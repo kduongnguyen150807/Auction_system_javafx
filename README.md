@@ -12,7 +12,7 @@ Hệ thống được chia làm 3 module chính để phân tách rõ ràng giao
 
 2. **`auction-server`**: Áp dụng mô hình MVC (Controller → Model → DAO/Database), là nơi duy nhất truy cập cơ sở dữ liệu. Xử lý các nghiệp vụ cốt lõi, concurrent bidding và quản lý kết nối.
 
-3. **`auction-client`**: Áp dụng mô hình MVC với JavaFX và FXML. Xử lý giao diện người dùng và giao tiếp với Server qua mạng.
+3. **`auction-client`**: Áp dụng mô hình MVC với JavaFX và FXML. Xử lý giao diện người dùng và giao tiếp với Server qua mạng.(Anh Tuấn, Trọng Nhân)
 
 ## 🚀 Các Tính Năng Nổi Bật
 
