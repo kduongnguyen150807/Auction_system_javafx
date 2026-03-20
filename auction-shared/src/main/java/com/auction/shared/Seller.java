@@ -3,8 +3,8 @@ public class Seller extends User {
     public Seller() {
         super();
     }
-    public Seller(String username, String password, String email) {
-        super(username, password, email);
+    public Seller(String u, String p, String e) {
+        super(u, p, e);
     }
     @Override
     public String getrolename() {

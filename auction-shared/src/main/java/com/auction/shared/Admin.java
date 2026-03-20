@@ -3,8 +3,8 @@ public class Admin extends User {
     public Admin() {
         super();
     }
-    public Admin(String username, String password, String email) {
-        super(username, password, email);
+    public Admin(String u, String p, String e) {
+        super(u, p, e);
     }
     @Override
     public String getrolename() {

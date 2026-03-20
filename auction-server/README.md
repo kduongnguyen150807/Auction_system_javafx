@@ -13,5 +13,3 @@ Module này đóng vai trò là trung tâm xử lý dữ liệu (Backend), áp d
 | `dao`             | Chọc trực tiếp vào Database (MySQL/PostgreSQL) để thực hiện CRUD.                     |
 | `service`         | Xử lý logic nghiệp vụ: Đấu giá đồng thời, Anti-sniping, và quản lý phiên.             |
 | `factory`         | Áp dụng **Factory Method Pattern** để khởi tạo các loại sản phẩm.                     |
-
-
