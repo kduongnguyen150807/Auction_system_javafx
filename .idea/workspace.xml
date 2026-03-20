@@ -28,9 +28,15 @@
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/Khanh/Desktop/Auction_system_javafx",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Khanh\Desktop\Auction_system_javafx" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -46,7 +52,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1774010610815</updated>
-      <workItem from="1774010611895" duration="370000" />
+      <workItem from="1774010611895" duration="8646000" />
     </task>
     <servers />
   </component>
