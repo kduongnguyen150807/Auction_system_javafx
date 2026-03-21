@@ -13,7 +13,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <VBox stylesheets="@../css/Menu.css"
-      minHeight="Infinity" minWidth="Infinity"
+      minHeight="768" minWidth="1024"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" >
     <children>
         <!--Banner-->
