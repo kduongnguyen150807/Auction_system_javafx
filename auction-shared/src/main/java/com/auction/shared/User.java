@@ -3,12 +3,14 @@ public abstract class User extends Entity {
     protected String username;
     protected String password;
     protected String email;
+    protected String age;
     protected boolean isactive;
     public User() {}
-    public User(String u, String p, String e) {
+    public User(String u, String p, String e, String a) {
         this.username = u;
         this.password = p;
         this.email = e;
+        this.age = a;
         this.isactive = true;
     }
     public abstract String getrolename();
@@ -20,21 +22,31 @@ public abstract class User extends Entity {
         this.username = u;
     }
     public String getpassword() {
-        return this.password;
+        String ans = this.password;
+        return ans;
     }
     public void setpassword(String p) {
         this.password = p;
     }
     public String getemail() {
-        return this.email;
+        String ans = this.email;
+        return ans;
     }
     public void setemail(String e) {
         this.email = e;
     }
+    public String getage() {
+        String ans = this.age;
+        return ans;
+    }
+    public void setage(String a) {
+        this.age = a;
+    }
     public boolean isactive() {
-        return this.isactive;
+        boolean ans = this.isactive;
+        return ans;
     }
     public void setactive(boolean a) {
         this.isactive = a;
     }
-}s
+}

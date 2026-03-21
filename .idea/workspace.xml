@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="" />
+    <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Bidder.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Bidder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Seller.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Seller.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/User.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 1
-}]]></component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
   <component name="ProjectId" id="3BFdNwP13BMQ0aqQJVHmqPueABj" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -19,12 +29,28 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "test-dnk",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Khanh/Desktop/Brand_New_Project",
+    "last_opened_file_path": "C:/Users/Khanh/Desktop/Auction_system_javafx",
+    "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="auction-client" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="auction-client" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -41,6 +67,7 @@
       <option name="presentableId" value="Default" />
       <updated>1774088715307</updated>
       <workItem from="1774088716364" duration="2391000" />
+      <workItem from="1774098490062" duration="47000" />
     </task>
     <servers />
   </component>
