@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.control.Button?>
+
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<VBox stylesheets="@../css/Menu.css"
+      minHeight="Infinity" minWidth="Infinity"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" >
+    <children>
+        <!--Banner-->
+        <HBox alignment="CENTER_LEFT" maxHeight="100.0" minHeight="100.0" prefHeight="100.0" style="-fx-background-color: orange;">
+            <children>
+                <ImageView fitHeight="80.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
+                    <image><Image url="@../images/hutao_money.gif" /></image>
+                </ImageView>
+                <VBox alignment="CENTER_LEFT" spacing="5.0">
+                    <children>
+                        <Label text="Bidding88">
+                            <font><Font name="Consolas Bold" size="24.0" /></font>
+                        </Label>
+                        <Label text="Online Auctions">
+                            <font><Font name="Consolas Bold" size="14.0" /></font>
+                        </Label>
+                    </children>
+                    <padding><Insets left="15.0" /></padding>
+                </VBox>
+                <!-- trang chu Button -->
+                <VBox alignment="CENTER" spacing="15.0" styleClass="TrangChuButton">
+                    <children>
+                        <Label text="Trang chủ">
+                            <font><Font name="Consolas Bold" size="24.0" /></font>
+                        </Label>
+                        <Label text="^">
+                            <font><Font name="Consolas Bold" size="14.0" /></font>
+                        </Label>
+                    </children>
+                </VBox>
+                <!-- Ho so button -->
+                <VBox alignment="CENTER" spacing="5.0" styleClass="BannerButton">
+                    <children>
+                        <Label text="Hồ sơ">
+                            <font><Font name="Consolas Bold" size="24.0" /></font>
+                        </Label>
+                        <Label text="^">
+                            <font><Font name="Consolas Bold" size="14.0" /></font>
+                        </Label>
+                    </children>
+                </VBox>
+            </children>
+            <padding><Insets left="20.0" /></padding>
+        </HBox>
+        <!--Scroll Pane-->
+        <ScrollPane styleClass="ScrollPane" minHeight="768.0" minWidth="1024.0" fitToWidth="true">
+            <content>
+                <VBox>
+                    <VBox spacing="10.0" style="-fx-background-color: black;" minHeight="0">
+                        <children>
+                            <HBox alignment="CENTER" prefWidth="1000">
+                                <children>
+                                    <ImageView fitWidth="1000" preserveRatio="false">
+                                        <image><Image url="@../images/cat1.jpeg"/></image>
+                                    </ImageView>
+                                </children>
+                            </HBox>
+                            <!-- Ongoing Bnind-->
+                            <VBox spacing="20" prefHeight="200">
+                                <children>
+                                    <Label text="Ongoing Bind" textFill="WHITE">
+                                        <font><Font name="Consolas Bold" size="40.0" /></font>
+                                        <VBox.margin><Insets left="45.0" top="30.0" /></VBox.margin>
+                                    </Label>
+
+                                    <Separator>
+                                        <VBox.margin><Insets left="45.0" right="45.0" /></VBox.margin>
+                                    </Separator>
+
+                                    <HBox spacing="20" styleClass="BindLine" >
+                                        <children>
+                                            <VBox></VBox>
+                                            <VBox styleClass="BindLineItem" minHeight="100" minWidth="50">
+                                                <children>
+                                                    <Label text="Item N/A" textFill="White">
+                                                        <font><Font name="Consolas Bold" size="24.0" /></font>
+                                                    </Label>
+                                                </children>
+                                            </VBox>
+                                            <VBox styleClass="BindLineItem" minHeight="100" minWidth="50">
+                                                <children>
+                                                    <Label text="Item N/A" textFill="White">
+                                                        <font><Font name="Consolas Bold" size="24.0" /></font>
+                                                    </Label>
+                                                </children>
+                                            </VBox>
+                                            <VBox styleClass="BindLineItem" minHeight="100" minWidth="50">
+                                                <children>
+                                                    <Label text="Item N/A" textFill="White">
+                                                        <font><Font name="Consolas Bold" size="24.0" /></font>
+                                                    </Label>
+                                                </children>
+                                            </VBox>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+                            <!-- Upcoming Bind-->
+                            <VBox spacing="20" prefHeight="500">
+                                <children>
+                                    <Label text="Upcoming Bind" textFill="WHITE">
+                                        <font><Font name="Consolas Bold" size="40.0" /></font>
+                                        <VBox.margin><Insets left="45.0" top="30.0" /></VBox.margin>
+                                    </Label>
+
+                                    <Separator>
+                                        <VBox.margin><Insets left="45.0" right="45.0" /></VBox.margin>
+                                    </Separator>
+
+                                    <HBox spacing="20" styleClass="BindLine" >
+                                        <children>
+                                            <VBox></VBox>
+                                            <VBox styleClass="BindLineItem" minHeight="100" minWidth="50">
+                                                <children>
+                                                    <Label text="Item N/A" textFill="White">
+                                                        <font><Font name="Consolas Bold" size="24.0" /></font>
+                                                    </Label>
+                                                </children>
+                                            </VBox>
+                                            <VBox styleClass="BindLineItem" minHeight="100" minWidth="50">
+                                                <children>
+                                                    <Label text="Item N/A" textFill="White">
+                                                        <font><Font name="Consolas Bold" size="24.0" /></font>
+                                                    </Label>
+                                                </children>
+                                            </VBox>
+                                            <VBox styleClass="BindLineItem" minHeight="100" minWidth="50">
+                                                <children>
+                                                    <Label text="Item N/A" textFill="White">
+                                                        <font><Font name="Consolas Bold" size="24.0" /></font>
+                                                    </Label>
+                                                </children>
+                                            </VBox>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+                        </children>
+                    </VBox>
+                    <VBox alignment="TOP_CENTER" spacing="20"
+                          style="-fx-background-color: orange; -fx-padding: 20;"
+                          minWidth="1000" minHeight="300">
+                        <Label text="About Us"
+                               style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: black;" />
+                    </VBox>
+                </VBox>
+
+            </content>
+        </ScrollPane>
+    </children>
+</VBox>

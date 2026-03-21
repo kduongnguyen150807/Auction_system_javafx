@@ -1,0 +1,38 @@
+.ScrollPane .viewport{
+    -fx-background-color: black;
+}
+.ScrollPane{
+    -fx-background-color: black;
+}
+.TimeBox {
+    -fx-border-color: orange;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-background-color: orange;
+    -fx-background-radius: 10;
+    -fx-pref-height: 200;
+    -fx-pref-width: 200;
+    -fx-alignment: center;
+}
+
+.DangKyButton{
+    -fx-border-color: black;
+    -fx-border-width: 2;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-background-color: black;
+    -fx-font-size: 15;
+    -fx-font-weight: bold;
+}
+
+.DangKyButton:hover{
+    -fx-background-color: #282713;
+}
+
+.BannerButton{
+    -fx-pref-width: 200;
+}
+.BannerButton:hover{
+    -fx-background-color: #555555;
+
+}

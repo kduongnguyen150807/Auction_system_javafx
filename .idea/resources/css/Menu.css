@@ -1,0 +1,27 @@
+.ScrollPane .viewport{
+    -fx-background-color: black;
+}
+.ScrollPane{
+    -fx-background-color: black;
+}
+/* hover cho VBox con */
+.BindLineItem {
+    -fx-background-color: grey;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.BindLineItem:hover {
+    -fx-background-color: #555555; /* màu khi hover */
+    -fx-cursor: hand; /* thay đổi cursor khi hover */
+}
+
+/* hover cho Trang chu */
+
+.TrangChuButton{
+    -fx-pref-width: 200;
+}
+.TrangChuButton:hover{
+    -fx-background-color: #555555;
+
+}
