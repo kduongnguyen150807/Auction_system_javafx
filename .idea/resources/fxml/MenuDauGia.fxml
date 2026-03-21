@@ -13,7 +13,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <VBox stylesheets="@../css/Menu.css"
-      minHeight="768" minWidth="1024"
+
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" >
     <children>
         <!--Banner-->
@@ -33,8 +33,8 @@
                     </children>
                     <padding><Insets left="15.0" /></padding>
                 </VBox>
-                <!-- trang chu Button -->
-                <VBox alignment="CENTER" spacing="15.0" styleClass="TrangChuButton">
+                <!-- Trang chu button -->
+                <VBox alignment="CENTER" spacing="5.0" styleClass="BannerButton">
                     <children>
                         <Label text="Trang chủ">
                             <font><Font name="Consolas Bold" size="24.0" /></font>

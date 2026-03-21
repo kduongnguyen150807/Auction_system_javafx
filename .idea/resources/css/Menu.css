@@ -16,12 +16,12 @@
     -fx-cursor: hand; /* thay đổi cursor khi hover */
 }
 
-/* hover cho Trang chu */
+/* hover cho Trang chu va Ho so*/
 
-.TrangChuButton{
+.BannerButton{
     -fx-pref-width: 200;
 }
-.TrangChuButton:hover{
+.BannerButton:hover{
     -fx-background-color: #555555;
 
 }
