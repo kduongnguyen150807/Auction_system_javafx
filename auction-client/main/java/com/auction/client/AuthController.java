@@ -32,7 +32,6 @@ public class AuthClientController {
         Map<String, Object> payload = new HashMap<>();
         payload.put("username", username);
         payload.put("password", password);
-        payload.put("hwid", hwid);
 
         // Tạo request yêu cầu đăng nhập
         Request request = new Request(Request.login, payload);
@@ -67,7 +66,6 @@ public class AuthClientController {
         payload.put("username", username);
         payload.put("password", password);
         payload.put("email", email);
-        payload.put("role", role != null ? role : "bidder");
 
         // Tạo request yêu cầu đăng ký
         Request request = new Request(Request.signup, payload);
