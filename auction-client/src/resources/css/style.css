@@ -1,0 +1,109 @@
+.BackGround .viewport{
+    -fx-background-color: #9a7c5c;
+}
+
+/* style cho banner */
+.my-hbox {
+    -fx-max-width: Infinity;
+    -fx-min-height: 200px;
+    -fx-background-color: linear-gradient(
+            from 0% 0% to 0% 100%,
+            #fff3e0 0%,
+            #ffd09b 100%
+    );
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+/* inside banner */
+/*left*/
+.LeftBanner{
+    -fx-min-height: 265px;
+    -fx-min-width: 275px;
+}
+/*specialize cho button*/
+.BannerButton{
+    -fx-background-color: rgba(0, 0, 0, 0.22);
+    -fx-min-width: 206px;
+    -fx-min-height: 59px;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 8;
+}
+
+.BannerButton:hover{
+    -fx-background-color: rgba(0, 0, 0, 0.71);
+    -fx-text-fill: white;
+}
+/*right*/
+.RightBanner{
+    -fx-min-height: 275px;
+    -fx-max-width: Infinity;
+}
+/*specialize cho text*/
+.RightBannerText{
+    -fx-text-fill: #000000;
+    -fx-font-weight: bold;
+    -fx-font-size: 50px
+}
+/*ket thuc banner*/
+
+/*showBind*/
+.ShowBind{
+    -fx-fit-to-width: true;
+    -fx-min-height: 150px;
+
+    -fx-hbar-policy: NEVER;
+    -fx-vbar-policy: NEVER;
+
+
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+/*BindLabel*/
+.ShowBind .label{
+    -fx-text-fill: #000000;
+    -fx-font-weight: bold;
+    -fx-font-size: 30px
+}
+/*AboutUs*/
+/* About Us container */
+.AboutUs {
+    -fx-background-color: linear-gradient(
+            from 0% 0% to 0% 100%,
+            #fff3e0 0%,
+            #ffd09b 100%
+    );
+    -fx-padding: 30 40 30 40;
+    -fx-spacing: 15;
+    -fx-alignment: center;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+/* Title */
+.AboutTitle {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #5a3e1b;
+}
+
+/* Content text */
+.AboutText {
+    -fx-font-size: 16px;
+    -fx-text-fill: #3b2a1a;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+/* Button*/
+.AboutButton {
+    -fx-background-color: #5a3e1b;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 8;
+}
+
+.AboutButton:hover {
+    -fx-background-color: #3b2a1a;
+}

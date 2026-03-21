@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.control.ScrollPane?>
+<ScrollPane styleClass="BackGround" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.MenuController">
+    <content>
+        <VBox alignment="TOP_CENTER" spacing="20" fillWidth="true">
+            <HBox styleClass="my-hbox" alignment="CENTER_LEFT">
+                <VBox styleClass="LeftBanner" alignment="TOP_CENTER">
+                    <ImageView fitWidth="265" fitHeight="157" preserveRatio="true">
+                        <image>
+                            <Image url="@../images/Hutao.png" />
+                        </image>
+                    </ImageView>
+                    <Button styleClass="BannerButton" fx:id="Login" text="Đăng nhập" onAction="#handlelogin"></Button>
+                    <Button styleClass="BannerButton" fx:id="About" text="Tìm hiểu thêm"></Button>
+                </VBox>
+                <VBox alignment="CENTER" styleClass="RightBanner" HBox.hgrow="ALWAYS">
+                    <Label text="BIDDING88" styleClass="RightBannerText"/>
+                    <Label text="Online Auctions" styleClass="RightBannerText"/>
+                </VBox>
+            </HBox>
+            <ScrollPane styleClass="ShowBind" fx:id="OngoingBind">
+                <content>
+                    <Label text="Ongoing Bind"/>
+                </content>
+            </ScrollPane>
+            <ScrollPane styleClass="ShowBind" fx:id="UpcomingBind">
+                <content>
+                    <Label text="Upcoming Bind"/>
+                </content>
+            </ScrollPane>
+            <ScrollPane styleClass="ShowBind" fx:id="EndedBind">
+                <content>
+                    <Label text="Ended Bind"/>
+                </content>
+            </ScrollPane>
+            <VBox styleClass="AboutUs">
+                <Label text="About Us" styleClass="AboutTitle"/>
+                <Label text="BIDDING88 là nền tảng đấu giá trực tuyến, nơi bạn có thể khám phá những sản phẩm độc đáo và tham gia đấu giá một cách minh bạch, nhanh chóng." styleClass="AboutText"/>
+                <Button text="Tìm hiểu thêm" styleClass="AboutButton"/>
+            </VBox>
+        </VBox>
+    </content>
+</ScrollPane>
