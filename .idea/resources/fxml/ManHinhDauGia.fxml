@@ -13,7 +13,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <VBox stylesheets="@../css/ManHinhDauGia.css"
-      prefHeight="768" prefWidth="1024"
+      prefHeight="768" prefWidth="1024" minWidth="1024" minHeight="768"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" >
     <children>
         <!--Banner-->
