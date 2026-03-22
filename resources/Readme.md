@@ -27,7 +27,7 @@ VBox ( chứa thông tin cửa sổ và khởi tạo xmlns )
                     |   |_Label(Name holder)
                     |
                   ...
-            |_ VBox (khung NỀN chứa những sản phẩm đang được đấu giá (Ongoing Bind), dự kiến thay thế bằng scroll pane cấu trúc tương tự)
+            |_ VBox (khung NỀN chứa những sản phẩm sắp được đấu giá (Ongoing Bind), dự kiến thay thế bằng scroll pane cấu trúc tương tự)
 
 
 
