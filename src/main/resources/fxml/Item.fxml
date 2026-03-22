@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.text.Font?>
+<!-- khoi tao duong dan den ItemController -->
+<VBox prefHeight="297.0" prefWidth="194.0" style="-fx-background-color: #1A1A1A; -fx-padding: 15; -fx-background-radius: 10;"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.ItemController">
+    <children>
+        <!-- Image Holder -->
+        <ImageView fitHeight="156.0" fitWidth="156.0" pickOnBounds="true">
+            <image>
+                <Image url="@car.png" />
+            </image>
+        </ImageView>
+        <!-- Ten san pham -->
+        <Label  fx:id="LabelName"
+                alignment="CENTER" contentDisplay="CENTER" prefHeight="54.0" prefWidth="246.0" styleClass="premium-label" text="" textFill="White" textOverrun="CENTER_ELLIPSIS">
+            <font>
+                <Font name="System Bold" size="16.0" />
+            </font>
+        </Label>
+        <!-- price va quantity-->
+        <HBox prefHeight="42.0" prefWidth="163.0">
+            <children>
+                <VBox prefHeight="42.0" prefWidth="90.0">
+                    <children>
+                        <!-- Price Text -->
+                        <Label
+                                alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="81.0" styleClass="premium-label" text=" Price" textFill="White" textOverrun="CENTER_ELLIPSIS">
+                            <font>
+                                <Font name="System Bold" size="12.0" />
+                            </font>
+                        </Label>
+                        <!-- Price Number -->
+                        <Label  fx:id="LabelPrice"
+                                alignment="CENTER" contentDisplay="CENTER" prefHeight="54.0" prefWidth="246.0" styleClass="premium-label" text="\$10000" textFill="Orange" textOverrun="CENTER_ELLIPSIS">
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </VBox>
+                <VBox prefHeight="42.0" prefWidth="74.0">
+                    <children>
+                        <!-- Quantity Text -->
+                        <Label
+                                alignment="CENTER" contentDisplay="CENTER" prefHeight="19.0" prefWidth="74.0" styleClass="premium-label" text="Quantity" textFill="White" textOverrun="CENTER_ELLIPSIS">
+                            <font>
+                                <Font name="System Bold" size="13.0" />
+                            </font>
+                        </Label>
+                        <!-- Quantity Number -->
+                        <Label  fx:id="LabelQuantity"
+                                alignment="CENTER" contentDisplay="CENTER" prefHeight="54.0" prefWidth="246.0" styleClass="premium-label" text="10" textFill="Orange" textOverrun="CENTER_ELLIPSIS">
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+        <!--button view detail-->
+        <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: orange;" text="View details" textFill="WHITE">
+            <font>
+                <Font name="System Bold" size="13.0" />
+            </font>
+        </Button>
+    </children>
+</VBox>
