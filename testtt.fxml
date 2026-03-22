@@ -189,7 +189,7 @@
                                           </VBox>
                                        </children>
                                     </HBox>
-                                    <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" text="View details" textFill="WHITE" />
+                                    <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" styleClass="view-details-button" text="View details" textFill="WHITE" />
                                  </children>
                               </VBox>
                            </children>
@@ -244,7 +244,7 @@
                                     </VBox>
                                  </children>
                               </HBox>
-                              <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" text="View details" textFill="WHITE">
+                              <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" styleClass="view-details-button" text="View details" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="12.0" />
                                  </font>
@@ -297,7 +297,7 @@
                               </VBox>
                            </children>
                         </HBox>
-                        <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" text="View details" textFill="WHITE" />
+                        <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" styleClass="view-details-button" text="View details" textFill="WHITE" />
                      </children>
                   </VBox>
                   <VBox layoutX="286.0" layoutY="474.0" prefHeight="297.0" prefWidth="194.0" style="-fx-background-color: #1A1A1A; -fx-padding: 15; -fx-background-radius: 10;">
@@ -344,7 +344,7 @@
                               </VBox>
                            </children>
                         </HBox>
-                        <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" text="View details" textFill="WHITE">
+                        <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" styleClass="view-details-button" text="View details" textFill="WHITE">
                            <font>
                               <Font name="System Bold" size="12.0" />
                            </font>
@@ -409,7 +409,7 @@
                                           </VBox>
                                        </children>
                                     </HBox>
-                                    <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" text="View details" textFill="WHITE">
+                                    <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" styleClass="view-details-button" text="View details" textFill="WHITE">
                                        <font>
                                           <Font name="System Bold" size="12.0" />
                                        </font>
@@ -464,7 +464,7 @@
                               </VBox>
                            </children>
                         </HBox>
-                        <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" text="View details" textFill="WHITE">
+                        <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="169.0" style="-fx-background-color: #c95406;" styleClass="view-details-button" text="View details" textFill="WHITE">
                            <font>
                               <Font name="System Bold" size="12.0" />
                            </font>
