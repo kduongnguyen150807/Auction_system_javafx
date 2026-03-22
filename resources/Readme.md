@@ -1,6 +1,6 @@
 Lưu ý, fxml có những <!-- ... --> để bạn dễ đọc
 và nút chắc chắn chưa được gắn với controller, chỉ phục vụ mục đích làm đẹp :((
-
+<pre>
 1, Điểm chung
 mỗi file fxml được triển khai chung theo mô hình chung:
 VBox ( chứa thông tin cửa sổ và khởi tạo xmlns )
@@ -11,7 +11,7 @@ VBox ( chứa thông tin cửa sổ và khởi tạo xmlns )
                      |_ Image Holder (Hutao)
                      |_ nút Trang chủ (VBox)
                      |_ nút Hồ sơ (VBox)
-          
+<pre>          
 2, Trang chủ:
 VBox ( chứa thông tin cửa sổ và khởi tạo xmlns )
  |_ Scroll Pane ( Khung hình giúp kéo lên xuống )
@@ -34,3 +34,4 @@ VBox ( chứa thông tin cửa sổ và khởi tạo xmlns )
 
 |_ VBox( chứa thông tin aboutus)
          
+<pre>
