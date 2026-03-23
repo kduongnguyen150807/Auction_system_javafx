@@ -1,0 +1,35 @@
+.ScrollPane .viewport{
+    -fx-background-color: black;
+}
+.ScrollPane{
+    -fx-background-color: black;
+}
+/* hover cho VBox con */
+.BindLineItem {
+    -fx-background-color: #2c2c2c;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-min-width: 110;
+    -fx-min-height: 150;
+    -fx-alignment: top-center;
+}
+.BindLineItem:hover {
+    -fx-background-color: #555555; /* màu khi hover */
+    -fx-cursor: hand; /* thay đổi cursor khi hover */
+}
+
+/* hover cho Trang chu va Ho so*/
+.BannerButton{
+    -fx-pref-width: 200;
+    -fx-background-color: orange;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: orange;
+}
+.BannerButton:hover{
+    -fx-background-color: #cb871b;
+}
+/* Đổi màu chữ của Label bên trong khi cha (VBox) được hover */
+.BannerButton:hover .label {
+    -fx-text-fill: white;
+}
