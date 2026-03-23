@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ThanhTimKiemController"
+      prefHeight="64.0" prefWidth="1024.0" maxWidth="1024" minWidth="1024" maxHeight="64"
+      style="-fx-border-color: #0E0E0E; -fx-border-width: 0 0 2 0" alignment="CENTER_LEFT">
+    <children>
+        <TextField prefHeight="36" prefWidth="744.93" style="-fx-background-color: #0E0E0E; -fx-prompt-text-fill: #505A81; -fx-text-fill: #505A81" promptText="Search">
+            <font><Font name="Plus Jakarta Sans" size="20" /></font>
+        </TextField>
+    </children>
+    <padding><Insets left="32"/></padding>
+</HBox>

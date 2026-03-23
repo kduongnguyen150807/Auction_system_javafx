@@ -1,0 +1,35 @@
+.MucLucCon {
+    -fx-padding: 10 12;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.MucLucCon:hover {
+    -fx-background-color: #1F1F1F;
+    -fx-border-radius: 2;
+    -fx-border-width: 0 0 0 2;
+    -fx-border-color: #FE8F00;
+}
+/* menu-text */
+.menu-text{
+    -fx-text-fill: #505A81;
+    -fx-font-weight: 600;
+    -fx-font-size: 14px;
+}
+/* icon */
+.icon {
+    -fx-fill: #505A81;
+    -fx-scale-x: 1;
+    -fx-scale-y: 1;
+}
+
+/* hover effect đồng bộ */
+.MucLucCon:hover .icon {
+    -fx-fill: #FE8F00;
+}
+
+.MucLucCon:hover .menu-text {
+    -fx-text-fill: #FE8F00;
+    -fx-font-weight: 800;
+}
+

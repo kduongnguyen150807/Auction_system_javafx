@@ -10,15 +10,15 @@ import java.io.IOException;
 public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("/fxml/TrangChu.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1024, 768);
-        stage.setTitle("Hello!");
+        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("/fxml/Khung.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), 1280, 1024);
+        stage.setTitle("Pro Auction!");
         stage.setScene(scene);
-        stage.setResizable(false);
+        stage.setResizable(true);
         stage.show();
 
-        TrangChuController newController = fxmlLoader.getController();
-        newController.HienThiVatPhamDauGia();
+        KhungController khungController = fxmlLoader.getController();
+        khungController.initializer();
     }
 
     public static void main(String[] args) {
