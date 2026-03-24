@@ -49,6 +49,12 @@ public class ClientHandler implements Runnable {
             User u = this.userservice.login(data.get("username"), data.get("password"));
             if (u != null) ans = new Response(req.getrequestid(), Response.ok, "success", u);
             else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+        } else if (act.equals(Request.signup)) {
+            Map<String, String> data = (Map<String, String>) req.getpayload();
+            User u = new Bidder(data.get("username"), data.get("password"), data.get("email"), data.get("age"), "");
+            boolean res = this.userservice.signup(u);
+            if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
+            else ans = new Response(req.getrequestid(), Response.err, "fail", null);
         } else if (act.equals(Request.list)) {
             List<Item> items = this.itemdao.getall();
             ans = new Response(req.getrequestid(), Response.ok, "success", items);

@@ -2,19 +2,26 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionCloser.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/BidService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/LoginController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/RegisterController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/WelcomeController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/network/NetworkClient.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/app/ServerApp.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/BidDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/BidDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/DatabaseConnection.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/Main.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/SceneManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/SceneManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/main/resources/fxml/welcome.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/resources/fxml/welcome.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/ItemDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/ItemDao.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/ObserverManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronic.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronics.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,12 +46,19 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;test-dnk&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/Khanh/Desktop/Auction_system_javafx&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Khanh\Desktop\Auction_system_javafx\auction-client\main\java\com\auction\client" />
+      <recent name="C:\Users\Khanh\Desktop\Auction_system_javafx\auction-client\main\java\com\auction\client\controller" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="auction-client" />
@@ -76,7 +90,10 @@
       <workItem from="1774088716364" duration="2391000" />
       <workItem from="1774098490062" duration="498000" />
       <workItem from="1774325310845" duration="1151000" />
-      <workItem from="1774334471018" duration="3888000" />
+      <workItem from="1774334471018" duration="4465000" />
+      <workItem from="1774338991774" duration="2187000" />
+      <workItem from="1774341210712" duration="9000" />
+      <workItem from="1774351729149" duration="1848000" />
     </task>
     <servers />
   </component>

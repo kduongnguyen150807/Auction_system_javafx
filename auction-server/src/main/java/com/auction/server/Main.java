@@ -1,12 +1,10 @@
 package com.auction.server;
-import com.auction.server.dao.DatabaseConnection;
 import com.auction.server.controller.SocketServer;
+import com.auction.server.service.AuctionCloser;
 public class Main {
     public static void main(String[] args) {
-        DatabaseConnection dbcon = DatabaseConnection.getinstance();
-        int port = 8080;
-        SocketServer server = new SocketServer(port);
         new AuctionCloser().start();
+        SocketServer server = new SocketServer(8080);
         server.startserver();
     }
 }

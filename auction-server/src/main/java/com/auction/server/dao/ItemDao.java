@@ -52,6 +52,16 @@ public class ItemDao {
         } catch (Exception e) { e.printStackTrace(); }
         return ans;
     }
+    public void closeauction(int id, int winnerid, String status) {
+        try {
+            String sql = "update items set winnerid = ?, status = ? where id = ?";
+            PreparedStatement ps = this.conn.prepareStatement(sql);
+            ps.setInt(1, winnerid);
+            ps.setString(2, status);
+            ps.setInt(3, id);
+            ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
     private Item maprs(ResultSet rs) throws SQLException {
         String cat = rs.getString("category");
         Item ans = null;

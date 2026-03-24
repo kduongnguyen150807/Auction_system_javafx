@@ -1,0 +1,14 @@
+com\auction\shared\UserRole.class
+com\auction\shared\Vehicle.class
+com\auction\shared\Entity.class
+com\auction\shared\Response.class
+com\auction\shared\Request.class
+com\auction\shared\User.class
+com\auction\shared\Admin.class
+com\auction\shared\Seller.class
+com\auction\shared\Item.class
+com\auction\shared\Electronics.class
+com\auction\shared\Art.class
+com\auction\shared\BidTransaction.class
+com\auction\shared\Bidder.class
+com\auction\shared\ItemStatus.class

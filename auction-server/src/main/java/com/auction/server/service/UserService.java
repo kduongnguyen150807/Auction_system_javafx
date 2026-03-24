@@ -10,4 +10,8 @@ public class UserService {
         User ans = this.userdao.login(u, p);
         return ans;
     }
+    public boolean signup(User u) {
+        boolean ans = this.userdao.signup(u);
+        return ans;
+    }
 }

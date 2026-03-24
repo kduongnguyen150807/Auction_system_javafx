@@ -33,4 +33,21 @@ public class UserDao {
         } catch (Exception e) { e.printStackTrace(); }
         return ans;
     }
+    public boolean signup(User u) {
+        boolean ans = false;
+        try {
+            String sql = "insert into users(username, password, email, age, phonenumber, role, isactive, islocked) values(?,?,?,?,?,?,?,?)";
+            PreparedStatement ps = this.conn.prepareStatement(sql);
+            ps.setString(1, u.getusername());
+            ps.setString(2, u.getpassword());
+            ps.setString(3, u.getemail());
+            ps.setString(4, u.getage());
+            ps.setString(5, u.getphonenumber());
+            ps.setString(6, u.getrole().name());
+            ps.setBoolean(7, true);
+            ps.setBoolean(8, false);
+            ans = ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return ans;
+    }
 }
