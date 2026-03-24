@@ -7,11 +7,11 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
-public class AuthClientController {
+public class AuthController {
     private final ObjectOutputStream out;
     private final ObjectInputStream in;
     private static final Pattern p = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    public AuthClientController(ObjectOutputStream out, ObjectInputStream in) {
+    public AuthController(ObjectOutputStream out, ObjectInputStream in) {
         this.out = out;
         this.in = in;
     }
@@ -42,7 +42,7 @@ public class AuthClientController {
         if (pass.length() < 6) {
             return new Response("local", Response.err, "Mật khẩu phải có ít nhất 6 ký tự", null);
         }
-        if (!AuthClientController.p.matcher(e).matches()) {
+        if (!AuthController.p.matcher(e).matches()) {
             return new Response("local", Response.err, "Định dạng email không hợp lệ", null);
         }
         Map<String, Object> payload = new HashMap<>();
@@ -62,9 +62,9 @@ public class AuthClientController {
             if (obj instanceof Response res) {
                 return res;
             }
-            return new Response(request.getid(), Response.err, "Định dạng phản hồi từ server không hợp lệ", null);
+            return new Response(request.getrequestid(), Response.err, "Định dạng phản hồi từ server không hợp lệ", null);
         } catch (IOException | ClassNotFoundException e) {
-            return new Response(request.getid(), Response.err, "Mất kết nối tới máy chủ", null);
+            return new Response(request.getrequestid(), Response.err, "Mất kết nối tới máy chủ", null);
         }
     }
 }

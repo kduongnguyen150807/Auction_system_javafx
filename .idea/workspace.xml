@@ -1,26 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/LoginController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/RegisterController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/WelcomeController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/network/NetworkClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Auction_system_javafx.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/main/java/module-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/Main.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/SceneManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/SceneManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/main/resources/fxml/welcome.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/resources/fxml/welcome.fxml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/ItemDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/ItemDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronic.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronics.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/LoginController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/controller/LoginController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -28,9 +20,33 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="module-info" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="test-dnk" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "25020286-ops"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/kduongnguyen150807/Auction_system_javafx.git",
+    "accountId": "aae69a09-d744-43c6-b577-1160f4276eb3"
+  }
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
 }</component>
@@ -39,22 +55,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;test-dnk&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Khanh/Desktop/Auction_system_javafx&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "Downloaded.Files.Path.Enabled": "false",
+    "Maven.Auction_system_javafx [clean].executor": "Run",
+    "Maven.Auction_system_javafx [org.apache.maven.plugins:maven-clean-plugin:3.2.0:clean].executor": "Run",
+    "Maven.Auction_system_javafx [org.openjfx:javafx-maven-plugin:0.0.8:run].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Repository.Attach.Annotations": "false",
+    "Repository.Attach.JavaDocs": "false",
+    "Repository.Attach.Sources": "false",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "test-nbn-2",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Khanh/Desktop/Auction_system_javafx",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Admin\IdeaProjects\Auction_system_javafx\auction-client\main\java" />
       <recent name="C:\Users\Khanh\Desktop\Auction_system_javafx\auction-client\main\java\com\auction\client" />
       <recent name="C:\Users\Khanh\Desktop\Auction_system_javafx\auction-client\main\java\com\auction\client\controller" />
     </key>
@@ -76,7 +105,6 @@
     <attachedChunks>
       <set>
         <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
       </set>
     </attachedChunks>
   </component>
