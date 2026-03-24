@@ -2,23 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/ItemStatus.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/UserRole.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Main.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/SocketServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Art.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Art.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/BidTransaction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/BidTransaction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Bidder.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Bidder.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronic.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronic.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Entity.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Entity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Item.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Item.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Request.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Seller.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Seller.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/User.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Vehicle.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Network/ClientHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Network/SessionManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/factory/ItemFactory.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/auction/server/AuctionServiceTest.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,7 +71,7 @@
       <workItem from="1774088716364" duration="2391000" />
       <workItem from="1774098490062" duration="498000" />
       <workItem from="1774325310845" duration="1151000" />
-      <workItem from="1774334471018" duration="205000" />
+      <workItem from="1774334471018" duration="1629000" />
     </task>
     <servers />
   </component>
