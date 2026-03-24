@@ -1,0 +1,21 @@
+/* Khai báo biến màu sắc */
+.root {
+    -color-bg: #000000;
+    -color-sidebar: #0E0E0E;
+    -color-primary: #FE8F00;
+    -color-text-main: #FFFFFF;
+    -color-text-muted: #505A81;
+    -color-card: #1F1F1F;
+    -color-border: #1A1A1A;
+    -color-bg-hover:shadow-1;
+
+    -mainText: #FFFFFF;
+    -subText: #ABABAB;
+}
+
+/* Container chính */
+.main-container {
+    -fx-background-color: -color-bg;
+}
+
+
