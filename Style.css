@@ -1,0 +1,185 @@
+/* ========================================
+   1. CÀI ĐẶT CHUNG CHO TOÀN BỘ APP
+   ======================================== */
+.root {
+    /* Đặt nền của toàn bộ ứng dụng thành màu đen nhám */
+    -fx-background-color: #121212; 
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+/* ========================================
+   2. KHU VỰC THANH TÌM KIẾM (SEARCH)
+   ======================================== */
+/* Áp dụng cho TextField tìm kiếm */
+.search-field {
+    -fx-background-color: #2A2A2A;      /* Nền xám đậm */
+    -fx-text-fill: white;               /* Chữ gõ vào màu trắng */
+    -fx-prompt-text-fill: #888888;      /* Chữ mờ Placeholder màu xám nhạt */
+    -fx-background-radius: 20px;        /* Bo góc tròn hình viên thuốc */
+    -fx-border-color: #D46210;          /* Viền màu cam PRO */
+    -fx-border-radius: 20px;            /* Bo góc viền khớp với nền */
+    -fx-padding: 0 15px 0 15px;         /* Thụt lề chữ vào trong 15px */
+}
+
+/* Áp dụng cho Nút kính lúp */
+.search-button {
+    -fx-background-color: transparent;  /* Xóa nền nút */
+    -fx-cursor: hand;                   /* Hiện hình bàn tay khi di chuột */
+}
+
+
+/* ========================================
+   3. KHU VỰC THANH ĐIỀU HƯỚNG (NAVIGATION BAR)
+   ======================================== */
+/* Khung ngang (HBox) chứa các menu */
+.nav-bar {
+    /* Màu nền cam dựa trên bản thiết kế Figma của bạn */
+    -fx-background-color: #D46210; 
+    -fx-padding: 10px 20px;
+}
+
+/* Các chữ link bình thường (Home, Collectibles...) */
+.nav-link {
+    -fx-text-fill: white;               /* Chữ màu trắng */
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+/* Khi di chuột vào link bình thường */
+.nav-link:hover {
+    -fx-text-fill: #121212;             /* Chữ biến thành màu đen để nổi bật trên nền cam */
+}
+
+
+/* ========================================
+   4. KHU VỰC MENU XỔ XUỐNG (CATEGORIES)
+   ======================================== */
+/* Nút Categories (MenuButton) */
+.nav-dropdown {
+    -fx-background-color: transparent;  /* Xóa nền mặc định */
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+/* Định dạng chữ "Categories" */
+.nav-dropdown > .label {
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+/* Định dạng cái mũi tên nhỏ 🔽 */
+.nav-dropdown > .arrow-button > .arrow {
+    -fx-background-color: white; 
+}
+
+/* Khi di chuột vào nút Categories */
+.nav-dropdown:hover > .label {
+    -fx-text-fill: #121212;             /* Chữ Categories đổi màu đen */
+}
+.nav-dropdown:hover > .arrow-button > .arrow {
+    -fx-background-color: #121212;      /* Mũi tên cũng đổi màu đen */
+}
+
+/* Khung menu con xổ xuống (Chứa Art, Watches...) */
+.nav-dropdown .context-menu {
+    -fx-background-color: #1A1A1A;      /* Nền menu con màu đen nhám */
+    -fx-border-color: #D46210;          /* Viền menu con màu cam */
+    -fx-border-width: 2px;
+}
+
+/* Chữ bên trong menu con */
+.nav-dropdown .menu-item > .label {
+    -fx-text-fill: white;
+}
+
+/* Khi rê chuột vào từng dòng của menu con */
+.nav-dropdown .menu-item:focused {
+    -fx-background-color: #D46210;      /* Dòng đó sáng lên màu cam */
+}
+/* Khung chứa nội dung đè lên ảnh */
+.hero-content-box {
+    -fx-padding: 50px;
+    -fx-background-color: rgba(0, 0, 0, 0.4); /* Tạo một lớp phủ đen mờ để chữ dễ đọc hơn */
+}
+
+/* Chữ đếm ngược */
+.timer-number {
+    -fx-text-fill: #D46210;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+}
+
+.timer-unit {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+/* ========================================
+   5. KHU VỰC THẺ SẢN PHẨM (PRODUCT CARDS)
+   ======================================== */
+/* Nút "View details" ở trạng thái bình thường */
+.view-details-button {
+    /* Đặt nền màu cam đậm từ thanh điều hướng của bạn */
+    -fx-background-color: #D46210;
+
+    /* Chữ màu trắng mặc định */
+    -fx-text-fill: white;
+
+    /* Các định dạng khác để nút trông đẹp hơn khớp với Figma */
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 15px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand; /* Hiện hình bàn tay khi di chuột */
+}
+
+/* Hiệu ứng khi di chuột vào nút (Hover) */
+.view-details-button:hover {
+    /* Nền sáng hơn một chút khi di chuột */
+    -fx-background-color: #E67A2A;
+}
+
+/* KHI CLICK CHUỘT VÀO NÚT (Pressed) - ĐÂY LÀ PHẦN BẠN CẦN */
+.view-details-button:pressed {
+    /* Chữ biến thành MÀU ĐEN khi nhấn xuống */
+    -fx-text-fill: black;
+
+    /* Tùy chọn: Có thể giữ màu nền cũ hoặc thay đổi nhẹ */
+    -fx-background-color: #D46210;
+}
+/* Nút Add Product ở màn hình chính */
+.add-product-button {
+    -fx-background-color: black;
+    -fx-text-fill: #D46210;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px !important; /* Giữ nguyên cỡ 18px */
+    -fx-border-color: #D46210;
+    -fx-border-radius: 5px;
+    -fx-cursor: hand;
+}
+
+/* Quan trọng: Ép trạng thái Hover cũng phải 18px */
+.add-product-button:hover {
+    -fx-text-fill: white;           /* Cho chữ đổi sang trắng cho đẹp */
+    -fx-font-size: 18px !important; /* Ép nó không được co bé lại */
+    -fx-background-color: #333333;  /* Nền xám nhẹ khi di chuột */
+}
+/* Dùng 2 lần class để tăng độ ưu tiên cực cao */
+.add-product-button.add-product-button {
+    -fx-background-color: black !important;
+    -fx-text-fill: #D46210 !important;
+    -fx-font-size: 18px !important;      /* Ép size 18 */
+    -fx-font-weight: bold !important;
+    -fx-border-color: #D46210 !important;
+    -fx-border-width: 2px !important;
+    -fx-border-radius: 5px !important;
+    -fx-background-radius: 5px !important;
+}
+
+/* Khi di chuột vào - Giữ nguyên font size */
+.add-product-button.add-product-button:hover {
+    -fx-background-color: #1A1A1A !important; /* Nền xám đen nhẹ */
+    -fx-text-fill: #FF8C00 !important;       /* Cam sáng hơn tí cho đẹp */
+    -fx-font-size: 18px !important;          /* Tuyệt đối giữ 18px */
+}

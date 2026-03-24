@@ -1,0 +1,114 @@
+/* ========================================
+   5. KHU VỰC THÊM SẢN PHẨM (ADD PRODUCT FORM)
+   ======================================== */
+
+/* Ô nhập liệu: NAME, PRICE, QUANTITY */
+.add-product-input {
+    -fx-background-color: #2A2A2A;      /* Nền xám đậm giống thanh search */
+    -fx-text-fill: white;               /* Chữ gõ vào màu trắng */
+    -fx-prompt-text-fill: #888888;      /* Chữ mờ màu xám */
+    -fx-background-radius: 30px;        /* Bo tròn dạng viên thuốc */
+    -fx-border-color: #D46210;          /* Viền cam chuẩn của bạn */
+    -fx-border-radius: 30px;
+    -fx-border-width: 2px;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;              /* Căn giữa chữ giống bản thiết kế */
+}
+
+/* Hiệu ứng khi di chuột và khi bấm vào gõ chữ */
+.add-product-input:hover {
+    -fx-background-color: #333333;
+    -fx-cursor: hand;
+}
+.add-product-input:focused {
+    -fx-border-color: #ff8547;          /* Viền cam sáng lên khi gõ */
+}
+
+/* Ô xổ xuống: CLASSIFY (ComboBox) */
+.add-product-combo-box {
+    -fx-background-color: #2A2A2A;
+    -fx-background-radius: 30px;
+    -fx-border-color: #D46210;
+    -fx-border-radius: 30px;
+    -fx-border-width: 2px;
+}
+.add-product-combo-box .list-cell {
+    -fx-alignment: center;              /* Căn giữa chữ CLASSIFY */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+.add-product-combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+.add-product-combo-box .arrow {
+    -fx-background-color: #888888;      /* Màu mũi tên xổ xuống */
+}
+
+/* Nút chọn ảnh: PICTURE */
+.picture-btn {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: white;
+    -fx-background-radius: 30px;
+    -fx-border-color: #D46210;
+    -fx-border-radius: 30px;
+    -fx-border-width: 2px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+.picture-btn:hover {
+    -fx-background-color: #333333;
+}
+.picture-btn:pressed {
+    -fx-scale-x: 0.98;                  /* Bấm vào lõm xuống */
+    -fx-scale-y: 0.98;
+}
+/* ========================================
+   CẤU HÌNH COMBOBOX LỌC SẢN PHẨM (BẢN CHỐNG LỖI 100%)
+   ======================================== */
+
+/* 1. CÁI HỘP BÊN NGOÀI (Nền xám nhám, viền cam giống ô QUANTITY) */
+.add-product-combo-box {
+    -fx-background-color: #2A2A2A !important;
+    -fx-border-color: #D46210 !important;
+    -fx-border-width: 2px !important;
+    -fx-background-radius: 30px !important;
+    -fx-border-radius: 30px !important;
+}
+
+/* 2. KHU VỰC CHỮ "CLASSIFY" BÊN TRONG NÚT */
+/* Lệnh !important ở đây sẽ bóp chết cái cục màu cam vô duyên kia */
+.add-product-combo-box > .list-cell {
+    -fx-background-color: transparent !important;
+    -fx-text-fill: #888888 !important; /* Màu xám mờ giống các ô Name, Price */
+    -fx-font-weight: bold;
+    -fx-padding: 5px 15px;
+}
+
+/* 3. XÓA NỀN CỦA CÁI MŨI TÊN BÊN PHẢI */
+.add-product-combo-box > .arrow-button {
+    -fx-background-color: transparent !important;
+    -fx-padding: 0 15px 0 0;
+}
+
+/* 4. KHUNG DANH SÁCH XỔ XUỐNG (Nền trắng) */
+.add-product-combo-box .list-view {
+    -fx-background-color: white !important;
+}
+
+/* 5. TỪNG DÒNG CHỮ TRONG MENU XỔ XUỐNG (Art, Car...) */
+.add-product-combo-box .list-view .list-cell {
+    -fx-background-color: white !important;
+    -fx-text-fill: black !important;
+    -fx-padding: 8px 15px;
+}
+
+/* 6. HIỆU ỨNG RÊ CHUỘT / ĐÃ CHỌN TRONG MENU */
+.add-product-combo-box .list-view .list-cell:filled:hover,
+.add-product-combo-box .list-view .list-cell:filled:selected {
+    -fx-background-color: #D46210 !important;
+    -fx-text-fill: white !important;
+}
