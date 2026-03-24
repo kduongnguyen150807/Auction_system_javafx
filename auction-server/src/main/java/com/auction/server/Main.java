@@ -6,6 +6,7 @@ public class Main {
         DatabaseConnection dbcon = DatabaseConnection.getinstance();
         int port = 8080;
         SocketServer server = new SocketServer(port);
+        new AuctionCloser().start();
         server.startserver();
     }
 }

@@ -1,19 +1,18 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 package com.auction.server.dao;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 public class DatabaseConnection {
     private static DatabaseConnection instance;
-    private Connection conn;
+    private Connection connection;
     private String url = "jdbc:mysql://localhost:3306/auction_db";
     private String user = "root";
     private String pass = "khanhmoc1236";
     private DatabaseConnection() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            this.conn = DriverManager.getConnection(url, user, pass);
-        } catch (Exception e) {
+            this.connection = DriverManager.getConnection(this.url, this.user, this.pass);
+        } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
     }
@@ -25,13 +24,7 @@ public class DatabaseConnection {
         return ans;
     }
     public Connection getconnection() {
-        Connection ans = this.conn;
+        Connection ans = this.connection;
         return ans;
     }
 }
-=======
-
->>>>>>> ac326420b33c0c98046ce5c55e9215f10777f773
-=======
-
->>>>>>> ac326420b33c0c98046ce5c55e9215f10777f773

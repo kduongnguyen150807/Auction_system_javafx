@@ -2,14 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/SocketServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionCloser.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/BidService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Network/ClientHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/Network/SessionManager.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/factory/ItemFactory.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/application.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/auction/server/AuctionServiceTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/app/ServerApp.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/BidDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/BidDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/DatabaseConnection.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/ItemDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/ItemDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/AuctionService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/ObserverManager.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +76,7 @@
       <workItem from="1774088716364" duration="2391000" />
       <workItem from="1774098490062" duration="498000" />
       <workItem from="1774325310845" duration="1151000" />
-      <workItem from="1774334471018" duration="1629000" />
+      <workItem from="1774334471018" duration="3888000" />
     </task>
     <servers />
   </component>
