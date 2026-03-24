@@ -4,21 +4,21 @@ import java.time.LocalDateTime;
 public class Response implements Serializable {
     public static final String ok = "SUCCESS";
     public static final String err = "ERROR";
-    private String rid;
-    private String st;
-    private String msg;
-    private Object obj;
-    private LocalDateTime ts;
+    protected String requestid;
+    protected String status;
+    protected String message;
+    protected Object payload;
+    protected LocalDateTime timestamp;
     public Response(String rid, String st, String msg, Object obj) {
-        this.rid = rid;
-        this.st = st;
-        this.msg = msg;
-        this.obj = obj;
-        this.ts = LocalDateTime.now();
+        this.requestid = rid;
+        this.status = st;
+        this.message = msg;
+        this.payload = obj;
+        this.timestamp = LocalDateTime.now();
     }
-    public String getrid() { return rid; }
-    public String getst() { return st; }
-    public String getmsg() { return msg; }
-    public Object getobj() { return obj; }
-    public LocalDateTime getts() { return ts; }
+    public String getrequestid() { String ans = this.requestid; return ans; }
+    public String getstatus() { String ans = this.status; return ans; }
+    public String getmessage() { String ans = this.message; return ans; }
+    public Object getpayload() { Object ans = this.payload; return ans; }
+    public LocalDateTime gettimestamp() { LocalDateTime ans = this.timestamp; return ans; }
 }

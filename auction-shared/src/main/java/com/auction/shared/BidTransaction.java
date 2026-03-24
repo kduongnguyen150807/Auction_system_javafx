@@ -1,23 +1,24 @@
 package com.auction.shared;
 import java.time.LocalDateTime;
 public class BidTransaction extends Entity {
-    private int iid;
-    private int uid;
-    private double val;
-    private LocalDateTime ts;
-    public BidTransaction() {}
+    protected int itemid;
+    protected int userid;
+    protected double bidvalue;
+    protected LocalDateTime timestamp;
+    public BidTransaction() { super(); }
     public BidTransaction(int iid, int uid, double val) {
-        this.iid = iid;
-        this.uid = uid;
-        this.val = val;
-        this.ts = LocalDateTime.now();
+        super();
+        this.itemid = iid;
+        this.userid = uid;
+        this.bidvalue = val;
+        this.timestamp = LocalDateTime.now();
     }
-    public int getiid() { return iid; }
-    public void setiid(int id) { this.iid = id; }
-    public int getuid() { return uid; }
-    public void setuid(int id) { this.uid = id; }
-    public double getval() { return val; }
-    public void setval(double v) { this.val = v; }
-    public LocalDateTime getts() { return ts; }
-    public void setts(LocalDateTime t) { this.ts = t; }
+    public int getitemid() { int ans = this.itemid; return ans; }
+    public void setitemid(int id) { this.itemid = id; }
+    public int getuserid() { int ans = this.userid; return ans; }
+    public void setuserid(int id) { this.userid = id; }
+    public double getbidvalue() { double ans = this.bidvalue; return ans; }
+    public void setbidvalue(double v) { this.bidvalue = v; }
+    public LocalDateTime gettimestamp() { LocalDateTime ans = this.timestamp; return ans; }
+    public void settimestamp(LocalDateTime t) { this.timestamp = t; }
 }

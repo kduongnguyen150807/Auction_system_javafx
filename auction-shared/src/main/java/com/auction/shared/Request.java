@@ -8,30 +8,18 @@ public class Request implements Serializable {
     public static final String bid = "BID";
     public static final String add = "ADD";
     public static final String list = "LIST";
-    private String id;
-    private String act;
-    private Object obj;
-    private LocalDateTime ts;
+    protected String requestid;
+    protected String action;
+    protected Object payload;
+    protected LocalDateTime timestamp;
     public Request(String act, Object obj) {
-        this.id = UUID.randomUUID().toString();
-        this.act = act;
-        this.obj = obj;
-        this.ts = LocalDateTime.now();
+        this.requestid = UUID.randomUUID().toString();
+        this.action = act;
+        this.payload = obj;
+        this.timestamp = LocalDateTime.now();
     }
-    public String getid() {
-        String ans = this.id;
-        return ans;
-    }
-    public String getact() {
-        String ans = this.act;
-        return ans;
-    }
-    public Object getobj() {
-        Object ans = this.obj;
-        return ans;
-    }
-    public LocalDateTime getts() {
-        LocalDateTime ans = this.ts;
-        return ans;
-    }
+    public String getrequestid() { String ans = this.requestid; return ans; }
+    public String getaction() { String ans = this.action; return ans; }
+    public Object getpayload() { Object ans = this.payload; return ans; }
+    public LocalDateTime gettimestamp() { LocalDateTime ans = this.timestamp; return ans; }
 }

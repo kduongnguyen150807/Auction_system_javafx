@@ -2,12 +2,23 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/ItemStatus.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/UserRole.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/main/java/com/auction/client/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Admin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Art.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Art.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/BidTransaction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/BidTransaction.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Bidder.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Bidder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronic.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Electronic.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Entity.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Entity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Item.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Item.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Request.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Seller.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Seller.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Vehicle.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,19 +36,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "test-dnk",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Khanh/Desktop/Auction_system_javafx",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;test-dnk&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Khanh/Desktop/Auction_system_javafx&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="auction-client" />
@@ -67,7 +78,9 @@
       <option name="presentableId" value="Default" />
       <updated>1774088715307</updated>
       <workItem from="1774088716364" duration="2391000" />
-      <workItem from="1774098490062" duration="47000" />
+      <workItem from="1774098490062" duration="498000" />
+      <workItem from="1774325310845" duration="1151000" />
+      <workItem from="1774334471018" duration="205000" />
     </task>
     <servers />
   </component>
