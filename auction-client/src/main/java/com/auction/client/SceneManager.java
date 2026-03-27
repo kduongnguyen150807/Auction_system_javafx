@@ -16,8 +16,12 @@ public class SceneManager {
     }
     public static void switchscene(String fxmlfile) throws IOException {
         Parent res = FXMLLoader.load(Objects.requireNonNull(SceneManager.class.getResource(fxmlfile)));
-        Scene ans = new Scene(res, 800, 600);
-        s.setScene(ans);
+        Scene currentScene = s.getScene();
+        if (currentScene == null) {
+            s.setScene(new Scene(res));
+        } else {
+            currentScene.setRoot(res);
+        }
         s.show();
     }
 }

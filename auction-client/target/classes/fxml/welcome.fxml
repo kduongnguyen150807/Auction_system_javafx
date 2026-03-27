@@ -22,10 +22,10 @@
                   <Region prefHeight="130.0" prefWidth="402.0" />
                   <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0">
                      <children>
-                        <Button onAction="#tologin" maxHeight="70.0" maxWidth="200.0" minHeight="70.0" minWidth="200.0" mnemonicParsing="false" styleClass="button-premium" stylesheets="@../css/style.css" text="Đăng nhập">
+                        <Button onAction="#tologin" maxHeight="70.0" maxWidth="200.0" minHeight="70.0" minWidth="200.0" mnemonicParsing="false" style="-fx-font-size: 30px; -fx-font-weight: bold;" styleClass="button-premium" stylesheets="@../css/style.css" text="Đăng nhập">
                            <font><Font name="Consolas Bold" size="30.0" /></font>
                         </Button>
-                        <Button onAction="#toregister" maxHeight="70.0" maxWidth="200.0" minHeight="70.0" minWidth="200.0" mnemonicParsing="false" styleClass="button-premium" stylesheets="@../css/style.css" text="Đăng ký">
+                        <Button onAction="#toregister" maxHeight="70.0" maxWidth="200.0" minHeight="70.0" minWidth="200.0" mnemonicParsing="false" style="-fx-font-size: 30px; -fx-font-weight: bold;" styleClass="button-premium" stylesheets="@../css/style.css" text="Đăng ký">
                            <font><Font name="Consolas Bold" size="30.0" /></font>
                         </Button>
                      </children>

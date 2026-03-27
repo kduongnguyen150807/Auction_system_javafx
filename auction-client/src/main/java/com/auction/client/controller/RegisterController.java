@@ -16,7 +16,8 @@ public class RegisterController {
     @FXML private PasswordField p;
     @FXML private PasswordField cp;
     @FXML private Label ans;
-    public void handleregister(ActionEvent ev) {
+    @FXML
+    public void handleRegister(ActionEvent ev) {
         String user = this.u.getText();
         String email = this.e.getText();
         String age = this.a.getText();
@@ -40,7 +41,13 @@ public class RegisterController {
             this.ans.setText("đăng ký thất bại!");
         }
     }
+    @FXML
     public void back(ActionEvent ev) throws Exception {
         SceneManager.switchscene("/fxml/login.fxml");
+    }
+
+    @FXML
+    public void goWelcome(ActionEvent ev) throws Exception {
+        SceneManager.switchscene("/fxml/welcome.fxml");
     }
 }

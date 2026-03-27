@@ -98,5 +98,6 @@
                 </VBox>
             </children>
         </VBox>
+        <Button mnemonicParsing="false" onAction="#goWelcome" prefHeight="40.0" prefWidth="110.0" style="-fx-background-color: #337ab7; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="Back" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" />
     </children>
 </AnchorPane>
