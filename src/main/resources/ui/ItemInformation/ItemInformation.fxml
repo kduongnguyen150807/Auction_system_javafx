@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<?import javafx.geometry.Insets?>
+<ScrollPane vbarPolicy="NEVER" hbarPolicy="NEVER" fitToHeight="true" fitToWidth="true"
+        stylesheets="@ItemInformation.css" xmlns="http://javafx.com/javafx/21.0.2"
+        xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.ItemInformation.ItemInformationController">
+    <content>
+        <HBox alignment="TOP_CENTER" prefHeight="770.0" prefWidth="960.0" spacing="10">
+            <!--leftside-->
+            <VBox prefHeight="770" prefWidth="629" spacing="5">
+                <children>
+                    <StackPane alignment="CENTER_LEFT">
+                        <children>
+                            <!--image holder-->
+                            <ImageView fitHeight="393" fitWidth="629" preserveRatio="true"
+                                       smooth="true">
+                                <image><Image url="@../../images/Hutao.png"/></image>
+                            </ImageView>
+                            <!--Name box-->
+                            <VBox alignment="BOTTOM_LEFT" styleClass="GradientBackGround">
+                                <children>
+                                    <Label styleClass="LabelText" text="Name" alignment="BOTTOM_LEFT">
+                                        <font><Font name="Plus Jakarta Sans"/></font>
+                                    </Label>
+                                </children>
+                                <padding><Insets left="20" bottom="20"/></padding>
+                            </VBox>
+                        </children>
+                    </StackPane>
+                    <!-- description box-->
+                    <VBox styleClass="DescriptionBox" prefWidth="629" maxWidth="629" spacing="8" minHeight="200">
+                        <children>
+                            <Label text="COLLECTOR'S DESCRIPTION" styleClass="DescriptionText, DesTitle"/>
+                            <Label text="DESCRIPTION" styleClass="DescriptionText, NotDesTitle"/>
+                        </children>
+                        <padding><Insets left="20" top="20"/> </padding>
+                    </VBox>
+                </children>
+            </VBox>
+            <!--rightside-->
+            <HBox prefHeight="770" prefWidth="298" styleClass="BIDDINGBOX">
+                <children>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <VBox spacing="2">
+                        <children>
+                            <Label text="CURRENT HIGHEST BID" styleClass="LabelLabelText" />
+                            <Label text="142,500$" styleClass="LabelText"/>
+                            <Button text="Place Bid Now" styleClass="btn-primary" maxWidth="Infinity" prefHeight="67" onAction="#ShowBiddingForm"/>
+                            <Region prefHeight="50"/>
+                            <Label text="ENDS IN" styleClass="LabelLabelText" />
+                            <Label text="04:12:38" styleClass="GoldenText"/>
+                        </children>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </children>
+                <padding><Insets top="20"/></padding>
+            </HBox>
+        </HBox>
+    </content>
+</ScrollPane>

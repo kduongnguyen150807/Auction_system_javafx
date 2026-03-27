@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.text.Text?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx" stylesheets="@BiddingForm.css"   alignment="CENTER"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.BiddingForm.BiddingFormController" fx:id="RootPane">
+    <children>
+        <VBox styleClass="BackGround" maxWidth="653" maxHeight="400" prefHeight="400" prefWidth="653" spacing="20">
+            <children>
+                <HBox spacing="20">
+                    <children>
+                        <VBox spacing="10">
+                            <children>
+                                <!-- Id -->
+                                <Label text="ITEM NUMBER" styleClass="AboveLabel"/>
+                                <Label fx:id="ItemId" text="#ID" styleClass="GoldenText" minWidth="200"/>
+                            </children>
+                        </VBox>
+                        <VBox spacing="10">
+                            <children>
+                                <!-- Name -->
+                                <Label text="ITEM NAME" styleClass="AboveLabel" />
+                                <Label fx:id="ItemName" text="Item Name" styleClass="GoldenText" prefWidth="400"/>
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+                <VBox spacing="10">
+                    <children>
+                        <!-- Amount Enter -->
+                        <Label text="ENTER YOUR AMOUNT" styleClass="AboveLabel" />
+                        <TextField fx:id="BidAmount" promptText='0.00$' styleClass="GoldenText, ProGoldenText" prefWidth="400" prefHeight="100"/>
+                    </children>
+                </VBox>
+                <HBox spacing="20">
+                    <children>
+                        <Hyperlink fx:id="CancelBidding" text="Cancel" styleClass="AboveLabel, HyperSubText" onAction="#RemoveForm"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="ConfirmBidding" text="Confirm" styleClass="btn-primary" prefHeight="50" prefWidth="150" onAction="#RemoveForm"/>
+                    </children>
+                </HBox>
+            </children>
+            <padding><Insets left="20" right="20" top="20"/></padding>
+        </VBox>
+    </children>
+</VBox>

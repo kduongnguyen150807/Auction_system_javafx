@@ -1,0 +1,26 @@
+/* Container của thanh tìm kiếm */
+.search-bar-container {
+    -fx-background-color: -color-bg;
+    -fx-border-color: #0E0E0E;
+    -fx-border-width: 0 0 2 0;
+}
+
+/* Tùy chỉnh ô nhập liệu */
+.search-input {
+    -fx-background-color: #0E0E0E;
+    -fx-background-radius: 8;
+    -fx-text-fill: -color-text-muted;
+    -fx-prompt-text-fill: #505A81;
+    -fx-font-family: "Plus Jakarta Sans";
+    -fx-font-size: 16px;
+    -fx-padding: 0 15 0 15;
+    -fx-border-color: transparent;
+    -fx-transition: all 0.2s;
+}
+
+/* Hiệu ứng khi người dùng click vào ô search (Focus) */
+.search-input:focused {
+    -fx-border-color: -color-primary;
+    -fx-border-radius: 8;
+    -fx-text-fill: white;
+}
