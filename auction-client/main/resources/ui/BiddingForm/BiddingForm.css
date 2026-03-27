@@ -1,0 +1,48 @@
+.BackGround{
+    -fx-background-color: -bidding-form;
+}
+
+.AboveLabel{
+    -fx-font-family: "Plus Jakarta Sans";
+    -fx-text-fill: -subText;
+    -fx-font-size: 16;
+    -fx-font-weight: 600;
+}
+
+.GoldenText{
+    -fx-font-family: "Plus Jakarta Sans";
+    -fx-text-fill: -goldenText;
+    -fx-background-color: -color-card;
+    -fx-font-size: 30;
+    -fx-label-padding: 10 10 10 10;
+    -fx-background-radius: 10;
+    -fx-font-weight: 700;
+}
+
+.ProGoldenText{
+    -fx-font-size: 40;
+}
+
+/* Button */
+.btn-primary {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 20;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+
+    -fx-font-size: 20;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #e07e00;
+}
+.HyperSubText, .HyperSubText:focused {
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+.HyperSubText:visited{
+    -fx-text-fill: white;
+}

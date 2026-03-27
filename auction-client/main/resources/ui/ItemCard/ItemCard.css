@@ -1,0 +1,23 @@
+.KhungItem{
+    -fx-background-color: -color-sidebar;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.KhungItem:hover{
+    -fx-background-color: -color-bg-hover;
+}
+
+.MainText{
+    -fx-text-fill: -mainText;
+    -fx-font-weight: 800;
+    -fx-font-size: 20px;
+}
+
+.SubText{
+    -fx-text-fill: -subText;
+    -fx-font-weight: 400;
+    -fx-font-size: 12px;
+}
+
+
