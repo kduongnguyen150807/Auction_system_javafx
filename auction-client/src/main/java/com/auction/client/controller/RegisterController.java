@@ -2,20 +2,28 @@ package com.auction.client.controller;
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
 import java.util.HashMap;
 import java.util.Map;
 public class RegisterController {
+    @FXML private AnchorPane rootPane;
     @FXML private TextField u;
     @FXML private TextField e;
     @FXML private TextField a;
     @FXML private PasswordField p;
     @FXML private PasswordField cp;
     @FXML private Label ans;
+
+    @FXML
+    private void initialize() {
+        Platform.runLater(() -> rootPane.requestFocus());
+    }
     @FXML
     public void handleRegister(ActionEvent ev) {
         String user = this.u.getText();
