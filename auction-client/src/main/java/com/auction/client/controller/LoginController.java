@@ -1,5 +1,6 @@
 package com.auction.client.controller;
 
+import com.auction.client.ClientSession;
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
@@ -41,7 +42,15 @@ public class LoginController {
         Response res = NetworkClient.getinstance().receiveresponse();
 
         if (res != null && res.getstatus().equals(Response.ok)) {
+            if (res.getpayload() instanceof User loggedInUser) {
+                ClientSession.setCurrentUser(loggedInUser);
+            }
             this.ans.setText("đăng nhập thành công!");
+            try {
+                SceneManager.switchscene("/fxml/main/Khung.fxml");
+            } catch (Exception ex) {
+                this.ans.setText("đăng nhập ok nhưng không mở được trang chủ");
+            }
         } else {
             this.ans.setText("sai tài khoản hoặc mật khẩu!");
         }

@@ -5,15 +5,109 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2dea2546-7e85-42d9-8b87-f0340db78b1f" name="Changes" comment="login-signup-welcome controller">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/auction/client/SceneManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/auction/client/SceneManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/auction/client/controller/LoginController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/auction/client/controller/LoginController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/auction/client/controller/RegisterController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/auction/client/controller/RegisterController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/fxml/login.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/fxml/login.fxml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/fxml/register.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/fxml/register.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/auction-client-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/SceneManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/SceneManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/AuthController.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/AuthController.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/LoginController.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/LoginController.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/RegisterController.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/RegisterController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/target/classes/fxml/login.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/fxml/login.fxml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/target/classes/fxml/register.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/fxml/register.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/WelcomeController.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/controller/WelcomeController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/network/NetworkClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/classes/com/auction/client/network/NetworkClient.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/controller/ClientHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/DatabaseConnection.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/dao/UserDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/auction/server/service/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/auction-server-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/controller/ClientHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/controller/ClientHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/controller/SocketServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/controller/SocketServer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/BidDao.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/BidDao.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/DatabaseConnection.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/DatabaseConnection.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/ItemDao.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/ItemDao.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/UserDao.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/dao/UserDao.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/AuctionCloser.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/AuctionCloser.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/AuctionManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/AuctionManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/BidService.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/BidService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/UserService.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/classes/com/auction/server/service/UserService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/target/original-auction-server-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/src/main/java/com/auction/shared/Request.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/auction-shared-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Admin.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Admin.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Art.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Art.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/BidTransaction.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/BidTransaction.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Bidder.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Bidder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Electronics.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Electronics.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Entity.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Entity.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Item.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Item.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/ItemStatus.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/ItemStatus.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Request.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Request.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Response.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Response.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Seller.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Seller.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/User.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/User.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/UserRole.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/UserRole.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Vehicle.class" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/classes/com/auction/shared/Vehicle.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-shared/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/auction-shared/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/client/Main.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/client/SceneManager.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/client/controller/AuthController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/client/controller/LoginController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/client/controller/RegisterController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/client/controller/WelcomeController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/client/network/NetworkClient.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/Main.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/controller/ClientHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/controller/SocketServer.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/dao/BidDao.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/dao/DatabaseConnection.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/dao/ItemDao.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/dao/UserDao.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/service/AuctionCloser.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/service/AuctionManager.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/service/BidService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/server/service/UserService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Admin.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Art.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/BidTransaction.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Bidder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Electronics.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Entity.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Item.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/ItemStatus.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Request.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Response.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Seller.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/User.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/UserRole.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/auction/shared/Vehicle.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/css/style.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/fxml/login.fxml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/fxml/register.fxml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/fxml/welcome.fxml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/images/age_icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/images/email_icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/images/hutao_money.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/images/key_icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/images/user_icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/module-info.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,7 +124,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="test-dnk" />
+        <entry key="$PROJECT_DIR$" value="test-nbn-2" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -55,33 +149,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Main.executor": "Run",
-    "Downloaded.Files.Path.Enabled": "false",
-    "Maven.Auction_system_javafx [clean].executor": "Run",
-    "Maven.Auction_system_javafx [org.apache.maven.plugins:maven-clean-plugin:3.2.0:clean].executor": "Run",
-    "Maven.Auction_system_javafx [org.openjfx:javafx-maven-plugin:0.0.8:run].executor": "Run",
-    "Maven.auction-client [org.openjfx:javafx-maven-plugin:0.0.8:run].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Repository.Attach.Annotations": "false",
-    "Repository.Attach.JavaDocs": "false",
-    "Repository.Attach.Sources": "false",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "test-nbn-2",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Khanh/Desktop/Auction_system_javafx",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "SDKs",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Downloaded.Files.Path.Enabled&quot;: &quot;false&quot;,
+    &quot;Maven.Auction_system_javafx [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Auction_system_javafx [org.apache.maven.plugins:maven-clean-plugin:3.2.0:clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Auction_system_javafx [org.openjfx:javafx-maven-plugin:0.0.8:run].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.auction-client [org.openjfx:javafx-maven-plugin:0.0.8:run].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Repository.Attach.Annotations&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.JavaDocs&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.Sources&quot;: &quot;false&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;testnbn-ketnoi2phan&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Khanh/Desktop/Auction_system_javafx&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Admin\IdeaProjects\Auction_system_javafx\auction-client\src" />

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.TrangChu.TrangChuController"
+      fx:id="MainBackGround" stylesheets="@/css/trangchu/TrangChu.css">
+    <children>
+        <HBox>
+            <children>
+                <Label text="Trending Lots" styleClass="TopLabel">
+                    <font><Font size="24"/></font>
+                </Label>
+            </children>
+        </HBox>
+        <ScrollPane styleClass="TrendingScrollPane" hbarPolicy="NEVER" vbarPolicy="NEVER">
+            <content>
+                <HBox fx:id="TrendingBind" styleClass="TrendingBind" spacing="20"/>
+            </content>
+        </ScrollPane>
+    </children>
+    <padding><Insets left="20"/></padding>
+</VBox>
