@@ -58,7 +58,7 @@
                <graphic>
                   <ImageView fitHeight="30.0" fitWidth="54.0" pickOnBounds="true" preserveRatio="true" style="-fx-shape: circle(50);">
                      <image>
-                        <Image url="@tải%20xuống.jpg" />
+                        <Image url="@tảixuống.jpg" />
                      </image>
                   </ImageView>
                </graphic>
