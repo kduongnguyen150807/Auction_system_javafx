@@ -1,0 +1,96 @@
+
+.add-product-input {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #888888;
+    -fx-background-radius: 30px;
+    -fx-border-color: #D46210;
+    -fx-border-radius: 30px;
+    -fx-border-width: 2px;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.add-product-input:hover {
+    -fx-background-color: #333333;
+    -fx-cursor: hand;
+}
+.add-product-input:focused {
+    -fx-border-color: #ff8547;
+}
+
+.add-product-combo-box {
+    -fx-background-color: #2A2A2A;
+    -fx-background-radius: 30px;
+    -fx-border-color: #D46210;
+    -fx-border-radius: 30px;
+    -fx-border-width: 2px;
+}
+.add-product-combo-box .list-cell {
+    -fx-alignment: center;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+.add-product-combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+.add-product-combo-box .arrow {
+    -fx-background-color: #888888;
+}
+
+.picture-btn {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: white;
+    -fx-background-radius: 30px;
+    -fx-border-color: #D46210;
+    -fx-border-radius: 30px;
+    -fx-border-width: 2px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+.picture-btn:hover {
+    -fx-background-color: #333333;
+}
+.picture-btn:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+.add-product-combo-box {
+    -fx-background-color: #2A2A2A !important;
+    -fx-border-color: #D46210 !important;
+    -fx-border-width: 2px !important;
+    -fx-background-radius: 30px !important;
+    -fx-border-radius: 30px !important;
+}
+.add-product-combo-box > .list-cell {
+    -fx-background-color: transparent !important;
+    -fx-text-fill: #888888 !important;
+    -fx-font-weight: bold;
+    -fx-padding: 5px 15px;
+}
+
+.add-product-combo-box > .arrow-button {
+    -fx-background-color: transparent !important;
+    -fx-padding: 0 15px 0 0;
+}
+
+
+.add-product-combo-box .list-view {
+    -fx-background-color: white !important;
+}
+
+.add-product-combo-box .list-view .list-cell {
+    -fx-background-color: white !important;
+    -fx-text-fill: black !important;
+    -fx-padding: 8px 15px;
+}
+
+.add-product-combo-box .list-view .list-cell:filled:hover,
+.add-product-combo-box .list-view .list-cell:filled:selected {
+    -fx-background-color: #D46210 !important;
+    -fx-text-fill: white !important;
+}

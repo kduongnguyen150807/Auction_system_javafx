@@ -1,0 +1,143 @@
+.root {
+    -fx-background-color: #121212; 
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.search-field {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #888888;
+    -fx-background-radius: 20px;
+    -fx-border-color: #D46210;
+    -fx-border-radius: 20px;
+    -fx-padding: 0 15px 0 15px;
+}
+
+.search-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.nav-bar {
+    -fx-background-color: #D46210; 
+    -fx-padding: 10px 20px;
+}
+
+.nav-link {
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.nav-link:hover {
+    -fx-text-fill: #121212;
+}
+.nav-dropdown {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.nav-dropdown > .label {
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.nav-dropdown > .arrow-button > .arrow {
+    -fx-background-color: white; 
+}
+
+.nav-dropdown:hover > .label {
+    -fx-text-fill: #121212;
+}
+.nav-dropdown:hover > .arrow-button > .arrow {
+    -fx-background-color: #121212;
+}
+.nav-dropdown .context-menu {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #D46210;
+    -fx-border-width: 2px;
+}
+
+.nav-dropdown .menu-item > .label {
+    -fx-text-fill: white;
+}
+
+.nav-dropdown .menu-item:focused {
+    -fx-background-color: #D46210;
+}
+
+.hero-content-box {
+    -fx-padding: 50px;
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+}
+
+.timer-number {
+    -fx-text-fill: #D46210;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+}
+
+.timer-unit {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
+.view-details-button {
+
+    -fx-background-color: #D46210;
+
+    -fx-text-fill: white;
+
+
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 15px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+
+.view-details-button:hover {
+    -fx-background-color: #E67A2A;
+}
+
+.view-details-button:pressed {
+
+    -fx-text-fill: black;
+
+    -fx-background-color: #D46210;
+}
+
+.profile-icon {
+    -fx-cursor: hand;
+}
+
+.profile-icon:hover {
+    -fx-opacity: 0.7;
+}
+
+.add-product-button {
+    -fx-background-color: transparent;
+
+    -fx-text-fill: #D46210;
+
+
+    -fx-border-color: #D46210;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+
+
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+}
+
+.add-product-button:hover {
+    -fx-background-color: rgba(212, 98, 16, 0.1);
+    -fx-text-fill: white;
+}
