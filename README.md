@@ -67,3 +67,5 @@ Kỹ Thuật Nâng Cao
 ## ⚙️ Hướng Dẫn Cài Đặt & Chạy (Setup Instructions)
 
 *(Phần này điền lệnh chạy maven/gradle để build project sau khi nhóm đã chốt xong công cụ)*
+
+Để chạy trước thì cần khởi chạy server thông qua Main trong auction-server và để hiện thị giao diện thì chạy App.java trong (auction-shared) (dùng Main bị lỗi JAVAFX)
