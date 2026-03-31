@@ -1,3 +1,42 @@
+.scroll-pane{
+    -fx-background-color: -color-bg;
+}
+
+.scroll-pane .viewport{
+    -fx-background-color: -color-bg;
+}
+
 .Bigtext{
     -fx-text-fill: -color-text-main;
+    -fx-font-size: 50;
+    -fx-font-weight: 800;
 }
+
+.Smalltext{
+    -fx-text-fill: -subText;
+    -fx-font-size: 18;
+    -fx-font-weight: 600;
+}
+
+/* Stat Cards */
+.stat-title{
+    -fx-font-size: 20;
+    -fx-text-fill: #ABABAB;
+    -fx-font-weight: bold;
+}
+
+.stat-card {
+    -fx-background-color: #1A1A1A;
+    -fx-padding: 25;
+    -fx-background-radius: 12;
+    -fx-border-color: #333333;
+    -fx-border-radius: 12;
+}
+
+.stat-value {
+    -fx-font-size: 40px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F99417;
+    -fx-padding: 10 0;
+}
+

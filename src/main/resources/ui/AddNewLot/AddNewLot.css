@@ -8,6 +8,13 @@
     -fx-font-size: 40;
 }
 
+.form-sub-title{
+    -fx-text-fill: #b06716;
+    -fx-font-weight: 600;
+    -fx-font-size: 30;
+}
+
+
 .box-info{
     -fx-background-color: #121212;
     -fx-text-fill: white;

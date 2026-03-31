@@ -6,12 +6,42 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx" stylesheets="@YourItem.css"
+<?import javafx.geometry.Insets?>
+<ScrollPane xmlns="http://javafx.com/javafx" stylesheets="@YourItem.css" vbarPolicy="NEVER"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.auction.client.ui.YourItem.YourItemController">
-    <children>
-        <!-- big label -->
-        <Label text="Inventory" styleClass="Bigtext"/>
-    </children>
+    <content>
+        <VBox prefWidth="900" minWidth="900" spacing="20">
+            <children>
+                <VBox>
+                    <children>
+                        <!-- big label -->
+                        <Label text="Inventory" styleClass="Bigtext"/>
+                        <!-- small label-->
+                        <Label text="Manage your item at ease" styleClass="Smalltext"/>
+                    </children>
+                </VBox>
+                <!-- stat card -->
+                <HBox spacing="20.0">
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="stat-title" text="ACTIVE ITEMS" />
+                        <Label styleClass="stat-value" text="2" />
+                    </VBox>
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="stat-title" text="INVENTORY VALUE" />
+                        <Label styleClass="stat-value" text="20000$"/>
+                    </VBox>
+                </HBox>
 
-</VBox>
+
+                <Label text="All Items" styleClass="Smalltext"/>
+                <FlowPane fx:id="ItemContainer" hgap="80" vgap="20">
+                    <children>
+
+                    </children>
+                </FlowPane>
+            </children>
+            <padding><Insets left="20"/> </padding>
+        </VBox>
+    </content>
+</ScrollPane>

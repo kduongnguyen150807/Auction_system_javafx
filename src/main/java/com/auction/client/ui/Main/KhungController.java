@@ -49,7 +49,7 @@ KhungController {
 
             // load TrangChu
             NodeContentLoader<ScrollPane> TrangChuLoader = new NodeContentLoader<>();
-            TrangChuLoader.load("/ui/Profile/Profile.fxml");
+            TrangChuLoader.load("/ui/YourItem/YourItem.fxml");
 
             //Add node
             NodeManager.addNodeToPane(TrangChuLoader.getCurrentNode(), ContentArea);
@@ -79,6 +79,20 @@ KhungController {
     public void OpenProfile() throws IOException{
         NodeContentLoader<ScrollPane> ProfileLoader = new NodeContentLoader<>();
         ProfileLoader.load("/ui/Profile/Profile.fxml");
+
+        Node[] NodeListInContentArea = ContentArea.getChildren().toArray(new Node[0]);
+        for(Node n: NodeListInContentArea){
+            ContentArea.getChildren().remove(n);
+        }
+
+        currentNode = ProfileLoader.getCurrentNode();
+        NodeManager.addNodeToPane(ProfileLoader.getCurrentNode(), ContentArea);
+    }
+
+    @FXML
+    public void OpenInventory() throws IOException{
+        NodeContentLoader<ScrollPane> ProfileLoader = new NodeContentLoader<>();
+        ProfileLoader.load("/ui/YourItem/YourItem.fxml");
 
         Node[] NodeListInContentArea = ContentArea.getChildren().toArray(new Node[0]);
         for(Node n: NodeListInContentArea){
