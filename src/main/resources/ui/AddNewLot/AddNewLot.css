@@ -1,0 +1,41 @@
+.BackGroundNewLot{
+    -fx-background-color: #191919;
+}
+
+.form-title{
+    -fx-text-fill: #fd9420;
+    -fx-font-weight: 800;
+    -fx-font-size: 40;
+}
+
+.box-info{
+    -fx-background-color: #121212;
+    -fx-text-fill: white;
+    -fx-border-color: #333333;
+    -fx-border-radius: 5;
+    -fx-padding: 12;
+    -fx-pref-width: 400;
+    -fx-pref-height: 60;
+}
+
+.btn-logout{
+    -fx-text-fill: red;
+    -fx-background-radius: 20;
+    -fx-background-color: black;
+    -fx-font-weight: 800;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+.btn-primary {
+    -fx-background-color: #FE8F00;
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 20;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #e07e00;
+}

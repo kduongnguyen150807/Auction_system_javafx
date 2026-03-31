@@ -5,12 +5,10 @@ import com.auction.client.app.NodeManager;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
 import java.io.IOException;
+import java.util.Stack;
 
 public class
 KhungController {
@@ -19,10 +17,25 @@ KhungController {
     private static Node currentNode;
 
     @FXML
+    private StackPane MainKhung;
+
+    @FXML
     private HBox SearchContainer;
 
     @FXML
     private StackPane ContentArea;
+
+    @FXML
+    public void CreateNewLot(){
+        try{
+            NodeContentLoader<AnchorPane> NewLotForm = new NodeContentLoader<>();
+            NewLotForm.load("/ui/AddNewLot/AddNewLot.fxml");
+
+            NodeManager.addNodeToPane(NewLotForm.getCurrentNode(), MainKhung);
+        } catch (Exception e) {
+            System.out.println("khong tim that new lot form");
+        }
+    }
 
     @FXML
     public void initialize(){

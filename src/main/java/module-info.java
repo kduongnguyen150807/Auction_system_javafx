@@ -10,4 +10,6 @@ module com.example.demo {
     opens com.auction.client.ui.ItemInformation to javafx.fxml;
     opens com.auction.client.ui.BiddingForm;
     opens com.auction.client.ui.Profile;
+    opens com.auction.client.ui.YourItem;
+    opens com.auction.client.ui.AddNewLot;
 }
