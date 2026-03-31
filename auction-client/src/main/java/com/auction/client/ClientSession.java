@@ -66,6 +66,14 @@ public final class ClientSession {
     }
   }
 
+  public static void updateavatar(String ans) {
+    if (currentUser != null) {
+      currentUser.setavatarurl(ans);
+      com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.updateavatar, currentUser.getusername() + " " + ans);
+      com.auction.client.network.NetworkClient.getinstance().sendrequest(req);
+    }
+  }
+
   public static void toggleRole() {
     activeRole = activeRole == UserRole.SELLER ? UserRole.BIDDER : UserRole.SELLER;
   }

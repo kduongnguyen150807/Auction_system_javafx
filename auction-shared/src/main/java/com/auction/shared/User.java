@@ -9,6 +9,7 @@ public abstract class User extends Entity {
   protected double balance;
   protected boolean isactive;
   protected boolean islocked;
+  protected String avatarurl;
 
   public User() {}
 
@@ -95,5 +96,13 @@ public abstract class User extends Entity {
 
   public void setlocked(boolean l) {
     this.islocked = l;
+  }
+
+  public String getavatarurl() {
+    return avatarurl;
+  }
+
+  public void setavatarurl(String ans) {
+    this.avatarurl = ans;
   }
 }

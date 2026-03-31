@@ -11,6 +11,7 @@ public class Request implements Serializable {
   public static final String add = "ADD";
   public static final String list = "LIST";
   public static final String updateprofile = "UPDATE_PROFILE";
+  public static final String updateavatar = "UPDATE_AVATAR";
   protected String requestid;
   protected String action;
   protected Object payload;

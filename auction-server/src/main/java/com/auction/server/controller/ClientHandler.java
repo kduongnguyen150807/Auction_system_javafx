@@ -87,6 +87,16 @@ public class ClientHandler implements Runnable {
           data.get("phone"));
       if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
       else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+    } else if (act.equals(Request.updateavatar)) {
+      String[] res = ((String) req.getpayload()).split(" ");
+      String username = res[0];
+      String url = res[1];
+      try {
+        this.userservice.updateavatar(username, url);
+        ans = new Response(req.getrequestid(), Response.ok, "success", null);
+      } catch (Exception e) {
+        ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      }
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
     }

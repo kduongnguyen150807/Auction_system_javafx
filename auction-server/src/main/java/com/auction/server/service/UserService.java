@@ -23,4 +23,8 @@ public class UserService {
     boolean ans = this.userdao.updateuserprofile(userid, fullname, email, phone);
     return ans;
   }
+
+  public void updateavatar(String username, String ans) throws Exception {
+    this.userdao.updateavatar(username, ans);
+  }
 }

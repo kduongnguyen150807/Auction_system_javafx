@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
 public class ProfileController {
+  @FXML private javafx.scene.image.ImageView avatarimageview;
   @FXML private Label usernameLabel;
   @FXML private Label fullNameLabel;
   @FXML private Label emailLabel;
@@ -105,5 +106,32 @@ public class ProfileController {
   private String toTitle(String role) {
     String lower = role.toLowerCase();
     return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+  }
+
+  public void handlechangeavatar(javafx.event.ActionEvent event) throws Exception {
+    javafx.stage.FileChooser filechooser = new javafx.stage.FileChooser();
+    java.io.File file = filechooser.showOpenDialog(null);
+    if (file != null) {
+      java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+      String boundary = "boundary123";
+      String head = "--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n";
+      String tail = "\r\n--" + boundary + "\r\nContent-Disposition: form-data; name=\"upload_preset\"\r\n\r\nupload_def\r\n--" + boundary + "--\r\n";
+      byte[] headbytes = head.getBytes();
+      byte[] filebytes = java.nio.file.Files.readAllBytes(file.toPath());
+      byte[] tailbytes = tail.getBytes();
+      byte[] body = new byte[headbytes.length + filebytes.length + tailbytes.length];
+      System.arraycopy(headbytes, 0, body, 0, headbytes.length);
+      System.arraycopy(filebytes, 0, body, headbytes.length, filebytes.length);
+      System.arraycopy(tailbytes, 0, body, headbytes.length + filebytes.length, tailbytes.length);
+      java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+          .uri(java.net.URI.create("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload"))
+          .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+          .POST(java.net.http.HttpRequest.BodyPublishers.ofByteArray(body))
+          .build();
+      java.net.http.HttpResponse<String> res = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
+      String ans = res.body().split("\"secure_url\":\"")[1].split("\"")[0];
+      avatarimageview.setImage(new javafx.scene.image.Image(ans));
+      ClientSession.updateavatar(ans);
+    }
   }
 }

@@ -127,4 +127,12 @@ public class UserDao {
     }
     return ans;
   }
+
+  public void updateavatar(String username, String ans) throws Exception {
+    String query = "UPDATE users SET avatar_url = ? WHERE username = ?";
+    java.sql.PreparedStatement stmt = this.conn.prepareStatement(query);
+    stmt.setString(1, ans);
+    stmt.setString(2, username);
+    int res = stmt.executeUpdate();
+  }
 }

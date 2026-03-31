@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
+<?import javafx.scene.image.ImageView?>
 
 <ScrollPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
             fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
@@ -22,11 +23,17 @@
             <children>
                 <HBox spacing="14" alignment="CENTER_LEFT" styleClass="profile-header">
                     <children>
-                        <StackPane prefWidth="88" minWidth="88" maxWidth="88" prefHeight="88" alignment="CENTER">
+                        <VBox alignment="CENTER" spacing="5">
                             <children>
-                                <Circle radius="34" styleClass="profile-avatar"/>
+                                <StackPane prefWidth="88" minWidth="88" maxWidth="88" prefHeight="88" alignment="CENTER">
+                                    <children>
+                                        <Circle radius="34" styleClass="profile-avatar"/>
+                                        <ImageView fx:id="avatarimageview" fitWidth="68" fitHeight="68" />
+                                    </children>
+                                </StackPane>
+                                <Button text="Change Avatar" onAction="#handlechangeavatar" styleClass="profile-btn"/>
                             </children>
-                        </StackPane>
+                        </VBox>
                         <VBox spacing="4">
                             <children>
                                 <Label fx:id="usernameLabel" text="username" styleClass="profile-title"/>
