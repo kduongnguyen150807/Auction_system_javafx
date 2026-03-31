@@ -44,9 +44,11 @@ Kỹ Thuật Nâng Cao
 
 - **Giao tiếp mạng:** Socket / REST API
 
-- **Build Tool:** Maven / Gradle
+- **Build Tool:** Maven
 
 - **Testing & CI/CD:** JUnit, GitHub Actions
+
+- ```API``` : Dùng Imgur để có thể upload 
 
 ## 📝 Quy Định Làm Việc Nhóm (Dành cho thành viên)
 
