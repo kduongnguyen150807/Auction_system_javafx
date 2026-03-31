@@ -1,0 +1,182 @@
+.sidebar {
+    -fx-background-color: -color-sidebar;
+    -fx-border-color: transparent -color-border transparent transparent;
+    -fx-border-width: 1;
+}
+
+.logo-text {
+    -fx-text-fill: -color-primary;
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+}
+
+.logo-subtext {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-size: 11px;
+}
+
+.menu-item {
+    -fx-padding: 12 15;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+    -fx-spacing: 10;
+    -fx-min-height: 44;
+    -fx-border-color: transparent;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+/* Align Auction row with other menu labels/icons */
+.menu-item-auction {
+    -fx-padding: 12 15 12 26;
+}
+
+.menu-item * {
+    -fx-cursor: hand;
+}
+
+.menu-item:hover {
+    -fx-background-color: #1f2a3f;
+    -fx-border-color: #42557c;
+}
+
+.menu-text {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-alignment: center-left;
+}
+
+.icon {
+    -fx-fill: -color-text-muted;
+}
+
+.menu-icon-slot {
+    -fx-alignment: center;
+}
+
+.menu-item.active {
+    -fx-background-color: -color-primary;
+}
+
+.menu-item.active:hover {
+    -fx-background-color: #ffcc73;
+    -fx-border-color: #ffe4ad;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.menu-item.active:hover .menu-text {
+    -fx-text-fill: black;
+}
+
+.menu-item.active:hover .icon {
+    -fx-fill: black;
+}
+
+.menu-item:pressed {
+    -fx-opacity: 0.85;
+}
+
+.menu-item.active:pressed {
+    -fx-background-color: #f08d00;
+    -fx-border-color: transparent;
+}
+
+.menu-item.active .icon {
+    -fx-fill: black;
+}
+
+.menu-item.active .menu-text {
+    -fx-text-fill: black;
+}
+
+/* Auction specific: align and force same hover style as History/Profile */
+.menu-item-auction .menu-icon-slot,
+.menu-item-auction .menu-text {
+    -fx-translate-x: 8;
+}
+
+.menu-item-auction:hover,
+.menu-item.menu-item-auction.active:hover {
+    -fx-background-color: #1f2a3f;
+    -fx-border-color: #42557c;
+    -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.menu-item.menu-item-auction.active:hover .menu-text,
+.menu-item.menu-item-auction:hover .menu-text {
+    -fx-text-fill: -color-text-muted;
+}
+
+.menu-item.menu-item-auction.active:hover .icon,
+.menu-item.menu-item-auction:hover .icon {
+    -fx-fill: -color-text-muted;
+}
+
+/* Force Auction behavior by fx:id to avoid class parsing ambiguity */
+#AuctionMenu {
+    -fx-padding: 12 15 12 18;
+    -fx-cursor: hand;
+}
+
+#AuctionMenu .menu-icon-slot,
+#AuctionMenu .menu-text {
+    -fx-translate-x: 2;
+    -fx-cursor: hand;
+}
+
+#AuctionMenu:hover {
+    -fx-background-color: #1f2a3f;
+    -fx-border-color: #42557c;
+    -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+#AuctionMenu:hover .menu-text {
+    -fx-text-fill: -color-text-muted;
+}
+
+#AuctionMenu:hover .icon {
+    -fx-fill: -color-text-muted;
+}
+
+.profile-card {
+    -fx-background-color: -color-card;
+    -fx-padding: 15;
+    -fx-background-radius: 12;
+}
+
+.avatar-circle {
+    -fx-stroke: -color-primary;
+    -fx-stroke-width: 2;
+}
+
+.user-name {
+    -fx-text-fill: -color-primary;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.user-rank {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-size: 11px;
+}
+
+.btn-primary {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 20;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+.content-area {
+    -fx-background-color: -color-bg;
+}

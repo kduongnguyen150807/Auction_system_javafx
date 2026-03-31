@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
+            maxWidth="Infinity" maxHeight="Infinity"
+            fx:controller="com.auction.client.ui.History.HistoryController"
+            stylesheets="@/css/history/History.css">
+    <content>
+        <VBox spacing="18" styleClass="history-root">
+            <children>
+                <Label text="Auction History" styleClass="history-title"/>
+                <VBox spacing="12">
+                    <children>
+                        <Label text="ONGOING BIDS" styleClass="section-label"/>
+                        <Separator/>
+                        <HBox spacing="14">
+                            <children>
+                                <VBox styleClass="history-card"><children><Label text="Item N/A" styleClass="card-text"/></children></VBox>
+                                <VBox styleClass="history-card"><children><Label text="Item N/A" styleClass="card-text"/></children></VBox>
+                                <VBox styleClass="history-card"><children><Label text="Item N/A" styleClass="card-text"/></children></VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox spacing="12">
+                    <children>
+                        <Label text="UPCOMING BIDS" styleClass="section-label"/>
+                        <Separator/>
+                        <HBox spacing="14">
+                            <children>
+                                <VBox styleClass="history-card"><children><Label text="Item N/A" styleClass="card-text"/></children></VBox>
+                                <VBox styleClass="history-card"><children><Label text="Item N/A" styleClass="card-text"/></children></VBox>
+                                <VBox styleClass="history-card"><children><Label text="Item N/A" styleClass="card-text"/></children></VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </children>
+            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+        </VBox>
+    </content>
+</ScrollPane>

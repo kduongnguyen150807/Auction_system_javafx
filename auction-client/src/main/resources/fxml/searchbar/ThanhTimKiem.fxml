@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.SearchBar.ThanhTimKiemController"
+      prefHeight="64.0" prefWidth="1024.0"
+      styleClass="search-bar-container"
+      alignment="CENTER_LEFT" stylesheets="@/css/searchbar/ThanhTimKiem.css">
+    <children>
+        <TextField fx:id="searchField"
+                   promptText="Search"
+                   styleClass="search-input"
+                   HBox.hgrow="ALWAYS"
+                   maxWidth="800"
+                   prefHeight="40" />
+    </children>
+    <padding><Insets left="32" right="32"/></padding>
+</HBox>

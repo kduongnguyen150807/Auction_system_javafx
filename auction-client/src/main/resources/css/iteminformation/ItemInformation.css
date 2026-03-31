@@ -1,0 +1,68 @@
+.GradientBackGround{
+    -fx-background-color: linear-gradient(to top,
+        rgba(0, 0, 0, 1.0) 0%,
+        rgba(0, 0, 0, 0.4) 50%,
+        rgba(0, 0, 0, 0.0) 100%
+    );
+}
+
+.LabelText{
+    -fx-text-fill: -mainText;
+    -fx-font-weight: 800;
+    -fx-font-size: 48;
+}
+
+.LabelLabelText{
+    -fx-text-fill: -subText;
+    -fx-font-weight: 600;
+    -fx-font-size: 20;
+}
+
+.scroll-pane{
+    -fx-background-color: -color-bg;
+}
+
+.scroll-pane .viewport{
+    -fx-background-color: -color-bg;
+}
+
+.DescriptionBox{
+    -fx-background-color: -box-background-color;
+    -fx-background-radius: 20;
+}
+
+.DesTitle{
+    -fx-font-size: 20;
+}
+
+.NotDesTitle{
+    -fx-font-size: 14;
+}
+
+.DescriptionText{
+    -fx-text-fill: -subText;
+    -fx-font-weight: 700;
+}
+
+.BIDDINGBOX{
+    -fx-background-radius: 20;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 20;
+    -fx-border-color: -color-border;
+}
+
+.btn-primary {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 20;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-font-size: 20;
+}
+
+.GoldenText{
+    -fx-text-fill: -goldenText;
+    -fx-font-weight: 800;
+    -fx-font-size: 40;
+}

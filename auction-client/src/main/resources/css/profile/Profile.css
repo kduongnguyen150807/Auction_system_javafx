@@ -1,0 +1,104 @@
+.profile-root {
+    -fx-background-color: -color-bg;
+    -fx-min-height: 760;
+}
+
+.profile-header {
+    -fx-background-color: #0f0f0f;
+    -fx-background-radius: 12;
+    -fx-padding: 16 18;
+}
+
+.profile-avatar {
+    -fx-fill: #090909;
+    -fx-stroke: -color-primary;
+    -fx-stroke-width: 2;
+}
+
+.profile-title {
+    -fx-text-fill: white;
+    -fx-font-size: 52;
+    -fx-font-weight: 800;
+}
+
+.profile-subtitle {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-size: 20;
+}
+
+.profile-btn {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+
+.logout-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d85c60;
+    -fx-font-weight: 700;
+    -fx-padding: 2 4;
+}
+
+.section-title {
+    -fx-text-fill: white;
+    -fx-font-size: 30;
+    -fx-font-weight: 700;
+}
+
+.metric-card {
+    -fx-background-color: #181818;
+    -fx-background-radius: 12;
+}
+
+.metric-title {
+    -fx-text-fill: #d9d9d9;
+    -fx-font-size: 13;
+    -fx-font-weight: 700;
+}
+
+.metric-value {
+    -fx-text-fill: -color-primary;
+    -fx-font-size: 44;
+    -fx-font-weight: 900;
+}
+
+.field-label {
+    -fx-text-fill: #8b8b8b;
+    -fx-font-size: 13;
+    -fx-font-weight: 700;
+}
+
+.field-box {
+    -fx-background-color: #121212;
+    -fx-background-radius: 8;
+    -fx-padding: 14;
+    -fx-text-fill: white;
+    -fx-min-height: 50;
+    -fx-alignment: center-left;
+}
+
+.field-input {
+    -fx-background-color: #121212;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+    -fx-text-fill: white;
+    -fx-min-height: 50;
+}
+
+.pill-value {
+    -fx-background-color: #1f1f1f;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12;
+    -fx-text-fill: #e9e9e9;
+}
+
+.scroll-pane {
+    -fx-background: -color-bg;
+    -fx-background-color: -color-bg;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: -color-bg;
+}

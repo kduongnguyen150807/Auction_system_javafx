@@ -1,0 +1,13 @@
+.button-premium {
+    -fx-background-color: #a87242;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-padding: 10 20;
+}
+.button-premium:hover {
+    -fx-background-color: #d49a6a;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
