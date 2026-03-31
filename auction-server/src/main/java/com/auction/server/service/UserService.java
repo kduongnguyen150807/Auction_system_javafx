@@ -19,4 +19,8 @@ public class UserService {
     boolean ans = this.userdao.signup(u);
     return ans;
   }
+  public boolean updateprofile(int userid, String fullname, String email, String phone) {
+    boolean ans = this.userdao.updateuserprofile(userid, fullname, email, phone);
+    return ans;
+  }
 }

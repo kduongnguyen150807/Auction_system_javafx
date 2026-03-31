@@ -112,4 +112,19 @@ public class UserDao {
     if (value == null) return "";
     return value.trim();
   }
+  public boolean updateuserprofile(int userid, String fullname, String email, String phone) {
+    boolean ans = false;
+    String sql = "UPDATE users SET username = ?, email = ?, phonenumber = ? WHERE id = ?";
+    try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+        stmt.setString(1, fullname);
+        stmt.setString(2, email);
+        stmt.setString(3, phone);
+        stmt.setInt(4, userid);
+        int res = stmt.executeUpdate();
+        ans = res > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return ans;
+  }
 }

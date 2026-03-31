@@ -47,10 +47,19 @@ public final class ClientSession {
   }
 
   public static void updateProfile(String newFullName, String newEmail, String newPhone) {
-    fullName = safe(newFullName);
-    email = safe(newEmail);
-    phone = safe(newPhone);
-    if (currentUser != null) {
+    if (currentUser == null) return;
+    java.util.Map<String, String> data = new java.util.HashMap<>();
+    data.put("userid", String.valueOf(currentUser.getid()));
+    data.put("fullname", newFullName);
+    data.put("email", newEmail);
+    data.put("phone", newPhone);
+    com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.updateprofile, data);
+    com.auction.client.network.NetworkClient.getinstance().sendrequest(req);
+    com.auction.shared.Response ans = com.auction.client.network.NetworkClient.getinstance().receiveresponse();
+    if (ans != null && com.auction.shared.Response.ok.equals(ans.getstatus())) {
+      fullName = safe(newFullName);
+      email = safe(newEmail);
+      phone = safe(newPhone);
       currentUser.setusername(fullName);
       currentUser.setemail(email);
       currentUser.setphonenumber(phone);
