@@ -62,22 +62,36 @@ public class ProfileController {
 
   public void refreshData() {
     String username = fallback(ClientSession.getUsername(), "username");
-    String fullName = fallback(ClientSession.getFullName(), username);
+    String fullname = fallback(ClientSession.getFullName(), username);
     String email = fallback(ClientSession.getEmail(), "username@mail.com");
     String phone = fallback(ClientSession.getPhone(), "N/A");
     UserRole role = ClientSession.getActiveRole();
-
     usernameLabel.setText(username);
-    fullNameLabel.setText(fullName);
+    fullNameLabel.setText(fullname);
     emailLabel.setText(email);
     phoneLabel.setText(phone);
     roleLabel.setText(toTitle(role.name()));
-
-    fullNameInput.setText(fullName);
+    fullNameInput.setText(fullname);
     emailInput.setText(email);
     phoneInput.setText(phone);
-
     toggleRoleButton.setText(role == UserRole.SELLER ? "Switch to Bidder" : "Switch to Seller");
+    if (ClientSession.getCurrentUser() != null) {
+      {
+        String res = ClientSession.getCurrentUser().getavatarurl();
+        if (res != null && !res.isEmpty()) {
+          javafx.application.Platform.runLater(() -> {
+            javafx.scene.image.Image ans = new javafx.scene.image.Image(res, true);
+            avatarimageview.setImage(ans);
+          });
+        }
+      }
+      {
+        double ans = 34.0;
+        javafx.application.Platform.runLater(() -> {
+          avatarimageview.setClip(new javafx.scene.shape.Circle(ans, ans, ans));
+        });
+      }
+    }
   }
 
   private void setEditingMode(boolean value) {
@@ -132,6 +146,15 @@ public class ProfileController {
       String ans = res.body().split("\"secure_url\":\"")[1].split("\"")[0];
       avatarimageview.setImage(new javafx.scene.image.Image(ans));
       ClientSession.updateavatar(ans);
+    }
+  }
+  public void handlerefresh(javafx.event.ActionEvent event) {
+    if (ClientSession.getCurrentUser() != null) {
+      String res = ClientSession.getCurrentUser().getavatarurl();
+      if (res != null && !res.isEmpty()) {
+        javafx.scene.image.Image ans = new javafx.scene.image.Image(res, true);
+        avatarimageview.setImage(ans);
+      }
     }
   }
 }

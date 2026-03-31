@@ -32,6 +32,7 @@
                                     </children>
                                 </StackPane>
                                 <Button text="Change Avatar" onAction="#handlechangeavatar" styleClass="profile-btn"/>
+                                <Button text="Refresh" onAction="#handlerefresh" styleClass="profile-btn"/>
                             </children>
                         </VBox>
                         <VBox spacing="4">
