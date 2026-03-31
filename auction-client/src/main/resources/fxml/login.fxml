@@ -78,7 +78,7 @@
                               </VBox>
                               <HBox alignment="CENTER">
                                  <children>
-                                    <Button onAction="#handleLogin" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #337ab7; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="Login" />
+                                    <Button defaultButton="true" onAction="#handleLogin" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #337ab7; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="Login" />
                                  </children>
                               </HBox>
                            </children>
