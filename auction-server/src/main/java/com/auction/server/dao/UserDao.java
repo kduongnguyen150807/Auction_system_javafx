@@ -112,6 +112,70 @@ public class UserDao {
     if (value == null) return "";
     return value.trim();
   }
+
+  private boolean existsDuplicateUsernameForUpdate(int userid, String username)
+      throws SQLException {
+    String sql =
+        "select 1 from users where id <> ? and lower(trim(username)) = lower(trim(?)) limit 1";
+    PreparedStatement ps = this.conn.prepareStatement(sql);
+    ps.setInt(1, userid);
+    ps.setString(2, username);
+    ResultSet rs = ps.executeQuery();
+    return rs.next();
+  }
+
+  private boolean existsDuplicateEmailForUpdate(int userid, String email) throws SQLException {
+    String sql =
+        "select 1 from users where id <> ? and lower(trim(email)) = lower(trim(?)) limit 1";
+    PreparedStatement ps = this.conn.prepareStatement(sql);
+    ps.setInt(1, userid);
+    ps.setString(2, email);
+    ResultSet rs = ps.executeQuery();
+    return rs.next();
+  }
+
+  private boolean existsDuplicatePhoneForUpdate(int userid, String phone) throws SQLException {
+    String sql =
+        "select 1 from users where id <> ? and lower(trim(phonenumber)) = lower(trim(?)) limit 1";
+    PreparedStatement ps = this.conn.prepareStatement(sql);
+    ps.setInt(1, userid);
+    ps.setString(2, phone);
+    ResultSet rs = ps.executeQuery();
+    return rs.next();
+  }
+
+  public boolean updateuserprofileWithDuplicateCheck(
+      int userid, String fullname, String email, String phone) {
+    boolean ans = false;
+    String normalizedUsername = normalize(fullname);
+    String normalizedEmail = normalize(email);
+    String normalizedPhone = normalize(phone);
+
+    try {
+      if (existsDuplicateUsernameForUpdate(userid, normalizedUsername)
+          || existsDuplicateEmailForUpdate(userid, normalizedEmail)
+          || existsDuplicatePhoneForUpdate(userid, normalizedPhone)) {
+        return false;
+      }
+
+      String sql =
+          "UPDATE users SET username = ?, email = ?, phonenumber = ? WHERE id = ?";
+      try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+        stmt.setString(1, normalizedUsername);
+        stmt.setString(2, normalizedEmail);
+        stmt.setString(3, normalizedPhone);
+        stmt.setInt(4, userid);
+        int res = stmt.executeUpdate();
+        ans = res > 0;
+      }
+    } catch (SQLIntegrityConstraintViolationException e) {
+      // Unique index (username/email) violation due to concurrent updates.
+      ans = false;
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
   public boolean updateuserprofile(int userid, String fullname, String email, String phone) {
     boolean ans = false;
     String sql = "UPDATE users SET username = ?, email = ?, phonenumber = ? WHERE id = ?";

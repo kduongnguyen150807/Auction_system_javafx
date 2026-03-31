@@ -20,7 +20,8 @@ public class UserService {
     return ans;
   }
   public boolean updateprofile(int userid, String fullname, String email, String phone) {
-    boolean ans = this.userdao.updateuserprofile(userid, fullname, email, phone);
+    boolean ans =
+        this.userdao.updateuserprofileWithDuplicateCheck(userid, fullname, email, phone);
     return ans;
   }
 }

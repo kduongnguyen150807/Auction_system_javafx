@@ -47,15 +47,15 @@
                     <children>
                         <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
                             <children>
-                                <Label text="MONEY SPENT" styleClass="metric-title"/>
-                                <Label text="0$" styleClass="metric-value"/>
+                                <Label fx:id="metricOneTitleLabel" text="MONEY SPENT" styleClass="metric-title"/>
+                                <Label fx:id="metricOneValueLabel" text="0$" styleClass="metric-value"/>
                             </children>
                             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                         </VBox>
                         <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
                             <children>
-                                <Label text="ITEMS SOLD" styleClass="metric-title"/>
-                                <Label text="0" styleClass="metric-value"/>
+                                <Label fx:id="metricTwoTitleLabel" text="ITEMS SOLD" styleClass="metric-title"/>
+                                <Label fx:id="metricTwoValueLabel" text="0" styleClass="metric-value"/>
                             </children>
                             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                         </VBox>
