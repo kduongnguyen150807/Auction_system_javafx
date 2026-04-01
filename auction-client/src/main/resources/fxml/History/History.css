@@ -1,0 +1,44 @@
+.history-root {
+    -fx-background-color: -color-bg;
+    -fx-min-height: 1000;
+}
+
+.history-title {
+    -fx-text-fill: white;
+    -fx-font-size: 34;
+    -fx-font-weight: 800;
+}
+
+.section-label {
+    -fx-text-fill: #d4d4d4;
+    -fx-font-size: 18;
+    -fx-font-weight: 700;
+}
+
+.history-card {
+    -fx-background-color: #1f1f1f;
+    -fx-background-radius: 10;
+    -fx-min-width: 180;
+    -fx-min-height: 90;
+    -fx-padding: 12;
+}
+
+.card-text {
+    -fx-text-fill: white;
+    -fx-font-size: 16;
+    -fx-font-weight: 700;
+}
+
+.history-subtitle {
+    -fx-text-fill: -subText;
+    -fx-font-size: 16;
+}
+
+.scroll-pane {
+    -fx-background: -color-bg;
+    -fx-background-color: -color-bg;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: -color-bg;
+}

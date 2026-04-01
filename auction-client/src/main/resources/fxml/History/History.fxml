@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" maxHeight="Infinity" maxWidth="Infinity" stylesheets="@History.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.History.HistoryController">
+    <content>
+        <VBox prefHeight="944.0" prefWidth="1024.0" spacing="18" style="-fx-background-color: black;" styleClass="history-root">
+            <children>
+                <Label styleClass="history-title" text="Auction History" />
+                <VBox spacing="12">
+                    <children>
+                        <Label styleClass="section-label" text="ONGOING BIDS" />
+                        <Separator prefWidth="175.0" />
+                        <HBox spacing="14">
+                            <children>
+                                <VBox styleClass="history-card"><children><Label styleClass="card-text" text="Item N/A" /></children></VBox>
+                                <VBox styleClass="history-card"><children><Label styleClass="card-text" text="Item N/A" /></children></VBox>
+                                <VBox styleClass="history-card"><children><Label styleClass="card-text" text="Item N/A" /></children></VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox spacing="12">
+                    <children>
+                        <Label styleClass="section-label" text="UPCOMING BIDS" />
+                        <Separator />
+                        <HBox spacing="14">
+                            <children>
+                                <VBox styleClass="history-card"><children><Label styleClass="card-text" text="Item N/A" /></children></VBox>
+                                <VBox styleClass="history-card"><children><Label styleClass="card-text" text="Item N/A" /></children></VBox>
+                                <VBox styleClass="history-card"><children><Label styleClass="card-text" text="Item N/A" /></children></VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox spacing="12">
+                    <children>
+                        <Label styleClass="section-label" text="COMPLETED BIDS" />
+                        <Label prefHeight="27.2" prefWidth="151.2" styleClass="section-label" text="Won" />
+                        <Separator prefWidth="175.0" />
+                        <HBox spacing="14">
+                            <children>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <Label styleClass="section-label" text="LOST" />
+                        <Separator prefWidth="175.0" />
+                        <HBox spacing="14">
+                            <children>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <Label styleClass="section-label" text="CANCELED" />
+                        <Separator prefWidth="175.0" />
+                        <HBox spacing="14">
+                            <children>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox styleClass="history-card">
+                                    <children>
+                                        <Label styleClass="card-text" text="Item N/A" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </children>
+            <padding><Insets bottom="20" left="20" right="20" top="20" /></padding>
+        </VBox>
+    </content>
+</ScrollPane>
