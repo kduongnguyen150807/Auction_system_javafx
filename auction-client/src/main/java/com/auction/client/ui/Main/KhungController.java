@@ -8,9 +8,11 @@ import java.io.IOException;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -23,6 +25,7 @@ private Node auctionNode;
 private Node historyNode;
 private Node profileNode;
 private Node adminNode;
+private Node addlotnode;
 private TrangChuController trangChuController;
 @FXML private HBox SearchContainer;
 @FXML private StackPane ContentArea;
@@ -32,6 +35,7 @@ private TrangChuController trangChuController;
 @FXML private HBox ManageUsersMenu;
 @FXML private Label UserName;
 @FXML private Label Rank;
+@FXML private Button primaryactionbutton;
 @FXML private javafx.scene.image.ImageView sidebaravatar;
 @FXML
 public void initialize() {
@@ -48,12 +52,15 @@ NodeContentLoader<ScrollPane> profileLoader = new NodeContentLoader<>();
 profileLoader.load("/fxml/profile/Profile.fxml");
 NodeContentLoader<VBox> adminLoader = new NodeContentLoader<>();
 adminLoader.load("/fxml/main/AdminDashboard.fxml");
+NodeContentLoader<AnchorPane> addlotloader = new NodeContentLoader<>();
+addlotloader.load("/fxml/addnewlot/AddNewLot.fxml");
 NodeManager.addNodeToPane(auctionLoader, ContentArea);
 NodeManager.addNodeToPane(searchLoader, SearchContainer);
 auctionNode = auctionLoader.getCurrentNode();
 historyNode = historyLoader.getCurrentNode();
 profileNode = profileLoader.getCurrentNode();
 adminNode = adminLoader.getCurrentNode();
+addlotnode = addlotloader.getCurrentNode();
 trangChuController = auctionLoader.getController();
 currentNode = auctionNode;
 setActiveMenu(AuctionMenu);
@@ -87,6 +94,16 @@ if (trangChuController != null && currentNode == auctionNode) {
 trangChuController.refreshItems();
 }
 }
+@FXML
+public void handleprimaryaction(ActionEvent e) {
+UserRole ans = ClientSession.getActiveRole();
+if (ans == UserRole.SELLER) {
+switchContent(addlotnode);
+} else {
+switchContent(auctionNode);
+setActiveMenu(AuctionMenu);
+}
+}
 private void switchContent(Node target) {
 if (target == null || currentNode == null || target == currentNode) return;
 NodeManager.switchNodewithNode(target, currentNode, ContentArea);
@@ -116,6 +133,8 @@ UserRole ans = ClientSession.getCurrentUser().getrole();
 boolean res = ans == UserRole.ADMIN;
 ManageUsersMenu.setVisible(res);
 ManageUsersMenu.setManaged(res);
+UserRole roleans = ClientSession.getActiveRole();
+if (primaryactionbutton != null) primaryactionbutton.setText(roleans == UserRole.SELLER ? "Create a New Auction" : "Place a Bid");
 String avatarres = ClientSession.getCurrentUser().getavatarurl();
 if (avatarres != null && !avatarres.isBlank()) {
 if (avatarres.contains(".webp")) avatarres = avatarres.replace(".webp", ".jpg");

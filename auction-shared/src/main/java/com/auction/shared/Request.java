@@ -15,6 +15,7 @@ public class Request implements Serializable {
   public static final String getallusers = "GET_ALL_USERS";
   public static final String lockuser = "LOCK_USER";
   public static final String unlockuser = "UNLOCK_USER";
+  public static final String addlot = "ADD_LOT";
   protected String requestid;
   protected String action;
   protected Object payload;

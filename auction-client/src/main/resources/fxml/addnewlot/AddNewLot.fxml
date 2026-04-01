@@ -1,66 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
-
-<AnchorPane prefHeight="500.0" maxHeight="500" prefWidth="700.0" maxWidth="700" stylesheets="@AddNewLot.css"
-            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.auction.client.ui.AddNewLot.AddNewLotController" styleClass="BackGroundNewLot">
+<AnchorPane prefHeight="500.0" prefWidth="700.0" styleClass="BackGroundNewLot" stylesheets="@AddNewLot.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.AddNewLot.AddNewLotController">
     <children>
-        <VBox alignment="CENTER" layoutY="30.0" prefWidth="700.0" spacing="3" >
+        <VBox alignment="TOP_CENTER" spacing="25.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="30.0">
             <children>
-                <!-- Title -->
-                <VBox alignment="CENTER">
+                <HBox alignment="CENTER_LEFT">
                     <children>
-                        <HBox>
-                            <children>
-                                <Label styleClass="form-sub-title" text="BIDDING88"/>
-                                <Region HBox.hgrow="ALWAYS"/>
-                                <Region HBox.hgrow="ALWAYS"/>
-                                <Label styleClass="form-sub-title" text="AUCTION PRO"/>
-                            </children>
-                            <padding><Insets left="50" right="50"/></padding>
-                        </HBox>
-
-                        <Label styleClass="form-title" text="ADD NEW LOT"/>
+                        <Label styleClass="form-sub-title" text="BIDDING88" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label styleClass="form-title" text="ADD NEW LOT" />
                     </children>
-                </VBox>
-                <!-- big box -->
-                <HBox alignment="CENTER" spacing="40.0">
+                </HBox>
+                <HBox alignment="CENTER" spacing="50.0" VBox.vgrow="ALWAYS">
                     <children>
-                        <!-- right info -->
-                        <VBox spacing="15.0" prefWidth="300.0">
+                        <VBox alignment="TOP_CENTER" prefWidth="280.0" spacing="15.0">
                             <children>
-                                <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="box-info" />
-                                <TextField fx:id="txtPrice" promptText="STARTING PRICE (USD)" styleClass="box-info" />
-                                <TextField fx:id="txtQuantity" promptText="QUANTITY" styleClass="box-info" />
-                                <ComboBox fx:id="classifyComboBox" prefWidth="300.0" promptText="CATEGORY" styleClass="box-info" />
-                            </children>
-                        </VBox>
-                        <!-- left info -->
-                        <VBox alignment="CENTER" spacing="15.0">
-                            <children>
-                                <StackPane styleClass="image-container">
-                                    <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="280.0" pickOnBounds="true" preserveRatio="false">
+                                <StackPane prefHeight="200.0" prefWidth="280.0" styleClass="image-container" style="-fx-border-color: #cccccc; -fx-border-radius: 8; -fx-background-color: rgba(255, 255, 255, 0.5); -fx-background-radius: 8;">
+                                    <ImageView fx:id="productImageView" fitHeight="190.0" fitWidth="270.0" pickOnBounds="true" preserveRatio="true">
                                         <image>
                                             <Image url="@../../images/Hutao.png" />
                                         </image>
                                     </ImageView>
                                 </StackPane>
-                                <Button prefWidth="280.0" styleClass="btn-primary" text="CHOOSE PICTURE" />
-                                <Button prefWidth="280.0" styleClass="btn-primary" text="CONFIRM UPLOAD" />
-                                <Button prefWidth="280" styleClass="btn-logout" text="CANCEL" />
+                                <Button maxWidth="1.7976931348623157E308" onAction="#handlechoosepicture" styleClass="btn-primary" text="CHOOSE PICTURE" />
+                                <Label fx:id="lblStatus" alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="form-status" wrapText="true" />
+                            </children>
+                        </VBox>
+                        <VBox prefWidth="320.0" spacing="15.0">
+                            <children>
+                                <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="box-info" />
+                                <TextField fx:id="txtPrice" promptText="STARTING PRICE (USD)" styleClass="box-info" />
+                                <TextArea fx:id="txtQuantity" prefRowCount="3" promptText="DESCRIPTION" styleClass="box-info" wrapText="true" />
+                                <TextField fx:id="txtEndTime" promptText="END TIME (dd/MM/yyyy HH:mm)" styleClass="box-info" />
+                                <ComboBox fx:id="classifyComboBox" maxWidth="1.7976931348623157E308" promptText="CATEGORY" styleClass="box-info" />
+                                <Region VBox.vgrow="ALWAYS" />
+                                <HBox spacing="15.0">
+                                    <children>
+                                        <Button maxWidth="1.7976931348623157E308" onAction="#handlecancel" styleClass="btn-logout" text="CANCEL" HBox.hgrow="ALWAYS" />
+                                        <Button maxWidth="1.7976931348623157E308" onAction="#handlesubmit" styleClass="btn-primary" text="CONFIRM UPLOAD" HBox.hgrow="ALWAYS" />
+                                    </children>
+                                </HBox>
                             </children>
                         </VBox>
                     </children>
                 </HBox>
             </children>
-            <padding>
-                <Insets bottom="20.0" left="20.0" right="20.0"/>
-            </padding>
         </VBox>
     </children>
 </AnchorPane>

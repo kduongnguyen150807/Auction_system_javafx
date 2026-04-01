@@ -69,6 +69,24 @@ public class ItemDao {
     return ans;
   }
 
+  public boolean insertlot(String title, String description, double startprice, java.time.LocalDateTime endtime, String sellerusername, String imageurl) {
+    boolean ans = false;
+    try {
+      String sql = "INSERT INTO lots (title, description, start_price, end_time, seller_username, image_url) VALUES (?, ?, ?, ?, ?, ?)";
+      PreparedStatement ps = this.conn.prepareStatement(sql);
+      ps.setString(1, title);
+      ps.setString(2, description);
+      ps.setDouble(3, startprice);
+      ps.setTimestamp(4, Timestamp.valueOf(endtime));
+      ps.setString(5, sellerusername);
+      ps.setString(6, imageurl);
+      int res = ps.executeUpdate();
+      ans = res > 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
   public void closeauction(int id, int winnerid, String status) {
     try {
       String sql = "update items set winnerid = ?, status = ? where id = ?";
