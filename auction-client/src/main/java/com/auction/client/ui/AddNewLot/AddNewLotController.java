@@ -51,6 +51,7 @@ private static final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/
 private final AtomicLong uploadUiGen = new AtomicLong(0L);
 private static AddNewLotController live;
 private static final String CATEGORY_IN_BOX = "CATEGORY";
+private static final String DEFAULT_CATEGORY = "Vehicle";
 public static void resetWhenOpening() {
 AddNewLotController c = live;
 if (c != null) {
@@ -146,10 +147,10 @@ String name = txtName.getText().trim();
 String price = txtPrice.getText().trim();
 String desc = txtQuantity.getText().trim();
 String cat = classifyComboBox.getValue();
+if (cat == null || cat.isBlank()) cat = DEFAULT_CATEGORY;
 if (name.isEmpty()
 || price.isEmpty()
 || desc.isEmpty()
-|| cat == null
 || startDatePicker.getValue() == null
 || startHourCombo.getValue() == null
 || startMinuteCombo.getValue() == null

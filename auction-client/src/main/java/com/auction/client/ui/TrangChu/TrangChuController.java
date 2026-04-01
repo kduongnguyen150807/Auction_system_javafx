@@ -4,9 +4,11 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
+import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
+import java.util.ArrayList;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,9 +18,13 @@ import javafx.scene.layout.HBox;
 
 public class TrangChuController {
   @FXML private HBox TrendingBind;
+  private final List<Item> cachedItems = new ArrayList<>();
+  private String keyword = "";
+  private String category = "All";
 
   @FXML
   void initialize() {
+    setFilters(KhungController.getSearchKeyword(), KhungController.getCategoryFilter());
     refreshItems();
   }
 
@@ -33,7 +39,7 @@ public class TrangChuController {
                 if (res == null || !Response.ok.equals(res.getstatus())) return;
                 Object payload = res.getpayload();
                 if (!(payload instanceof List<?> rawItems)) return;
-                Platform.runLater(() -> renderItems(rawItems));
+                Platform.runLater(() -> cacheAndRender(rawItems));
               } catch (Exception ignored) {
               }
             });
@@ -41,10 +47,24 @@ public class TrangChuController {
     worker.start();
   }
 
-  private void renderItems(List<?> rawItems) {
-    TrendingBind.getChildren().clear();
+  public void setFilters(String keyword, String category) {
+    this.keyword = keyword == null ? "" : keyword.trim().toLowerCase();
+    this.category = (category == null || category.isBlank()) ? "All" : category;
+    renderFilteredItems();
+  }
+
+  private void cacheAndRender(List<?> rawItems) {
+    cachedItems.clear();
     for (Object obj : rawItems) {
-      if (!(obj instanceof Item item)) continue;
+      if (obj instanceof Item item) cachedItems.add(item);
+    }
+    renderFilteredItems();
+  }
+
+  private void renderFilteredItems() {
+    TrendingBind.getChildren().clear();
+    for (Item item : cachedItems) {
+      if (!match(item)) continue;
       try {
         NodeContentLoader<HBox> loader = new NodeContentLoader<>();
         loader.load("/fxml/itemcard/ItemCard.fxml");
@@ -61,6 +81,13 @@ public class TrangChuController {
       } catch (Exception ignored) {
       }
     }
+  }
+
+  private boolean match(Item item) {
+    String name = safe(item.getname()).toLowerCase();
+    if (!keyword.isBlank() && !name.contains(keyword)) return false;
+    if ("All".equalsIgnoreCase(category)) return true;
+    return safe(item.getcategory()).equalsIgnoreCase(category);
   }
 
   private String safe(String value) {

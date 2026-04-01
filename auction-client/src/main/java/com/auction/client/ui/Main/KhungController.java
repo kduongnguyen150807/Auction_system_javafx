@@ -4,6 +4,7 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.ui.AddNewLot.AddNewLotController;
 import com.auction.client.ui.TrangChu.TrangChuController;
+import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.shared.UserRole;
 import java.io.IOException;
 import javafx.event.ActionEvent;
@@ -22,18 +23,23 @@ public class KhungController {
 private static KhungController instance;
 private static Pane khungChua;
 private static Node currentNode;
+private static String searchKeyword = "";
+private static String categoryFilter = "All";
 private Node auctionNode;
 private Node historyNode;
+private Node myItemNode;
 private Node profileNode;
 private Node adminNode;
 private Node addlotnode;
 private Node nodeBeforeAddLot;
 private HBox menuBeforeAddLot;
 private TrangChuController trangChuController;
+private YourItemController yourItemController;
 @FXML private HBox SearchContainer;
 @FXML private StackPane ContentArea;
 @FXML private HBox AuctionMenu;
 @FXML private HBox HistoryMenu;
+@FXML private HBox MyItemMenu;
 @FXML private HBox ProfileMenu;
 @FXML private HBox ManageUsersMenu;
 @FXML private Label UserName;
@@ -51,6 +57,8 @@ NodeContentLoader<ScrollPane> auctionLoader = new NodeContentLoader<>();
 auctionLoader.load("/fxml/trangchu/TrangChu.fxml");
 NodeContentLoader<ScrollPane> historyLoader = new NodeContentLoader<>();
 historyLoader.load("/fxml/history/History.fxml");
+NodeContentLoader<ScrollPane> myItemLoader = new NodeContentLoader<>();
+myItemLoader.load("/fxml/youritem/YourItem.fxml");
 NodeContentLoader<ScrollPane> profileLoader = new NodeContentLoader<>();
 profileLoader.load("/fxml/profile/Profile.fxml");
 NodeContentLoader<VBox> adminLoader = new NodeContentLoader<>();
@@ -61,10 +69,12 @@ NodeManager.addNodeToPane(auctionLoader, ContentArea);
 NodeManager.addNodeToPane(searchLoader, SearchContainer);
 auctionNode = auctionLoader.getCurrentNode();
 historyNode = historyLoader.getCurrentNode();
+myItemNode = myItemLoader.getCurrentNode();
 profileNode = profileLoader.getCurrentNode();
 adminNode = adminLoader.getCurrentNode();
 addlotnode = addlotloader.getCurrentNode();
 trangChuController = auctionLoader.getController();
+yourItemController = myItemLoader.getController();
 currentNode = auctionNode;
 setActiveMenu(AuctionMenu);
 applySessionToSidebar();
@@ -82,6 +92,15 @@ switchContent(historyNode);
 setActiveMenu(HistoryMenu);
 }
 @FXML
+public void openMyItems(MouseEvent e) {
+if (ClientSession.getActiveRole() != UserRole.SELLER) return;
+switchContent(myItemNode);
+setActiveMenu(MyItemMenu);
+if (yourItemController != null) {
+yourItemController.refreshItems();
+}
+}
+@FXML
 public void openProfile(MouseEvent e) {
 switchContent(profileNode);
 setActiveMenu(ProfileMenu);
@@ -95,6 +114,8 @@ setActiveMenu(ManageUsersMenu);
 public void handleRefresh(ActionEvent e) {
 if (trangChuController != null && currentNode == auctionNode) {
 trangChuController.refreshItems();
+} else if (yourItemController != null && currentNode == myItemNode) {
+yourItemController.refreshItems();
 }
 }
 @FXML
@@ -115,6 +136,7 @@ setActiveMenu(AuctionMenu);
 private HBox menuForNode(Node n) {
 if (n == auctionNode) return AuctionMenu;
 if (n == historyNode) return HistoryMenu;
+if (n == myItemNode) return MyItemMenu;
 if (n == profileNode) return ProfileMenu;
 if (n == adminNode) return ManageUsersMenu;
 return AuctionMenu;
@@ -127,6 +149,7 @@ currentNode = target;
 private void setActiveMenu(HBox active) {
 AuctionMenu.getStyleClass().remove("active");
 HistoryMenu.getStyleClass().remove("active");
+MyItemMenu.getStyleClass().remove("active");
 ProfileMenu.getStyleClass().remove("active");
 ManageUsersMenu.getStyleClass().remove("active");
 if (!active.getStyleClass().contains("active")) active.getStyleClass().add("active");
@@ -139,6 +162,24 @@ return currentNode;
 }
 public static void refreshSidebarFromSession() {
 if (instance != null) instance.applySessionToSidebar();
+}
+public static void applySearchFilter(String keyword, String category) {
+searchKeyword = keyword == null ? "" : keyword.trim();
+categoryFilter = (category == null || category.isBlank()) ? "All" : category.trim();
+if (instance != null) {
+if (instance.trangChuController != null) {
+instance.trangChuController.setFilters(searchKeyword, categoryFilter);
+}
+if (instance.yourItemController != null) {
+instance.yourItemController.setFilters(searchKeyword, categoryFilter);
+}
+}
+}
+public static String getSearchKeyword() {
+return searchKeyword;
+}
+public static String getCategoryFilter() {
+return categoryFilter;
 }
 public static void returnFromAddLot(boolean refreshAuction) {
 if (instance == null) return;
@@ -160,6 +201,13 @@ ManageUsersMenu.setVisible(res);
 ManageUsersMenu.setManaged(res);
 UserRole roleans = ClientSession.getActiveRole();
 if (primaryactionbutton != null) primaryactionbutton.setText(roleans == UserRole.SELLER ? "Create a New Auction" : "Place a Bid");
+boolean showMyItems = roleans == UserRole.SELLER;
+MyItemMenu.setVisible(showMyItems);
+MyItemMenu.setManaged(showMyItems);
+if (!showMyItems && currentNode == myItemNode) {
+switchContent(auctionNode);
+setActiveMenu(AuctionMenu);
+}
 String avatarres = ClientSession.getCurrentUser().getavatarurl();
 if (avatarres != null && !avatarres.isBlank()) {
 if (avatarres.contains(".webp")) avatarres = avatarres.replace(".webp", ".jpg");

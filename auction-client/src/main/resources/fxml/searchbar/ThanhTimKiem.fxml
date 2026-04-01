@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 
@@ -17,6 +18,11 @@
                    HBox.hgrow="ALWAYS"
                    maxWidth="800"
                    prefHeight="40" />
+        <ComboBox fx:id="categoryFilter"
+                  promptText="Category"
+                  styleClass="category-filter"
+                  prefHeight="40"
+                  prefWidth="180"/>
     </children>
     <padding><Insets left="32" right="32"/></padding>
 </HBox>

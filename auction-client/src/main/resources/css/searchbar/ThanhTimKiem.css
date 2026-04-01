@@ -19,3 +19,16 @@
     -fx-border-radius: 8;
     -fx-text-fill: white;
 }
+
+.category-filter {
+    -fx-background-color: #0E0E0E;
+    -fx-background-radius: 8;
+    -fx-text-fill: -color-text-main;
+    -fx-prompt-text-fill: #505A81;
+    -fx-border-color: transparent;
+}
+
+.category-filter .list-cell {
+    -fx-background-color: #0E0E0E;
+    -fx-text-fill: -color-text-main;
+}
