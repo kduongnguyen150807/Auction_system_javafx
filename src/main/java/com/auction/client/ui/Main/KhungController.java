@@ -49,7 +49,7 @@ KhungController {
 
             // load TrangChu
             NodeContentLoader<ScrollPane> TrangChuLoader = new NodeContentLoader<>();
-            TrangChuLoader.load("/ui/YourItem/YourItem.fxml");
+            TrangChuLoader.load("/ui/UserManager/UserManager.fxml");
 
             //Add node
             NodeManager.addNodeToPane(TrangChuLoader.getCurrentNode(), ContentArea);

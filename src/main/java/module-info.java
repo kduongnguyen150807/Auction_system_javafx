@@ -12,4 +12,6 @@ module com.example.demo {
     opens com.auction.client.ui.Profile;
     opens com.auction.client.ui.YourItem;
     opens com.auction.client.ui.AddNewLot;
+    opens com.auction.client.ui.UserManager;
+    opens com.auction.client.ui.UserCard;
 }

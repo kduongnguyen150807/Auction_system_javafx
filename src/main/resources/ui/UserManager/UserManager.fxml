@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx" stylesheets="@UserManager.css"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.UserManager.UserManagerController"
+      prefWidth="900.0" maxWidth="900" spacing="20">
+    <children>
+        <!-- stat card -->
+        <HBox spacing="20.0">
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                <Label styleClass="stat-title" text="TOTAL USERS" />
+                <Label styleClass="stat-value" text="3" />
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                <Label styleClass="stat-title" text="INDENTITY VERIFIED" />
+                <Label styleClass="stat-value" text="2" />
+            </VBox>
+        </HBox>
+        <!-- filter-->
+        <HBox spacing="20">
+            <children>
+                <Button text="ALL ROLES" styleClass="Filter-btn"/>
+                <Button text="COLLTECTOR" styleClass="Filter-btn"/>
+                <Button text="SELLERS" styleClass="Filter-btn"/>
+            </children>
+        </HBox>
+        <!-- User Box-->
+        <VBox styleClass="user-box">
+            <children>
+                <HBox spacing="20" alignment="CENTER_LEFT" style="-fx-background-color: #292929" >
+                    <children>
+                        <Label text="USER IDENTITY" styleClass="title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="STATUS" styleClass="title" prefWidth="70" />
+                        <Label text="ROLE" styleClass="title" prefWidth="80"/>
+                        <Label text="AMOUNT SPENT" styleClass="title" prefWidth="100"/>
+                    </children>
+                    <padding><Insets left="50" right="40" top="10" bottom="10"/> </padding>
+                </HBox>
+                <!-- user card -->
+                <VBox fx:id="UserBox" styleClass="user-box"/>
+                <!-- page -->
+                <HBox spacing="20" alignment="CENTER_RIGHT" style="-fx-background-color: #292929" >
+                    <children>
+                        <Button text="Prev" onAction="#PrevPage" styleClass="btn-page"/>
+                        <Button text="1" fx:id="currentPage" styleClass="btn-page"/>
+                        <Button text="Next" onAction="#NextPage" styleClass="btn-page"/>
+                    </children>
+                    <padding><Insets top="10" bottom="10" right="20"/></padding>
+                </HBox>
+            </children>
+        </VBox>
+        <!-- ban and unban -->
+        <VBox alignment="CENTER" spacing="10">
+            <children>
+                <Button graphicTextGap="8.0" styleClass="btn-secondary" text="Unban" />
+                <Button styleClass="btn-logout" text="Ban" />
+            </children>
+        </VBox>
+    </children>
+</VBox>
