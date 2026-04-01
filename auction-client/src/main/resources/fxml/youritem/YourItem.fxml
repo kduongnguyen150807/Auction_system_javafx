@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.YourItem.YourItemController"
+            stylesheets="@/css/youritem/YourItem.css" hbarPolicy="NEVER" fitToWidth="true">
+    <content>
+        <VBox prefWidth="900" spacing="20">
+            <children>
+                <VBox>
+                    <children>
+                        <Label text="Inventory" styleClass="Bigtext"/>
+                        <Label text="Manage your item at ease" styleClass="Smalltext"/>
+                    </children>
+                </VBox>
+                <HBox spacing="20.0">
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <children>
+                            <Label styleClass="stat-title" text="ACTIVE ITEMS"/>
+                            <Label fx:id="ActiveItemsValue" styleClass="stat-value" text="0"/>
+                        </children>
+                    </VBox>
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <children>
+                            <Label styleClass="stat-title" text="INVENTORY VALUE"/>
+                            <Label fx:id="InventoryValue" styleClass="stat-value" text="0$"/>
+                        </children>
+                    </VBox>
+                </HBox>
+                <Label text="All Items" styleClass="Smalltext"/>
+                <FlowPane fx:id="ItemContainer" hgap="20" vgap="20"/>
+            </children>
+            <padding><Insets left="20" right="20" top="10" bottom="20"/></padding>
+        </VBox>
+    </content>
+</ScrollPane>
