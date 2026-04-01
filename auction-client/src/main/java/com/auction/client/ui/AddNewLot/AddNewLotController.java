@@ -146,11 +146,19 @@ public void handlesubmit(ActionEvent e) {
 String name = txtName.getText().trim();
 String price = txtPrice.getText().trim();
 String desc = txtQuantity.getText().trim();
-String cat = classifyComboBox.getValue();
-if (cat == null || cat.isBlank()) cat = DEFAULT_CATEGORY;
+String catRaw = classifyComboBox.getValue();
+final String categoryForSubmit =
+    (catRaw == null || catRaw.isBlank()) ? DEFAULT_CATEGORY : catRaw;
+if (desc.isEmpty()) {
+Alert needDesc = new Alert(Alert.AlertType.WARNING);
+needDesc.setTitle("Thiếu mô tả");
+needDesc.setHeaderText(null);
+needDesc.setContentText("Vui lòng nhập mô tả (description) cho sản phẩm.");
+needDesc.showAndWait();
+return;
+}
 if (name.isEmpty()
 || price.isEmpty()
-|| desc.isEmpty()
 || startDatePicker.getValue() == null
 || startHourCombo.getValue() == null
 || startMinuteCombo.getValue() == null
@@ -193,7 +201,7 @@ data.put("startingprice", price);
 data.put("description", desc);
 data.put("starttime", startNorm);
 data.put("endtime", endNorm);
-data.put("category", cat);
+data.put("category", categoryForSubmit);
 data.put("sellerusername", ClientSession.getUsername());
 data.put("imageurl", lotimageurl);
 Request req = new Request(Request.addlot, data);
