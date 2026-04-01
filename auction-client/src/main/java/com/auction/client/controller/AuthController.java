@@ -14,6 +14,10 @@ public class AuthController {
   private final ObjectInputStream in;
   private static final Pattern p = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
+  public static boolean isValidEmail(String email) {
+    return email != null && !email.trim().isEmpty() && p.matcher(email).matches();
+  }
+
   public AuthController(ObjectOutputStream out, ObjectInputStream in) {
     this.out = out;
     this.in = in;
@@ -57,7 +61,7 @@ public class AuthController {
     if (pass.length() < 6) {
       return new Response("local", Response.err, "Mật khẩu phải có ít nhất 6 ký tự", null);
     }
-    if (!AuthController.p.matcher(e).matches()) {
+    if (!AuthController.isValidEmail(e)) {
       return new Response("local", Response.err, "Định dạng email không hợp lệ", null);
     }
     Map<String, Object> payload = new HashMap<>();

@@ -19,9 +19,9 @@ public class UserService {
     boolean ans = this.userdao.signup(u);
     return ans;
   }
-  public boolean updateprofile(int userid, String fullname, String email, String phone) {
-    boolean ans = this.userdao.updateuserprofile(userid, fullname, email, phone);
-    return ans;
+  /** @return null nếu thành công; mã lỗi nếu không (vd. duplicate_email). */
+  public String updateprofile(int userid, String fullname, String email, String phone) {
+    return this.userdao.updateuserprofile(userid, fullname, email, phone);
   }
 
   public void updateavatar(String username, String ans) throws Exception {

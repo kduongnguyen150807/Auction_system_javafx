@@ -2,10 +2,12 @@ package com.auction.client.ui.Profile;
 
 import com.auction.client.ClientSession;
 import com.auction.client.SceneManager;
+import com.auction.client.controller.AuthController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.UserRole;
 import java.io.IOException;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -40,11 +42,46 @@ public class ProfileController {
       setEditingMode(true);
       return;
     }
-    ClientSession.updateProfile(
-        fullNameInput.getText(), emailInput.getText(), phoneInput.getText());
+    String newEmail = emailInput.getText();
+    if (!AuthController.isValidEmail(newEmail)) {
+      Alert a = new Alert(Alert.AlertType.WARNING);
+      a.setTitle("Cannot save profile");
+      a.setHeaderText(null);
+      a.setContentText("Định dạng email không hợp lệ");
+      a.showAndWait();
+      emailInput.setText(fallback(ClientSession.getEmail(), "username@mail.com"));
+      return;
+    }
+    String err =
+        ClientSession.updateProfile(
+            fullNameInput.getText(), newEmail, phoneInput.getText());
+    if (err != null) {
+      Alert a = new Alert(Alert.AlertType.WARNING);
+      a.setTitle("Cannot save profile");
+      a.setHeaderText(null);
+      a.setContentText(profileErrorMessage(err));
+      a.showAndWait();
+      if ("duplicate_email".equals(err) || "duplicate_phone".equals(err)) {
+        emailInput.setText(fallback(ClientSession.getEmail(), "username@mail.com"));
+        phoneInput.setText(fallback(ClientSession.getPhone(), "N/A"));
+      }
+      return;
+    }
     refreshData();
     setEditingMode(false);
     KhungController.refreshSidebarFromSession();
+  }
+
+  private String profileErrorMessage(String code) {
+    if (code == null) return "";
+    return switch (code) {
+      case "duplicate_email" -> "This email is already used by another account.";
+      case "duplicate_phone" -> "This phone number is already used by another account.";
+      case "invalid_email" -> "Email cannot be empty.";
+      case "update_failed" -> "Could not update profile. Please try again.";
+      case "not_logged_in" -> "You are not logged in.";
+      default -> "Could not save profile.";
+    };
   }
 
   @FXML

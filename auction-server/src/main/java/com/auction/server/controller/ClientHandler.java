@@ -80,13 +80,14 @@ public class ClientHandler implements Runnable {
               req.getrequestid(), sysres.getstatus(), sysres.getmessage(), sysres.getpayload());
     } else if (act.equals(Request.updateprofile)) {
       Map<String, String> data = (Map<String, String>) req.getpayload();
-      boolean res = this.userservice.updateprofile(
-          Integer.parseInt(data.get("userid")),
-          data.get("fullname"),
-          data.get("email"),
-          data.get("phone"));
-      if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
-      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      String err =
+          this.userservice.updateprofile(
+              Integer.parseInt(data.get("userid")),
+              data.get("fullname"),
+              data.get("email"),
+              data.get("phone"));
+      if (err == null) ans = new Response(req.getrequestid(), Response.ok, "success", null);
+      else ans = new Response(req.getrequestid(), Response.err, err, null);
     } else if (act.equals(Request.updateavatar)) {
       String[] res = ((String) req.getpayload()).split(" ");
       String username = res[0];

@@ -2,6 +2,7 @@ package com.auction.shared;
 
 public abstract class User extends Entity {
   protected String username;
+  protected String fullname;
   protected String password;
   protected String email;
   protected String age;
@@ -15,6 +16,7 @@ public abstract class User extends Entity {
 
   public User(String u, String p, String e, String a, String ph) {
     this.username = u;
+    this.fullname = u;
     this.password = p;
     this.email = e;
     this.age = a;
@@ -33,6 +35,15 @@ public abstract class User extends Entity {
 
   public void setusername(String u) {
     this.username = u;
+  }
+
+  public String getfullname() {
+    String ans = this.fullname;
+    return ans;
+  }
+
+  public void setfullname(String ans) {
+    this.fullname = ans;
   }
 
   public String getpassword() {

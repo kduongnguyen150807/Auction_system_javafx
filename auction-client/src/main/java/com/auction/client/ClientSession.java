@@ -15,7 +15,8 @@ public final class ClientSession {
   public static void setCurrentUser(User user) {
     currentUser = user;
     if (user != null) {
-      fullName = safe(user.getusername());
+      fullName = safe(user.getfullname());
+      if (fullName.isBlank()) fullName = safe(user.getusername());
       email = safe(user.getemail());
       phone = safe(user.getphonenumber());
       activeRole = user.getrole() == null ? UserRole.BIDDER : user.getrole();
@@ -46,8 +47,9 @@ public final class ClientSession {
     return activeRole;
   }
 
-  public static void updateProfile(String newFullName, String newEmail, String newPhone) {
-    if (currentUser == null) return;
+  /** @return null nếu lưu thành công; mã lỗi từ server (vd. duplicate_email) nếu thất bại. */
+  public static String updateProfile(String newFullName, String newEmail, String newPhone) {
+    if (currentUser == null) return "not_logged_in";
     java.util.Map<String, String> data = new java.util.HashMap<>();
     data.put("userid", String.valueOf(currentUser.getid()));
     data.put("fullname", newFullName);
@@ -60,10 +62,12 @@ public final class ClientSession {
       fullName = safe(newFullName);
       email = safe(newEmail);
       phone = safe(newPhone);
-      currentUser.setusername(fullName);
+      currentUser.setfullname(fullName);
       currentUser.setemail(email);
       currentUser.setphonenumber(phone);
+      return null;
     }
+    return ans != null ? ans.getmessage() : "fail";
   }
 
   public static void updateavatar(String ans) {

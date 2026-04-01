@@ -8,7 +8,20 @@ public class UserDao {
 
   public UserDao() {
     this.conn = DatabaseConnection.getinstance().getconnection();
+    this.ensureProfileColumns();
     this.ensureUniqueIndexes();
+  }
+
+  private void ensureProfileColumns() {
+    try {
+      if (!this.columnExists("users", "fullname")) {
+        Statement st = this.conn.createStatement();
+        st.execute("alter table users add column fullname varchar(255) null");
+        st.execute("update users set fullname = username where fullname is null or trim(fullname) = ''");
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 
   public User login(String u, String p) {
@@ -27,6 +40,7 @@ public class UserDao {
         ans.setid(rs.getInt("id"));
         ans.setversion(rs.getInt("version"));
         ans.setusername(rs.getString("username"));
+        ans.setfullname(rs.getString("fullname"));
         ans.setpassword(rs.getString("password"));
         ans.setemail(rs.getString("email"));
         ans.setage(rs.getString("age"));
@@ -52,16 +66,19 @@ public class UserDao {
       }
 
       String sql =
-          "insert into users(username, password, email, age, phonenumber, role, isactive, islocked) values(?,?,?,?,?,?,?,?)";
+          "insert into users(username, fullname, password, email, age, phonenumber, role, isactive, islocked) values(?,?,?,?,?,?,?,?,?)";
       PreparedStatement ps = this.conn.prepareStatement(sql);
       ps.setString(1, normalizedUsername);
-      ps.setString(2, u.getpassword());
-      ps.setString(3, normalizedEmail);
-      ps.setString(4, u.getage());
-      ps.setString(5, u.getphonenumber());
-      ps.setString(6, u.getrole().name());
-      ps.setBoolean(7, true);
-      ps.setBoolean(8, false);
+      String profileName = normalize(u.getfullname());
+      if (profileName.isBlank()) profileName = normalizedUsername;
+      ps.setString(2, profileName);
+      ps.setString(3, u.getpassword());
+      ps.setString(4, normalizedEmail);
+      ps.setString(5, u.getage());
+      ps.setString(6, u.getphonenumber());
+      ps.setString(7, u.getrole().name());
+      ps.setBoolean(8, true);
+      ps.setBoolean(9, false);
       ans = ps.executeUpdate() > 0;
     } catch (SQLIntegrityConstraintViolationException e) {
       // Duplicate username/email unique index violation.
@@ -99,6 +116,17 @@ public class UserDao {
     return rs.next();
   }
 
+  private boolean columnExists(String tableName, String columnName) throws SQLException {
+    String sql =
+        "select 1 from information_schema.columns "
+            + "where table_schema = database() and table_name = ? and column_name = ? limit 1";
+    PreparedStatement ps = this.conn.prepareStatement(sql);
+    ps.setString(1, tableName);
+    ps.setString(2, columnName);
+    ResultSet rs = ps.executeQuery();
+    return rs.next();
+  }
+
   private boolean existsDuplicateUser(String username, String email) throws SQLException {
     String sql =
         "select 1 from users where lower(trim(username)) = lower(trim(?)) or lower(trim(email)) = lower(trim(?)) limit 1";
@@ -113,20 +141,64 @@ public class UserDao {
     if (value == null) return "";
     return value.trim();
   }
-  public boolean updateuserprofile(int userid, String fullname, String email, String phone) {
-    boolean ans = false;
-    String sql = "UPDATE users SET username = ?, email = ?, phonenumber = ? WHERE id = ?";
-    try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
-        stmt.setString(1, fullname);
-        stmt.setString(2, email);
-        stmt.setString(3, phone);
-        stmt.setInt(4, userid);
-        int res = stmt.executeUpdate();
-        ans = res > 0;
-    } catch (SQLException e) {
-        e.printStackTrace();
+
+  /**
+   * @return null nếu cập nhật DB thành công; mã lỗi ngắn nếu trùng email/phone hoặc lỗi.
+   */
+  public String updateuserprofile(int userid, String fullname, String email, String phone) {
+    String fn = normalize(fullname);
+    String em = normalize(email);
+    String ph = normalize(phone);
+    if (em.isEmpty()) {
+      return "invalid_email";
     }
-    return ans;
+    try {
+      if (emailTakenByOtherUser(userid, em)) {
+        return "duplicate_email";
+      }
+      if (!ph.isEmpty() && phoneTakenByOtherUser(userid, ph)) {
+        return "duplicate_phone";
+      }
+      String sql = "UPDATE users SET fullname = ?, email = ?, phonenumber = ? WHERE id = ?";
+      try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+        stmt.setString(1, fn);
+        stmt.setString(2, em);
+        stmt.setString(3, ph);
+        stmt.setInt(4, userid);
+        stmt.executeUpdate();
+      }
+      return null;
+    } catch (SQLIntegrityConstraintViolationException e) {
+      return "duplicate_email";
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return "update_failed";
+    }
+  }
+
+  private boolean emailTakenByOtherUser(int userid, String email) throws SQLException {
+    String sql =
+        "select 1 from users where id <> ? and lower(trim(email)) = lower(trim(?)) limit 1";
+    try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+      ps.setInt(1, userid);
+      ps.setString(2, email);
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();
+      }
+    }
+  }
+
+  private boolean phoneTakenByOtherUser(int userid, String phone) throws SQLException {
+    String sql =
+        "select 1 from users where id <> ? and trim(coalesce(phonenumber,'')) <> '' "
+            + "and lower(trim(phonenumber)) = lower(trim(?)) limit 1";
+    try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+      ps.setInt(1, userid);
+      ps.setString(2, phone);
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();
+      }
+    }
   }
 
   public void updateavatar(String username, String ans) throws Exception {
@@ -163,6 +235,7 @@ public class UserDao {
         u.setid(rs.getInt("id"));
         u.setversion(rs.getInt("version"));
         u.setusername(rs.getString("username"));
+        u.setfullname(rs.getString("fullname"));
         u.setpassword(rs.getString("password"));
         u.setemail(rs.getString("email"));
         u.setage(rs.getString("age"));
