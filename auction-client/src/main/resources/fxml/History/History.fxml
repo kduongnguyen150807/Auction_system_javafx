@@ -41,7 +41,7 @@
                 <VBox spacing="12">
                     <children>
                         <Label styleClass="section-label" text="COMPLETED BIDS" />
-                        <Label prefHeight="27.2" prefWidth="151.2" styleClass="section-label" text="Won" />
+                        <Label prefHeight="27.2" prefWidth="151.2" styleClass="section-label" text="WON" />
                         <Separator prefWidth="175.0" />
                         <HBox spacing="14">
                             <children>
