@@ -54,8 +54,8 @@ public final class ClientSession {
     data.put("email", newEmail);
     data.put("phone", newPhone);
     com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.updateprofile, data);
-    com.auction.client.network.NetworkClient.getinstance().sendrequest(req);
-    com.auction.shared.Response ans = com.auction.client.network.NetworkClient.getinstance().receiveresponse();
+    com.auction.shared.Response ans =
+        com.auction.client.network.NetworkClient.getinstance().sendrequestandwait(req);
     if (ans != null && com.auction.shared.Response.ok.equals(ans.getstatus())) {
       fullName = safe(newFullName);
       email = safe(newEmail);
@@ -70,7 +70,7 @@ public final class ClientSession {
     if (currentUser != null) {
       currentUser.setavatarurl(ans);
       com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.updateavatar, currentUser.getusername() + " " + ans);
-      com.auction.client.network.NetworkClient.getinstance().sendrequest(req);
+      com.auction.client.network.NetworkClient.getinstance().sendrequestandwait(req);
     }
   }
 

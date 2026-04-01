@@ -36,9 +36,7 @@ public class LoginController {
     data.put("password", pass);
 
     Request req = new Request(Request.login, data);
-    NetworkClient.getinstance().sendrequest(req);
-
-    Response res = NetworkClient.getinstance().receiveresponse();
+    Response res = NetworkClient.getinstance().sendrequestandwait(req);
 
     if (res != null && res.getstatus().equals(Response.ok)) {
       if (res.getpayload() instanceof User loggedInUser) {

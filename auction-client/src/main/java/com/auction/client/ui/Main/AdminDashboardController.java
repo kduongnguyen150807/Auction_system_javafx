@@ -33,8 +33,7 @@ loadusers();
 }
 private void loadusers() {
 Request req = new Request(Request.getallusers, null);
-NetworkClient.getinstance().sendrequest(req);
-Response res = NetworkClient.getinstance().receiveresponse();
+Response res = NetworkClient.getinstance().sendrequestandwait(req);
 if (res != null && Response.ok.equals(res.getstatus())) {
 List<User> ans = (List<User>) res.getpayload();
 if (ans != null) userlist.addAll(ans);
@@ -45,8 +44,7 @@ private void handleban(ActionEvent event) {
 User selecteduser = usertable.getSelectionModel().getSelectedItem();
 if (selecteduser == null) return;
 Request req = new Request(Request.lockuser, selecteduser.getusername());
-NetworkClient.getinstance().sendrequest(req);
-Response res = NetworkClient.getinstance().receiveresponse();
+Response res = NetworkClient.getinstance().sendrequestandwait(req);
 if (res != null && Response.ok.equals(res.getstatus())) {
 selecteduser.setlocked(true);
 usertable.refresh();
@@ -57,8 +55,7 @@ private void handleunban(ActionEvent event) {
 User selecteduser = usertable.getSelectionModel().getSelectedItem();
 if (selecteduser == null) return;
 Request req = new Request(Request.unlockuser, selecteduser.getusername());
-NetworkClient.getinstance().sendrequest(req);
-Response res = NetworkClient.getinstance().receiveresponse();
+Response res = NetworkClient.getinstance().sendrequestandwait(req);
 if (res != null && Response.ok.equals(res.getstatus())) {
 selecteduser.setlocked(false);
 usertable.refresh();

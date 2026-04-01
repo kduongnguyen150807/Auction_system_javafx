@@ -27,8 +27,9 @@ public class TrangChuController {
         new Thread(
             () -> {
               try {
-                NetworkClient.getinstance().sendrequest(new Request(Request.list, null));
-                Response res = NetworkClient.getinstance().receiveresponse();
+                Response res =
+                    NetworkClient.getinstance()
+                        .sendrequestandwait(new Request(Request.list, null));
                 if (res == null || !Response.ok.equals(res.getstatus())) return;
                 Object payload = res.getpayload();
                 if (!(payload instanceof List<?> rawItems)) return;
@@ -53,7 +54,8 @@ public class TrangChuController {
               safe(item.getname()),
               item.getcurrentprice(),
               safe(item.getdescription()),
-              formatTimeRemaining(item.getendtime()));
+              formatTimeRemaining(item.getendtime()),
+              safe(item.getimageurl()));
         }
         NodeManager.addNodeToPane(loader, TrendingBind);
       } catch (Exception ignored) {

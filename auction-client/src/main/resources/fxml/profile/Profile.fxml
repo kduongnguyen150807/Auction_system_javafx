@@ -51,11 +51,29 @@
                     </children>
                 </HBox>
 
-                <HBox spacing="14">
+                <HBox fx:id="bidderMetricsRow" spacing="14">
                     <children>
                         <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
                             <children>
                                 <Label text="MONEY SPENT" styleClass="metric-title"/>
+                                <Label text="0$" styleClass="metric-value"/>
+                            </children>
+                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
+                            <children>
+                                <Label text="ITEMS BOUGHT" styleClass="metric-title"/>
+                                <Label text="0" styleClass="metric-value"/>
+                            </children>
+                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
+                        </VBox>
+                    </children>
+                </HBox>
+                <HBox fx:id="sellerMetricsRow" spacing="14" visible="false" managed="false">
+                    <children>
+                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
+                            <children>
+                                <Label text="MONEY RECEIVED" styleClass="metric-title"/>
                                 <Label text="0$" styleClass="metric-value"/>
                             </children>
                             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>

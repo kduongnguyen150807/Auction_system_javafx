@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 
 public class ProfileController {
   @FXML private javafx.scene.image.ImageView avatarimageview;
@@ -22,6 +23,8 @@ public class ProfileController {
   @FXML private TextField phoneInput;
   @FXML private Button editButton;
   @FXML private Button toggleRoleButton;
+  @FXML private HBox bidderMetricsRow;
+  @FXML private HBox sellerMetricsRow;
 
   private boolean editing = false;
 
@@ -97,6 +100,19 @@ public class ProfileController {
       }
     }
     KhungController.refreshSidebarFromSession();
+    applyRoleMetricsVisibility(role);
+  }
+
+  private void applyRoleMetricsVisibility(UserRole activeRole) {
+    if (bidderMetricsRow == null || sellerMetricsRow == null) {
+      return;
+    }
+    boolean showBidder = activeRole == UserRole.BIDDER;
+    boolean showSeller = activeRole == UserRole.SELLER;
+    bidderMetricsRow.setVisible(showBidder);
+    bidderMetricsRow.setManaged(showBidder);
+    sellerMetricsRow.setVisible(showSeller);
+    sellerMetricsRow.setManaged(showSeller);
   }
 
   private void setEditingMode(boolean value) {

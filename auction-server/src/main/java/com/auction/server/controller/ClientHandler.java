@@ -111,16 +111,31 @@ public class ClientHandler implements Runnable {
       if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
       else ans = new Response(req.getrequestid(), Response.err, "fail", null);
     } else if (act.equals(Request.addlot)) {
-      Map<String, String> data = (Map<String, String>) req.getpayload();
-      String title = data.get("name");
-      String description = data.get("description");
-      double startprice = Double.parseDouble(data.get("startingprice"));
-      java.time.LocalDateTime endtime = java.time.LocalDateTime.parse(data.get("endtime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-      String sellerusername = data.get("sellerusername");
-      String imageurl = data.getOrDefault("imageurl", "");
-      boolean res = this.itemdao.insertlot(title, description, startprice, endtime, sellerusername, imageurl);
-      if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
-      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      try {
+        Map<String, String> data = (Map<String, String>) req.getpayload();
+        String title = data.get("name");
+        String description = data.get("description");
+        double startprice = Double.parseDouble(data.get("startingprice"));
+        java.time.LocalDateTime endtime =
+            java.time.LocalDateTime.parse(
+                data.get("endtime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String sellerusername = data.get("sellerusername");
+        String imageurl = data.getOrDefault("imageurl", "");
+        boolean res =
+            this.itemdao.insertlot(
+                title,
+                description,
+                startprice,
+                endtime,
+                sellerusername,
+                imageurl,
+                data.getOrDefault("category", "Vehicle"));
+        if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
+        else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      } catch (Exception e) {
+        e.printStackTrace();
+        ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      }
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
     }

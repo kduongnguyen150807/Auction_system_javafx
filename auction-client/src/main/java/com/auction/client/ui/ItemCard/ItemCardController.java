@@ -6,6 +6,7 @@ import com.auction.client.ui.Main.KhungController;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
@@ -17,11 +18,15 @@ public class ItemCardController {
   @FXML private Label TimeRemain;
   @FXML private ImageView ImageHolder;
 
-  public void setData(String name, double price, String desc, String time) {
+  public void setData(String name, double price, String desc, String time, String imageUrl) {
     ItemName.setText(name);
     ItemDescription.setText(desc);
     Price.setText(String.format("%,.2f$", price));
     TimeRemain.setText(time);
+    if (imageUrl != null && !imageUrl.isBlank()) {
+      String u = imageUrl.contains(".webp") ? imageUrl.replace(".webp", ".jpg") : imageUrl;
+      ImageHolder.setImage(new Image(u, true));
+    }
   }
 
   public void HandleItemClicked() {

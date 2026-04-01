@@ -12,6 +12,7 @@ public abstract class Item extends Entity {
   protected int sellerid;
   protected int winnerid;
   protected ItemStatus status;
+  protected String imageurl;
 
   public Item() {}
 
@@ -106,5 +107,14 @@ public abstract class Item extends Entity {
 
   public void setstatus(ItemStatus s) {
     this.status = s;
+  }
+
+  public String getimageurl() {
+    String ans = this.imageurl;
+    return ans;
+  }
+
+  public void setimageurl(String u) {
+    this.imageurl = u;
   }
 }

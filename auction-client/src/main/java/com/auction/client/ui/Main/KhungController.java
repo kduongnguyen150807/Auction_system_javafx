@@ -2,6 +2,7 @@ package com.auction.client.ui.Main;
 import com.auction.client.ClientSession;
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
+import com.auction.client.ui.AddNewLot.AddNewLotController;
 import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.shared.UserRole;
 import java.io.IOException;
@@ -26,6 +27,8 @@ private Node historyNode;
 private Node profileNode;
 private Node adminNode;
 private Node addlotnode;
+private Node nodeBeforeAddLot;
+private HBox menuBeforeAddLot;
 private TrangChuController trangChuController;
 @FXML private HBox SearchContainer;
 @FXML private StackPane ContentArea;
@@ -98,11 +101,23 @@ trangChuController.refreshItems();
 public void handleprimaryaction(ActionEvent e) {
 UserRole ans = ClientSession.getActiveRole();
 if (ans == UserRole.SELLER) {
+nodeBeforeAddLot = currentNode;
+menuBeforeAddLot = menuForNode(currentNode);
+if (currentNode != addlotnode) {
+AddNewLotController.resetWhenOpening();
+}
 switchContent(addlotnode);
 } else {
 switchContent(auctionNode);
 setActiveMenu(AuctionMenu);
 }
+}
+private HBox menuForNode(Node n) {
+if (n == auctionNode) return AuctionMenu;
+if (n == historyNode) return HistoryMenu;
+if (n == profileNode) return ProfileMenu;
+if (n == adminNode) return ManageUsersMenu;
+return AuctionMenu;
 }
 private void switchContent(Node target) {
 if (target == null || currentNode == null || target == currentNode) return;
@@ -124,6 +139,16 @@ return currentNode;
 }
 public static void refreshSidebarFromSession() {
 if (instance != null) instance.applySessionToSidebar();
+}
+public static void returnFromAddLot(boolean refreshAuction) {
+if (instance == null) return;
+Node back = instance.nodeBeforeAddLot != null ? instance.nodeBeforeAddLot : instance.auctionNode;
+HBox menu = instance.menuBeforeAddLot != null ? instance.menuBeforeAddLot : instance.AuctionMenu;
+instance.switchContent(back);
+instance.setActiveMenu(menu);
+if (refreshAuction && back == instance.auctionNode && instance.trangChuController != null) {
+instance.trangChuController.refreshItems();
+}
 }
 private void applySessionToSidebar() {
 if (ClientSession.getCurrentUser() == null) return;

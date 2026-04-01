@@ -22,6 +22,20 @@ public class NetworkClient {
         NetworkClient ans = instance;
         return ans;
     }
+    /**
+     * Gửi một request và đọc đúng một response trong cùng lock — bắt buộc dùng cho mọi RPC
+     * để các luồng (list / addlot / login / …) không đọc nhầm object trên cùng socket.
+     */
+    public synchronized Response sendrequestandwait(Request req) {
+        try {
+            this.out.writeObject(req);
+            this.out.flush();
+            return (Response) this.in.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
     public void sendrequest(Request req) {
         try {
             this.out.writeObject(req);

@@ -44,8 +44,7 @@ public class RegisterController {
     data.put("age", age);
     data.put("password", pass);
     Request req = new Request(Request.signup, data);
-    NetworkClient.getinstance().sendrequest(req);
-    Response res = NetworkClient.getinstance().receiveresponse();
+    Response res = NetworkClient.getinstance().sendrequestandwait(req);
     if (res != null && res.getstatus().equals(Response.ok)) {
       this.ans.setText("đăng ký thành công!");
     } else {

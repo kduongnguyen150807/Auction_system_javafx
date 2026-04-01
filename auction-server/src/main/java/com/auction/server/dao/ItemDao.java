@@ -10,6 +10,29 @@ public class ItemDao {
 
   public ItemDao() {
     this.conn = DatabaseConnection.getinstance().getconnection();
+    this.ensureItemsImageUrlColumn();
+  }
+
+  private void ensureItemsImageUrlColumn() {
+    try {
+      if (!this.columnExists("items", "image_url")) {
+        Statement st = this.conn.createStatement();
+        st.executeUpdate("ALTER TABLE items ADD COLUMN image_url VARCHAR(2048) NULL");
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private boolean columnExists(String tableName, String columnName) throws SQLException {
+    String sql =
+        "select 1 from information_schema.columns "
+            + "where table_schema = database() and table_name = ? and column_name = ? limit 1";
+    PreparedStatement ps = this.conn.prepareStatement(sql);
+    ps.setString(1, tableName);
+    ps.setString(2, columnName);
+    ResultSet rs = ps.executeQuery();
+    return rs.next();
   }
 
   public List<Item> getall() {
@@ -69,17 +92,36 @@ public class ItemDao {
     return ans;
   }
 
-  public boolean insertlot(String title, String description, double startprice, java.time.LocalDateTime endtime, String sellerusername, String imageurl) {
+  public boolean insertlot(String title, String description, double startprice, java.time.LocalDateTime endtime, String sellerusername, String imageurl, String cat) {
     boolean ans = false;
     try {
-      String sql = "INSERT INTO lots (title, description, start_price, end_time, seller_username, image_url) VALUES (?, ?, ?, ?, ?, ?)";
+      int sid = -1;
+      PreparedStatement ps0 = this.conn.prepareStatement("select id from users where username = ? limit 1");
+      ps0.setString(1, sellerusername);
+      ResultSet rs0 = ps0.executeQuery();
+      if (rs0.next()) sid = rs0.getInt(1);
+      if (sid <= 0) return false;
+      String c = (cat == null || cat.isBlank()) ? "Vehicle" : cat.trim();
+      String img = imageurl == null ? "" : imageurl.trim();
+      String sql =
+          "INSERT INTO items (category, name, description, startingprice, currentprice, starttime, endtime, sellerid, winnerid, status, version, image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
       PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setString(1, title);
-      ps.setString(2, description);
-      ps.setDouble(3, startprice);
-      ps.setTimestamp(4, Timestamp.valueOf(endtime));
-      ps.setString(5, sellerusername);
-      ps.setString(6, imageurl);
+      ps.setString(1, c);
+      ps.setString(2, title);
+      ps.setString(3, description);
+      ps.setDouble(4, startprice);
+      ps.setDouble(5, startprice);
+      ps.setTimestamp(6, Timestamp.valueOf(java.time.LocalDateTime.now()));
+      ps.setTimestamp(7, Timestamp.valueOf(endtime));
+      ps.setInt(8, sid);
+      ps.setNull(9, Types.INTEGER);
+      ps.setString(10, ItemStatus.OPEN.name());
+      ps.setInt(11, 0);
+      if (img.isEmpty()) {
+        ps.setNull(12, Types.VARCHAR);
+      } else {
+        ps.setString(12, img);
+      }
       int res = ps.executeUpdate();
       ans = res > 0;
     } catch (Exception e) {
@@ -117,6 +159,10 @@ public class ItemDao {
     ans.setsellerid(rs.getInt("sellerid"));
     ans.setwinnerid(rs.getInt("winnerid"));
     ans.setstatus(ItemStatus.valueOf(rs.getString("status")));
+    String iu = rs.getString("image_url");
+    if (iu != null && !iu.isBlank()) {
+      ans.setimageurl(iu);
+    }
     return ans;
   }
 }
