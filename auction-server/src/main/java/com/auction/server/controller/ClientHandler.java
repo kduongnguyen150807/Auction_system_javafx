@@ -97,6 +97,19 @@ public class ClientHandler implements Runnable {
       } catch (Exception e) {
         ans = new Response(req.getrequestid(), Response.err, "fail", null);
       }
+    } else if (act.equals(Request.getallusers)) {
+      java.util.List<User> res = this.userservice.getallusers();
+      ans = new Response(req.getrequestid(), Response.ok, "success", res);
+    } else if (act.equals(Request.lockuser)) {
+      String targetusername = (String) req.getpayload();
+      boolean res = this.userservice.setuserlocked(targetusername, true);
+      if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
+      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+    } else if (act.equals(Request.unlockuser)) {
+      String targetusername = (String) req.getpayload();
+      boolean res = this.userservice.setuserlocked(targetusername, false);
+      if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
+      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
     }

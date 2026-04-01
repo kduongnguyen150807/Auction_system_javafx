@@ -27,4 +27,12 @@ public class UserService {
   public void updateavatar(String username, String ans) throws Exception {
     this.userdao.updateavatar(username, ans);
   }
+  public java.util.List<User> getallusers() {
+    java.util.List<User> ans = this.userdao.getallusers();
+    return ans;
+  }
+  public boolean setuserlocked(String username, boolean lockstatus) {
+    boolean ans = this.userdao.setuserlocked(username, lockstatus);
+    return ans;
+  }
 }

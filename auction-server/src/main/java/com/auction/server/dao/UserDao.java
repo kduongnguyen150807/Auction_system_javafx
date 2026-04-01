@@ -135,4 +135,45 @@ public class UserDao {
     stmt.setString(2, username);
     int res = stmt.executeUpdate();
   }
+  public boolean setuserlocked(String username, boolean lockstatus) {
+    boolean ans = false;
+    String sql = "UPDATE users SET islocked = ? WHERE username = ?";
+    try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+      stmt.setBoolean(1, lockstatus);
+      stmt.setString(2, username);
+      int res = stmt.executeUpdate();
+      ans = res > 0;
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
+  public java.util.List<User> getallusers() {
+    java.util.List<User> ans = new java.util.ArrayList<>();
+    String sql = "select * from users";
+    try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+      ResultSet rs = stmt.executeQuery();
+      while (rs.next()) {
+        String r = rs.getString("role");
+        User u;
+        if (r.equalsIgnoreCase("ADMIN")) u = new Admin();
+        else if (r.equalsIgnoreCase("SELLER")) u = new Seller();
+        else u = new Bidder();
+        u.setid(rs.getInt("id"));
+        u.setversion(rs.getInt("version"));
+        u.setusername(rs.getString("username"));
+        u.setpassword(rs.getString("password"));
+        u.setemail(rs.getString("email"));
+        u.setage(rs.getString("age"));
+        u.setphonenumber(rs.getString("phonenumber"));
+        u.setbalance(rs.getDouble("balance"));
+        u.setactive(rs.getBoolean("isactive"));
+        u.setlocked(rs.getBoolean("islocked"));
+        ans.add(u);
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
 }

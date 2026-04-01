@@ -74,21 +74,25 @@ public class ProfileController {
     fullNameInput.setText(fullname);
     emailInput.setText(email);
     phoneInput.setText(phone);
-    toggleRoleButton.setText(role == UserRole.SELLER ? "Switch to Bidder" : "Switch to Seller");
+    UserRole ans = role;
+    boolean res = ans == UserRole.ADMIN;
+    toggleRoleButton.setVisible(!res);
+    toggleRoleButton.setManaged(!res);
+    if (!res) toggleRoleButton.setText(ans == UserRole.SELLER ? "Switch to Bidder" : "Switch to Seller");
     if (ClientSession.getCurrentUser() != null) {
       {
-        String res = ClientSession.getCurrentUser().getavatarurl();
-        if (res != null && !res.isEmpty()) {
+        String avatarurl = ClientSession.getCurrentUser().getavatarurl();
+        if (avatarurl != null && !avatarurl.isEmpty()) {
           javafx.application.Platform.runLater(() -> {
-            javafx.scene.image.Image ans = new javafx.scene.image.Image(res, true);
-            avatarimageview.setImage(ans);
+            javafx.scene.image.Image img = new javafx.scene.image.Image(avatarurl, true);
+            avatarimageview.setImage(img);
           });
         }
       }
       {
-        double ans = 34.0;
+        double radius = 34.0;
         javafx.application.Platform.runLater(() -> {
-          avatarimageview.setClip(new javafx.scene.shape.Circle(ans, ans, ans));
+          avatarimageview.setClip(new javafx.scene.shape.Circle(radius, radius, radius));
         });
       }
     }

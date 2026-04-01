@@ -12,6 +12,9 @@ public class Request implements Serializable {
   public static final String list = "LIST";
   public static final String updateprofile = "UPDATE_PROFILE";
   public static final String updateavatar = "UPDATE_AVATAR";
+  public static final String getallusers = "GET_ALL_USERS";
+  public static final String lockuser = "LOCK_USER";
+  public static final String unlockuser = "UNLOCK_USER";
   protected String requestid;
   protected String action;
   protected Object payload;

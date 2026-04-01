@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-border-radius: 15; -fx-padding: 20;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.Main.AdminDashboardController">
+<TableView fx:id="usertable" VBox.vgrow="ALWAYS">
+<columns>
+<TableColumn fx:id="colusername" text="username" prefWidth="150.0" />
+<TableColumn fx:id="colemail" text="email" prefWidth="200.0" />
+<TableColumn fx:id="colrole" text="role" prefWidth="100.0" />
+<TableColumn fx:id="colstatus" text="status" prefWidth="100.0" />
+</columns>
+</TableView>
+<HBox alignment="CENTER" spacing="20.0">
+<Button fx:id="btnban" mnemonicParsing="false" onAction="#handleban" style="-fx-background-color: red; -fx-text-fill: white;" text="ban" />
+<Button fx:id="btnunban" mnemonicParsing="false" onAction="#handleunban" style="-fx-background-color: green; -fx-text-fill: white;" text="unban" />
+</HBox>
+</VBox>
