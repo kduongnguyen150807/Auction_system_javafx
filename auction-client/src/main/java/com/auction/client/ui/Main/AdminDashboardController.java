@@ -11,7 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
+
 import java.util.List;
 public class AdminDashboardController {
 @FXML private TableView<User> usertable;
@@ -24,8 +24,8 @@ public class AdminDashboardController {
 private ObservableList<User> userlist = FXCollections.observableArrayList();
 @FXML
 public void initialize() {
-colusername.setCellValueFactory(new PropertyValueFactory<>("username"));
-colemail.setCellValueFactory(new PropertyValueFactory<>("email"));
+colusername.setCellValueFactory(celldata -> new SimpleStringProperty(celldata.getValue().getusername()));
+colemail.setCellValueFactory(celldata -> new SimpleStringProperty(celldata.getValue().getemail()));
 colrole.setCellValueFactory(celldata -> new SimpleStringProperty(celldata.getValue().getrole().toString()));
 colstatus.setCellValueFactory(celldata -> new SimpleStringProperty(celldata.getValue().islocked() ? "locked" : "active"));
 usertable.setItems(userlist);
