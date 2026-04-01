@@ -32,6 +32,7 @@ private TrangChuController trangChuController;
 @FXML private HBox ManageUsersMenu;
 @FXML private Label UserName;
 @FXML private Label Rank;
+@FXML private javafx.scene.image.ImageView sidebaravatar;
 @FXML
 public void initialize() {
 instance = this;
@@ -115,6 +116,16 @@ UserRole ans = ClientSession.getCurrentUser().getrole();
 boolean res = ans == UserRole.ADMIN;
 ManageUsersMenu.setVisible(res);
 ManageUsersMenu.setManaged(res);
+String avatarres = ClientSession.getCurrentUser().getavatarurl();
+if (avatarres != null && !avatarres.isBlank()) {
+if (avatarres.contains(".webp")) avatarres = avatarres.replace(".webp", ".jpg");
+final String avatarurl = avatarres;
+javafx.application.Platform.runLater(() -> {
+javafx.scene.image.Image avatarans = new javafx.scene.image.Image(avatarurl, true);
+sidebaravatar.setImage(avatarans);
+sidebaravatar.setClip(new javafx.scene.shape.Circle(24, 24, 24));
+});
+}
 }
 private String fallback(String value, String fallback) {
 return (value == null || value.isBlank()) ? fallback : value;

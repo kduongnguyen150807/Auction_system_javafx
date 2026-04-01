@@ -96,6 +96,7 @@ public class ProfileController {
         });
       }
     }
+    KhungController.refreshSidebarFromSession();
   }
 
   private void setEditingMode(boolean value) {

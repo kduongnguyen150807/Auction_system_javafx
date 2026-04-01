@@ -65,13 +65,13 @@
 [INFO] ------------------------------------------------------------------------
 [INFO] Reactor Summary for auction-system 1.0-SNAPSHOT:
 [INFO] 
-[INFO] auction-system ..................................... SUCCESS [  0.126 s]
-[INFO] auction-shared ..................................... SUCCESS [  0.644 s]
-[INFO] auction-server ..................................... SUCCESS [  0.268 s]
-[INFO] auction-client ..................................... SUCCESS [  0.365 s]
+[INFO] auction-system ..................................... SUCCESS [  0.119 s]
+[INFO] auction-shared ..................................... SUCCESS [  0.633 s]
+[INFO] auction-server ..................................... SUCCESS [  0.269 s]
+[INFO] auction-client ..................................... SUCCESS [  0.369 s]
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  1.479 s
-[INFO] Finished at: 2026-04-01T08:30:59+07:00
+[INFO] Total time:  1.468 s
+[INFO] Finished at: 2026-04-01T08:42:05+07:00
 [INFO] ------------------------------------------------------------------------

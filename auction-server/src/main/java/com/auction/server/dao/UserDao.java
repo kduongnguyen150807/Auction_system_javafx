@@ -34,6 +34,7 @@ public class UserDao {
         ans.setbalance(rs.getDouble("balance"));
         ans.setactive(rs.getBoolean("isactive"));
         ans.setlocked(rs.getBoolean("islocked"));
+        ans.setavatarurl(rs.getString("avatar_url"));
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -169,6 +170,7 @@ public class UserDao {
         u.setbalance(rs.getDouble("balance"));
         u.setactive(rs.getBoolean("isactive"));
         u.setlocked(rs.getBoolean("islocked"));
+        u.setavatarurl(rs.getString("avatar_url"));
         ans.add(u);
       }
     } catch (SQLException e) {
