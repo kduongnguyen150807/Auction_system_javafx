@@ -1,0 +1,81 @@
+/* Stat Cards */
+.stat-title{
+    -fx-font-size: 20;
+    -fx-text-fill: #ABABAB;
+    -fx-font-weight: bold;
+}
+
+.stat-card {
+    -fx-background-color: #1A1A1A;
+    -fx-padding: 25;
+    -fx-background-radius: 12;
+    -fx-border-color: #333333;
+    -fx-border-radius: 12;
+}
+
+.stat-value {
+    -fx-font-size: 40px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F99417;
+    -fx-padding: 10 0;
+}
+
+/* filter btn */
+.Filter-btn{
+    -fx-background-color: #1A1A1A;
+    -fx-text-fill: #ABABAB;
+    -fx-font-weight: 600;
+
+    -fx-cursor: hand;
+    -fx-background-radius: 20;
+}
+
+.Filter-btn:hover{
+    -fx-background-color: #fd9420;
+    -fx-text-fill: black;
+}
+
+.user-box{
+    -fx-background-radius: 20;
+}
+
+.title{
+    -fx-text-fill: #ABABAB;
+    -fx-font-size: 10;
+    -fx-font-weight: 600;
+}
+
+.user-card{
+    -fx-background-color: #1a1a1a; -fx-padding: 10; -fx-background-radius: 5;
+}
+
+.user-card:hover{
+    -fx-cursor: hand;
+}
+
+.user-card:selected{
+    -fx-background-color: black;
+}
+
+.btn-logout{
+    -fx-text-fill: red;
+    -fx-background-radius: 20;
+    -fx-background-color: black;
+}
+.btn-secondary {
+    -fx-background-color: #333333;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 10 20;
+}
+
+.btn-page{
+    -fx-cursor: hand;
+    -fx-background-color: #191919;
+    -fx-text-fill: #FFFFFF;
+}
+
+.btn-page:hover{
+    -fx-background-color: #fd9420;
+    -fx-text-fill: black;
+}
