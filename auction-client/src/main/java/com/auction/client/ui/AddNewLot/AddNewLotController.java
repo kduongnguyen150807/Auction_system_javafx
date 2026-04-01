@@ -12,6 +12,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -21,10 +22,12 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
@@ -34,10 +37,17 @@ public class AddNewLotController {
 @FXML private TextField txtName;
 @FXML private TextField txtPrice;
 @FXML private TextArea txtQuantity;
-@FXML private TextField txtEndTime;
+@FXML private DatePicker startDatePicker;
+@FXML private ComboBox<Integer> startHourCombo;
+@FXML private ComboBox<Integer> startMinuteCombo;
+@FXML private ComboBox<Integer> startSecondCombo;
+@FXML private DatePicker endDatePicker;
+@FXML private ComboBox<Integer> endHourCombo;
+@FXML private ComboBox<Integer> endMinuteCombo;
+@FXML private ComboBox<Integer> endSecondCombo;
 @FXML private ComboBox<String> classifyComboBox;
 private String lotimageurl = "";
-private static final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+private static final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 private final AtomicLong uploadUiGen = new AtomicLong(0L);
 private static AddNewLotController live;
 private static final String CATEGORY_IN_BOX = "CATEGORY";
@@ -66,6 +76,22 @@ setText(item);
 }
 }
 });
+for (int i = 0; i < 24; i++) endHourCombo.getItems().add(i);
+for (int i = 0; i < 60; i++) {
+startMinuteCombo.getItems().add(i);
+startSecondCombo.getItems().add(i);
+endMinuteCombo.getItems().add(i);
+endSecondCombo.getItems().add(i);
+}
+for (int i = 0; i < 24; i++) startHourCombo.getItems().add(i);
+startHourCombo.setValue(0);
+startMinuteCombo.setValue(0);
+startSecondCombo.setValue(0);
+endHourCombo.setValue(23);
+endMinuteCombo.setValue(59);
+endSecondCombo.setValue(0);
+startDatePicker.setValue(LocalDate.now());
+endDatePicker.setValue(LocalDate.now().plusDays(1));
 }
 @FXML
 public void handlechoosepicture(ActionEvent e) {
@@ -119,15 +145,43 @@ public void handlesubmit(ActionEvent e) {
 String name = txtName.getText().trim();
 String price = txtPrice.getText().trim();
 String desc = txtQuantity.getText().trim();
-String time = txtEndTime.getText().trim();
 String cat = classifyComboBox.getValue();
-if (name.isEmpty() || price.isEmpty() || desc.isEmpty() || time.isEmpty() || cat == null) {
+if (name.isEmpty()
+|| price.isEmpty()
+|| desc.isEmpty()
+|| cat == null
+|| startDatePicker.getValue() == null
+|| startHourCombo.getValue() == null
+|| startMinuteCombo.getValue() == null
+|| startSecondCombo.getValue() == null
+|| endDatePicker.getValue() == null
+|| endHourCombo.getValue() == null
+|| endMinuteCombo.getValue() == null
+|| endSecondCombo.getValue() == null) {
 lblStatus.setText("fill all fields");
 return;
 }
-String timenorm = normalizeEndTimeForServer(time);
-if (timenorm == null) {
-lblStatus.setText("invalid end time (dd/MM/yyyy HH:mm or dd/MM/yyyy)");
+String startNorm =
+normalizeDateTimeForServer(
+startDatePicker.getValue(),
+startHourCombo.getValue(),
+startMinuteCombo.getValue(),
+startSecondCombo.getValue());
+String endNorm =
+normalizeDateTimeForServer(
+endDatePicker.getValue(), endHourCombo.getValue(), endMinuteCombo.getValue(), endSecondCombo.getValue());
+if (startNorm == null || endNorm == null) {
+lblStatus.setText("invalid start/end time");
+return;
+}
+LocalDateTime startDt = parseClientDateTime(startNorm);
+LocalDateTime endDt = parseClientDateTime(endNorm);
+if (startDt == null || endDt == null || !endDt.isAfter(startDt)) {
+Alert a = new Alert(Alert.AlertType.WARNING);
+a.setTitle("Invalid time range");
+a.setHeaderText(null);
+a.setContentText("End time must be after start time.");
+a.showAndWait();
 return;
 }
 new Thread(() -> {
@@ -136,7 +190,8 @@ Map<String, String> data = new HashMap<>();
 data.put("name", name);
 data.put("startingprice", price);
 data.put("description", desc);
-data.put("endtime", timenorm);
+data.put("starttime", startNorm);
+data.put("endtime", endNorm);
 data.put("category", cat);
 data.put("sellerusername", ClientSession.getUsername());
 data.put("imageurl", lotimageurl);
@@ -165,7 +220,14 @@ uploadUiGen.incrementAndGet();
 txtName.clear();
 txtPrice.clear();
 txtQuantity.clear();
-txtEndTime.clear();
+startDatePicker.setValue(LocalDate.now());
+startHourCombo.setValue(0);
+startMinuteCombo.setValue(0);
+startSecondCombo.setValue(0);
+endDatePicker.setValue(LocalDate.now().plusDays(1));
+endHourCombo.setValue(23);
+endMinuteCombo.setValue(59);
+endSecondCombo.setValue(0);
 classifyComboBox.getSelectionModel().clearSelection();
 classifyComboBox.setValue(null);
 classifyComboBox.setPromptText("CATEGORY");
@@ -178,17 +240,22 @@ productImageView.setImage(new Image(hutao.toExternalForm(), false));
 productImageView.setImage(null);
 }
 }
-private String normalizeEndTimeForServer(String raw) {
-if (raw == null || raw.isBlank()) return null;
+private String normalizeDateTimeForServer(LocalDate date, Integer hour, Integer minute, Integer second) {
+if (date == null || hour == null || minute == null || second == null) return null;
 try {
-LocalDateTime.parse(raw, fmt);
-return raw;
+LocalDateTime dt = LocalDateTime.of(date, LocalTime.of(hour, minute, second));
+return dt.format(fmt);
 } catch (DateTimeParseException e) {
-try {
-return LocalDate.parse(raw, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atTime(23, 59).format(fmt);
-} catch (DateTimeParseException e2) {
 return null;
 }
+}
+
+private LocalDateTime parseClientDateTime(String value) {
+if (value == null || value.isBlank()) return null;
+try {
+return LocalDateTime.parse(value, fmt);
+} catch (DateTimeParseException e) {
+return null;
 }
 }
 }

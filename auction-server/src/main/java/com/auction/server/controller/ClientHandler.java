@@ -117,9 +117,30 @@ public class ClientHandler implements Runnable {
         String title = data.get("name");
         String description = data.get("description");
         double startprice = Double.parseDouble(data.get("startingprice"));
-        java.time.LocalDateTime endtime =
-            java.time.LocalDateTime.parse(
-                data.get("endtime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        java.time.LocalDateTime starttime;
+        try {
+          starttime =
+              java.time.LocalDateTime.parse(
+                  data.get("starttime"),
+                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+        } catch (java.time.format.DateTimeParseException ignored) {
+          starttime =
+              java.time.LocalDateTime.parse(
+                  data.get("starttime"),
+                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
+        java.time.LocalDateTime endtime;
+        try {
+          endtime =
+              java.time.LocalDateTime.parse(
+                  data.get("endtime"),
+                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+        } catch (java.time.format.DateTimeParseException ignored) {
+          endtime =
+              java.time.LocalDateTime.parse(
+                  data.get("endtime"),
+                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
         String sellerusername = data.get("sellerusername");
         String imageurl = data.getOrDefault("imageurl", "");
         boolean res =
@@ -127,6 +148,7 @@ public class ClientHandler implements Runnable {
                 title,
                 description,
                 startprice,
+                starttime,
                 endtime,
                 sellerusername,
                 imageurl,

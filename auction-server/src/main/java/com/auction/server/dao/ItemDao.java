@@ -92,7 +92,15 @@ public class ItemDao {
     return ans;
   }
 
-  public boolean insertlot(String title, String description, double startprice, java.time.LocalDateTime endtime, String sellerusername, String imageurl, String cat) {
+  public boolean insertlot(
+      String title,
+      String description,
+      double startprice,
+      java.time.LocalDateTime starttime,
+      java.time.LocalDateTime endtime,
+      String sellerusername,
+      String imageurl,
+      String cat) {
     boolean ans = false;
     try {
       int sid = -1;
@@ -111,7 +119,7 @@ public class ItemDao {
       ps.setString(3, description);
       ps.setDouble(4, startprice);
       ps.setDouble(5, startprice);
-      ps.setTimestamp(6, Timestamp.valueOf(java.time.LocalDateTime.now()));
+      ps.setTimestamp(6, Timestamp.valueOf(starttime));
       ps.setTimestamp(7, Timestamp.valueOf(endtime));
       ps.setInt(8, sid);
       ps.setNull(9, Types.INTEGER);

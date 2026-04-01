@@ -34,7 +34,30 @@
                                 <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="box-info" />
                                 <TextField fx:id="txtPrice" promptText="STARTING PRICE (USD)" styleClass="box-info" />
                                 <TextArea fx:id="txtQuantity" prefRowCount="3" promptText="DESCRIPTION" styleClass="box-info" wrapText="true" />
-                                <TextField fx:id="txtEndTime" promptText="END TIME (dd/MM/yyyy HH:mm)" styleClass="box-info" />
+                                <VBox spacing="6.0">
+                                    <children>
+                                        <DatePicker fx:id="startDatePicker" maxWidth="1.7976931348623157E308" promptText="START DATE (DD/MM/YY)" styleClass="box-info" />
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <ComboBox fx:id="startHourCombo" promptText="HH" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="startMinuteCombo" promptText="MM" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="startSecondCombo" promptText="SS" HBox.hgrow="ALWAYS" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                                <VBox spacing="6.0">
+                                    <children>
+                                        <DatePicker fx:id="endDatePicker" maxWidth="1.7976931348623157E308" promptText="END DATE (DD/MM/YY)" styleClass="box-info" />
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <ComboBox fx:id="endHourCombo" promptText="HH" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="endMinuteCombo" promptText="MM" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="endSecondCombo" promptText="SS" HBox.hgrow="ALWAYS" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
                                 <ComboBox fx:id="classifyComboBox" maxWidth="1.7976931348623157E308" promptText="CATEGORY" styleClass="box-info" />
                                 <Region VBox.vgrow="ALWAYS" />
                                 <HBox spacing="15.0">
