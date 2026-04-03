@@ -16,6 +16,8 @@ public class Request implements Serializable {
   public static final String lockuser = "LOCK_USER";
   public static final String unlockuser = "UNLOCK_USER";
   public static final String addlot = "ADD_LOT";
+  public static final String getongoingbids = "GET_ONGOING_BIDS";
+  public static final String getupcomingbids = "GET_UPCOMING_BIDS";
   protected String requestid;
   protected String action;
   protected Object payload;

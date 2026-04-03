@@ -3,6 +3,7 @@ import com.auction.client.ClientSession;
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.ui.AddNewLot.AddNewLotController;
+import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.shared.UserRole;
@@ -35,6 +36,7 @@ private Node nodeBeforeAddLot;
 private HBox menuBeforeAddLot;
 private TrangChuController trangChuController;
 private YourItemController yourItemController;
+private HistoryController historycontroller;
 @FXML private HBox SearchContainer;
 @FXML private StackPane ContentArea;
 @FXML private HBox AuctionMenu;
@@ -75,6 +77,7 @@ adminNode = adminLoader.getCurrentNode();
 addlotnode = addlotloader.getCurrentNode();
 trangChuController = auctionLoader.getController();
 yourItemController = myItemLoader.getController();
+historycontroller = historyLoader.getController();
 currentNode = auctionNode;
 setActiveMenu(AuctionMenu);
 applySessionToSidebar();
@@ -90,6 +93,9 @@ setActiveMenu(AuctionMenu);
 public void openHistory(MouseEvent e) {
 switchContent(historyNode);
 setActiveMenu(HistoryMenu);
+if (historycontroller != null) {
+historycontroller.refreshhistory();
+}
 }
 @FXML
 public void openMyItems(MouseEvent e) {

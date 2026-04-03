@@ -1,6 +1,7 @@
 package com.auction.server.controller;
 
 import com.auction.server.dao.ItemDao;
+import com.auction.server.dao.LotDao;
 import com.auction.server.service.AuctionManager;
 import com.auction.server.service.UserService;
 import com.auction.shared.*;
@@ -15,11 +16,13 @@ public class ClientHandler implements Runnable {
   private ObjectInputStream in;
   private UserService userservice;
   private ItemDao itemdao;
+  private LotDao lotdao;
 
   public ClientHandler(Socket s) {
     this.socket = s;
     this.userservice = new UserService();
     this.itemdao = new ItemDao();
+    this.lotdao = new LotDao();
     try {
       this.out = new ObjectOutputStream(this.socket.getOutputStream());
       this.out.flush();
@@ -159,6 +162,14 @@ public class ClientHandler implements Runnable {
         e.printStackTrace();
         ans = new Response(req.getrequestid(), Response.err, "fail", null);
       }
+    } else if (act.equals(Request.getongoingbids)) {
+      int res = (int) req.getpayload();
+      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getongoingbids(res);
+      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
+    } else if (act.equals(Request.getupcomingbids)) {
+      int res = (int) req.getpayload();
+      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getupcomingbids(res);
+      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
     }

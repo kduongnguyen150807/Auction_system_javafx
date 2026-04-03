@@ -24,9 +24,9 @@ public class BidService {
       ans = new Response("sys", Response.err, "low", null);
       return ans;
     }
-    boolean up = this.itemdao.updateprice(i.getid(), b.getbidvalue(), i.getversion());
-    if (up) {
-      this.biddao.addbid(b);
+    boolean res = this.biddao.placebid(b);
+    if (res) {
+      this.itemdao.updateprice(i.getid(), b.getbidvalue(), i.getversion());
       LocalDateTime now = LocalDateTime.now();
       LocalDateTime end = i.getendtime();
       if (now.plusSeconds(30).isAfter(end)) {
