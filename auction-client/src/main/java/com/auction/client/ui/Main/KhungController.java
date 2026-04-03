@@ -143,8 +143,13 @@ return AuctionMenu;
 }
 private void switchContent(Node target) {
 if (target == null || currentNode == null || target == currentNode) return;
-NodeManager.switchNodewithNode(target, currentNode, ContentArea);
+ContentArea.getChildren().clear();
+ContentArea.getChildren().add(target);
 currentNode = target;
+}
+/** Gọi khi nội dung chính bị thay bằng view khác (vd. trang chi tiết item) để sidebar vẫn đổi màn đúng. */
+public static void setMainContentNode(Node node) {
+if (node != null) currentNode = node;
 }
 private void setActiveMenu(HBox active) {
 AuctionMenu.getStyleClass().remove("active");

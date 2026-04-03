@@ -71,6 +71,7 @@ public class TrangChuController {
         ItemCardController controller = loader.getController();
         if (controller != null) {
           controller.setData(
+              item.getid(),
               safe(item.getname()),
               item.getcurrentprice(),
               safe(item.getdescription()),

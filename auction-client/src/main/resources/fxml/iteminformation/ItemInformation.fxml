@@ -21,12 +21,12 @@
                 <children>
                     <StackPane alignment="CENTER_LEFT">
                         <children>
-                            <ImageView fitHeight="393" fitWidth="629" preserveRatio="true" smooth="true">
+                            <ImageView fx:id="ItemImageHolder" fitHeight="393" fitWidth="629" preserveRatio="true" smooth="true">
                                 <image><Image url="@/images/hutao_money.gif"/></image>
                             </ImageView>
                             <VBox alignment="BOTTOM_LEFT" styleClass="GradientBackGround">
                                 <children>
-                                    <Label styleClass="LabelText" text="Name" alignment="BOTTOM_LEFT">
+                                    <Label fx:id="ItemName" styleClass="LabelText" text="Name" alignment="BOTTOM_LEFT">
                                         <font><Font size="42"/></font>
                                     </Label>
                                 </children>
@@ -37,7 +37,7 @@
                     <VBox styleClass="DescriptionBox" prefWidth="629" maxWidth="629" spacing="8" minHeight="200">
                         <children>
                             <Label text="COLLECTOR'S DESCRIPTION" styleClass="DescriptionText, DesTitle"/>
-                            <Label text="DESCRIPTION" styleClass="DescriptionText, NotDesTitle"/>
+                            <Label fx:id="ItemDescription" text="DESCRIPTION" styleClass="DescriptionText, NotDesTitle"/>
                         </children>
                         <padding><Insets left="20" top="20"/></padding>
                     </VBox>
@@ -49,11 +49,11 @@
                     <VBox spacing="2">
                         <children>
                             <Label text="CURRENT HIGHEST BID" styleClass="LabelLabelText" />
-                            <Label text="142,500$" styleClass="LabelText"/>
+                            <Label fx:id="CurrentHighestBidValue" text="142,500$" styleClass="LabelText"/>
                             <Button text="Place Bid Now" styleClass="btn-primary" maxWidth="Infinity" prefHeight="67" onAction="#ShowBiddingForm"/>
                             <Region prefHeight="50"/>
                             <Label text="ENDS IN" styleClass="LabelLabelText" />
-                            <Label text="04:12:38" styleClass="GoldenText"/>
+                            <Label fx:id="EndsInValue" text="04:12:38" styleClass="GoldenText"/>
                         </children>
                     </VBox>
                     <Region HBox.hgrow="ALWAYS"/>

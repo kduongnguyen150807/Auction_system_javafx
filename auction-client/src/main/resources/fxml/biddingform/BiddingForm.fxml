@@ -41,7 +41,7 @@
                     <children>
                         <Hyperlink fx:id="CancelBidding" text="Cancel" styleClass="AboveLabel, HyperSubText" onAction="#RemoveForm"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Button fx:id="ConfirmBidding" text="Confirm" styleClass="btn-primary" prefHeight="50" prefWidth="150" onAction="#RemoveForm"/>
+                        <Button fx:id="ConfirmBidding" text="Confirm" styleClass="btn-primary" prefHeight="50" prefWidth="150" onAction="#HandleConfirmBidding"/>
                     </children>
                 </HBox>
             </children>

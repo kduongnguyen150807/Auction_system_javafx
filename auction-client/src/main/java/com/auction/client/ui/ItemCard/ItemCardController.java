@@ -3,6 +3,7 @@ package com.auction.client.ui.ItemCard;
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.client.ui.ItemInformation.ItemInformationController;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -18,13 +19,27 @@ public class ItemCardController {
   @FXML private Label TimeRemain;
   @FXML private ImageView ImageHolder;
 
-  public void setData(String name, double price, String desc, String time, String imageUrl) {
+  private int itemId = -1;
+  private String itemName = "";
+  private String itemDesc = "";
+  private String itemTimeRemain = "";
+  private double currentPrice = 0.0;
+  private String itemImageUrl = "";
+
+  public void setData(int itemId, String name, double price, String desc, String time, String imageUrl) {
+    this.itemId = itemId;
+    this.itemName = name == null ? "" : name;
+    this.itemDesc = desc == null ? "" : desc;
+    this.itemTimeRemain = time == null ? "" : time;
+    this.currentPrice = price;
+    this.itemImageUrl = imageUrl == null ? "" : imageUrl;
+
     ItemName.setText(name);
-    ItemDescription.setText(desc);
+    ItemDescription.setText(this.itemDesc);
     Price.setText(String.format("%,.2f$", price));
     TimeRemain.setText(time);
-    if (imageUrl != null && !imageUrl.isBlank()) {
-      String u = imageUrl.contains(".webp") ? imageUrl.replace(".webp", ".jpg") : imageUrl;
+    if (!this.itemImageUrl.isBlank()) {
+      String u = this.itemImageUrl.contains(".webp") ? this.itemImageUrl.replace(".webp", ".jpg") : this.itemImageUrl;
       ImageHolder.setImage(new Image(u, true));
     }
   }
@@ -33,10 +48,17 @@ public class ItemCardController {
     try {
       NodeContentLoader<ScrollPane> infoLoader = new NodeContentLoader<>();
       infoLoader.load("/fxml/iteminformation/ItemInformation.fxml");
+
+      ItemInformationController infoController = infoLoader.getController();
+      if (infoController != null && itemId > 0) {
+        infoController.setData(itemId, itemName, currentPrice, itemDesc, itemTimeRemain, itemImageUrl);
+      }
+
       NodeManager.switchNodewithNode(
           infoLoader.getCurrentNode(),
           KhungController.getCurrentNode(),
           KhungController.getKhungChua());
+      KhungController.setMainContentNode(infoLoader.getCurrentNode());
     } catch (Exception ignored) {
     }
   }
