@@ -2,6 +2,7 @@ package com.auction.server.controller;
 
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.LotDao;
+import com.auction.server.dao.UserDao;
 import com.auction.server.service.AuctionManager;
 import com.auction.server.service.UserService;
 import com.auction.shared.*;
@@ -148,6 +149,23 @@ public class ClientHandler implements Runnable {
       int res = (int) req.getpayload();
       java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getpastbids(res);
       ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
+    } else if (act.equals("deposit")) {
+      Map<String, String> data = (Map<String, String>) req.getpayload();
+      int id = Integer.parseInt(data.get("userid"));
+      double val = Double.parseDouble(data.get("amount"));
+      UserDao d = new UserDao();
+      User u = d.getbyid(String.valueOf(id));
+      if (u != null) {
+        boolean res = d.updatebalance(id, u.getbalance() + val);
+        if (res) {
+          u.setbalance(u.getbalance() + val);
+          ans = new Response(req.getrequestid(), Response.ok, "success", u);
+        } else {
+          ans = new Response(req.getrequestid(), Response.err, "fail", null);
+        }
+      } else {
+        ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      }
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
     }

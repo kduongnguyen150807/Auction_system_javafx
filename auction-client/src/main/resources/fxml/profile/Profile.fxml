@@ -122,6 +122,16 @@
                         <TextField fx:id="phoneInput" text="N/A" styleClass="field-input" visible="false" managed="false"/>
                     </children>
                 </VBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="15.0">
+                    <children>
+                        <Label style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px;" text="VÍ TIỀN:" />
+                        <Label fx:id="balanceLabel" style="-fx-text-fill: #ffaa00; -fx-font-size: 18px; -fx-font-weight: bold;" text="0$" />
+                        <TextField fx:id="DepositAmountField" promptText="Nhập số tiền..." style="-fx-background-color: #333333; -fx-text-fill: white; -fx-pref-width: 150;" />
+                        <Button onAction="#handleDeposit" style="-fx-background-color: #ffaa00; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;" text="Nạp Tiền" />
+                    </children>
+                    <padding><Insets top="10" /></padding>
+                </HBox>
             </children>
             <padding><Insets top="26" right="24" bottom="24" left="24"/></padding>
         </VBox>
