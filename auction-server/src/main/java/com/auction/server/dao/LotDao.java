@@ -18,7 +18,7 @@ public class LotDao {
             String sql = "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar " +
                     "FROM items i " +
                     "LEFT JOIN users u ON i.sellerid = u.id " +
-                    "WHERE i.status = 'OPEN' AND i.endtime > NOW()";
+                    "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
             PreparedStatement ps = this.conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -34,7 +34,7 @@ public class LotDao {
             String sql = "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar " +
                     "FROM items i " +
                     "LEFT JOIN users u ON i.sellerid = u.id " +
-                    "WHERE i.starttime > NOW()";
+                    "WHERE i.status = 'OPEN' AND i.starttime > NOW()";
             PreparedStatement ps = this.conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -68,7 +68,7 @@ public class LotDao {
                     "FROM items i " +
                     "LEFT JOIN users u ON i.sellerid = u.id " +
                     "LEFT JOIN users w ON i.winnerid = w.id " +
-                    "WHERE i.status IN ('CLOSED', 'FINISHED', 'CANCELED') OR i.endtime <= NOW()";
+                    "WHERE i.status IN ('FINISHED', 'CANCELED') OR (i.status = 'OPEN' AND i.endtime <= NOW())";
             PreparedStatement ps = this.conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
