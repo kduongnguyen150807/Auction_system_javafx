@@ -26,7 +26,10 @@
             </children>
         </HBox>
 
-        <ComboBox fx:id="categoryFilter" promptText="Category" styleClass="category-filter" prefHeight="40" prefWidth="180"/>
+        <ComboBox fx:id="categoryFilter" promptText="Category" styleClass="category-filter" prefHeight="40" prefWidth="150"/>
+        <TextField fx:id="minpricefield" promptText="Min $" styleClass="search-input" prefWidth="80" prefHeight="40"/>
+        <TextField fx:id="maxpricefield" promptText="Max $" styleClass="search-input" prefWidth="80" prefHeight="40"/>
+        <Button fx:id="filterButton" text="Apply" onAction="#applyfilter" style="-fx-background-color: #ffaa00; -fx-text-fill: black; -fx-font-weight: bold; -fx-pref-height: 40; -fx-cursor: hand;"/>
     </children>
     <padding><Insets left="32" right="32"/></padding>
 </HBox>

@@ -30,6 +30,8 @@ public class KhungController {
     private static Node cn;
     private static String sk = "";
     private static String cf = "All";
+    private static double minp = 0;
+    private static double maxp = Double.MAX_VALUE;
     public static ItemInformationController infoc;
 
     private Node an, hn, mn, pn, adn, aln;
@@ -54,48 +56,57 @@ public class KhungController {
         instance = this;
         kc = ContentArea;
         try {
-            NodeContentLoader<HBox> sl = new NodeContentLoader<>();
-            sl.load("/fxml/searchbar/ThanhTimKiem.fxml");
-            NodeContentLoader<Pane> al = new NodeContentLoader<>();
-            al.load("/fxml/trangchu/TrangChu.fxml");
-            NodeContentLoader<Pane> hl = new NodeContentLoader<>();
-            hl.load("/fxml/history/History.fxml");
-            NodeContentLoader<Pane> ml = new NodeContentLoader<>();
-            ml.load("/fxml/youritem/YourItem.fxml");
-            NodeContentLoader<Pane> pl = new NodeContentLoader<>();
-            pl.load("/fxml/profile/Profile.fxml");
-            NodeContentLoader<Pane> adl = new NodeContentLoader<>();
-            adl.load("/fxml/main/AdminDashboard.fxml");
-            NodeContentLoader<Pane> all = new NodeContentLoader<>();
-            all.load("/fxml/addnewlot/AddNewLot.fxml");
+            NodeContentLoader<HBox> res = new NodeContentLoader<>();
+            res.load("/fxml/searchbar/ThanhTimKiem.fxml");
+            NodeContentLoader<Pane> ans = new NodeContentLoader<>();
+            ans.load("/fxml/trangchu/TrangChu.fxml");
+            NodeContentLoader<Pane> res1 = new NodeContentLoader<>();
+            res1.load("/fxml/history/History.fxml");
+            NodeContentLoader<Pane> ans1 = new NodeContentLoader<>();
+            ans1.load("/fxml/youritem/YourItem.fxml");
+            NodeContentLoader<Pane> res2 = new NodeContentLoader<>();
+            res2.load("/fxml/profile/Profile.fxml");
+            NodeContentLoader<Pane> ans2 = new NodeContentLoader<>();
+            ans2.load("/fxml/main/AdminDashboard.fxml");
+            NodeContentLoader<Pane> res3 = new NodeContentLoader<>();
+            res3.load("/fxml/addnewlot/AddNewLot.fxml");
 
-            if (ContentArea != null) ContentArea.getChildren().add(al.getCurrentNode());
-            if (SearchContainer != null) SearchContainer.getChildren().add(sl.getCurrentNode());
+            if (ContentArea != null) ContentArea.getChildren().add(ans.getCurrentNode());
+            if (SearchContainer != null) SearchContainer.getChildren().add(res.getCurrentNode());
 
-            an = al.getCurrentNode();
-            hn = hl.getCurrentNode();
-            mn = ml.getCurrentNode();
-            pn = pl.getCurrentNode();
-            adn = adl.getCurrentNode();
-            aln = all.getCurrentNode();
+            an = ans.getCurrentNode();
+            hn = res1.getCurrentNode();
+            mn = ans1.getCurrentNode();
+            pn = res2.getCurrentNode();
+            adn = ans2.getCurrentNode();
+            aln = res3.getCurrentNode();
 
-            tc = al.getController();
-            yc = ml.getController();
-            hc = hl.getController();
+            tc = ans.getController();
+            yc = ans1.getController();
+            hc = res1.getController();
 
             cn = an;
             setmenu(AuctionMenu);
             update();
+
+            Platform.runLater(() -> {
+                javafx.scene.Scene ans3 = kc.getScene();
+                if (ans3 != null) {
+                    ans3.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, res4 -> {
+                        if (res4.getCode() == javafx.scene.input.KeyCode.F11) {
+                            javafx.stage.Stage ans4 = (javafx.stage.Stage) ans3.getWindow();
+                            ans4.setFullScreen(!ans4.isFullScreen());
+                            res4.consume();
+                        }
+                    });
+                }
+            });
         } catch (Exception e) {}
     }
 
     @FXML public void openAuction(MouseEvent e) { switchpage(an, AuctionMenu); }
     @FXML public void openHistory(MouseEvent e) { switchpage(hn, HistoryMenu); if (hc != null) hc.refreshhistory(); }
-    // Tìm hàm này và sửa lại:
-    @FXML
-    public void openMyItems(MouseEvent e) {
-        switchpage(mn, MyItemMenu);
-    }
+    @FXML public void openMyItems(MouseEvent e) { switchpage(mn, MyItemMenu); }
     @FXML public void openProfile(MouseEvent e) { switchpage(pn, ProfileMenu); }
     @FXML public void openManageUsers(MouseEvent e) { switchpage(adn, ManageUsersMenu); }
 
@@ -143,37 +154,37 @@ public class KhungController {
         if (ClientSession.getCurrentUser() == null) return;
         if (UserName != null) UserName.setText(ClientSession.getUsername());
         if (Rank != null) {
-            String res = ClientSession.getActiveRole().name();
-            User res1 = ClientSession.getCurrentUser();
-            if (res1.gettotalratings() > 0) {
-                String res2 = res1.getavgrating() <= 2.0 ? "Negative" : (res1.getavgrating() <= 3.0 ? "Neutral" : "Positive");
-                res = res + " | " + String.format("%.1f\u2605 %s", res1.getavgrating(), res2);
+            String ans = ClientSession.getActiveRole().name();
+            User res = ClientSession.getCurrentUser();
+            if (res.gettotalratings() > 0) {
+                String ans1 = res.getavgrating() <= 2.0 ? "Negative" : (res.getavgrating() <= 3.0 ? "Neutral" : "Positive");
+                ans = ans + " | " + String.format("%.1f\u2605 %s", res.getavgrating(), ans1);
             }
-            Rank.setText(res);
+            Rank.setText(ans);
         }
-        boolean isadmin = ClientSession.getCurrentUser().getrole() == UserRole.ADMIN;
+        boolean ans1 = ClientSession.getCurrentUser().getrole() == UserRole.ADMIN;
         if (ManageUsersMenu != null) {
-            ManageUsersMenu.setVisible(isadmin);
-            ManageUsersMenu.setManaged(isadmin);
+            ManageUsersMenu.setVisible(ans1);
+            ManageUsersMenu.setManaged(ans1);
         }
-        String u = ClientSession.getCurrentUser().getavatarurl();
-        if (sidebaravatar != null && u != null && !u.isBlank()) {
-            Image ansimg = new Image(u, true);
-            ansimg.progressProperty().addListener((obs, oldv, newv) -> {
-                if (newv.doubleValue() == 1.0 && !ansimg.isError()) {
-                    double resw = ansimg.getWidth();
-                    double resh = ansimg.getHeight();
-                    double ansmin = Math.min(resw, resh);
-                    double resx = (resw - ansmin) / 2;
-                    double resy = (resh - ansmin) / 2;
+        String res1 = ClientSession.getCurrentUser().getavatarurl();
+        if (sidebaravatar != null && res1 != null && !res1.isBlank()) {
+            Image ans2 = new Image(res1, true);
+            ans2.progressProperty().addListener((obs, oldv, newv) -> {
+                if (newv.doubleValue() == 1.0 && !ans2.isError()) {
+                    double res2 = ans2.getWidth();
+                    double ans3 = ans2.getHeight();
+                    double res3 = Math.min(res2, ans3);
+                    double ans4 = (res2 - res3) / 2;
+                    double res4 = (ans3 - res3) / 2;
                     Platform.runLater(() -> {
-                        sidebaravatar.setImage(ansimg);
-                        sidebaravatar.setViewport(new javafx.geometry.Rectangle2D(resx, resy, ansmin, ansmin));
+                        sidebaravatar.setImage(ans2);
+                        sidebaravatar.setViewport(new javafx.geometry.Rectangle2D(ans4, res4, res3, res3));
                         sidebaravatar.setFitWidth(48);
                         sidebaravatar.setFitHeight(48);
                         sidebaravatar.setPreserveRatio(false);
-                        double ansr = 24.0;
-                        sidebaravatar.setClip(new Circle(ansr, ansr, ansr));
+                        double ans5 = 24.0;
+                        sidebaravatar.setClip(new Circle(ans5, ans5, ans5));
                     });
                 }
             });
@@ -185,28 +196,32 @@ public class KhungController {
     public static void setMainContentNode(Node n) { if (n != null) cn = n; }
     public static void refreshSidebarFromSession() { if (instance != null) instance.update(); }
 
-    public static void applySearchFilter(String k, String c) {
+    public static void applysearchfilter(String k, String c, double min, double max) {
         sk = k == null ? "" : k.trim();
         cf = c == null ? "All" : c.trim();
+        minp = min;
+        maxp = max;
         if (instance != null) {
-            if (instance.tc != null) instance.tc.setFilters(sk, cf);
-            if (instance.yc != null) instance.yc.setFilters(sk, cf);
+            if (instance.tc != null) instance.tc.setfilters(sk, cf);
+            if (instance.yc != null) instance.yc.refreshItems();
         }
     }
 
-    public static void updaterealtimeui(Item res) {
+    public static void updaterealtimeui(Item ans) {
         Platform.runLater(() -> {
             if (infoc != null) {
-                infoc.updatepriceui(res);
+                infoc.updatepriceui(ans);
             }
             if (instance != null && instance.tc != null) {
-                instance.tc.updatepriceui(res);
+                instance.tc.updatepriceui(ans);
             }
         });
     }
 
     public static String getSearchKeyword() { return sk; }
     public static String getCategoryFilter() { return cf; }
+    public static double getminprice() { return minp; }
+    public static double getmaxprice() { return maxp; }
 
     public static void returnFromAddLot(boolean r) {
         if (instance == null) return;
@@ -218,20 +233,18 @@ public class KhungController {
         if (instance == null || user == null) return;
         Platform.runLater(() -> {
             try {
-                NodeContentLoader<javafx.scene.Parent> loader = new NodeContentLoader<>();
-                loader.load("/fxml/userprofile/UserProfile.fxml");
-                UserProfileController ctrl = loader.getController();
-                ctrl.setUser(user);
-                javafx.scene.Node profileNode = loader.getCurrentNode();
+                NodeContentLoader<javafx.scene.Parent> ans = new NodeContentLoader<>();
+                ans.load("/fxml/userprofile/UserProfile.fxml");
+                UserProfileController res = ans.getController();
+                res.setUser(user);
+                javafx.scene.Node ans1 = ans.getCurrentNode();
                 if (instance.ContentArea != null) {
                     instance.ContentArea.getChildren().clear();
-                    instance.ContentArea.getChildren().add(profileNode);
+                    instance.ContentArea.getChildren().add(ans1);
                 }
-                cn = profileNode;
+                cn = ans1;
                 instance.setmenu(null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            } catch (Exception e) {}
         });
     }
 

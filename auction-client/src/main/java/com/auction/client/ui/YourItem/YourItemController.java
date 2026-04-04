@@ -21,49 +21,64 @@ public class YourItemController {
     refreshItems();
   }
 
+  @FXML
   public void refreshItems() {
     if (ClientSession.getCurrentUser() == null) return;
-    int res_uid = ClientSession.getCurrentUser().getid();
+    int ans = ClientSession.getCurrentUser().getid();
 
     new Thread(() -> {
       try {
-        Request req = new Request("get_my_items", res_uid);
-        Response res = NetworkClient.getinstance().sendrequestandwait(req);
+        Request res = new Request("get_my_items", ans);
+        Response ans1 = NetworkClient.getinstance().sendrequestandwait(res);
 
-        if (res != null && Response.ok.equals(res.getstatus())) {
-          List<Item> ans = (List<Item>) res.getpayload();
-          Platform.runLater(() -> render(ans));
+        if (ans1 != null && Response.ok.equals(ans1.getstatus())) {
+          List<Item> res1 = (List<Item>) ans1.getpayload();
+          Platform.runLater(() -> render(res1));
         }
       } catch (Exception ignored) {}
     }).start();
   }
 
-  private void render(List<Item> items) {
+  private void render(List<Item> ans) {
     ItemContainer.getChildren().clear();
-    int res_active = 0;
-    double res_total = 0;
+    int res = 0;
+    double ans1 = 0;
 
-    for (Item res_i : items) {
-      if (res_i.getstatus() == ItemStatus.OPEN) res_active++;
-      res_total += res_i.getcurrentprice();
+    for (Item res1 : ans) {
+      if (!match(res1)) continue;
+
+      if (res1.getstatus() == ItemStatus.OPEN) res++;
+      ans1 += res1.getcurrentprice();
 
       try {
-        NodeContentLoader<javafx.scene.layout.HBox> res_l = new NodeContentLoader<>();
-        res_l.load("/fxml/itemcard/ItemCard.fxml");
-        ItemCardController res_c = res_l.getController();
-        if (res_c != null) {
-          String res_status = res_i.getstatus() == null ? "N/A" : res_i.getstatus().name();
-          if (res_i.getstatus() == ItemStatus.PENDING) res_status = "\u23F3 Pending Approval";
-          res_c.setData(res_i.getid(), res_i.getname(), res_i.getcurrentprice(), res_i.getdescription(),
-                  res_status,
-                  res_i.getimageurl(), res_i.getsellerusername(), res_i.getselleravatarurl());
+        NodeContentLoader<javafx.scene.layout.HBox> ans2 = new NodeContentLoader<>();
+        ans2.load("/fxml/itemcard/ItemCard.fxml");
+        ItemCardController res2 = ans2.getController();
+        if (res2 != null) {
+          String ans3 = res1.getstatus() == null ? "N/A" : res1.getstatus().name();
+          if (res1.getstatus() == ItemStatus.PENDING) ans3 = "\u23F3 Pending Approval";
+          res2.setData(res1.getid(), res1.getname(), res1.getcurrentprice(), res1.getdescription(),
+                  ans3,
+                  res1.getimageurl(), res1.getsellerusername(), res1.getselleravatarurl());
         }
-        NodeManager.addNodeToPane(res_l, ItemContainer);
+        NodeManager.addNodeToPane(ans2, ItemContainer);
       } catch (Exception ignored) {}
     }
-    ActiveItemsValue.setText(String.valueOf(res_active));
-    InventoryValue.setText(String.format("%,.0f$", res_total));
+    if (ActiveItemsValue != null) ActiveItemsValue.setText(String.valueOf(res));
+    if (InventoryValue != null) InventoryValue.setText(String.format("%,.0f$", ans1));
   }
 
-  public void setFilters(String k, String c) {}
+  public void setfilters(String k, String c) {}
+
+  private boolean match(Item ans) {
+    String res = com.auction.client.ui.Main.KhungController.getSearchKeyword();
+    String ans1 = com.auction.client.ui.Main.KhungController.getCategoryFilter();
+    double res1 = com.auction.client.ui.Main.KhungController.getminprice();
+    double ans2 = com.auction.client.ui.Main.KhungController.getmaxprice();
+
+    if (res != null && !res.isBlank() && ans.getname() != null && !ans.getname().toLowerCase().contains(res.toLowerCase())) return false;
+    if (ans1 != null && !ans1.equalsIgnoreCase("All") && ans.getcategory() != null && !ans.getcategory().equalsIgnoreCase(ans1)) return false;
+    if (ans.getcurrentprice() < res1 || ans.getcurrentprice() > ans2) return false;
+    return true;
+  }
 }
