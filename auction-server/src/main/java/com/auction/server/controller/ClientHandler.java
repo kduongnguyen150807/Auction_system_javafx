@@ -217,6 +217,24 @@ public class ClientHandler implements Runnable {
         ans = new Response(rid, Response.ok, "success", this.itemdao.getcategorystats());
       } else ans = new Response(rid, Response.err, "forbidden", null);
     }
+    else if (act.equals("get_bid_history")) {
+      int res = (int) pay;
+      java.util.List<BidTransaction> ans2 = new java.util.ArrayList<>();
+      try {
+        java.sql.Connection res1 = com.auction.server.dao.DatabaseConnection.getinstance().getconnection();
+        java.sql.PreparedStatement ans1 = res1.prepareStatement("SELECT * FROM bid_transactions WHERE itemid = ? ORDER BY timestamp ASC");
+        ans1.setInt(1, res);
+        java.sql.ResultSet res2 = ans1.executeQuery();
+        while (res2.next()) {
+          BidTransaction ans3 = new BidTransaction();
+          ans3.setbidvalue(res2.getDouble("bidvalue"));
+          java.sql.Timestamp res3 = res2.getTimestamp("timestamp");
+          if (res3 != null) ans3.settimestamp(res3.toLocalDateTime());
+          ans2.add(ans3);
+        }
+      } catch (Exception e) {}
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) ans2);
+    }
     else if (act.equals("ping")) {
       ans = new Response(rid, Response.ok, "pong", null);
     }
