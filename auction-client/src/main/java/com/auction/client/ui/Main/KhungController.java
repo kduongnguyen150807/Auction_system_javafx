@@ -7,6 +7,7 @@ import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.shared.Item;
+import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -140,7 +141,15 @@ public class KhungController {
     public void update() {
         if (ClientSession.getCurrentUser() == null) return;
         if (UserName != null) UserName.setText(ClientSession.getUsername());
-        if (Rank != null) Rank.setText(ClientSession.getActiveRole().name());
+        if (Rank != null) {
+            String res = ClientSession.getActiveRole().name();
+            User res1 = ClientSession.getCurrentUser();
+            if (res1.gettotalratings() > 0) {
+                String res2 = res1.getavgrating() <= 2.0 ? "Negative" : (res1.getavgrating() <= 3.0 ? "Neutral" : "Positive");
+                res = res + " | " + String.format("%.1f\u2605 %s", res1.getavgrating(), res2);
+            }
+            Rank.setText(res);
+        }
         boolean isadmin = ClientSession.getCurrentUser().getrole() == UserRole.ADMIN;
         if (ManageUsersMenu != null) {
             ManageUsersMenu.setVisible(isadmin);

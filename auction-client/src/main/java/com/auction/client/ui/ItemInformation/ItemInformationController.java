@@ -1,10 +1,12 @@
 package com.auction.client.ui.ItemInformation;
 
+import com.auction.client.ClientSession;
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.Item;
+import com.auction.shared.Rating;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.util.List;
@@ -12,6 +14,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -28,10 +31,16 @@ public class ItemInformationController {
     @FXML private ImageView SellerAvatar;
     @FXML private Label SellerName;
     @FXML private Button BidButton;
+    @FXML private Button RateButton;
+    @FXML private VBox RatingsContainer;
+    @FXML private javafx.scene.control.ComboBox<String> RatingFilterCombo;
 
     private int id = -1;
     private String n = "";
     private double currentMaxPrice = 0;
+    private int sellerid = -1;
+    private int winnerid = -1;
+    private java.util.List<Rating> cachedratings = new java.util.ArrayList<>();
 
     public void setData(int iid, String iname, double p, double mp, String d, String t, String url, String sname, String surl) {
         this.id = iid;
@@ -91,32 +100,107 @@ public class ItemInformationController {
     public void refresh() {
         Thread t = new Thread(() -> {
             try {
-                Request req = new Request(Request.list, null);
+                Request req = new Request(Request.getitembyid, this.id);
                 Response res = NetworkClient.getinstance().sendrequestandwait(req);
                 if (res != null && Response.ok.equals(res.getstatus())) {
                     Object p = res.getpayload();
-                    if (p instanceof List<?> list) {
-                        for (Object o : list) {
-                            if (o instanceof Item i && i.getid() == this.id) {
-                                Platform.runLater(() -> {
-                                    if (CurrentHighestBidValue != null) {
-                                        CurrentHighestBidValue.setText(String.format("%,.0f$", i.getcurrentprice()));
-                                    }
-                                    this.currentMaxPrice = i.getmaxprice();
-                                    if (MaxPriceValue != null) {
-                                        if (this.currentMaxPrice > 0) MaxPriceValue.setText(String.format("BUY IT NOW: %,.0f$", this.currentMaxPrice));
-                                        else MaxPriceValue.setText("NO BUY IT NOW");
-                                    }
-                                });
-                                break;
+                    if (p instanceof Item i) {
+                        Platform.runLater(() -> {
+                            if (CurrentHighestBidValue != null) {
+                                CurrentHighestBidValue.setText(String.format("%,.0f$", i.getcurrentprice()));
                             }
-                        }
+                            this.currentMaxPrice = i.getmaxprice();
+                            if (MaxPriceValue != null) {
+                                if (this.currentMaxPrice > 0) MaxPriceValue.setText(String.format("BUY IT NOW: %,.0f$", this.currentMaxPrice));
+                                else MaxPriceValue.setText("NO BUY IT NOW");
+                            }
+                            this.sellerid = i.getsellerid();
+                            this.winnerid = i.getwinnerid();
+                            setupratingui(i);
+                        });
                     }
                 }
+                loadratings();
             } catch (Exception e) {}
         });
         t.setDaemon(true);
         t.start();
+    }
+
+    private void setupratingui(Item res) {
+        if (res == null || RateButton == null) return;
+        boolean ans = false;
+        if (res.getstatus() == com.auction.shared.ItemStatus.CLOSED || res.getstatus() == com.auction.shared.ItemStatus.FINISHED) {
+            if (ClientSession.getCurrentUser() != null) {
+                int res1 = ClientSession.getCurrentUser().getid();
+                if (res1 == res.getwinnerid() || res1 == res.getsellerid()) {
+                    ans = true;
+                }
+            }
+        }
+        RateButton.setVisible(ans);
+        RateButton.setManaged(ans);
+    }
+
+    private void loadratings() {
+        if (this.id <= 0) return;
+        Request res = new Request(Request.getratings, this.id);
+        Response res1 = NetworkClient.getinstance().sendrequestandwait(res);
+        if (res1 != null && Response.ok.equals(res1.getstatus())) {
+            Object res2 = res1.getpayload();
+            if (res2 instanceof List<?> list) {
+                cachedratings.clear();
+                for (Object o : list) {
+                    if (o instanceof Rating) cachedratings.add((Rating) o);
+                }
+                Platform.runLater(() -> {
+                    if (RatingFilterCombo != null && RatingFilterCombo.getItems().isEmpty()) {
+                        RatingFilterCombo.getItems().addAll("All", "Positive", "Neutral", "Negative");
+                        RatingFilterCombo.setValue("All");
+                    }
+                    renderratings("All");
+                });
+            }
+        }
+    }
+
+    @FXML
+    private void handleratingfilter() {
+        if (RatingFilterCombo == null) return;
+        String res = RatingFilterCombo.getValue();
+        if (res == null) res = "All";
+        renderratings(res);
+    }
+
+    private void renderratings(String filter) {
+        if (RatingsContainer == null) return;
+        RatingsContainer.getChildren().removeIf(res -> !(res instanceof HBox));
+        boolean ans = false;
+        for (Rating res4 : cachedratings) {
+            String res9 = res4.getstars() <= 2 ? "Negative" : (res4.getstars() == 3 ? "Neutral" : "Positive");
+            if (!"All".equals(filter) && !res9.equals(filter)) continue;
+            ans = true;
+            String res5 = "\u2605".repeat(res4.getstars()) + "\u2606".repeat(5 - res4.getstars());
+            String res10 = res4.getstars() <= 2 ? "#ff4444" : (res4.getstars() == 3 ? "#ffaa00" : "#44ff44");
+            String res6 = (res4.getraterusername() != null ? res4.getraterusername() : "User") + ": " + res5 + "  [" + res9 + "]";
+            Label res7 = new Label(res6);
+            res7.setStyle("-fx-text-fill: " + res10 + "; -fx-font-size: 13;");
+            RatingsContainer.getChildren().add(res7);
+            if (res4.getfeedback() != null && !res4.getfeedback().isBlank()) {
+                Label res8 = new Label("  \"" + res4.getfeedback() + "\"");
+                res8.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12; -fx-font-style: italic;");
+                res8.setWrapText(true);
+                RatingsContainer.getChildren().add(res8);
+            }
+        }
+        if (!ans && !"All".equals(filter)) {
+            Label res11 = new Label("No " + filter.toLowerCase() + " ratings.");
+            res11.setStyle("-fx-text-fill: #666; -fx-font-size: 12;");
+            RatingsContainer.getChildren().add(res11);
+        }
+        boolean res12 = !cachedratings.isEmpty();
+        RatingsContainer.setVisible(res12);
+        RatingsContainer.setManaged(res12);
     }
 
     @FXML
@@ -130,6 +214,24 @@ public class ItemInformationController {
                 c.setParentController(this);
             }
             NodeManager.addNodeToPane(l, KhungController.getKhungChua());
+        } catch (Exception e) {}
+    }
+
+    @FXML
+    private void ShowRatingForm() {
+        try {
+            NodeContentLoader<VBox> res = new NodeContentLoader<>();
+            res.load("/fxml/ratingform/RatingForm.fxml");
+            com.auction.client.ui.RatingForm.RatingFormController res1 = res.getController();
+            if (res1 != null) {
+                res1.setdata(this.id);
+                res1.setoncomplete(() -> {
+                    RateButton.setVisible(false);
+                    RateButton.setManaged(false);
+                    new Thread(() -> loadratings()).start();
+                });
+            }
+            NodeManager.addNodeToPane(res, KhungController.getKhungChua());
         } catch (Exception e) {}
     }
 

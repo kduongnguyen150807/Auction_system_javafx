@@ -19,6 +19,14 @@ public class UserDao {
         st.execute("alter table users add column fullname varchar(255) null");
         st.execute("update users set fullname = username where fullname is null or trim(fullname) = ''");
       }
+      if (!this.columnExists("users", "avgrating")) {
+        Statement st = this.conn.createStatement();
+        st.execute("alter table users add column avgrating double default 0");
+      }
+      if (!this.columnExists("users", "totalratings")) {
+        Statement st = this.conn.createStatement();
+        st.execute("alter table users add column totalratings int default 0");
+      }
     } catch (SQLException e) {
     }
   }
@@ -52,6 +60,8 @@ public class UserDao {
         ans.setactive(rs.getBoolean("isactive"));
         ans.setlocked(rs.getBoolean("islocked"));
         ans.setavatarurl(rs.getString("avatar_url"));
+        try { ans.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
+        try { ans.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
       }
     } catch (Exception e) {
     }
@@ -216,6 +226,19 @@ public class UserDao {
     return ans;
   }
 
+  public boolean setuserrole(String username, String role) {
+    boolean ans = false;
+    String sql = "UPDATE users SET role = ? WHERE username = ?";
+    try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+      stmt.setString(1, role);
+      stmt.setString(2, username);
+      int res = stmt.executeUpdate();
+      ans = res > 0;
+    } catch (SQLException e) {
+    }
+    return ans;
+  }
+
   public java.util.List<User> getallusers() {
     java.util.List<User> ans = new java.util.ArrayList<>();
     String sql = "select * from users";
@@ -243,6 +266,8 @@ public class UserDao {
         u.setactive(rs.getBoolean("isactive"));
         u.setlocked(rs.getBoolean("islocked"));
         u.setavatarurl(rs.getString("avatar_url"));
+        try { u.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
+        try { u.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
         ans.add(u);
       }
     } catch (SQLException e) {
@@ -317,6 +342,8 @@ public class UserDao {
         ans.setactive(rs.getBoolean("isactive"));
         ans.setlocked(rs.getBoolean("islocked"));
         ans.setavatarurl(rs.getString("avatar_url"));
+        try { ans.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
+        try { ans.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
       }
     } catch (Exception e) {}
     return ans;

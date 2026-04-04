@@ -15,6 +15,8 @@ public abstract class User extends Entity {
   protected int itemsbought;
   protected double moneyreceived;
   protected int itemssold;
+  protected double avgrating;
+  protected int totalratings;
 
   public User() {}
 
@@ -64,4 +66,8 @@ public abstract class User extends Entity {
   public void setmoneyreceived(double m) { this.moneyreceived = m; }
   public int getitemssold() { return this.itemssold; }
   public void setitemssold(int i) { this.itemssold = i; }
+  public double getavgrating() { return this.avgrating; }
+  public void setavgrating(double r) { this.avgrating = r; }
+  public int gettotalratings() { return this.totalratings; }
+  public void settotalratings(int r) { this.totalratings = r; }
 }

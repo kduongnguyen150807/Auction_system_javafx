@@ -52,8 +52,10 @@ public class YourItemController {
         res_l.load("/fxml/itemcard/ItemCard.fxml");
         ItemCardController res_c = res_l.getController();
         if (res_c != null) {
+          String res_status = res_i.getstatus() == null ? "N/A" : res_i.getstatus().name();
+          if (res_i.getstatus() == ItemStatus.PENDING) res_status = "\u23F3 Pending Approval";
           res_c.setData(res_i.getid(), res_i.getname(), res_i.getcurrentprice(), res_i.getdescription(),
-                  res_i.getstatus() == null ? "N/A" : res_i.getstatus().name(),
+                  res_status,
                   res_i.getimageurl(), res_i.getsellerusername(), res_i.getselleravatarurl());
         }
         NodeManager.addNodeToPane(res_l, ItemContainer);

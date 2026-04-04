@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class TransactionLog implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int id;
     private int userid;
     private String type;

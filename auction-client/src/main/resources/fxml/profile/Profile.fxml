@@ -38,7 +38,13 @@
                         <VBox spacing="4">
                             <children>
                                 <Label fx:id="usernameLabel" text="username" styleClass="profile-title"/>
-                                <Label text="Description" styleClass="profile-subtitle"/>
+                                <HBox spacing="6" alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label fx:id="ratingStarsLabel" text="" style="-fx-text-fill: #e2b44d; -fx-font-size: 16;"/>
+                                        <Label fx:id="ratingCountLabel" text="" style="-fx-text-fill: #999; -fx-font-size: 12;"/>
+                                    </children>
+                                </HBox>
+                                <Label fx:id="reputationWarning" text="" style="-fx-text-fill: #ff4444; -fx-font-weight: bold; -fx-font-size: 13;" visible="false" managed="false"/>
                             </children>
                         </VBox>
                         <Region HBox.hgrow="ALWAYS"/>

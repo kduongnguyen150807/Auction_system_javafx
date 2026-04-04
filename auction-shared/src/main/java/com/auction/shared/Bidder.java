@@ -1,6 +1,7 @@
 package com.auction.shared;
 
 public class Bidder extends User {
+  private static final long serialVersionUID = 1L;
   public Bidder() {
     super();
   }

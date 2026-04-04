@@ -126,7 +126,7 @@ public class ItemDao {
       ps.setTimestamp(8, Timestamp.valueOf(et));
       ps.setInt(9, sid);
       ps.setNull(10, Types.INTEGER);
-      ps.setString(11, ItemStatus.OPEN.name());
+      ps.setString(11, ItemStatus.PENDING.name());
       ps.setInt(12, 0);
       ps.setString(13, url);
       int res = ps.executeUpdate();
@@ -207,6 +207,49 @@ public class ItemDao {
         Item res2 = maprs(res1);
         ans.add(res2);
       }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
+
+  public java.util.List<Item> getpendingitems() {
+    java.util.List<Item> ans = new java.util.ArrayList<>();
+    try {
+      String res = "select i.*, u.username as seller_name, u.avatar_url as seller_avatar from items i left join users u on i.sellerid = u.id where i.status = 'PENDING' order by i.id desc";
+      PreparedStatement ps = this.conn.prepareStatement(res);
+      ResultSet res1 = ps.executeQuery();
+      while (res1.next()) {
+        ans.add(maprs(res1));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
+
+  public boolean approveitem(int id) {
+    boolean ans = false;
+    try {
+      String res = "update items set status = 'OPEN' where id = ? and status = 'PENDING'";
+      PreparedStatement ps = this.conn.prepareStatement(res);
+      ps.setInt(1, id);
+      int res1 = ps.executeUpdate();
+      ans = res1 > 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
+
+  public boolean rejectitem(int id) {
+    boolean ans = false;
+    try {
+      String res = "update items set status = 'CANCELED' where id = ? and status = 'PENDING'";
+      PreparedStatement ps = this.conn.prepareStatement(res);
+      ps.setInt(1, id);
+      int res1 = ps.executeUpdate();
+      ans = res1 > 0;
     } catch (Exception e) {
       e.printStackTrace();
     }

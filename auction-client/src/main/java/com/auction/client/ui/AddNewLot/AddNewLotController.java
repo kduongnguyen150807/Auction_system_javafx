@@ -200,6 +200,11 @@ public class AddNewLotController {
                 Response res = NetworkClient.getinstance().sendrequestandwait(req);
                 Platform.runLater(() -> {
                     if (res != null && Response.ok.equals(res.getstatus())) {
+                        Alert ans = new Alert(Alert.AlertType.INFORMATION);
+                        ans.setTitle("Item Submitted");
+                        ans.setHeaderText(null);
+                        ans.setContentText("Your item has been submitted and is pending admin approval.");
+                        ans.showAndWait();
                         KhungController.returnFromAddLot(true);
                         clearForm();
                     } else {

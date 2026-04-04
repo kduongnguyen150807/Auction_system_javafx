@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class Lot implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int id;
     private int itemid;
     private String title;

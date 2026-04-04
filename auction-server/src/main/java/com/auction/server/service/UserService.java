@@ -35,4 +35,9 @@ public class UserService {
     boolean ans = this.userdao.setuserlocked(username, lockstatus);
     return ans;
   }
+
+  public boolean setuserrole(String username, String role) {
+    boolean ans = this.userdao.setuserrole(username, role);
+    return ans;
+  }
 }

@@ -17,6 +17,7 @@ public class ProfileController {
   @FXML private javafx.scene.image.ImageView avatarimageview;
   @FXML private Label usernameLabel, fullNameLabel, emailLabel, phoneLabel, roleLabel, balanceLabel;
   @FXML private Label moneySpentLabel, itemsBoughtLabel, moneyReceivedLabel, itemsSoldLabel;
+  @FXML private Label ratingStarsLabel, ratingCountLabel, reputationWarning;
   @FXML private TextField fullNameInput, emailInput, phoneInput, DepositAmountField;
   @FXML private Button editButton, toggleRoleButton;
   @FXML private HBox bidderMetricsRow, sellerMetricsRow;
@@ -84,6 +85,27 @@ public class ProfileController {
       boolean res2 = ans == UserRole.BIDDER;
       if (bidderMetricsRow != null) { bidderMetricsRow.setVisible(res2); bidderMetricsRow.setManaged(res2); }
       if (sellerMetricsRow != null) { sellerMetricsRow.setVisible(!res2); sellerMetricsRow.setManaged(!res2); }
+
+      if (ratingStarsLabel != null) {
+        if (res.gettotalratings() > 0) {
+          int res3 = (int) Math.round(res.getavgrating());
+          String res4 = "\u2605".repeat(res3) + "\u2606".repeat(5 - res3);
+          String res6 = res.getavgrating() <= 2.0 ? "Negative" : (res.getavgrating() <= 3.0 ? "Neutral" : "Positive");
+          String res7 = res.getavgrating() <= 2.0 ? "-fx-text-fill: #ff4444;" : (res.getavgrating() <= 3.0 ? "-fx-text-fill: #ffaa00;" : "-fx-text-fill: #44cc44;");
+          ratingStarsLabel.setText(res4);
+          ratingStarsLabel.setStyle("-fx-font-size: 16; " + res7);
+          ratingCountLabel.setText(String.format("%.1f (%d ratings) - %s", res.getavgrating(), res.gettotalratings(), res6));
+        } else {
+          ratingStarsLabel.setText("");
+          ratingCountLabel.setText("No ratings yet");
+        }
+      }
+      if (reputationWarning != null) {
+        boolean res5 = res.getavgrating() < 2.0 && res.gettotalratings() >= 3;
+        reputationWarning.setText(res5 ? "WARNING: Low reputation user" : "");
+        reputationWarning.setVisible(res5);
+        reputationWarning.setManaged(res5);
+      }
 
       if (res.getavatarurl() != null && !res.getavatarurl().isEmpty()) {
         javafx.scene.image.Image ansimg = new javafx.scene.image.Image(res.getavatarurl(), true);

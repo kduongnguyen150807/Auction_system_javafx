@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Request implements Serializable {
+  private static final long serialVersionUID = 1L;
   public static final String login = "LOGIN";
   public static final String signup = "SIGNUP";
   public static final String bid = "BID";
@@ -18,6 +19,13 @@ public class Request implements Serializable {
   public static final String addlot = "ADD_LOT";
   public static final String getongoingbids = "GET_ONGOING_BIDS";
   public static final String getupcomingbids = "GET_UPCOMING_BIDS";
+  public static final String submitrating = "SUBMIT_RATING";
+  public static final String getratings = "GET_RATINGS";
+  public static final String getpendingitems = "GET_PENDING_ITEMS";
+  public static final String approveitem = "APPROVE_ITEM";
+  public static final String rejectitem = "REJECT_ITEM";
+  public static final String getitembyid = "GET_ITEM_BY_ID";
+  public static final String promoteadmin = "PROMOTE_ADMIN";
   protected String requestid;
   protected String action;
   protected Object payload;

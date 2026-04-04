@@ -2,7 +2,8 @@ package com.auction.shared;
 
 import java.time.LocalDateTime;
 
-public class Item extends Entity { // BỎ abstract ở đây
+public class Item extends Entity {
+  private static final long serialVersionUID = 1L;
   protected String name;
   protected String description;
   protected double startingprice;

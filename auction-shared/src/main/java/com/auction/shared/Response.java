@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class Response implements Serializable {
+  private static final long serialVersionUID = 1L;
   public static final String ok = "SUCCESS";
   public static final String err = "ERROR";
   protected String requestid;
