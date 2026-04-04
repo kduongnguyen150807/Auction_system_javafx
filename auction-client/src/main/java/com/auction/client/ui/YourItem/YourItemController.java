@@ -5,111 +5,63 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
-import com.auction.client.ui.Main.KhungController;
-import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import java.util.ArrayList;
-import java.util.List;
+import com.auction.shared.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.control.Label;
+import java.util.List;
 
 public class YourItemController {
   @FXML private FlowPane ItemContainer;
-  @FXML private javafx.scene.control.Label ActiveItemsValue;
-  @FXML private javafx.scene.control.Label InventoryValue;
-  private final List<Item> cachedItems = new ArrayList<>();
-  private String keyword = "";
-  private String category = "All";
+  @FXML private Label ActiveItemsValue, InventoryValue;
 
   @FXML
   void initialize() {
-    setFilters(KhungController.getSearchKeyword(), KhungController.getCategoryFilter());
     refreshItems();
   }
 
   public void refreshItems() {
-    Thread worker =
-        new Thread(
-            () -> {
-              try {
-                Response res =
-                    NetworkClient.getinstance()
-                        .sendrequestandwait(new Request(Request.list, null));
-                if (res == null || !Response.ok.equals(res.getstatus())) return;
-                Object payload = res.getpayload();
-                if (!(payload instanceof List<?> rawItems)) return;
-                Platform.runLater(() -> cacheAndRender(rawItems));
-              } catch (Exception ignored) {
-              }
-            });
-    worker.setDaemon(true);
-    worker.start();
-  }
+    if (ClientSession.getCurrentUser() == null) return;
+    int res_uid = ClientSession.getCurrentUser().getid();
 
-  public void setFilters(String keyword, String category) {
-    this.keyword = keyword == null ? "" : keyword.trim().toLowerCase();
-    this.category = (category == null || category.isBlank()) ? "All" : category;
-    renderFilteredItems();
-  }
-
-  private void cacheAndRender(List<?> rawItems) {
-    cachedItems.clear();
-    for (Object obj : rawItems) {
-      if (obj instanceof Item item) cachedItems.add(item);
-    }
-    renderFilteredItems();
-  }
-
-  private void renderFilteredItems() {
-    ItemContainer.getChildren().clear();
-    int uid = ClientSession.getCurrentUser() == null ? -1 : ClientSession.getCurrentUser().getid();
-    int activeCount = 0;
-    double totalValue = 0;
-    for (Item item : cachedItems) {
-      if (item.getsellerid() != uid) continue;
-      if (!match(item)) continue;
-      if (item.getstatus() == ItemStatus.OPEN) activeCount++;
-      totalValue += item.getcurrentprice();
+    new Thread(() -> {
       try {
-        NodeContentLoader<javafx.scene.layout.HBox> loader = new NodeContentLoader<>();
-        loader.load("/fxml/itemcard/ItemCard.fxml");
-        ItemCardController controller = loader.getController();
-        if (controller != null) {
-          controller.setData(
-                  item.getid(),
-                  safe(item.getname()),
-                  item.getcurrentprice(),
-                  safe(item.getdescription()),
-                  formatStatus(item.getstatus()),
-                  safe(item.getimageurl()),
-                  safe(item.getsellerusername()),
-                  safe(item.getselleravatarurl())
-          );
+        Request req = new Request("get_my_items", res_uid);
+        Response res = NetworkClient.getinstance().sendrequestandwait(req);
+
+        if (res != null && Response.ok.equals(res.getstatus())) {
+          List<Item> ans = (List<Item>) res.getpayload();
+          Platform.runLater(() -> render(ans));
         }
-        NodeManager.addNodeToPane(loader, ItemContainer);
-      } catch (Exception ignored) {
-      }
+      } catch (Exception ignored) {}
+    }).start();
+  }
+
+  private void render(List<Item> items) {
+    ItemContainer.getChildren().clear();
+    int res_active = 0;
+    double res_total = 0;
+
+    for (Item res_i : items) {
+      if (res_i.getstatus() == ItemStatus.OPEN) res_active++;
+      res_total += res_i.getcurrentprice();
+
+      try {
+        NodeContentLoader<javafx.scene.layout.HBox> res_l = new NodeContentLoader<>();
+        res_l.load("/fxml/itemcard/ItemCard.fxml");
+        ItemCardController res_c = res_l.getController();
+        if (res_c != null) {
+          res_c.setData(res_i.getid(), res_i.getname(), res_i.getcurrentprice(), res_i.getdescription(),
+                  res_i.getstatus() == null ? "N/A" : res_i.getstatus().name(),
+                  res_i.getimageurl(), res_i.getsellerusername(), res_i.getselleravatarurl());
+        }
+        NodeManager.addNodeToPane(res_l, ItemContainer);
+      } catch (Exception ignored) {}
     }
-    ActiveItemsValue.setText(String.valueOf(activeCount));
-    InventoryValue.setText(String.format("%,.0f$", totalValue));
+    ActiveItemsValue.setText(String.valueOf(res_active));
+    InventoryValue.setText(String.format("%,.0f$", res_total));
   }
 
-  private boolean match(Item item) {
-    String name = safe(item.getname()).toLowerCase();
-    if (!keyword.isBlank() && !name.contains(keyword)) return false;
-    if ("All".equalsIgnoreCase(category)) return true;
-    return safe(item.getcategory()).equalsIgnoreCase(category);
-  }
-
-  private String safe(String value) {
-    return value == null ? "" : value;
-  }
-
-  private String formatStatus(ItemStatus status) {
-    if (status == null) return "N/A";
-    return status.name();
-  }
+  public void setFilters(String k, String c) {}
 }

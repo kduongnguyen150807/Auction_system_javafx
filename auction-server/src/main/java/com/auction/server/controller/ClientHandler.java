@@ -55,138 +55,131 @@ public class ClientHandler implements Runnable {
     } catch (Exception e) {
     } finally {
       AuctionManager.getinstance().removeclient(this);
-      try {
-        this.socket.close();
-      } catch (Exception e) {}
+      try { this.socket.close(); } catch (Exception e) {}
     }
   }
 
   private Response process(Request req) {
     Response ans = null;
     String act = req.getaction();
+    Object pay = req.getpayload();
+    String rid = req.getrequestid();
+
+    // 1. NHÓM AUTH (ĐĂNG NHẬP / ĐĂNG KÝ)
     if (act.equals(Request.login)) {
-      Map<String, String> data = (Map<String, String>) req.getpayload();
-      User u = this.userservice.login(data.get("username"), data.get("password"));
+      Map<String, String> res = (Map<String, String>) pay;
+      User u = this.userservice.login(res.get("username"), res.get("password"));
       if (u != null) {
         this.currentuser = u;
-        ans = new Response(req.getrequestid(), Response.ok, "success", u);
-      } else ans = new Response(req.getrequestid(), Response.err, "fail", null);
-    } else if (act.equals(Request.signup)) {
-      Map<String, String> data = (Map<String, String>) req.getpayload();
-      User u = new Bidder(data.get("username"), data.get("password"), data.get("email"), data.get("age"), "");
-      boolean res = this.userservice.signup(u);
-      if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
-      else ans = new Response(req.getrequestid(), Response.err, "duplicate_username_or_email", null);
-    } else if (act.equals(Request.list)) {
-      List<Item> items = this.itemdao.getall();
-      items.removeIf(i -> i.getstatus() != com.auction.shared.ItemStatus.OPEN);
-      ans = new Response(req.getrequestid(), Response.ok, "success", items);
-    } else if (act.equals(Request.bid)) {
-      BidTransaction b = (BidTransaction) req.getpayload();
-      Response sysres = AuctionManager.getinstance().processbid(b);
-      ans = new Response(req.getrequestid(), sysres.getstatus(), sysres.getmessage(), sysres.getpayload());
-    } else if (act.equals(Request.updateprofile)) {
-      Map<String, String> data = (Map<String, String>) req.getpayload();
-      String err = this.userservice.updateprofile(Integer.parseInt(data.get("userid")), data.get("fullname"), data.get("email"), data.get("phone"));
-      if (err == null) ans = new Response(req.getrequestid(), Response.ok, "success", null);
-      else ans = new Response(req.getrequestid(), Response.err, err, null);
-    } else if (act.equals(Request.updateavatar)) {
-      String[] res = ((String) req.getpayload()).split(" ");
-      String username = res[0];
-      String url = res[1];
+        ans = new Response(rid, Response.ok, "success", u);
+      } else ans = new Response(rid, Response.err, "fail", null);
+    }
+    else if (act.equals(Request.signup)) {
+      Map<String, String> res = (Map<String, String>) pay;
+      User u = new Bidder(res.get("username"), res.get("password"), res.get("email"), res.get("age"), "");
+      boolean res2 = this.userservice.signup(u);
+      ans = new Response(rid, res2 ? Response.ok : Response.err, res2 ? "success" : "duplicate", null);
+    }
+
+    // 2. NHÓM ITEM & ĐẤU GIÁ
+    else if (act.equals(Request.list)) {
+      List<Item> res = this.itemdao.getall();
+      res.removeIf(i -> i.getstatus() != com.auction.shared.ItemStatus.OPEN);
+      ans = new Response(rid, Response.ok, "success", res);
+    }
+    else if (act.equals(Request.bid)) {
+      BidTransaction res = (BidTransaction) pay;
+      Response res2 = AuctionManager.getinstance().processbid(res);
+      ans = new Response(rid, res2.getstatus(), res2.getmessage(), res2.getpayload());
+    }
+    else if (act.equals(Request.addlot)) {
+      ans = handleAddLot(req);
+    }
+    else if (act.equals("get_my_items")) { // Cho trang Your Item
+      int res = (int) pay;
+      java.util.List<Item> ans2 = this.itemdao.getbysellerid(res);
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) ans2);
+    }
+
+    // 3. NHÓM PROFILE & USER MANAGEMENT
+    else if (act.equals(Request.updateprofile)) {
+      Map<String, String> res = (Map<String, String>) pay;
+      String err = this.userservice.updateprofile(Integer.parseInt(res.get("userid")), res.get("fullname"), res.get("email"), res.get("phone"));
+      ans = new Response(rid, err == null ? Response.ok : Response.err, err == null ? "success" : err, null);
+    }
+    else if (act.equals(Request.updateavatar)) {
+      String[] res = ((String) pay).split(" ");
       try {
-        this.userservice.updateavatar(username, url);
-        ans = new Response(req.getrequestid(), Response.ok, "success", null);
-      } catch (Exception e) {
-        ans = new Response(req.getrequestid(), Response.err, "fail", null);
-      }
-    } else if (act.equals(Request.getallusers)) {
-      java.util.List<User> res = this.userservice.getallusers();
-      ans = new Response(req.getrequestid(), Response.ok, "success", res);
-    } else if (act.equals(Request.lockuser)) {
-      String targetusername = (String) req.getpayload();
-      boolean res = this.userservice.setuserlocked(targetusername, true);
-      if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
-      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
-    } else if (act.equals(Request.unlockuser)) {
-      String targetusername = (String) req.getpayload();
-      boolean res = this.userservice.setuserlocked(targetusername, false);
-      if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
-      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
-    } else if (act.equals(Request.addlot)) {
-      try {
-        Map<String, String> data = (Map<String, String>) req.getpayload();
-        String title = data.get("name");
-        String description = data.get("description");
-        double startprice = Double.parseDouble(data.get("startingprice"));
-        double maxp = Double.parseDouble(data.getOrDefault("maxprice", "0"));
+        this.userservice.updateavatar(res[0], res[1]);
+        ans = new Response(rid, Response.ok, "success", null);
+      } catch (Exception e) { ans = new Response(rid, Response.err, "fail", null); }
+    }
+    else if (act.equals(Request.getallusers)) {
+      ans = new Response(rid, Response.ok, "success", this.userservice.getallusers());
+    }
+    else if (act.equals(Request.lockuser) || act.equals(Request.unlockuser)) {
+      boolean lock = act.equals(Request.lockuser);
+      boolean res = this.userservice.setuserlocked((String) pay, lock);
+      ans = new Response(rid, res ? Response.ok : Response.err, res ? "success" : "fail", null);
+    }
 
-        java.time.LocalDateTime starttime;
-        try {
-          starttime = java.time.LocalDateTime.parse(data.get("starttime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
-        } catch (java.time.format.DateTimeParseException ignored) {
-          starttime = java.time.LocalDateTime.parse(data.get("starttime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        }
-        java.time.LocalDateTime endtime;
-        try {
-          endtime = java.time.LocalDateTime.parse(data.get("endtime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
-        } catch (java.time.format.DateTimeParseException ignored) {
-          endtime = java.time.LocalDateTime.parse(data.get("endtime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        }
-        String sellerusername = data.get("sellerusername");
-        String imageurl = data.getOrDefault("imageurl", "");
+    // 4. NHÓM LỊCH SỬ (BIDDER)
+    else if (act.equals(Request.getongoingbids)) {
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) this.lotdao.getongoingbids((int) pay));
+    }
+    else if (act.equals(Request.getupcomingbids)) {
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) this.lotdao.getupcomingbids((int) pay));
+    }
+    else if (act.equals("getclosedbids")) {
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) this.lotdao.getclosedbids((int) pay));
+    }
+    else if (act.equals("getpastbids")) {
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) this.lotdao.getpastbids((int) pay));
+    }
 
-        boolean res = this.itemdao.insertlot(title, description, startprice, maxp, starttime, endtime, sellerusername, imageurl, data.getOrDefault("category", "Vehicle"));
-
-        if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
-        else ans = new Response(req.getrequestid(), Response.err, "fail", null);
-      } catch (Exception e) {
-        ans = new Response(req.getrequestid(), Response.err, "fail", null);
-      }
-    } else if (act.equals(Request.getongoingbids)) {
-      int res = (int) req.getpayload();
-      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getongoingbids(res);
-      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
-    } else if (act.equals(Request.getupcomingbids)) {
-      int res = (int) req.getpayload();
-      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getupcomingbids(res);
-      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
-    } else if (act.equals("getclosedbids")) {
-      int res = (int) req.getpayload();
-      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getclosedbids(res);
-      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
-    } else if (act.equals("getpastbids")) {
-      int res = (int) req.getpayload();
-      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getpastbids(res);
-      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
-    } else if (act.equals("deposit")) {
-      Map<String, String> data = (Map<String, String>) req.getpayload();
-      int id = Integer.parseInt(data.get("userid"));
-      double val = Double.parseDouble(data.get("amount"));
-      com.auction.server.dao.UserDao d = new com.auction.server.dao.UserDao();
-      User u = d.getbyid(String.valueOf(id));
-      if (u != null) {
-        boolean res = d.updatebalance(id, u.getbalance() + val);
-        if (res) {
-          this.logdao.insertlog(id, "DEPOSIT", val, 0);
-          u.setbalance(u.getbalance() + val);
-          ans = new Response(req.getrequestid(), Response.ok, "success", u);
-        } else ans = new Response(req.getrequestid(), Response.err, "fail", null);
-      } else ans = new Response(req.getrequestid(), Response.err, "fail", null);
-    } else if (act.equals("refresh_user")) {
-      int res = (int) req.getpayload();
-      com.auction.server.dao.UserDao d = new com.auction.server.dao.UserDao();
-      User u = d.getbyid(String.valueOf(res));
-      if (u != null) ans = new Response(req.getrequestid(), Response.ok, "success", u);
-      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
-    } else if (act.equals("get_transactions")) {
-      int res = (int) req.getpayload();
-      java.util.List<TransactionLog> ans2 = this.logdao.getbyuserid(res);
-      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
-    } else {
-      ans = new Response(req.getrequestid(), Response.err, "unknown", null);
+    // 5. NHÓM TÀI CHÍNH & REFRESH
+    else if (act.equals("deposit")) {
+      ans = handleDeposit(req);
+    }
+    else if (act.equals("refresh_user")) {
+      User u = new com.auction.server.dao.UserDao().getbyid(String.valueOf(pay));
+      ans = new Response(rid, u != null ? Response.ok : Response.err, u != null ? "success" : "fail", u);
+    }
+    else if (act.equals("get_transactions")) {
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) this.logdao.getbyuserid((int) pay));
+    }
+    else {
+      ans = new Response(rid, Response.err, "unknown_action", null);
     }
     return ans;
+  }
+
+  private Response handleAddLot(Request req) {
+    try {
+      Map<String, String> res = (Map<String, String>) req.getpayload();
+      java.time.format.DateTimeFormatter f = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]");
+      java.time.LocalDateTime st = java.time.LocalDateTime.parse(res.get("starttime").length() == 16 ? res.get("starttime") + ":00" : res.get("starttime"), f);
+      java.time.LocalDateTime et = java.time.LocalDateTime.parse(res.get("endtime").length() == 16 ? res.get("endtime") + ":00" : res.get("endtime"), f);
+
+      boolean ok = this.itemdao.insertlot(res.get("name"), res.get("description"), Double.parseDouble(res.get("startingprice")),
+              Double.parseDouble(res.getOrDefault("maxprice", "0")), st, et, res.get("sellerusername"),
+              res.getOrDefault("imageurl", ""), res.getOrDefault("category", "Vehicle"));
+      return new Response(req.getrequestid(), ok ? Response.ok : Response.err, ok ? "success" : "fail", null);
+    } catch (Exception e) { return new Response(req.getrequestid(), Response.err, "fail", null); }
+  }
+
+  private Response handleDeposit(Request req) {
+    Map<String, String> res = (Map<String, String>) req.getpayload();
+    int id = Integer.parseInt(res.get("userid"));
+    double val = Double.parseDouble(res.get("amount"));
+    com.auction.server.dao.UserDao d = new com.auction.server.dao.UserDao();
+    User u = d.getbyid(String.valueOf(id));
+    if (u != null && d.updatebalance(id, u.getbalance() + val)) {
+      this.logdao.insertlog(id, "DEPOSIT", val, 0);
+      u.setbalance(u.getbalance() + val);
+      return new Response(req.getrequestid(), Response.ok, "success", u);
+    }
+    return new Response(req.getrequestid(), Response.err, "fail", null);
   }
 
   public void send(Response r) {

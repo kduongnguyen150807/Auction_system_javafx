@@ -88,7 +88,11 @@ public class KhungController {
 
     @FXML public void openAuction(MouseEvent e) { switchpage(an, AuctionMenu); }
     @FXML public void openHistory(MouseEvent e) { switchpage(hn, HistoryMenu); if (hc != null) hc.refreshhistory(); }
-    @FXML public void openMyItems(MouseEvent e) { if (ClientSession.getActiveRole() == UserRole.SELLER) switchpage(mn, MyItemMenu); }
+    // Tìm hàm này và sửa lại:
+    @FXML
+    public void openMyItems(MouseEvent e) {
+        switchpage(mn, MyItemMenu);
+    }
     @FXML public void openProfile(MouseEvent e) { switchpage(pn, ProfileMenu); }
     @FXML public void openManageUsers(MouseEvent e) { switchpage(adn, ManageUsersMenu); }
 

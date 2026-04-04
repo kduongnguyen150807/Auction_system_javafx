@@ -195,4 +195,21 @@ public class ItemDao {
     }
     return ans;
   }
+  public java.util.List<Item> getbysellerid(int sid) {
+    java.util.List<Item> ans = new java.util.ArrayList<>();
+    try {
+      // Đổi createdat thành id để sắp xếp, vì bảng items của mày có id chắc luôn
+      String res = "SELECT * FROM items WHERE sellerid = ? ORDER BY id DESC";
+      java.sql.PreparedStatement ps = this.conn.prepareStatement(res);
+      ps.setInt(1, sid);
+      java.sql.ResultSet res1 = ps.executeQuery();
+      while (res1.next()) {
+        Item res2 = maprs(res1);
+        ans.add(res2);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
 }
