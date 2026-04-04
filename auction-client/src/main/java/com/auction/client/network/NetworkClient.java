@@ -9,7 +9,7 @@ public class NetworkClient {
     private ObjectInputStream in;
     private NetworkClient() {
         try {
-            this.socket = new Socket("localhost", 8080);
+            this.socket = new Socket("paris-unworn.gl.joinmc.link", 8080);
             this.out = new ObjectOutputStream(this.socket.getOutputStream());
             this.out.flush();
             this.in = new ObjectInputStream(this.socket.getInputStream());
