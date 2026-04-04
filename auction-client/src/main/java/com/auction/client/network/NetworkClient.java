@@ -47,18 +47,24 @@ public class NetworkClient {
                         } else {
                             ClientSession.setCurrentUser(u);
                         }
-                        continue; // Đọc tiếp cục dữ liệu chính
+                        continue;
                     }
                     else if ("OUTBID_NOTIFY".equals(ans.getstatus())) {
                         int res_id = (int) ans.getpayload();
                         NotificationCenter.addnotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res_id + " vừa bị người khác trả giá cao hơn! Húp lại ngay!");
-                        continue; // Đọc tiếp cục dữ liệu chính
+                        continue;
                     }
 
-                    break; // Thoát vòng lặp khi nhận được response chính
+                    if (ans.getrequestid() != null && ans.getrequestid().equals(req.getrequestid())) {
+                        break;
+                    } else {
+                        continue;
+                    }
                 }
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return ans;
     }
 
