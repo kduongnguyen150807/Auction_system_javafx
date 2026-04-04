@@ -18,6 +18,7 @@ public class ClientHandler implements Runnable {
   private UserService userservice;
   private ItemDao itemdao;
   private LotDao lotdao;
+  private User currentuser;
 
   public ClientHandler(Socket s) {
     this.socket = s;
@@ -30,6 +31,11 @@ public class ClientHandler implements Runnable {
       this.in = new ObjectInputStream(this.socket.getInputStream());
       AuctionManager.getinstance().addclient(this);
     } catch (Exception e) {}
+  }
+
+  public User getcurrentuser() {
+    User ans = this.currentuser;
+    return ans;
   }
 
   @Override
@@ -59,8 +65,12 @@ public class ClientHandler implements Runnable {
     if (act.equals(Request.login)) {
       Map<String, String> data = (Map<String, String>) req.getpayload();
       User u = this.userservice.login(data.get("username"), data.get("password"));
-      if (u != null) ans = new Response(req.getrequestid(), Response.ok, "success", u);
-      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      if (u != null) {
+        this.currentuser = u;
+        ans = new Response(req.getrequestid(), Response.ok, "success", u);
+      } else {
+        ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      }
     } else if (act.equals(Request.signup)) {
       Map<String, String> data = (Map<String, String>) req.getpayload();
       User u = new Bidder(data.get("username"), data.get("password"), data.get("email"), data.get("age"), "");
@@ -160,21 +170,14 @@ public class ClientHandler implements Runnable {
         if (res) {
           u.setbalance(u.getbalance() + val);
           ans = new Response(req.getrequestid(), Response.ok, "success", u);
-        } else {
-          ans = new Response(req.getrequestid(), Response.err, "fail", null);
-        }
-      } else {
-        ans = new Response(req.getrequestid(), Response.err, "fail", null);
-      }
+        } else ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      } else ans = new Response(req.getrequestid(), Response.err, "fail", null);
     } else if (act.equals("refresh_user")) {
       int res = (int) req.getpayload();
       UserDao d = new UserDao();
       User u = d.getbyid(String.valueOf(res));
-      if (u != null) {
-        ans = new Response(req.getrequestid(), Response.ok, "success", u);
-      } else {
-        ans = new Response(req.getrequestid(), Response.err, "fail", null);
-      }
+      if (u != null) ans = new Response(req.getrequestid(), Response.ok, "success", u);
+      else ans = new Response(req.getrequestid(), Response.err, "fail", null);
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
     }

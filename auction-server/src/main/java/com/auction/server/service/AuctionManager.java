@@ -22,11 +22,8 @@ public class AuctionManager {
   }
 
   public static synchronized AuctionManager getinstance() {
-    if (instance == null) {
-      instance = new AuctionManager();
-    }
-    AuctionManager ans = instance;
-    return ans;
+    if (instance == null) instance = new AuctionManager();
+    return instance;
   }
 
   public void addclient(ClientHandler c) {
@@ -39,82 +36,69 @@ public class AuctionManager {
 
   public synchronized Response processbid(BidTransaction b) {
     Item res = itemdao.getbyid(b.getitemid());
-    User u = userdao.getbyid(String.valueOf(b.getuserid()));
+    User ans = userdao.getbyid(String.valueOf(b.getuserid()));
 
-    if (res != null && res.getsellerid() == b.getuserid()) {
-      return new Response("", Response.err, "Mày đéo thể tự mua đồ của chính mày được!", null);
-    }
-
-    if (res != null && b.getbidvalue() <= res.getcurrentprice()) {
-      return new Response("", Response.err, "Giá bid m đưa ra phải lớn hơn giá hiện tại!", null);
-    }
-
-    if (u != null && u.getbalance() < b.getbidvalue()) {
-      return new Response("", Response.err, "Ví đéo đủ tiền, nạp thêm đi cu!", null);
-    }
+    if (res != null && res.getsellerid() == b.getuserid()) return new Response("", Response.err, "Fail", null);
+    if (res != null && b.getbidvalue() <= res.getcurrentprice()) return new Response("", Response.err, "Fail", null);
+    if (ans != null && ans.getbalance() < b.getbidvalue()) return new Response("", Response.err, "Fail", null);
 
     if (res != null && res.getmaxprice() > 0 && b.getbidvalue() >= res.getmaxprice()) {
-      userdao.updatebalance(u.getid(), u.getbalance() - res.getmaxprice());
-      userdao.addbiddermetrics(u.getid(), res.getmaxprice());
+      double res1 = res.getmaxprice();
+      userdao.updatebalance(ans.getid(), ans.getbalance() - res1);
+      userdao.addbiddermetrics(ans.getid(), res1);
+      sendtouser(ans.getid(), new Response("", "BALANCE_UPDATE", "Success", userdao.getbyid(String.valueOf(ans.getid()))));
 
-      User s = userdao.getbyid(String.valueOf(res.getsellerid()));
-      if (s != null) {
-        userdao.updatebalance(s.getid(), s.getbalance() + res.getmaxprice());
-        userdao.addsellermetrics(s.getid(), res.getmaxprice());
+      User ans1 = userdao.getbyid(String.valueOf(res.getsellerid()));
+      if (ans1 != null) {
+        userdao.updatebalance(ans1.getid(), ans1.getbalance() + res1);
+        userdao.addsellermetrics(ans1.getid(), res1);
+        sendtouser(ans1.getid(), new Response("", "BALANCE_UPDATE", "Success", userdao.getbyid(String.valueOf(ans1.getid()))));
       }
-
-      itemdao.updateprice(res.getid(), res.getmaxprice(), res.getversion());
+      itemdao.updateprice(res.getid(), res1, res.getversion());
       itemdao.closeauction(res.getid(), b.getuserid(), "CLOSED");
-      Response ans = new Response("", Response.ok, "BUY_IT_NOW_SUCCESS", b.getitemid());
-      broadcast(ans);
-      return ans;
+      Response ans2 = new Response("", Response.ok, "BUY_IT_NOW_SUCCESS", b.getitemid());
+      broadcast(ans2);
+      return ans2;
     }
 
-    int prevbidder = getprevioushighestbidder(b.getitemid());
-    double prevprice = res.getcurrentprice();
+    int res2 = getprevioushighestbidder(b.getitemid());
+    double res3 = res.getcurrentprice();
+    userdao.updatebalance(ans.getid(), ans.getbalance() - b.getbidvalue());
+    sendtouser(ans.getid(), new Response("", "BALANCE_UPDATE", "Success", userdao.getbyid(String.valueOf(ans.getid()))));
 
-    userdao.updatebalance(u.getid(), u.getbalance() - b.getbidvalue());
-
-    if (prevbidder > 0 && prevprice > 0) {
-      User oldu = userdao.getbyid(String.valueOf(prevbidder));
-      if (oldu != null) {
-        userdao.updatebalance(prevbidder, oldu.getbalance() + prevprice);
+    if (res2 > 0 && res3 > 0) {
+      User ans3 = userdao.getbyid(String.valueOf(res2));
+      if (ans3 != null) {
+        userdao.updatebalance(res2, ans3.getbalance() + res3);
+        sendtouser(res2, new Response("", "BALANCE_UPDATE", "Outbid", userdao.getbyid(String.valueOf(res2))));
       }
     }
 
-    Response ans = this.bidservice.placebid(b);
-    if (ans.getstatus().equals(Response.ok)) {
-      broadcast(ans);
-    } else {
-      userdao.updatebalance(u.getid(), u.getbalance() + b.getbidvalue());
-      if (prevbidder > 0 && prevprice > 0) {
-        User oldu = userdao.getbyid(String.valueOf(prevbidder));
-        if (oldu != null) {
-          userdao.updatebalance(prevbidder, oldu.getbalance() - prevprice);
-        }
-      }
-    }
-    return ans;
+    Response ans4 = this.bidservice.placebid(b);
+    if (ans4.getstatus().equals(Response.ok)) broadcast(ans4);
+    return ans4;
   }
 
-  private int getprevioushighestbidder(int itemid) {
+  private int getprevioushighestbidder(int id) {
     int ans = -1;
     try {
-      java.sql.Connection conn = com.auction.server.dao.DatabaseConnection.getinstance().getconnection();
-      String sql = "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
-      java.sql.PreparedStatement ps = conn.prepareStatement(sql);
-      ps.setInt(1, itemid);
-      java.sql.ResultSet rs = ps.executeQuery();
-      if (rs.next()) {
-        ans = rs.getInt("userid");
-      }
+      java.sql.Connection res = com.auction.server.dao.DatabaseConnection.getinstance().getconnection();
+      String res1 = "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
+      java.sql.PreparedStatement ans1 = res.prepareStatement(res1);
+      ans1.setInt(1, id);
+      java.sql.ResultSet res2 = ans1.executeQuery();
+      if (res2.next()) ans = res2.getInt("userid");
     } catch (Exception e) {}
     return ans;
   }
 
-  public void broadcast(Response r) {
-    for (ClientHandler c : this.clients) {
-      c.send(r);
+  public void sendtouser(int id, Response r) {
+    for (ClientHandler ans : this.clients) {
+      if (ans.getcurrentuser() != null && ans.getcurrentuser().getid() == id) ans.send(r);
     }
+  }
+
+  public void broadcast(Response r) {
+    for (ClientHandler ans : this.clients) ans.send(r);
   }
 }

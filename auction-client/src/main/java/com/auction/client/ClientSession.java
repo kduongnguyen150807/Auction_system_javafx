@@ -8,7 +8,7 @@ public final class ClientSession {
   private static String fullName = "";
   private static String email = "";
   private static String phone = "";
-  private static UserRole activeRole = UserRole.BIDDER;
+  private static UserRole activeRole;
 
   private ClientSession() {}
 
@@ -19,45 +19,51 @@ public final class ClientSession {
       if (fullName.isBlank()) fullName = safe(user.getusername());
       email = safe(user.getemail());
       phone = safe(user.getphonenumber());
-      activeRole = user.getrole() == null ? UserRole.BIDDER : user.getrole();
+      if (activeRole == null) {
+        activeRole = user.getrole() == null ? UserRole.BIDDER : user.getrole();
+      }
     }
   }
 
   public static User getCurrentUser() {
-    return currentUser;
+    User ans = currentUser;
+    return ans;
   }
 
   public static String getUsername() {
-    return currentUser == null ? "" : safe(currentUser.getusername());
+    String ans = currentUser == null ? "" : safe(currentUser.getusername());
+    return ans;
   }
 
   public static String getFullName() {
-    return fullName;
+    String ans = fullName;
+    return ans;
   }
 
   public static String getEmail() {
-    return email;
+    String ans = email;
+    return ans;
   }
 
   public static String getPhone() {
-    return phone;
+    String ans = phone;
+    return ans;
   }
 
   public static UserRole getActiveRole() {
-    return activeRole;
+    UserRole ans = activeRole;
+    return ans;
   }
 
-  /** @return null nếu lưu thành công; mã lỗi từ server (vd. duplicate_email) nếu thất bại. */
   public static String updateProfile(String newFullName, String newEmail, String newPhone) {
     if (currentUser == null) return "not_logged_in";
-    java.util.Map<String, String> data = new java.util.HashMap<>();
-    data.put("userid", String.valueOf(currentUser.getid()));
-    data.put("fullname", newFullName);
-    data.put("email", newEmail);
-    data.put("phone", newPhone);
-    com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.updateprofile, data);
-    com.auction.shared.Response ans =
-        com.auction.client.network.NetworkClient.getinstance().sendrequestandwait(req);
+    java.util.Map<String, String> res = new java.util.HashMap<>();
+    res.put("userid", String.valueOf(currentUser.getid()));
+    res.put("fullname", newFullName);
+    res.put("email", newEmail);
+    res.put("phone", newPhone);
+    com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.updateprofile, res);
+    com.auction.shared.Response ans = com.auction.client.network.NetworkClient.getinstance().sendrequestandwait(req);
     if (ans != null && com.auction.shared.Response.ok.equals(ans.getstatus())) {
       fullName = safe(newFullName);
       email = safe(newEmail);
@@ -67,7 +73,8 @@ public final class ClientSession {
       currentUser.setphonenumber(phone);
       return null;
     }
-    return ans != null ? ans.getmessage() : "fail";
+    String ans2 = ans != null ? ans.getmessage() : "fail";
+    return ans2;
   }
 
   public static void updateavatar(String ans) {
@@ -79,7 +86,8 @@ public final class ClientSession {
   }
 
   public static void toggleRole() {
-    activeRole = activeRole == UserRole.SELLER ? UserRole.BIDDER : UserRole.SELLER;
+    if (activeRole == UserRole.SELLER) activeRole = UserRole.BIDDER;
+    else activeRole = UserRole.SELLER;
   }
 
   public static void clear() {
@@ -87,10 +95,11 @@ public final class ClientSession {
     fullName = "";
     email = "";
     phone = "";
-    activeRole = UserRole.BIDDER;
+    activeRole = null;
   }
 
   private static String safe(String value) {
-    return value == null ? "" : value;
+    String ans = value == null ? "" : value;
+    return ans;
   }
 }

@@ -83,9 +83,7 @@ public class KhungController {
             cn = an;
             setmenu(AuctionMenu);
             update();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
     }
 
     @FXML public void openAuction(MouseEvent e) { switchpage(an, AuctionMenu); }
@@ -145,9 +143,24 @@ public class KhungController {
         }
         String u = ClientSession.getCurrentUser().getavatarurl();
         if (sidebaravatar != null && u != null && !u.isBlank()) {
-            Platform.runLater(() -> {
-                sidebaravatar.setImage(new Image(u, true));
-                sidebaravatar.setClip(new Circle(24, 24, 24));
+            Image ansimg = new Image(u, true);
+            ansimg.progressProperty().addListener((obs, oldv, newv) -> {
+                if (newv.doubleValue() == 1.0 && !ansimg.isError()) {
+                    double resw = ansimg.getWidth();
+                    double resh = ansimg.getHeight();
+                    double ansmin = Math.min(resw, resh);
+                    double resx = (resw - ansmin) / 2;
+                    double resy = (resh - ansmin) / 2;
+                    Platform.runLater(() -> {
+                        sidebaravatar.setImage(ansimg);
+                        sidebaravatar.setViewport(new javafx.geometry.Rectangle2D(resx, resy, ansmin, ansmin));
+                        sidebaravatar.setFitWidth(48);
+                        sidebaravatar.setFitHeight(48);
+                        sidebaravatar.setPreserveRatio(false);
+                        double ansr = 24.0;
+                        sidebaravatar.setClip(new Circle(ansr, ansr, ansr));
+                    });
+                }
             });
         }
     }
