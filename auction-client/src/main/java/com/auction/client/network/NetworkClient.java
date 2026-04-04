@@ -7,6 +7,7 @@ import com.auction.shared.User;
 import com.auction.client.ClientSession;
 import com.auction.client.ui.Profile.ProfileController;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.util.NotificationCenter;
 import javafx.application.Platform;
 import java.io.*;
@@ -43,10 +44,16 @@ public class NetworkClient {
                 while (true) {
                     Object ans = in.readObject();
                     if (ans instanceof Response) {
-                        handleincoming((Response) ans);
+                        try {
+                            handleincoming((Response) ans);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
         res.setDaemon(true);
         res.start();
@@ -70,8 +77,21 @@ public class NetworkClient {
             return;
         }
         if ("PRICE_UPDATE".equals(res.getstatus())) {
-            Item res3 = (Item) res.getpayload();
-            KhungController.updaterealtimeui(res3);
+            Object res3 = res.getpayload();
+            if (res3 instanceof Item) {
+                Item res4 = (Item) res3;
+                int ans = res4.getid();
+                double ans1 = res4.getcurrentprice();
+                Platform.runLater(() -> {
+                    if (KhungController.infoc != null && KhungController.infoc.getid() == ans) {
+                        KhungController.infoc.updateCurrentBid(ans1);
+                    }
+                    TrangChuController ans2 = TrangChuController.getinstance();
+                    if (ans2 != null) {
+                        ans2.updateitemprice(ans, ans1);
+                    }
+                });
+            }
             return;
         }
         String res5 = res.getrequestid();
