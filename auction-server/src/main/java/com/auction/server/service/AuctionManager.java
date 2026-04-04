@@ -41,6 +41,10 @@ public class AuctionManager {
     Item res = itemdao.getbyid(b.getitemid());
     User ans = userdao.getbyid(String.valueOf(b.getuserid()));
 
+    if (ans != null) {
+      String ph = ans.getphonenumber();
+      if (ph == null || ph.trim().isEmpty()) return new Response("", Response.err, "Unverified account. Add a phone number to bid.", null);
+    }
     if (res != null && res.getsellerid() == b.getuserid()) return new Response("", Response.err, "Fail", null);
     if (res != null && b.getbidvalue() <= res.getcurrentprice()) return new Response("", Response.err, "Fail", null);
     if (ans != null && ans.getbalance() < b.getbidvalue()) return new Response("", Response.err, "Fail", null);

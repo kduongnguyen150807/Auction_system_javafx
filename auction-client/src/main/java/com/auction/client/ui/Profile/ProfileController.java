@@ -17,7 +17,7 @@ public class ProfileController {
   @FXML private javafx.scene.image.ImageView avatarimageview;
   @FXML private Label usernameLabel, fullNameLabel, emailLabel, phoneLabel, roleLabel, balanceLabel;
   @FXML private Label moneySpentLabel, itemsBoughtLabel, moneyReceivedLabel, itemsSoldLabel;
-  @FXML private Label ratingStarsLabel, ratingCountLabel, reputationWarning;
+  @FXML private Label ratingStarsLabel, ratingCountLabel, reputationWarning, verifiedLabel;
   @FXML private TextField fullNameInput, emailInput, phoneInput, DepositAmountField;
   @FXML private Button editButton, toggleRoleButton;
   @FXML private HBox bidderMetricsRow, sellerMetricsRow;
@@ -73,6 +73,14 @@ public class ProfileController {
       emailLabel.setText(res.getemail());
       phoneLabel.setText(res.getphonenumber());
       roleLabel.setText(ans.name());
+      if (verifiedLabel != null) {
+        String ph = res.getphonenumber();
+        boolean verified = ph != null && !ph.trim().isEmpty();
+        verifiedLabel.setText(verified ? "\u2713 Verified" : "Unverified");
+        verifiedLabel.setStyle(verified
+                ? "-fx-background-color: #44cc44; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;"
+                : "-fx-background-color: #ff4444; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;");
+      }
       if (balanceLabel != null) balanceLabel.setText(String.format("%,.0f$", res.getbalance()));
       if (moneySpentLabel != null) moneySpentLabel.setText(String.format("%,.0f$", res.getmoneyspent()));
       if (itemsBoughtLabel != null) itemsBoughtLabel.setText(String.valueOf(res.getitemsbought()));
@@ -134,12 +142,39 @@ public class ProfileController {
   private void setEditingMode(boolean v) {
     editing = v;
     editButton.setText(editing ? "Save" : "Edit Profile");
-    fullNameLabel.setVisible(!v); fullNameInput.setVisible(v);
-    emailLabel.setVisible(!v); emailInput.setVisible(v);
-    phoneLabel.setVisible(!v); phoneInput.setVisible(v);
+    fullNameLabel.setVisible(!v); fullNameLabel.setManaged(!v);
+    fullNameInput.setVisible(v); fullNameInput.setManaged(v);
+    emailLabel.setVisible(!v); emailLabel.setManaged(!v);
+    emailInput.setVisible(v); emailInput.setManaged(v);
+    phoneLabel.setVisible(!v); phoneLabel.setManaged(!v);
+    phoneInput.setVisible(v); phoneInput.setManaged(v);
+    if (v) {
+      User res = ClientSession.getCurrentUser();
+      if (res != null) {
+        fullNameInput.setText(res.getfullname() != null ? res.getfullname() : "");
+        emailInput.setText(res.getemail() != null ? res.getemail() : "");
+        phoneInput.setText(res.getphonenumber() != null ? res.getphonenumber() : "");
+      }
+    }
   }
 
-  @FXML public void handleEditProfile() { setEditingMode(!editing); }
+  @FXML
+  public void handleEditProfile() {
+    if (editing) {
+      String err = ClientSession.updateProfile(
+              fullNameInput.getText(),
+              emailInput.getText(),
+              phoneInput.getText()
+      );
+      if (err == null) {
+        refreshData();
+        KhungController.refreshSidebarFromSession();
+      } else {
+        new Alert(Alert.AlertType.ERROR, err).showAndWait();
+      }
+    }
+    setEditingMode(!editing);
+  }
   @FXML public void handleLogout() { ClientSession.clear(); try { SceneManager.switchscene("/fxml/welcome.fxml"); } catch (IOException e) {} }
 
   @FXML

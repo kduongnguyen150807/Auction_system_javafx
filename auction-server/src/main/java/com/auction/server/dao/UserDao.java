@@ -316,7 +316,7 @@ public class UserDao {
 
   public java.util.List<User> searchusers(String keyword) {
     java.util.List<User> ans = new java.util.ArrayList<>();
-    String sql = "select * from users where (lower(username) like ? or lower(fullname) like ?) and isactive = true limit 20";
+    String sql = "select * from users where (lower(username) like ? or lower(fullname) like ?) and isactive = true and lower(role) != 'admin' limit 20";
     try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
       String kw = "%" + keyword.toLowerCase().trim() + "%";
       ps.setString(1, kw);

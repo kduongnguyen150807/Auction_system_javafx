@@ -50,6 +50,12 @@ public class BiddingFormController {
                 showAlert(Alert.AlertType.WARNING, "Not logged in", "Please login to place a bid.");
                 return;
             }
+            String phone = ClientSession.getCurrentUser().getphonenumber();
+            if (phone == null || phone.trim().isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Unverified Account",
+                        "You must add a phone number in your Profile to place a bid.");
+                return;
+            }
             if (itemid <= 0) {
                 showAlert(Alert.AlertType.ERROR, "Missing item", "Item not selected.");
                 return;

@@ -37,7 +37,12 @@
                         </VBox>
                         <VBox spacing="4">
                             <children>
-                                <Label fx:id="usernameLabel" text="username" styleClass="profile-title"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label fx:id="usernameLabel" text="username" styleClass="profile-title"/>
+                                        <Label fx:id="verifiedLabel" text="Unverified" style="-fx-background-color: #ff4444; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;"/>
+                                    </children>
+                                </HBox>
                                 <HBox spacing="6" alignment="CENTER_LEFT">
                                     <children>
                                         <Label fx:id="ratingStarsLabel" text="" style="-fx-text-fill: #e2b44d; -fx-font-size: 16;"/>
