@@ -5,6 +5,7 @@ import com.auction.shared.Response;
 import com.auction.shared.User;
 import com.auction.client.ClientSession;
 import com.auction.client.ui.Profile.ProfileController;
+import com.auction.client.util.NotificationCenter;
 import java.io.*;
 import java.net.Socket;
 
@@ -33,17 +34,28 @@ public class NetworkClient {
         try {
             this.out.writeObject(req);
             this.out.flush();
-            Object res = this.in.readObject();
-            if (res instanceof Response) {
-                ans = (Response) res;
-                if ("BALANCE_UPDATE".equals(ans.getstatus())) {
-                    User u = (User) ans.getpayload();
-                    if (ProfileController.getinstance() != null) {
-                        ProfileController.getinstance().updatebalancedirectly(u);
-                    } else {
-                        ClientSession.setCurrentUser(u);
+
+            while (true) {
+                Object res = this.in.readObject();
+                if (res instanceof Response) {
+                    ans = (Response) res;
+
+                    if ("BALANCE_UPDATE".equals(ans.getstatus())) {
+                        User u = (User) ans.getpayload();
+                        if (ProfileController.getinstance() != null) {
+                            ProfileController.getinstance().updatebalancedirectly(u);
+                        } else {
+                            ClientSession.setCurrentUser(u);
+                        }
+                        continue; // Đọc tiếp cục dữ liệu chính
                     }
-                    ans = (Response) this.in.readObject();
+                    else if ("OUTBID_NOTIFY".equals(ans.getstatus())) {
+                        int res_id = (int) ans.getpayload();
+                        NotificationCenter.addnotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res_id + " vừa bị người khác trả giá cao hơn! Húp lại ngay!");
+                        continue; // Đọc tiếp cục dữ liệu chính
+                    }
+
+                    break; // Thoát vòng lặp khi nhận được response chính
                 }
             }
         } catch (Exception e) {}

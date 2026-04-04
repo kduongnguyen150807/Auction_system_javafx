@@ -1,28 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 
-<HBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
+<HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.ui.SearchBar.ThanhTimKiemController"
-      prefHeight="64.0" prefWidth="1024.0"
-      styleClass="search-bar-container"
-      alignment="CENTER_LEFT" stylesheets="@/css/searchbar/ThanhTimKiem.css">
+      prefHeight="64.0" prefWidth="1024.0" styleClass="search-bar-container"
+      alignment="CENTER_LEFT" spacing="15" stylesheets="@/css/searchbar/ThanhTimKiem.css">
     <children>
-        <TextField fx:id="searchField"
-                   promptText="Search"
-                   styleClass="search-input"
-                   HBox.hgrow="ALWAYS"
-                   maxWidth="800"
-                   prefHeight="40" />
-        <ComboBox fx:id="categoryFilter"
-                  promptText="Category"
-                  styleClass="category-filter"
-                  prefHeight="40"
-                  prefWidth="180"/>
+        <Button fx:id="bellButton" text="🔔" onAction="#toggleNotifications" style="-fx-background-color: #3a3b3c; -fx-text-fill: #ffaa00; -fx-font-size: 18px; -fx-background-radius: 50%; -fx-min-width: 40px; -fx-min-height: 40px; -fx-cursor: hand;"/>
+        <TextField fx:id="searchField" promptText="Search" styleClass="search-input" HBox.hgrow="ALWAYS" maxWidth="800" prefHeight="40" />
+        <ComboBox fx:id="categoryFilter" promptText="Category" styleClass="category-filter" prefHeight="40" prefWidth="180"/>
     </children>
     <padding><Insets left="32" right="32"/></padding>
 </HBox>
