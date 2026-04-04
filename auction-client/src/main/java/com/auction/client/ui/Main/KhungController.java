@@ -6,6 +6,7 @@ import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
+import com.auction.client.ui.UserProfile.UserProfileController;
 import com.auction.shared.Item;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
@@ -211,5 +212,31 @@ public class KhungController {
         if (instance == null) return;
         instance.switchpage(instance.an, instance.AuctionMenu);
         if (r && instance.tc != null) instance.tc.refreshItems();
+    }
+
+    public static void showUserProfile(User user) {
+        if (instance == null || user == null) return;
+        Platform.runLater(() -> {
+            try {
+                NodeContentLoader<javafx.scene.Parent> loader = new NodeContentLoader<>();
+                loader.load("/fxml/userprofile/UserProfile.fxml");
+                UserProfileController ctrl = loader.getController();
+                ctrl.setUser(user);
+                javafx.scene.Node profileNode = loader.getCurrentNode();
+                if (instance.ContentArea != null) {
+                    instance.ContentArea.getChildren().clear();
+                    instance.ContentArea.getChildren().add(profileNode);
+                }
+                cn = profileNode;
+                instance.setmenu(null);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public static void returnToAuction() {
+        if (instance == null) return;
+        Platform.runLater(() -> instance.switchpage(instance.an, instance.AuctionMenu));
     }
 }

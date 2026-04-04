@@ -3,15 +3,29 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.HBox?>
 
 <HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.ui.SearchBar.ThanhTimKiemController"
       prefHeight="64.0" prefWidth="1024.0" styleClass="search-bar-container"
-      alignment="CENTER_LEFT" spacing="15" stylesheets="@/css/searchbar/ThanhTimKiem.css">
+      alignment="CENTER_LEFT" spacing="12" stylesheets="@/css/searchbar/ThanhTimKiem.css">
     <children>
-        <Button fx:id="bellButton" text="🔔" onAction="#toggleNotifications" style="-fx-background-color: #3a3b3c; -fx-text-fill: #ffaa00; -fx-font-size: 18px; -fx-background-radius: 50%; -fx-min-width: 40px; -fx-min-height: 40px; -fx-cursor: hand;"/>
-        <TextField fx:id="searchField" promptText="Search" styleClass="search-input" HBox.hgrow="ALWAYS" maxWidth="800" prefHeight="40" />
+        <Button fx:id="bellButton" text="&#x1F514;" onAction="#toggleNotifications" styleClass="bell-btn"/>
+        <TextField fx:id="searchField" promptText="Search items..." styleClass="search-input" HBox.hgrow="ALWAYS" maxWidth="800" prefHeight="40"/>
+
+        <HBox styleClass="search-toggle-group" spacing="0" alignment="CENTER">
+            <children>
+                <ToggleButton fx:id="itemsToggle" text="Items" styleClass="search-toggle, search-toggle-left" prefHeight="40" onAction="#onSearchModeChanged">
+                    <toggleGroup><ToggleGroup fx:id="searchModeGroup"/></toggleGroup>
+                </ToggleButton>
+                <ToggleButton fx:id="usersToggle" text="Users" styleClass="search-toggle, search-toggle-right" prefHeight="40" onAction="#onSearchModeChanged">
+                    <toggleGroup><fx:reference source="searchModeGroup"/></toggleGroup>
+                </ToggleButton>
+            </children>
+        </HBox>
+
         <ComboBox fx:id="categoryFilter" promptText="Category" styleClass="category-filter" prefHeight="40" prefWidth="180"/>
     </children>
     <padding><Insets left="32" right="32"/></padding>

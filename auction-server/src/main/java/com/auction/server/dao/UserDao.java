@@ -314,6 +314,38 @@ public class UserDao {
     return ans;
   }
 
+  public java.util.List<User> searchusers(String keyword) {
+    java.util.List<User> ans = new java.util.ArrayList<>();
+    String sql = "select * from users where (lower(username) like ? or lower(fullname) like ?) and isactive = true limit 20";
+    try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+      String kw = "%" + keyword.toLowerCase().trim() + "%";
+      ps.setString(1, kw);
+      ps.setString(2, kw);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        String r = rs.getString("role");
+        User u;
+        if (r.equalsIgnoreCase("ADMIN")) u = new Admin();
+        else if (r.equalsIgnoreCase("SELLER")) u = new Seller();
+        else u = new Bidder();
+        u.setid(rs.getInt("id"));
+        u.setusername(rs.getString("username"));
+        u.setfullname(rs.getString("fullname"));
+        u.setemail(rs.getString("email"));
+        u.setavatarurl(rs.getString("avatar_url"));
+        try { u.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
+        try { u.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
+        u.setmoneyspent(rs.getDouble("moneyspent"));
+        u.setitemsbought(rs.getInt("itemsbought"));
+        u.setmoneyreceived(rs.getDouble("moneyreceived"));
+        u.setitemssold(rs.getInt("itemssold"));
+        u.setpassword("");
+        ans.add(u);
+      }
+    } catch (SQLException e) {}
+    return ans;
+  }
+
   public User getbyid(String id) {
     User ans = null;
     try {

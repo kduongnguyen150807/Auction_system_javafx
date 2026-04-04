@@ -205,6 +205,17 @@ public class ClientHandler implements Runnable {
         ans = new Response(rid, Response.err, "forbidden", null);
       }
     }
+    else if (act.equals(Request.searchusers)) {
+      String res = (String) pay;
+      java.util.List<User> res2 = new com.auction.server.dao.UserDao().searchusers(res);
+      ans = new Response(rid, Response.ok, "success", (java.io.Serializable) res2);
+    }
+    else if (act.equals(Request.getuserbyid)) {
+      int res = (int) pay;
+      User u = new com.auction.server.dao.UserDao().getbyid(String.valueOf(res));
+      if (u != null) u.setpassword("");
+      ans = new Response(rid, u != null ? Response.ok : Response.err, u != null ? "success" : "not_found", u);
+    }
     else {
       ans = new Response(rid, Response.err, "unknown_action", null);
     }

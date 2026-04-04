@@ -26,6 +26,8 @@ public class Request implements Serializable {
   public static final String rejectitem = "REJECT_ITEM";
   public static final String getitembyid = "GET_ITEM_BY_ID";
   public static final String promoteadmin = "PROMOTE_ADMIN";
+  public static final String searchusers = "SEARCH_USERS";
+  public static final String getuserbyid = "GET_USER_BY_ID";
   protected String requestid;
   protected String action;
   protected Object payload;

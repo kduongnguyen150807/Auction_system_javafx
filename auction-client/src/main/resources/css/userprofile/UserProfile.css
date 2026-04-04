@@ -1,0 +1,122 @@
+.profile-root {
+    -fx-background-color: -color-bg;
+    -fx-min-height: 760;
+}
+
+.profile-header {
+    -fx-background-color: #0f0f0f;
+    -fx-background-radius: 12;
+    -fx-padding: 16 18;
+}
+
+.profile-avatar {
+    -fx-fill: #090909;
+    -fx-stroke: -color-primary;
+    -fx-stroke-width: 2;
+}
+
+.profile-title {
+    -fx-text-fill: white;
+    -fx-font-size: 36;
+    -fx-font-weight: 800;
+}
+
+.profile-subtitle {
+    -fx-text-fill: #999;
+    -fx-font-size: 16;
+}
+
+.back-btn {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #ffaa00;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-font-size: 14;
+}
+
+.back-btn:hover {
+    -fx-background-color: #3a3a3a;
+}
+
+.section-title {
+    -fx-text-fill: white;
+    -fx-font-size: 22;
+    -fx-font-weight: 700;
+}
+
+.metric-card {
+    -fx-background-color: #181818;
+    -fx-background-radius: 12;
+}
+
+.metric-title-sm {
+    -fx-text-fill: #d9d9d9;
+    -fx-font-size: 13;
+    -fx-font-weight: 700;
+}
+
+.metric-value-sm {
+    -fx-text-fill: -color-primary;
+    -fx-font-size: 32;
+    -fx-font-weight: 900;
+}
+
+.metric-value-role {
+    -fx-text-fill: #44cc44;
+    -fx-font-size: 24;
+    -fx-font-weight: 800;
+}
+
+.field-label {
+    -fx-text-fill: #8b8b8b;
+    -fx-font-size: 13;
+    -fx-font-weight: 700;
+}
+
+.field-box {
+    -fx-background-color: #121212;
+    -fx-background-radius: 8;
+    -fx-padding: 14;
+    -fx-text-fill: white;
+    -fx-min-height: 50;
+    -fx-alignment: center-left;
+}
+
+.scroll-pane {
+    -fx-background: -color-bg;
+    -fx-background-color: -color-bg;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: -color-bg;
+}
+
+.item-card-mini {
+    -fx-background-color: #1a1a1a;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-cursor: hand;
+    -fx-pref-width: 200;
+}
+
+.item-card-mini:hover {
+    -fx-background-color: #252525;
+}
+
+.item-card-mini-name {
+    -fx-text-fill: white;
+    -fx-font-size: 14;
+    -fx-font-weight: bold;
+}
+
+.item-card-mini-price {
+    -fx-text-fill: #ffaa00;
+    -fx-font-size: 13;
+}
+
+.item-card-mini-status {
+    -fx-text-fill: #44cc44;
+    -fx-font-size: 11;
+}
