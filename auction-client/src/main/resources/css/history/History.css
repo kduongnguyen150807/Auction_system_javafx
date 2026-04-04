@@ -42,3 +42,46 @@
 .scroll-pane > .viewport {
     -fx-background-color: -color-bg;
 }
+.history-root {
+    -fx-background-color: #121212;
+}
+
+.history-title {
+    -fx-text-fill: #ffaa00;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.table-view {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #333333;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #2a2a2a;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-size: 40px;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #444444;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #ffaa00;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-row-cell {
+    -fx-background-color: #1e1e1e;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #2a2a2a;
+    -fx-cell-size: 40px;
+}
+

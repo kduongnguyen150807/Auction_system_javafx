@@ -1,5 +1,6 @@
 package com.auction.server.controller;
 
+import com.auction.server.service.SettlementService; // Nhớ import cái này
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -17,6 +18,10 @@ public class SocketServer {
 
   public void startserver() {
     try {
+      // Kích hoạt Robot quét tiền tự động ở đây nè con lợn
+      SettlementService ans = new SettlementService();
+      ans.start();
+
       ServerSocket ss = new ServerSocket(this.port);
       System.out.println("server is running");
       while (true) {

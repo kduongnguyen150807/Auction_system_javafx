@@ -179,4 +179,20 @@ public class ItemDao {
     }
     return ans;
   }
+  public java.util.List<Item> getexpireditems() {
+    java.util.List<Item> ans = new java.util.ArrayList<>();
+    try {
+      String res = "SELECT * FROM items WHERE endtime <= NOW() AND status = 'OPEN'";
+      java.sql.PreparedStatement ps = this.conn.prepareStatement(res);
+      java.sql.ResultSet res1 = ps.executeQuery();
+      while (res1.next()) {
+        // Dùng hàm maprs mày đã viết sẵn để bốc data lên
+        Item res2 = maprs(res1);
+        ans.add(res2);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return ans;
+  }
 }

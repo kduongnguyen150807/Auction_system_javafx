@@ -162,4 +162,17 @@ public class ProfileController {
       Platform.runLater(this::refreshData);
     }
   }
+  @FXML
+  public void handleShowHistory() {
+    try {
+      javafx.fxml.FXMLLoader res = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/history/TransactionHistory.fxml"));
+      javafx.scene.Parent ans = res.load();
+      javafx.stage.Stage res1 = new javafx.stage.Stage();
+      res1.setTitle("Lịch sử giao dịch");
+      res1.setScene(new javafx.scene.Scene(ans, 800, 500));
+      res1.show();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 }

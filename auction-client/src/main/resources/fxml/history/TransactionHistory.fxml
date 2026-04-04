@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.ui.TransactionHistory.TransactionHistoryController"
+      spacing="20" styleClass="history-root" stylesheets="@/css/history/TransactionHistory.css">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    <children>
+        <Label text="LỊCH SỬ GIAO DỊCH" styleClass="history-title"/>
+        <TableView fx:id="table" VBox.vgrow="ALWAYS" styleClass="transaction-table">
+            <columns>
+                <TableColumn fx:id="idcol" text="MÃ GD" prefWidth="80"/>
+                <TableColumn fx:id="typecol" text="LOẠI GIAO DỊCH" prefWidth="180"/>
+                <TableColumn fx:id="amountcol" text="SỐ TIỀN" prefWidth="150"/>
+                <TableColumn fx:id="itemcol" text="MÃ SP" prefWidth="100"/>
+                <TableColumn fx:id="datecol" text="THỜI GIAN" prefWidth="250"/>
+            </columns>
+        </TableView>
+    </children>
+</VBox>

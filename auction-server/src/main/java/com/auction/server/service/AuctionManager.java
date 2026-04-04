@@ -3,6 +3,7 @@ package com.auction.server.service;
 import com.auction.server.controller.ClientHandler;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.UserDao;
+import com.auction.server.dao.TransactionLogDao;
 import com.auction.shared.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,12 +14,14 @@ public class AuctionManager {
   private BidService bidservice;
   private ItemDao itemdao;
   private UserDao userdao;
+  private TransactionLogDao logdao;
 
   private AuctionManager() {
     this.clients = new CopyOnWriteArrayList<>();
     this.bidservice = new BidService();
     this.itemdao = new ItemDao();
     this.userdao = new UserDao();
+    this.logdao = new TransactionLogDao();
   }
 
   public static synchronized AuctionManager getinstance() {
@@ -46,12 +49,14 @@ public class AuctionManager {
       double res1 = res.getmaxprice();
       userdao.updatebalance(ans.getid(), ans.getbalance() - res1);
       userdao.addbiddermetrics(ans.getid(), res1);
+      logdao.insertlog(ans.getid(), "ITEM_BOUGHT", -res1, b.getitemid());
       sendtouser(ans.getid(), new Response("", "BALANCE_UPDATE", "Success", userdao.getbyid(String.valueOf(ans.getid()))));
 
       User ans1 = userdao.getbyid(String.valueOf(res.getsellerid()));
       if (ans1 != null) {
         userdao.updatebalance(ans1.getid(), ans1.getbalance() + res1);
         userdao.addsellermetrics(ans1.getid(), res1);
+        logdao.insertlog(ans1.getid(), "ITEM_SOLD", res1, b.getitemid());
         sendtouser(ans1.getid(), new Response("", "BALANCE_UPDATE", "Success", userdao.getbyid(String.valueOf(ans1.getid()))));
       }
       itemdao.updateprice(res.getid(), res1, res.getversion());
@@ -64,12 +69,14 @@ public class AuctionManager {
     int res2 = getprevioushighestbidder(b.getitemid());
     double res3 = res.getcurrentprice();
     userdao.updatebalance(ans.getid(), ans.getbalance() - b.getbidvalue());
+    logdao.insertlog(ans.getid(), "BID_HOLD", -b.getbidvalue(), b.getitemid());
     sendtouser(ans.getid(), new Response("", "BALANCE_UPDATE", "Success", userdao.getbyid(String.valueOf(ans.getid()))));
 
     if (res2 > 0 && res3 > 0) {
       User ans3 = userdao.getbyid(String.valueOf(res2));
       if (ans3 != null) {
         userdao.updatebalance(res2, ans3.getbalance() + res3);
+        logdao.insertlog(res2, "BID_REFUND", res3, b.getitemid());
         sendtouser(res2, new Response("", "BALANCE_UPDATE", "Outbid", userdao.getbyid(String.valueOf(res2))));
       }
     }

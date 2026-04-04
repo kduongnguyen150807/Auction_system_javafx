@@ -1,0 +1,80 @@
+/* NỀN ĐEN TUYỀN CHO CẢ CỬA SỔ */
+.history-root {
+    -fx-background-color: #121212;
+}
+
+/* TIÊU ĐỀ CHỮ CAM NỔI BẬT */
+.history-title {
+    -fx-text-fill: #ffaa00;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+/* CẤU HÌNH BẢNG ĐEN TUYỀN */
+.transaction-table {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #333333;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* CẤU HÌNH HEADERS BẢNG (CHỮ CAM) */
+.transaction-table .column-header-background {
+    -fx-background-color: #2a2a2a;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.transaction-table .column-header, .transaction-table .filler {
+    -fx-background-color: transparent;
+    -fx-size: 40px;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #444444;
+}
+
+.transaction-table .column-header .label {
+    -fx-text-fill: #ffaa00; /* Tiêu đề chữ cam */
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+/* CẤU HÌNH Ô DATA TRONG BẢNG (CHỮ TRẮNG, BACKGROUND ĐEN) */
+.table-row-cell {
+    -fx-background-color: #1e1e1e; /* Background đen cho ô dữ liệu */
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #2a2a2a;
+    -fx-cell-size: 40px;
+}
+
+/* Ô DATA LẺ/CHẴN CHO DỄ NHÌN */
+.table-row-cell:odd {
+    -fx-background-color: #242424;
+}
+
+.table-row-cell:even {
+    -fx-background-color: #1e1e1e;
+}
+
+/* HOVER VÀO DÒNG THÌ HIỆN MÀU CAM */
+.table-row-cell:hover {
+    -fx-background-color: #333333;
+}
+
+/* KHI CHỌN DÒNG THÌ HIỆN MÀU CAM */
+.table-row-cell:selected {
+    -fx-background-color: #ffaa00;
+}
+
+/* CHỮ TRẮNG CHO DATA CỦA Ô */
+.table-cell {
+    -fx-text-fill: white; /* TEXT MÀU TRẮNG NỔI TRÊN NỀN ĐEN */
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 10 0 10;
+}
+
+/* KHI DÒNG ĐƯỢC CHỌN, CHỮ DATA CHUYỂN THÀNH ĐEN CHO DỄ ĐỌC */
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #121212;
+    -fx-font-weight: bold;
+}
