@@ -36,6 +36,15 @@ public class AuctionManager {
 
   public synchronized Response processbid(BidTransaction b) {
     Item res = itemdao.getbyid(b.getitemid());
+
+    if (res != null && res.getsellerid() == b.getuserid()) {
+      return new Response("", Response.err, "Mày đéo thể tự bid hoặc mua đứt đồ của chính mày được!", null);
+    }
+
+    if (res != null && b.getbidvalue() <= res.getcurrentprice()) {
+      return new Response("", Response.err, "Giá bid m đưa ra phải lớn hơn giá hiện tại!", null);
+    }
+
     if (res != null && res.getmaxprice() > 0 && b.getbidvalue() >= res.getmaxprice()) {
       itemdao.updateprice(res.getid(), res.getmaxprice(), res.getversion());
       itemdao.closeauction(res.getid(), b.getuserid(), "CLOSED");
