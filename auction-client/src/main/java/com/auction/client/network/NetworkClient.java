@@ -6,7 +6,7 @@ import com.auction.shared.Response;
 import com.auction.shared.User;
 import com.auction.client.ClientSession;
 import com.auction.client.ui.Profile.ProfileController;
-import com.auction.client.ui.TrangChu.TrangChuController;
+import com.auction.client.ui.Main.KhungController;
 import com.auction.client.util.NotificationCenter;
 import javafx.application.Platform;
 import java.io.*;
@@ -71,12 +71,7 @@ public class NetworkClient {
         }
         if ("PRICE_UPDATE".equals(res.getstatus())) {
             Item res3 = (Item) res.getpayload();
-            Platform.runLater(() -> {
-                TrangChuController res4 = TrangChuController.getinstance();
-                if (res4 != null) {
-                    res4.updateitemprice(res3.getid(), res3.getcurrentprice());
-                }
-            });
+            KhungController.updaterealtimeui(res3);
             return;
         }
         String res5 = res.getrequestid();

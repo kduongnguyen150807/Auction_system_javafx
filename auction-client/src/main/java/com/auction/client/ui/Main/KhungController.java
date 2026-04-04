@@ -6,6 +6,7 @@ import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
+import com.auction.shared.Item;
 import com.auction.shared.UserRole;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -181,6 +182,17 @@ public class KhungController {
             if (instance.tc != null) instance.tc.setFilters(sk, cf);
             if (instance.yc != null) instance.yc.setFilters(sk, cf);
         }
+    }
+
+    public static void updaterealtimeui(Item res) {
+        Platform.runLater(() -> {
+            if (infoc != null) {
+                infoc.updatepriceui(res);
+            }
+            if (instance != null && instance.tc != null) {
+                instance.tc.updatepriceui(res);
+            }
+        });
     }
 
     public static String getSearchKeyword() { return sk; }

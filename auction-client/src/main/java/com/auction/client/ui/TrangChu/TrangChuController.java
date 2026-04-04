@@ -99,6 +99,11 @@ public class TrangChuController {
     }
   }
 
+  public void updatepriceui(Item res) {
+    if (res == null) return;
+    updateitemprice(res.getid(), res.getcurrentprice());
+  }
+
   public void updateitemprice(int res, double res1) {
     for (Item ans : cacheditems) {
       if (ans.getid() == res) {

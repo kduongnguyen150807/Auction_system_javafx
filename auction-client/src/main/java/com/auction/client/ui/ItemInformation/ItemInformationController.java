@@ -133,6 +133,11 @@ public class ItemInformationController {
         } catch (Exception e) {}
     }
 
+    public void updatepriceui(Item res) {
+        if (res == null || res.getid() != this.id) return;
+        if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", res.getcurrentprice()));
+    }
+
     public void updateCurrentBid(double val) {
         Platform.runLater(() -> {
             if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", val));
