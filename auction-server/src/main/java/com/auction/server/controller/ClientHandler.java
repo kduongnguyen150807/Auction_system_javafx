@@ -47,8 +47,11 @@ public class ClientHandler implements Runnable {
         Request req = (Request) this.in.readObject();
         Response ans = process(req);
         if (ans != null) {
-          this.out.writeObject(ans);
-          this.out.flush();
+          synchronized (this.out) {
+            this.out.reset();
+            this.out.writeObject(ans);
+            this.out.flush();
+          }
         }
       }
     } catch (EOFException e) {
@@ -184,8 +187,11 @@ public class ClientHandler implements Runnable {
 
   public void send(Response r) {
     try {
-      this.out.writeObject(r);
-      this.out.flush();
+      synchronized (this.out) {
+        this.out.reset();
+        this.out.writeObject(r);
+        this.out.flush();
+      }
     } catch (Exception e) {}
   }
 }

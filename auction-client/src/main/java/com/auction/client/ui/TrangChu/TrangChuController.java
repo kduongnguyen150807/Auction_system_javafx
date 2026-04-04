@@ -9,6 +9,8 @@ import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,13 +19,21 @@ import javafx.fxml.FXML;
 import javafx.scene.layout.HBox;
 
 public class TrangChuController {
+  private static TrangChuController instance;
   @FXML private HBox TrendingBind;
   private final List<Item> cacheditems = new ArrayList<>();
+  private final Map<Integer, ItemCardController> cardmap = new HashMap<>();
   private String kw = "";
   private String cat = "All";
 
+  public static TrangChuController getinstance() {
+    TrangChuController ans = instance;
+    return ans;
+  }
+
   @FXML
   void initialize() {
+    instance = this;
     setFilters(KhungController.getSearchKeyword(), KhungController.getCategoryFilter());
     refreshItems();
   }
@@ -62,14 +72,15 @@ public class TrangChuController {
   private void renderFilteredItems() {
     if (TrendingBind == null) return;
     TrendingBind.getChildren().clear();
+    cardmap.clear();
     for (Item res : cacheditems) {
       if (!match(res)) continue;
       try {
-        NodeContentLoader<HBox> l = new NodeContentLoader<>();
-        l.load("/fxml/itemcard/ItemCard.fxml");
-        ItemCardController c = l.getController();
-        if (c != null) {
-          c.setData(
+        NodeContentLoader<HBox> ans = new NodeContentLoader<>();
+        ans.load("/fxml/itemcard/ItemCard.fxml");
+        ItemCardController res1 = ans.getController();
+        if (res1 != null) {
+          res1.setData(
                   res.getid(),
                   safe(res.getname()),
                   res.getcurrentprice(),
@@ -79,11 +90,25 @@ public class TrangChuController {
                   safe(res.getsellerusername()),
                   safe(res.getselleravatarurl())
           );
+          cardmap.put(res.getid(), res1);
         }
-        NodeManager.addNodeToPane(l, TrendingBind);
+        NodeManager.addNodeToPane(ans, TrendingBind);
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+  }
+
+  public void updateitemprice(int res, double res1) {
+    for (Item ans : cacheditems) {
+      if (ans.getid() == res) {
+        ans.setcurrentprice(res1);
+        break;
+      }
+    }
+    ItemCardController ans1 = cardmap.get(res);
+    if (ans1 != null) {
+      ans1.updateprice(res1);
     }
   }
 

@@ -63,6 +63,14 @@ public class AuctionManager {
       itemdao.closeauction(res.getid(), b.getuserid(), "CLOSED");
       Response ans2 = new Response("", Response.ok, "BUY_IT_NOW_SUCCESS", b.getitemid());
       broadcast(ans2);
+      int res4 = getprevioushighestbidder(b.getitemid());
+      if (res4 > 0) {
+        sendtouser(res4, new Response("", "OUTBID_NOTIFY", "outbid", b.getitemid()));
+      }
+      Item res5 = itemdao.getbyid(b.getitemid());
+      if (res5 != null) {
+        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res5));
+      }
       return ans2;
     }
 
@@ -82,7 +90,16 @@ public class AuctionManager {
     }
 
     Response ans4 = this.bidservice.placebid(b);
-    if (ans4.getstatus().equals(Response.ok)) broadcast(ans4);
+    if (ans4.getstatus().equals(Response.ok)) {
+      broadcast(ans4);
+      if (res2 > 0) {
+        sendtouser(res2, new Response("", "OUTBID_NOTIFY", "outbid", b.getitemid()));
+      }
+      Item res4 = itemdao.getbyid(b.getitemid());
+      if (res4 != null) {
+        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res4));
+      }
+    }
     return ans4;
   }
 

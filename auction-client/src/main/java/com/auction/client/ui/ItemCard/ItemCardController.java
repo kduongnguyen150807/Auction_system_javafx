@@ -66,6 +66,16 @@ public class ItemCardController {
     iv.setViewport(new Rectangle2D(cropX, cropY, cropW, cropH));
   }
 
+  public void updateprice(double res) {
+    this.p = res;
+    if (Price != null) Price.setText(String.format("%,.0f$", res));
+  }
+
+  public int getid() {
+    int res = this.id;
+    return res;
+  }
+
   public void HandleItemClicked() {
     try {
       NodeContentLoader<ScrollPane> l = new NodeContentLoader<>();
