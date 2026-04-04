@@ -4,62 +4,83 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<ScrollPane vbarPolicy="NEVER" hbarPolicy="NEVER" fitToHeight="true" fitToWidth="true"
-            stylesheets="@/css/iteminformation/ItemInformation.css" xmlns="http://javafx.com/javafx/21.0.2"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.ItemInformation.ItemInformationController">
+<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER" styleClass="main-scroll-pane" stylesheets="@/css/iteminformation/ItemInformation.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.ItemInformation.ItemInformationController">
     <content>
-        <HBox alignment="TOP_CENTER" prefHeight="770.0" prefWidth="960.0" spacing="10">
-            <VBox prefHeight="770" prefWidth="629" spacing="5">
-                <children>
-                    <StackPane alignment="CENTER_LEFT">
-                        <children>
-                            <ImageView fx:id="ItemImageHolder" fitHeight="393" fitWidth="629" preserveRatio="true" smooth="true">
-                                <image><Image url="@/images/hutao_money.gif"/></image>
-                            </ImageView>
-                            <VBox alignment="BOTTOM_LEFT" styleClass="GradientBackGround">
-                                <children>
-                                    <Label fx:id="ItemName" styleClass="LabelText" text="Name" alignment="BOTTOM_LEFT">
-                                        <font><Font size="42"/></font>
-                                    </Label>
-                                </children>
-                                <padding><Insets left="20" bottom="20"/></padding>
-                            </VBox>
-                        </children>
-                    </StackPane>
-                    <VBox styleClass="DescriptionBox" prefWidth="629" maxWidth="629" spacing="8" minHeight="200">
-                        <children>
-                            <Label text="COLLECTOR'S DESCRIPTION" styleClass="DescriptionText, DesTitle"/>
-                            <Label fx:id="ItemDescription" text="DESCRIPTION" styleClass="DescriptionText, NotDesTitle"/>
-                        </children>
-                        <padding><Insets left="20" top="20"/></padding>
-                    </VBox>
-                </children>
-            </VBox>
-            <HBox prefHeight="770" prefWidth="298" styleClass="BIDDINGBOX">
-                <children>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <VBox spacing="2">
-                        <children>
-                            <Label text="CURRENT HIGHEST BID" styleClass="LabelLabelText" />
-                            <Label fx:id="CurrentHighestBidValue" text="142,500$" styleClass="LabelText"/>
-                            <Button text="Place Bid Now" styleClass="btn-primary" maxWidth="Infinity" prefHeight="67" onAction="#ShowBiddingForm"/>
-                            <Region prefHeight="50"/>
-                            <Label text="ENDS IN" styleClass="LabelLabelText" />
-                            <Label fx:id="EndsInValue" text="04:12:38" styleClass="GoldenText"/>
-                        </children>
-                    </VBox>
-                    <Region HBox.hgrow="ALWAYS"/>
-                </children>
-                <padding><Insets top="20"/></padding>
-            </HBox>
+        <HBox alignment="CENTER" spacing="40.0" styleClass="main-container">
+            <children>
+                <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
+                    <children>
+                        <ImageView fx:id="ItemImageHolder" fitHeight="550.0" fitWidth="550.0" pickOnBounds="true" preserveRatio="true" />
+                    </children>
+                </VBox>
+
+                <VBox alignment="CENTER_LEFT" maxWidth="550.0" minWidth="450.0" spacing="25.0" HBox.hgrow="SOMETIMES">
+                    <children>
+                        <Label fx:id="ItemName" styleClass="title-label" text="Hugo" wrapText="true" />
+
+                        <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="seller-box">
+                            <children>
+                                <ImageView fx:id="SellerAvatar" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true">
+                                    <clip>
+                                        <Circle centerX="25" centerY="25" radius="25" />
+                                    </clip>
+                                </ImageView>
+                                <VBox alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label styleClass="label-small" text="SELLER" />
+                                        <Label fx:id="SellerName" styleClass="seller-name-label" text="Unknown Seller" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <VBox spacing="8.0">
+                            <children>
+                                <Label styleClass="label-small" text="DESCRIPTION" />
+                                <Label fx:id="ItemDescription" styleClass="description-text" text="Tuổi thơ dữ dội..." wrapText="true" />
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="20.0">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="50.0">
+                                    <children>
+                                        <VBox spacing="5.0">
+                                            <children>
+                                                <Label styleClass="label-small" text="CURRENT BID" />
+                                                <Label fx:id="CurrentHighestBidValue" styleClass="price-label" text="7,000,000$" />
+                                            </children>
+                                        </VBox>
+                                        <VBox spacing="5.0">
+                                            <children>
+                                                <Label styleClass="label-small" text="BUY IT NOW" />
+                                                <Label fx:id="MaxPriceValue" styleClass="price-label" text="NO BUY IT NOW" />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                                <VBox spacing="5.0">
+                                    <children>
+                                        <Label styleClass="label-small" text="ENDS IN" />
+                                        <Label fx:id="EndsInValue" styleClass="timer-label" text="22h 12m" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+
+                        <Button maxWidth="Infinity" onAction="#ShowBiddingForm" prefHeight="65.0" styleClass="bid-button" text="PLACE BID NOW" />
+                    </children>
+                </VBox>
+            </children>
+            <padding>
+                <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+            </padding>
         </HBox>
     </content>
 </ScrollPane>

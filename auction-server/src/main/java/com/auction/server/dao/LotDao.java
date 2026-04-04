@@ -1,64 +1,98 @@
 package com.auction.server.dao;
-import com.auction.shared.*;
+
+import com.auction.shared.Lot;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
 public class LotDao {
     private Connection conn;
+
     public LotDao() {
         this.conn = DatabaseConnection.getinstance().getconnection();
     }
+
     public List<Lot> getongoingbids(int userid) {
         List<Lot> ans = new ArrayList<>();
         try {
-            String sql = "select distinct i.id, i.name, i.description, i.startingprice, i.currentprice, i.starttime, i.endtime, i.image_url from items i inner join bid_transactions b on b.itemid = i.id where b.userid = ? and i.starttime <= now() and i.endtime >= now() order by i.endtime asc";
+            String sql = "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar " +
+                    "FROM items i " +
+                    "LEFT JOIN users u ON i.sellerid = u.id " +
+                    "WHERE i.status = 'OPEN' AND i.endtime > NOW()";
             PreparedStatement ps = this.conn.prepareStatement(sql);
-            ps.setInt(1, userid);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Lot res = new Lot();
-                res.setid(rs.getInt("id"));
-                res.settitle(rs.getString("name"));
-                res.setdescription(rs.getString("description"));
-                res.setstartprice(rs.getDouble("startingprice"));
-                res.setbidvalue(rs.getDouble("currentprice"));
-                res.setstarttime(rs.getTimestamp("starttime").toLocalDateTime());
-                res.setendtime(rs.getTimestamp("endtime").toLocalDateTime());
-                String res2 = rs.getString("image_url");
-                if (res2 != null && !res2.isBlank()) {
-                    res.setimageurl(res2);
-                }
-                ans.add(res);
+                ans.add(maprs(rs));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
         return ans;
     }
+
     public List<Lot> getupcomingbids(int userid) {
         List<Lot> ans = new ArrayList<>();
         try {
-            String sql = "select distinct i.id, i.name, i.description, i.startingprice, i.currentprice, i.starttime, i.endtime, i.image_url from items i inner join bid_transactions b on b.itemid = i.id where b.userid = ? and i.starttime > now() order by i.starttime asc";
+            String sql = "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar " +
+                    "FROM items i " +
+                    "LEFT JOIN users u ON i.sellerid = u.id " +
+                    "WHERE i.starttime > NOW()";
             PreparedStatement ps = this.conn.prepareStatement(sql);
-            ps.setInt(1, userid);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Lot res = new Lot();
-                res.setid(rs.getInt("id"));
-                res.settitle(rs.getString("name"));
-                res.setdescription(rs.getString("description"));
-                res.setstartprice(rs.getDouble("startingprice"));
-                res.setbidvalue(rs.getDouble("currentprice"));
-                res.setstarttime(rs.getTimestamp("starttime").toLocalDateTime());
-                res.setendtime(rs.getTimestamp("endtime").toLocalDateTime());
-                String res2 = rs.getString("image_url");
-                if (res2 != null && !res2.isBlank()) {
-                    res.setimageurl(res2);
-                }
-                ans.add(res);
+                ans.add(maprs(rs));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
+        return ans;
+    }
+
+    public List<Lot> getclosedbids(int userid) {
+        List<Lot> ans = new ArrayList<>();
+        try {
+            String sql = "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name " +
+                    "FROM items i " +
+                    "LEFT JOIN users u ON i.sellerid = u.id " +
+                    "LEFT JOIN users w ON i.winnerid = w.id " +
+                    "WHERE i.status = 'CLOSED'";
+            PreparedStatement ps = this.conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                ans.add(maprs(rs));
+            }
+        } catch (Exception e) {}
+        return ans;
+    }
+
+    public List<Lot> getpastbids(int userid) {
+        List<Lot> ans = new ArrayList<>();
+        try {
+            String sql = "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name " +
+                    "FROM items i " +
+                    "LEFT JOIN users u ON i.sellerid = u.id " +
+                    "LEFT JOIN users w ON i.winnerid = w.id " +
+                    "WHERE i.status IN ('CLOSED', 'FINISHED', 'CANCELED') OR i.endtime <= NOW()";
+            PreparedStatement ps = this.conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                ans.add(maprs(rs));
+            }
+        } catch (Exception e) {}
+        return ans;
+    }
+
+    private Lot maprs(ResultSet rs) throws SQLException {
+        Lot ans = new Lot();
+        ans.setid(rs.getInt("id"));
+        ans.settitle(rs.getString("name"));
+        ans.setdescription(rs.getString("description"));
+        ans.setbidvalue(rs.getDouble("currentprice"));
+        ans.setstarttime(rs.getTimestamp("starttime").toLocalDateTime());
+        ans.setendtime(rs.getTimestamp("endtime").toLocalDateTime());
+        ans.setimageurl(rs.getString("image_url"));
+        ans.setsellerusername(rs.getString("s_name"));
+        ans.setselleravatarurl(rs.getString("s_avatar"));
+        try {
+            String wname = rs.getString("w_name");
+            if (wname != null) ans.setwinnerusername(wname);
+        } catch (Exception e) {}
         return ans;
     }
 }

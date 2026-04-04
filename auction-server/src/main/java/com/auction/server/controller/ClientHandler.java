@@ -28,9 +28,7 @@ public class ClientHandler implements Runnable {
       this.out.flush();
       this.in = new ObjectInputStream(this.socket.getInputStream());
       AuctionManager.getinstance().addclient(this);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    } catch (Exception e) {}
   }
 
   @Override
@@ -46,13 +44,11 @@ public class ClientHandler implements Runnable {
       }
     } catch (EOFException e) {
     } catch (Exception e) {
-      e.printStackTrace();
     } finally {
       AuctionManager.getinstance().removeclient(this);
       try {
         this.socket.close();
-      } catch (Exception e) {
-      }
+      } catch (Exception e) {}
     }
   }
 
@@ -66,9 +62,7 @@ public class ClientHandler implements Runnable {
       else ans = new Response(req.getrequestid(), Response.err, "fail", null);
     } else if (act.equals(Request.signup)) {
       Map<String, String> data = (Map<String, String>) req.getpayload();
-      User u =
-          new Bidder(
-              data.get("username"), data.get("password"), data.get("email"), data.get("age"), "");
+      User u = new Bidder(data.get("username"), data.get("password"), data.get("email"), data.get("age"), "");
       boolean res = this.userservice.signup(u);
       if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
       else ans = new Response(req.getrequestid(), Response.err, "duplicate_username_or_email", null);
@@ -78,17 +72,10 @@ public class ClientHandler implements Runnable {
     } else if (act.equals(Request.bid)) {
       BidTransaction b = (BidTransaction) req.getpayload();
       Response sysres = AuctionManager.getinstance().processbid(b);
-      ans =
-          new Response(
-              req.getrequestid(), sysres.getstatus(), sysres.getmessage(), sysres.getpayload());
+      ans = new Response(req.getrequestid(), sysres.getstatus(), sysres.getmessage(), sysres.getpayload());
     } else if (act.equals(Request.updateprofile)) {
       Map<String, String> data = (Map<String, String>) req.getpayload();
-      String err =
-          this.userservice.updateprofile(
-              Integer.parseInt(data.get("userid")),
-              data.get("fullname"),
-              data.get("email"),
-              data.get("phone"));
+      String err = this.userservice.updateprofile(Integer.parseInt(data.get("userid")), data.get("fullname"), data.get("email"), data.get("phone"));
       if (err == null) ans = new Response(req.getrequestid(), Response.ok, "success", null);
       else ans = new Response(req.getrequestid(), Response.err, err, null);
     } else if (act.equals(Request.updateavatar)) {
@@ -120,46 +107,28 @@ public class ClientHandler implements Runnable {
         String title = data.get("name");
         String description = data.get("description");
         double startprice = Double.parseDouble(data.get("startingprice"));
+        double maxp = Double.parseDouble(data.getOrDefault("maxprice", "0"));
+
         java.time.LocalDateTime starttime;
         try {
-          starttime =
-              java.time.LocalDateTime.parse(
-                  data.get("starttime"),
-                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+          starttime = java.time.LocalDateTime.parse(data.get("starttime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
         } catch (java.time.format.DateTimeParseException ignored) {
-          starttime =
-              java.time.LocalDateTime.parse(
-                  data.get("starttime"),
-                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+          starttime = java.time.LocalDateTime.parse(data.get("starttime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
         }
         java.time.LocalDateTime endtime;
         try {
-          endtime =
-              java.time.LocalDateTime.parse(
-                  data.get("endtime"),
-                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+          endtime = java.time.LocalDateTime.parse(data.get("endtime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
         } catch (java.time.format.DateTimeParseException ignored) {
-          endtime =
-              java.time.LocalDateTime.parse(
-                  data.get("endtime"),
-                  java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+          endtime = java.time.LocalDateTime.parse(data.get("endtime"), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
         }
         String sellerusername = data.get("sellerusername");
         String imageurl = data.getOrDefault("imageurl", "");
-        boolean res =
-            this.itemdao.insertlot(
-                title,
-                description,
-                startprice,
-                starttime,
-                endtime,
-                sellerusername,
-                imageurl,
-                data.getOrDefault("category", "Vehicle"));
+
+        boolean res = this.itemdao.insertlot(title, description, startprice, maxp, starttime, endtime, sellerusername, imageurl, data.getOrDefault("category", "Vehicle"));
+
         if (res) ans = new Response(req.getrequestid(), Response.ok, "success", null);
         else ans = new Response(req.getrequestid(), Response.err, "fail", null);
       } catch (Exception e) {
-        e.printStackTrace();
         ans = new Response(req.getrequestid(), Response.err, "fail", null);
       }
     } else if (act.equals(Request.getongoingbids)) {
@@ -169,6 +138,14 @@ public class ClientHandler implements Runnable {
     } else if (act.equals(Request.getupcomingbids)) {
       int res = (int) req.getpayload();
       java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getupcomingbids(res);
+      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
+    } else if (act.equals("getclosedbids")) {
+      int res = (int) req.getpayload();
+      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getclosedbids(res);
+      ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
+    } else if (act.equals("getpastbids")) {
+      int res = (int) req.getpayload();
+      java.util.List<com.auction.shared.Lot> ans2 = this.lotdao.getpastbids(res);
       ans = new Response(req.getrequestid(), Response.ok, "success", (java.io.Serializable) ans2);
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
@@ -180,7 +157,6 @@ public class ClientHandler implements Runnable {
     try {
       this.out.writeObject(r);
       this.out.flush();
-    } catch (Exception e) {
-    }
+    } catch (Exception e) {}
   }
 }

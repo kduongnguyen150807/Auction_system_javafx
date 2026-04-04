@@ -2,43 +2,71 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="itemRoot" alignment="TOP_CENTER" spacing="8.0" styleClass="KhungItem"
-      xmlns="http://javafx.com/javafx/8.0.171"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.ui.ItemCard.ItemCardController"
-      stylesheets="@/css/itemcard/ItemCard.css"
-      prefWidth="222" maxWidth="222" prefHeight="478" maxHeight="478" onMouseClicked="#HandleItemClicked">
+<VBox fx:id="itemRoot" alignment="TOP_CENTER" onMouseClicked="#HandleItemClicked" spacing="10.0" style="-fx-background-color: #111111; -fx-background-radius: 10;" stylesheets="@/css/iteminformation/ItemInformation.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.ItemCard.ItemCardController">
     <children>
-        <ImageView fitWidth="220" fitHeight="256" fx:id="ImageHolder">
-            <image><Image url="@/images/user_icon.png"/></image>
-        </ImageView>
-        <VBox prefHeight="220" maxHeight="140">
+        <ImageView fx:id="ImageHolder" fitHeight="250.0" fitWidth="280.0" pickOnBounds="true" />
+
+        <VBox spacing="15.0">
             <children>
-                <Label fx:id="ItemName" text="NameHolder" styleClass="MainText"/>
-                <Label fx:id="ItemDescription" text="Description" styleClass="SubText"/>
-                <Region VBox.vgrow="ALWAYS"/>
-                <HBox prefHeight="64" prefWidth="172" maxWidth="172" maxHeight="64">
+                <VBox spacing="5.0">
                     <children>
-                        <VBox prefWidth="87" prefHeight="47" maxHeight="47" maxWidth="87">
-                            <Label text="Current BID" styleClass="SubText"><font><Font size="12"/></font></Label>
-                            <Label fx:id="Price" text="1000$" styleClass="MainText"><font><Font size="18"/></font></Label>
+                        <Label fx:id="ItemName" styleClass="card-title" text="Name" wrapText="true">
+                            <font>
+                                <Font name="Montserrat Bold" size="18.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="ItemDescription" styleClass="card-text" text="Description" textFill="#888888" wrapText="false">
+                            <font>
+                                <Font name="Montserrat Medium" size="13.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </VBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                    <children>
+                        <VBox spacing="2.0">
+                            <children>
+                                <Label styleClass="label-small" text="Current BID" textFill="#888888">
+                                    <font>
+                                        <Font size="10.0" />
+                                    </font>
+                                </Label>
+                                <Label fx:id="Price" minWidth="-Infinity" styleClass="price-label" text="0$" textFill="WHITE">
+                                    <font>
+                                        <Font name="Montserrat Bold" size="20.0" />
+                                    </font>
+                                </Label>
+                            </children>
                         </VBox>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <VBox prefWidth="87" prefHeight="47" maxHeight="47" maxWidth="87">
-                            <Label text="Time Remaining" styleClass="SubText"><font><Font size="12"/></font></Label>
-                            <Label fx:id="TimeRemain" text="2d14h" styleClass="MainText"><font><Font size="18"/></font></Label>
+                        <VBox spacing="2.0">
+                            <children>
+                                <Label styleClass="label-small" text="Time Remaining" textFill="#888888">
+                                    <font>
+                                        <Font size="10.0" />
+                                    </font>
+                                </Label>
+                                <Label fx:id="TimeRemain" minWidth="-Infinity" styleClass="timer-label" text="00:00:00" textFill="WHITE">
+                                    <font>
+                                        <Font name="Montserrat Bold" size="20.0" />
+                                    </font>
+                                </Label>
+                            </children>
                         </VBox>
                     </children>
                 </HBox>
             </children>
-            <padding><Insets left="24"/></padding>
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="5.0" />
+            </padding>
         </VBox>
     </children>
+    <padding>
+        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+    </padding>
 </VBox>

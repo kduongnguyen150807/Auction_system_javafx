@@ -33,7 +33,12 @@
                 </HBox>
                 <VBox spacing="10">
                     <children>
-                        <Label text="ENTER YOUR AMOUNT" styleClass="AboveLabel" />
+                        <HBox alignment="CENTER_LEFT" spacing="20">
+                            <children>
+                                <Label text="ENTER YOUR AMOUNT" styleClass="AboveLabel" />
+                                <Label fx:id="MaxPriceInfo" style="-fx-text-fill: #ffaa00; -fx-font-family: 'Montserrat Bold'; -fx-font-size: 14px;" />
+                            </children>
+                        </HBox>
                         <TextField fx:id="BidAmount" promptText="0.00$" styleClass="GoldenText, ProGoldenText" prefWidth="400" prefHeight="100"/>
                     </children>
                 </VBox>

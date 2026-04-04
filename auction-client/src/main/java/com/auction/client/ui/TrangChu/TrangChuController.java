@@ -18,9 +18,9 @@ import javafx.scene.layout.HBox;
 
 public class TrangChuController {
   @FXML private HBox TrendingBind;
-  private final List<Item> cachedItems = new ArrayList<>();
-  private String keyword = "";
-  private String category = "All";
+  private final List<Item> cacheditems = new ArrayList<>();
+  private String kw = "";
+  private String cat = "All";
 
   @FXML
   void initialize() {
@@ -29,81 +29,82 @@ public class TrangChuController {
   }
 
   public void refreshItems() {
-    Thread worker =
-        new Thread(
-            () -> {
-              try {
-                Response res =
-                    NetworkClient.getinstance()
-                        .sendrequestandwait(new Request(Request.list, null));
-                if (res == null || !Response.ok.equals(res.getstatus())) return;
-                Object payload = res.getpayload();
-                if (!(payload instanceof List<?> rawItems)) return;
-                Platform.runLater(() -> cacheAndRender(rawItems));
-              } catch (Exception ignored) {
-              }
-            });
-    worker.setDaemon(true);
-    worker.start();
+    Thread t = new Thread(() -> {
+      try {
+        Request req = new Request(Request.list, null);
+        Response res = NetworkClient.getinstance().sendrequestandwait(req);
+        if (res == null || !Response.ok.equals(res.getstatus())) return;
+        Object payload = res.getpayload();
+        if (!(payload instanceof List<?> list)) return;
+        Platform.runLater(() -> cacheAndRender(list));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    });
+    t.setDaemon(true);
+    t.start();
   }
 
-  public void setFilters(String keyword, String category) {
-    this.keyword = keyword == null ? "" : keyword.trim().toLowerCase();
-    this.category = (category == null || category.isBlank()) ? "All" : category;
+  public void setFilters(String k, String c) {
+    this.kw = (k == null) ? "" : k.trim().toLowerCase();
+    this.cat = (c == null || c.isBlank()) ? "All" : c;
     renderFilteredItems();
   }
 
-  private void cacheAndRender(List<?> rawItems) {
-    cachedItems.clear();
-    for (Object obj : rawItems) {
-      if (obj instanceof Item item) cachedItems.add(item);
+  private void cacheAndRender(List<?> list) {
+    cacheditems.clear();
+    for (Object o : list) {
+      if (o instanceof Item i) cacheditems.add(i);
     }
     renderFilteredItems();
   }
 
   private void renderFilteredItems() {
+    if (TrendingBind == null) return;
     TrendingBind.getChildren().clear();
-    for (Item item : cachedItems) {
-      if (!match(item)) continue;
+    for (Item res : cacheditems) {
+      if (!match(res)) continue;
       try {
-        NodeContentLoader<HBox> loader = new NodeContentLoader<>();
-        loader.load("/fxml/itemcard/ItemCard.fxml");
-        ItemCardController controller = loader.getController();
-        if (controller != null) {
-          controller.setData(
-              item.getid(),
-              safe(item.getname()),
-              item.getcurrentprice(),
-              safe(item.getdescription()),
-              formatTimeRemaining(item.getendtime()),
-              safe(item.getimageurl()));
+        NodeContentLoader<HBox> l = new NodeContentLoader<>();
+        l.load("/fxml/itemcard/ItemCard.fxml");
+        ItemCardController c = l.getController();
+        if (c != null) {
+          c.setData(
+                  res.getid(),
+                  safe(res.getname()),
+                  res.getcurrentprice(),
+                  safe(res.getdescription()),
+                  formattime(res.getendtime()),
+                  safe(res.getimageurl()),
+                  safe(res.getsellerusername()),
+                  safe(res.getselleravatarurl())
+          );
         }
-        NodeManager.addNodeToPane(loader, TrendingBind);
-      } catch (Exception ignored) {
+        NodeManager.addNodeToPane(l, TrendingBind);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
   }
 
-  private boolean match(Item item) {
-    String name = safe(item.getname()).toLowerCase();
-    if (!keyword.isBlank() && !name.contains(keyword)) return false;
-    if ("All".equalsIgnoreCase(category)) return true;
-    return safe(item.getcategory()).equalsIgnoreCase(category);
+  private boolean match(Item i) {
+    String n = safe(i.getname()).toLowerCase();
+    if (!kw.isBlank() && !n.contains(kw)) return false;
+    if ("All".equalsIgnoreCase(cat)) return true;
+    return safe(i.getcategory()).equalsIgnoreCase(cat);
   }
 
-  private String safe(String value) {
-    return value == null ? "" : value;
+  private String safe(String s) {
+    String ans = (s == null) ? "" : s;
+    return ans;
   }
 
-  private String formatTimeRemaining(LocalDateTime endTime) {
-    if (endTime == null) return "N/A";
-    Duration d = Duration.between(LocalDateTime.now(), endTime);
-    if (d.isNegative() || d.isZero()) return "Da ket thuc";
-    long totalHours = d.toHours();
-    long days = totalHours / 24;
-    long hours = totalHours % 24;
-    if (days > 0) return days + "d " + hours + "h";
-    long minutes = d.toMinutes() % 60;
-    return hours + "h " + minutes + "m";
+  private String formattime(LocalDateTime t) {
+    if (t == null) return "N/A";
+    Duration d = Duration.between(LocalDateTime.now(), t);
+    if (d.isNegative() || d.isZero()) return "closed";
+    long h = d.toHours();
+    if (h / 24 > 0) return (h / 24) + "d " + (h % 24) + "h";
+    return (h % 24) + "h " + (d.toMinutes() % 60) + "m";
   }
 }

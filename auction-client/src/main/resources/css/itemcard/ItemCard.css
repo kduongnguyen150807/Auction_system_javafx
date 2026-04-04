@@ -19,3 +19,16 @@
     -fx-font-weight: 400;
     -fx-font-size: 12px;
 }
+/* Màu trắng cho tên sản phẩm ở màn hình chính */
+.card-title {
+    -fx-font-family: "Montserrat Bold";
+    -fx-font-size: 18px;
+    -fx-text-fill: #FFFFFF !important;
+}
+
+/* Chỉnh luôn cho cái description sáng lên tí đọc cho rõ [cite: 22, 23] */
+.card-text {
+    -fx-font-family: "Montserrat Medium";
+    -fx-font-size: 13px;
+    -fx-text-fill: #BBBBBB;
+}

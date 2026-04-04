@@ -9,10 +9,13 @@ public abstract class Item extends Entity {
   protected double currentprice;
   protected LocalDateTime starttime;
   protected LocalDateTime endtime;
+  protected double maxprice;
   protected int sellerid;
   protected int winnerid;
   protected ItemStatus status;
   protected String imageurl;
+  protected String sellerusername;
+  protected String selleravatarurl;
 
   public Item() {}
 
@@ -28,93 +31,30 @@ public abstract class Item extends Entity {
 
   public abstract String getcategory();
 
-  public String getname() {
-    String ans = this.name;
-    return ans;
-  }
-
-  public void setname(String n) {
-    this.name = n;
-  }
-
-  public String getdescription() {
-    String ans = this.description;
-    return ans;
-  }
-
-  public void setdescription(String d) {
-    this.description = d;
-  }
-
-  public double getstartingprice() {
-    double ans = this.startingprice;
-    return ans;
-  }
-
-  public void setstartingprice(double sp) {
-    this.startingprice = sp;
-  }
-
-  public double getcurrentprice() {
-    double ans = this.currentprice;
-    return ans;
-  }
-
-  public void setcurrentprice(double cp) {
-    this.currentprice = cp;
-  }
-
-  public LocalDateTime getstarttime() {
-    LocalDateTime ans = this.starttime;
-    return ans;
-  }
-
-  public void setstarttime(LocalDateTime st) {
-    this.starttime = st;
-  }
-
-  public LocalDateTime getendtime() {
-    LocalDateTime ans = this.endtime;
-    return ans;
-  }
-
-  public void setendtime(LocalDateTime et) {
-    this.endtime = et;
-  }
-
-  public int getsellerid() {
-    int ans = this.sellerid;
-    return ans;
-  }
-
-  public void setsellerid(int sid) {
-    this.sellerid = sid;
-  }
-
-  public int getwinnerid() {
-    int ans = this.winnerid;
-    return ans;
-  }
-
-  public void setwinnerid(int wid) {
-    this.winnerid = wid;
-  }
-
-  public ItemStatus getstatus() {
-    ItemStatus ans = this.status;
-    return ans;
-  }
-
-  public void setstatus(ItemStatus s) {
-    this.status = s;
-  }
-
-  public String getimageurl() {
-    String ans = this.imageurl;
-    return ans;
-  }
-
-  public void setimageurl(String u) {
-    this.imageurl = u;
-  }
+  public String getname() { return this.name; }
+  public void setname(String n) { this.name = n; }
+  public String getdescription() { return this.description; }
+  public void setdescription(String d) { this.description = d; }
+  public double getstartingprice() { return this.startingprice; }
+  public void setstartingprice(double sp) { this.startingprice = sp; }
+  public double getcurrentprice() { return this.currentprice; }
+  public void setcurrentprice(double cp) { this.currentprice = cp; }
+  public LocalDateTime getstarttime() { return this.starttime; }
+  public void setstarttime(LocalDateTime st) { this.starttime = st; }
+  public LocalDateTime getendtime() { return this.endtime; }
+  public void setendtime(LocalDateTime et) { this.endtime = et; }
+  public double getmaxprice() { return this.maxprice; }
+  public void setmaxprice(double m) { this.maxprice = m; }
+  public int getsellerid() { return this.sellerid; }
+  public void setsellerid(int sid) { this.sellerid = sid; }
+  public int getwinnerid() { return this.winnerid; }
+  public void setwinnerid(int wid) { this.winnerid = wid; }
+  public ItemStatus getstatus() { return this.status; }
+  public void setstatus(ItemStatus s) { this.status = s; }
+  public String getimageurl() { return this.imageurl; }
+  public void setimageurl(String u) { this.imageurl = u; }
+  public String getsellerusername() { return this.sellerusername; }
+  public void setsellerusername(String su) { this.sellerusername = su; }
+  public String getselleravatarurl() { return this.selleravatarurl; }
+  public void setselleravatarurl(String sa) { this.selleravatarurl = sa; }
 }

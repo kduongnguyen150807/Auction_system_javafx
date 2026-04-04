@@ -79,12 +79,15 @@ public class YourItemController {
         ItemCardController controller = loader.getController();
         if (controller != null) {
           controller.setData(
-              item.getid(),
-              safe(item.getname()),
-              item.getcurrentprice(),
-              safe(item.getdescription()),
-              formatStatus(item.getstatus()),
-              safe(item.getimageurl()));
+                  item.getid(),
+                  safe(item.getname()),
+                  item.getcurrentprice(),
+                  safe(item.getdescription()),
+                  formatStatus(item.getstatus()),
+                  safe(item.getimageurl()),
+                  safe(item.getsellerusername()),
+                  safe(item.getselleravatarurl())
+          );
         }
         NodeManager.addNodeToPane(loader, ItemContainer);
       } catch (Exception ignored) {

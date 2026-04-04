@@ -33,6 +33,7 @@
                             <children>
                                 <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="box-info" />
                                 <TextField fx:id="txtPrice" promptText="STARTING PRICE (USD)" styleClass="box-info" />
+                                <TextField fx:id="txtMaxPrice" promptText="BUY IT NOW PRICE (OPTIONAL)" styleClass="box-info" />
                                 <TextArea fx:id="txtQuantity" prefRowCount="3" promptText="DESCRIPTION" styleClass="box-info" wrapText="true" />
                                 <VBox spacing="6.0">
                                     <children>
