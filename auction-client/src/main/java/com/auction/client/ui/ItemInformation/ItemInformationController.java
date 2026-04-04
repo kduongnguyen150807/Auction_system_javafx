@@ -281,8 +281,16 @@ public class ItemInformationController {
 
     public void updatepriceui(Item res) {
         if (res == null || res.getid() != this.id) return;
-        if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", res.getcurrentprice()));
         Platform.runLater(() -> {
+            if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", res.getcurrentprice()));
+            if (EndsInValue != null && res.getendtime() != null) {
+                java.time.Duration ans = java.time.Duration.between(java.time.LocalDateTime.now(), res.getendtime());
+                if (!ans.isNegative() && !ans.isZero()) {
+                    long res1 = ans.toHours();
+                    if (res1 / 24 > 0) EndsInValue.setText((res1 / 24) + "d " + (res1 % 24) + "h");
+                    else EndsInValue.setText((res1 % 24) + "h " + (ans.toMinutes() % 60) + "m " + (ans.getSeconds() % 60) + "s");
+                }
+            }
             if (pricechart != null && ans1 != null) {
                 String ans2 = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
                 ans1.getData().add(new javafx.scene.chart.XYChart.Data<>(ans2, res.getcurrentprice()));
@@ -293,10 +301,6 @@ public class ItemInformationController {
     public void updateCurrentBid(double val) {
         Platform.runLater(() -> {
             if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", val));
-            if (pricechart != null && ans1 != null) {
-                String ans = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
-                ans1.getData().add(new javafx.scene.chart.XYChart.Data<>(ans, val));
-            }
         });
     }
 

@@ -46,14 +46,10 @@ public class NetworkClient {
                     if (ans instanceof Response) {
                         try {
                             handleincoming((Response) ans);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        } catch (Exception e) {}
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            } catch (Exception e) {}
         });
         res.setDaemon(true);
         res.start();
@@ -80,15 +76,13 @@ public class NetworkClient {
             Object res3 = res.getpayload();
             if (res3 instanceof Item) {
                 Item res4 = (Item) res3;
-                int ans = res4.getid();
-                double ans1 = res4.getcurrentprice();
                 Platform.runLater(() -> {
-                    if (KhungController.infoc != null && KhungController.infoc.getid() == ans) {
-                        KhungController.infoc.updateCurrentBid(ans1);
+                    if (KhungController.infoc != null && KhungController.infoc.getid() == res4.getid()) {
+                        KhungController.infoc.updatepriceui(res4);
                     }
                     TrangChuController ans2 = TrangChuController.getinstance();
                     if (ans2 != null) {
-                        ans2.updateitemprice(ans, ans1);
+                        ans2.updateitemprice(res4);
                     }
                 });
             }
@@ -114,16 +108,14 @@ public class NetworkClient {
             }
             ans = res.poll(30, TimeUnit.SECONDS);
             pendingmap.remove(req.getrequestid());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
         return ans;
     }
 
     public static String uploadfile(String urlString, byte[] fileBytes) throws Exception {
         String res = "boundary" + System.currentTimeMillis();
-        java.net.URL url = new java.net.URL(urlString);
-        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+        java.net.URL ans1 = java.net.URI.create(urlString).toURL();
+        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) ans1.openConnection();
         conn.setDoOutput(true);
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + res);

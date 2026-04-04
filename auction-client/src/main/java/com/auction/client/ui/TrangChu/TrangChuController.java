@@ -97,19 +97,28 @@ public class TrangChuController {
 
   public void updatepriceui(Item ans) {
     if (ans == null) return;
-    updateitemprice(ans.getid(), ans.getcurrentprice());
+    updateitemprice(ans);
   }
 
-  public void updateitemprice(int ans, double res) {
-    for (Item ans1 : cacheditems) {
-      if (ans1.getid() == ans) {
-        ans1.setcurrentprice(res);
+  public void updateitemprice(Item ans) {
+    for (int res = 0; res < cacheditems.size(); res++) {
+      if (cacheditems.get(res).getid() == ans.getid()) {
+        cacheditems.set(res, ans);
         break;
       }
     }
-    ItemCardController res1 = cardmap.get(ans);
+    ItemCardController res1 = cardmap.get(ans.getid());
     if (res1 != null) {
-      res1.updateprice(res);
+      res1.setData(
+              ans.getid(),
+              safe(ans.getname()),
+              ans.getcurrentprice(),
+              safe(ans.getdescription()),
+              formattime(ans.getendtime()),
+              safe(ans.getimageurl()),
+              safe(ans.getsellerusername()),
+              safe(ans.getselleravatarurl())
+      );
     }
   }
 

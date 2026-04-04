@@ -107,13 +107,20 @@ public class AuctionManager {
 
     Response ans4 = this.bidservice.placebid(b);
     if (ans4.getstatus().equals(Response.ok)) {
+      Item res4 = itemdao.getbyid(b.getitemid());
+      if (res4 != null) {
+        java.time.LocalDateTime res5 = java.time.LocalDateTime.now();
+        java.time.LocalDateTime ans5 = res4.getendtime();
+        if (ans5 != null && java.time.Duration.between(res5, ans5).getSeconds() < 60) {
+          java.time.LocalDateTime res6 = ans5.plusSeconds(60);
+          itemdao.updateendtime(res4.getid(), res6);
+          res4.setendtime(res6);
+        }
+        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res4));
+      }
       broadcast(ans4);
       if (res2 > 0) {
         sendtouser(res2, new Response("", "OUTBID_NOTIFY", "outbid", b.getitemid()));
-      }
-      Item res4 = itemdao.getbyid(b.getitemid());
-      if (res4 != null) {
-        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res4));
       }
     }
 
@@ -133,7 +140,6 @@ public class AuctionManager {
         }
       }
     }
-
     return ans4;
   }
 
