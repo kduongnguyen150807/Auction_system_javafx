@@ -255,4 +255,29 @@ public class ItemDao {
     }
     return ans;
   }
+  public java.util.HashMap<String, Integer> getstatusstats() {
+    java.util.HashMap<String, Integer> ans = new java.util.HashMap<>();
+    try {
+      String res = "select status, count(*) as cnt from items group by status";
+      PreparedStatement ps = this.conn.prepareStatement(res);
+      ResultSet res1 = ps.executeQuery();
+      while (res1.next()) {
+        ans.put(res1.getString("status"), res1.getInt("cnt"));
+      }
+    } catch (Exception e) {}
+    return ans;
+  }
+
+  public java.util.HashMap<String, Double> getcategorystats() {
+    java.util.HashMap<String, Double> ans = new java.util.HashMap<>();
+    try {
+      String res = "select category, sum(currentprice) as total from items where status in ('CLOSED', 'FINISHED') group by category";
+      PreparedStatement ps = this.conn.prepareStatement(res);
+      ResultSet res1 = ps.executeQuery();
+      while (res1.next()) {
+        ans.put(res1.getString("category"), res1.getDouble("total"));
+      }
+    } catch (Exception e) {}
+    return ans;
+  }
 }

@@ -207,6 +207,16 @@ public class ClientHandler implements Runnable {
       if (u != null) u.setpassword("");
       ans = new Response(rid, u != null ? Response.ok : Response.err, u != null ? "success" : "not_found", u);
     }
+    else if (act.equals("get_status_stats")) {
+      if (this.currentuser != null && this.currentuser.getrole() == UserRole.ADMIN) {
+        ans = new Response(rid, Response.ok, "success", this.itemdao.getstatusstats());
+      } else ans = new Response(rid, Response.err, "forbidden", null);
+    }
+    else if (act.equals("get_category_stats")) {
+      if (this.currentuser != null && this.currentuser.getrole() == UserRole.ADMIN) {
+        ans = new Response(rid, Response.ok, "success", this.itemdao.getcategorystats());
+      } else ans = new Response(rid, Response.err, "forbidden", null);
+    }
     else if (act.equals("ping")) {
       ans = new Response(rid, Response.ok, "pong", null);
     }

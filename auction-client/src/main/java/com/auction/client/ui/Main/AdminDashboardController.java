@@ -37,6 +37,8 @@ public class AdminDashboardController {
     @FXML private Button btnreject;
 
     @FXML private ComboBox<String> ratingfilter;
+    @FXML private javafx.scene.chart.PieChart statuschart;
+    @FXML private javafx.scene.chart.BarChart<String, Number> categorychart;
 
     private ObservableList<User> userlist = FXCollections.observableArrayList();
     private FilteredList<User> filtereduserlist;
@@ -72,6 +74,7 @@ public class AdminDashboardController {
 
         loadusers();
         loadpendingitems();
+        loadstats();
     }
 
     private void loadusers() {
@@ -92,6 +95,41 @@ public class AdminDashboardController {
             if (res1 != null && Response.ok.equals(res1.getstatus())) {
                 List<Item> ans = (List<Item>) res1.getpayload();
                 if (ans != null) javafx.application.Platform.runLater(() -> { pendinglist.clear(); pendinglist.addAll(ans); });
+            }
+        }).start();
+    }
+
+    private void loadstats() {
+        new Thread(() -> {
+            Request res = new Request("get_status_stats", null);
+            Response ans = NetworkClient.getinstance().sendrequestandwait(res);
+            if (ans != null && Response.ok.equals(ans.getstatus())) {
+                java.util.HashMap<String, Integer> res1 = (java.util.HashMap<String, Integer>) ans.getpayload();
+                javafx.application.Platform.runLater(() -> {
+                    if (statuschart != null) {
+                        statuschart.getData().clear();
+                        for (java.util.Map.Entry<String, Integer> ans1 : res1.entrySet()) {
+                            statuschart.getData().add(new javafx.scene.chart.PieChart.Data(ans1.getKey() + " (" + ans1.getValue() + ")", ans1.getValue()));
+                        }
+                    }
+                });
+            }
+
+            Request res2 = new Request("get_category_stats", null);
+            Response ans2 = NetworkClient.getinstance().sendrequestandwait(res2);
+            if (ans2 != null && Response.ok.equals(ans2.getstatus())) {
+                java.util.HashMap<String, Double> res3 = (java.util.HashMap<String, Double>) ans2.getpayload();
+                javafx.application.Platform.runLater(() -> {
+                    if (categorychart != null) {
+                        categorychart.getData().clear();
+                        javafx.scene.chart.XYChart.Series<String, Number> ans3 = new javafx.scene.chart.XYChart.Series<>();
+                        ans3.setName("Revenue");
+                        for (java.util.Map.Entry<String, Double> res4 : res3.entrySet()) {
+                            ans3.getData().add(new javafx.scene.chart.XYChart.Data<>(res4.getKey(), res4.getValue()));
+                        }
+                        categorychart.getData().add(ans3);
+                    }
+                });
             }
         }).start();
     }
@@ -165,6 +203,7 @@ public class AdminDashboardController {
                 javafx.application.Platform.runLater(() -> {
                     pendinglist.remove(res);
                     showalert(Alert.AlertType.INFORMATION, "Approved", "Item '" + res.getname() + "' is now live.");
+                    loadstats();
                 });
             }
         }).start();
@@ -181,6 +220,7 @@ public class AdminDashboardController {
                 javafx.application.Platform.runLater(() -> {
                     pendinglist.remove(res);
                     showalert(Alert.AlertType.INFORMATION, "Rejected", "Item '" + res.getname() + "' has been rejected.");
+                    loadstats();
                 });
             }
         }).start();
@@ -206,6 +246,7 @@ public class AdminDashboardController {
     private void handlerefreshpending(ActionEvent event) {
         loadpendingitems();
         loadusers();
+        loadstats();
     }
 
     private void showalert(Alert.AlertType type, String title, String content) {
