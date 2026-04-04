@@ -27,6 +27,10 @@ public class ProfileController {
   @FXML private Label phoneLabel;
   @FXML private Label roleLabel;
   @FXML private Label balanceLabel;
+  @FXML private Label moneySpentLabel;
+  @FXML private Label itemsBoughtLabel;
+  @FXML private Label moneyReceivedLabel;
+  @FXML private Label itemsSoldLabel;
   @FXML private TextField fullNameInput;
   @FXML private TextField emailInput;
   @FXML private TextField phoneInput;
@@ -155,6 +159,18 @@ public class ProfileController {
       if (balanceLabel != null) {
         balanceLabel.setText(String.format("%,.0f$", ClientSession.getCurrentUser().getbalance()));
       }
+      if (moneySpentLabel != null) {
+        moneySpentLabel.setText(String.format("%,.0f$", ClientSession.getCurrentUser().getmoneyspent()));
+      }
+      if (itemsBoughtLabel != null) {
+        itemsBoughtLabel.setText(String.valueOf(ClientSession.getCurrentUser().getitemsbought()));
+      }
+      if (moneyReceivedLabel != null) {
+        moneyReceivedLabel.setText(String.format("%,.0f$", ClientSession.getCurrentUser().getmoneyreceived()));
+      }
+      if (itemsSoldLabel != null) {
+        itemsSoldLabel.setText(String.valueOf(ClientSession.getCurrentUser().getitemssold()));
+      }
       {
         String avatarurl = ClientSession.getCurrentUser().getavatarurl();
         if (avatarurl != null && !avatarurl.isEmpty()) {
@@ -243,12 +259,19 @@ public class ProfileController {
   }
 
   public void handlerefresh(javafx.event.ActionEvent event) {
-    if (ClientSession.getCurrentUser() != null) {
-      String res = ClientSession.getCurrentUser().getavatarurl();
-      if (res != null && !res.isEmpty()) {
-        javafx.scene.image.Image ans = new javafx.scene.image.Image(res, true);
-        avatarimageview.setImage(ans);
+    if (ClientSession.getCurrentUser() == null) return;
+    try {
+      int res = ClientSession.getCurrentUser().getid();
+      Request req = new Request("refresh_user", res);
+      Response ans = NetworkClient.getinstance().sendrequestandwait(req);
+
+      if (ans != null && Response.ok.equals(ans.getstatus())) {
+        User u = (User) ans.getpayload();
+        ClientSession.setCurrentUser(u);
+        javafx.application.Platform.runLater(() -> {
+          refreshData();
+        });
       }
-    }
+    } catch (Exception e) {}
   }
 }

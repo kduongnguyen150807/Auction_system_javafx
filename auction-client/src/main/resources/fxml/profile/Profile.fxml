@@ -56,14 +56,14 @@
                         <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
                             <children>
                                 <Label text="MONEY SPENT" styleClass="metric-title"/>
-                                <Label text="0$" styleClass="metric-value"/>
+                                <Label fx:id="moneySpentLabel" text="0$" styleClass="metric-value"/>
                             </children>
                             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                         </VBox>
                         <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
                             <children>
                                 <Label text="ITEMS BOUGHT" styleClass="metric-title"/>
-                                <Label text="0" styleClass="metric-value"/>
+                                <Label fx:id="itemsBoughtLabel" text="0" styleClass="metric-value"/>
                             </children>
                             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                         </VBox>
@@ -74,14 +74,14 @@
                         <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
                             <children>
                                 <Label text="MONEY RECEIVED" styleClass="metric-title"/>
-                                <Label text="0$" styleClass="metric-value"/>
+                                <Label fx:id="moneyReceivedLabel" text="0$" styleClass="metric-value"/>
                             </children>
                             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                         </VBox>
                         <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
                             <children>
                                 <Label text="ITEMS SOLD" styleClass="metric-title"/>
-                                <Label text="0" styleClass="metric-value"/>
+                                <Label fx:id="itemsSoldLabel" text="0" styleClass="metric-value"/>
                             </children>
                             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                         </VBox>

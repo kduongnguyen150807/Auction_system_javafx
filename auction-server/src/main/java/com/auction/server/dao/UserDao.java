@@ -45,6 +45,10 @@ public class UserDao {
         ans.setage(rs.getString("age"));
         ans.setphonenumber(rs.getString("phonenumber"));
         ans.setbalance(rs.getDouble("balance"));
+        ans.setmoneyspent(rs.getDouble("moneyspent"));
+        ans.setitemsbought(rs.getInt("itemsbought"));
+        ans.setmoneyreceived(rs.getDouble("moneyreceived"));
+        ans.setitemssold(rs.getInt("itemssold"));
         ans.setactive(rs.getBoolean("isactive"));
         ans.setlocked(rs.getBoolean("islocked"));
         ans.setavatarurl(rs.getString("avatar_url"));
@@ -232,6 +236,10 @@ public class UserDao {
         u.setage(rs.getString("age"));
         u.setphonenumber(rs.getString("phonenumber"));
         u.setbalance(rs.getDouble("balance"));
+        u.setmoneyspent(rs.getDouble("moneyspent"));
+        u.setitemsbought(rs.getInt("itemsbought"));
+        u.setmoneyreceived(rs.getDouble("moneyreceived"));
+        u.setitemssold(rs.getInt("itemssold"));
         u.setactive(rs.getBoolean("isactive"));
         u.setlocked(rs.getBoolean("islocked"));
         u.setavatarurl(rs.getString("avatar_url"));
@@ -249,6 +257,32 @@ public class UserDao {
       PreparedStatement ps = this.conn.prepareStatement(sql);
       ps.setDouble(1, b);
       ps.setInt(2, id);
+      int res = ps.executeUpdate();
+      ans = res > 0;
+    } catch (Exception e) {}
+    return ans;
+  }
+
+  public boolean addbiddermetrics(int userid, double amount) {
+    boolean ans = false;
+    try {
+      String sql = "UPDATE users SET moneyspent = moneyspent + ?, itemsbought = itemsbought + 1 WHERE id = ?";
+      PreparedStatement ps = this.conn.prepareStatement(sql);
+      ps.setDouble(1, amount);
+      ps.setInt(2, userid);
+      int res = ps.executeUpdate();
+      ans = res > 0;
+    } catch (Exception e) {}
+    return ans;
+  }
+
+  public boolean addsellermetrics(int userid, double amount) {
+    boolean ans = false;
+    try {
+      String sql = "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";
+      PreparedStatement ps = this.conn.prepareStatement(sql);
+      ps.setDouble(1, amount);
+      ps.setInt(2, userid);
       int res = ps.executeUpdate();
       ans = res > 0;
     } catch (Exception e) {}
@@ -276,6 +310,10 @@ public class UserDao {
         ans.setage(rs.getString("age"));
         ans.setphonenumber(rs.getString("phonenumber"));
         ans.setbalance(rs.getDouble("balance"));
+        ans.setmoneyspent(rs.getDouble("moneyspent"));
+        ans.setitemsbought(rs.getInt("itemsbought"));
+        ans.setmoneyreceived(rs.getDouble("moneyreceived"));
+        ans.setitemssold(rs.getInt("itemssold"));
         ans.setactive(rs.getBoolean("isactive"));
         ans.setlocked(rs.getBoolean("islocked"));
         ans.setavatarurl(rs.getString("avatar_url"));

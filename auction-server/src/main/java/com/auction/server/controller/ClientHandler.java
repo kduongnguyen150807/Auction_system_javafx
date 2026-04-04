@@ -166,6 +166,15 @@ public class ClientHandler implements Runnable {
       } else {
         ans = new Response(req.getrequestid(), Response.err, "fail", null);
       }
+    } else if (act.equals("refresh_user")) {
+      int res = (int) req.getpayload();
+      UserDao d = new UserDao();
+      User u = d.getbyid(String.valueOf(res));
+      if (u != null) {
+        ans = new Response(req.getrequestid(), Response.ok, "success", u);
+      } else {
+        ans = new Response(req.getrequestid(), Response.err, "fail", null);
+      }
     } else {
       ans = new Response(req.getrequestid(), Response.err, "unknown", null);
     }
