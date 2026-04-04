@@ -15,6 +15,7 @@ public class AuctionManager {
   private ItemDao itemdao;
   private UserDao userdao;
   private TransactionLogDao logdao;
+  private java.util.Map<Integer, java.util.Map<Integer, Double>> autobids;
 
   private AuctionManager() {
     this.clients = new CopyOnWriteArrayList<>();
@@ -22,6 +23,7 @@ public class AuctionManager {
     this.itemdao = new ItemDao();
     this.userdao = new UserDao();
     this.logdao = new TransactionLogDao();
+    this.autobids = new java.util.concurrent.ConcurrentHashMap<>();
   }
 
   public static synchronized AuctionManager getinstance() {
@@ -46,7 +48,17 @@ public class AuctionManager {
       if (ph == null || ph.trim().isEmpty()) return new Response("", Response.err, "Unverified account. Add a phone number to bid.", null);
     }
     if (res != null && res.getsellerid() == b.getuserid()) return new Response("", Response.err, "Fail", null);
-    if (res != null && b.getbidvalue() <= res.getcurrentprice()) return new Response("", Response.err, "Fail", null);
+
+    if (b.getisautobid()) {
+      java.util.Map<Integer, Double> res1 = this.autobids.computeIfAbsent(b.getitemid(), k -> new java.util.concurrent.ConcurrentHashMap<>());
+      res1.put(b.getuserid(), b.getmaxautobid());
+      b.setbidvalue(res.getcurrentprice() + 10.0);
+    }
+
+    if (res != null && b.getbidvalue() <= res.getcurrentprice()) {
+      b.setbidvalue(res.getcurrentprice() + 10.0);
+    }
+
     if (ans != null && ans.getbalance() < b.getbidvalue()) return new Response("", Response.err, "Fail", null);
 
     if (res != null && res.getmaxprice() > 0 && b.getbidvalue() >= res.getmaxprice()) {
@@ -104,6 +116,24 @@ public class AuctionManager {
         broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res4));
       }
     }
+
+    java.util.Map<Integer, Double> ans5 = this.autobids.get(b.getitemid());
+    if (ans5 != null) {
+      double res6 = itemdao.getbyid(b.getitemid()).getcurrentprice();
+      int res7 = getprevioushighestbidder(b.getitemid());
+      for (java.util.Map.Entry<Integer, Double> res8 : ans5.entrySet()) {
+        if (res8.getKey() != res7 && res8.getValue() > res6) {
+          double ans6 = res6 + 10.0;
+          if (ans6 <= res8.getValue()) {
+            BidTransaction ans7 = new BidTransaction(b.getitemid(), res8.getKey(), ans6);
+            ans7.setisautobid(false);
+            processbid(ans7);
+            break;
+          }
+        }
+      }
+    }
+
     return ans4;
   }
 

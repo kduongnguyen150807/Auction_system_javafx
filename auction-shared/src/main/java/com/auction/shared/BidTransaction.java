@@ -8,6 +8,8 @@ public class BidTransaction extends Entity {
   protected int userid;
   protected double bidvalue;
   protected LocalDateTime timestamp;
+  protected double maxautobid;
+  protected boolean isautobid;
 
   public BidTransaction() {
     super();
@@ -19,6 +21,8 @@ public class BidTransaction extends Entity {
     this.userid = uid;
     this.bidvalue = val;
     this.timestamp = LocalDateTime.now();
+    this.maxautobid = 0.0;
+    this.isautobid = false;
   }
 
   public int getitemid() {
@@ -26,8 +30,8 @@ public class BidTransaction extends Entity {
     return ans;
   }
 
-  public void setitemid(int id) {
-    this.itemid = id;
+  public void setitemid(int res) {
+    this.itemid = res;
   }
 
   public int getuserid() {
@@ -35,8 +39,8 @@ public class BidTransaction extends Entity {
     return ans;
   }
 
-  public void setuserid(int id) {
-    this.userid = id;
+  public void setuserid(int res) {
+    this.userid = res;
   }
 
   public double getbidvalue() {
@@ -44,8 +48,8 @@ public class BidTransaction extends Entity {
     return ans;
   }
 
-  public void setbidvalue(double v) {
-    this.bidvalue = v;
+  public void setbidvalue(double res) {
+    this.bidvalue = res;
   }
 
   public LocalDateTime gettimestamp() {
@@ -53,7 +57,25 @@ public class BidTransaction extends Entity {
     return ans;
   }
 
-  public void settimestamp(LocalDateTime t) {
-    this.timestamp = t;
+  public void settimestamp(LocalDateTime res) {
+    this.timestamp = res;
+  }
+
+  public double getmaxautobid() {
+    double ans = this.maxautobid;
+    return ans;
+  }
+
+  public void setmaxautobid(double res) {
+    this.maxautobid = res;
+  }
+
+  public boolean getisautobid() {
+    boolean ans = this.isautobid;
+    return ans;
+  }
+
+  public void setisautobid(boolean res) {
+    this.isautobid = res;
   }
 }

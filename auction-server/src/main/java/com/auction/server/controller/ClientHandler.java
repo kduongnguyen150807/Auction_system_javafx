@@ -71,7 +71,6 @@ public class ClientHandler implements Runnable {
     Object pay = req.getpayload();
     String rid = req.getrequestid();
 
-    // 1. NHÓM AUTH (ĐĂNG NHẬP / ĐĂNG KÝ)
     if (act.equals(Request.login)) {
       Map<String, String> res = (Map<String, String>) pay;
       User u = this.userservice.login(res.get("username"), res.get("password"));
@@ -86,8 +85,6 @@ public class ClientHandler implements Runnable {
       boolean res2 = this.userservice.signup(u);
       ans = new Response(rid, res2 ? Response.ok : Response.err, res2 ? "success" : "duplicate", null);
     }
-
-    // 2. NHÓM ITEM & ĐẤU GIÁ
     else if (act.equals(Request.list)) {
       List<Item> res = this.itemdao.getall();
       res.removeIf(i -> i.getstatus() != com.auction.shared.ItemStatus.OPEN);
@@ -99,15 +96,13 @@ public class ClientHandler implements Runnable {
       ans = new Response(rid, res2.getstatus(), res2.getmessage(), res2.getpayload());
     }
     else if (act.equals(Request.addlot)) {
-      ans = handleAddLot(req);
+      ans = handleaddlot(req);
     }
-    else if (act.equals("get_my_items")) { // Cho trang Your Item
+    else if (act.equals("get_my_items")) {
       int res = (int) pay;
       java.util.List<Item> ans2 = this.itemdao.getbysellerid(res);
       ans = new Response(rid, Response.ok, "success", (java.io.Serializable) ans2);
     }
-
-    // 3. NHÓM PROFILE & USER MANAGEMENT
     else if (act.equals(Request.updateprofile)) {
       Map<String, String> res = (Map<String, String>) pay;
       String err = this.userservice.updateprofile(Integer.parseInt(res.get("userid")), res.get("fullname"), res.get("email"), res.get("phone"));
@@ -140,8 +135,6 @@ public class ClientHandler implements Runnable {
         ans = new Response(rid, Response.err, "forbidden", null);
       }
     }
-
-    // 4. NHÓM LỊCH SỬ (BIDDER)
     else if (act.equals(Request.getongoingbids)) {
       ans = new Response(rid, Response.ok, "success", (java.io.Serializable) this.lotdao.getongoingbids((int) pay));
     }
@@ -154,10 +147,8 @@ public class ClientHandler implements Runnable {
     else if (act.equals("getpastbids")) {
       ans = new Response(rid, Response.ok, "success", (java.io.Serializable) this.lotdao.getpastbids((int) pay));
     }
-
-    // 5. NHÓM TÀI CHÍNH & REFRESH
     else if (act.equals("deposit")) {
-      ans = handleDeposit(req);
+      ans = handledeposit(req);
     }
     else if (act.equals("refresh_user")) {
       User u = new com.auction.server.dao.UserDao().getbyid(String.valueOf(pay));
@@ -216,6 +207,9 @@ public class ClientHandler implements Runnable {
       if (u != null) u.setpassword("");
       ans = new Response(rid, u != null ? Response.ok : Response.err, u != null ? "success" : "not_found", u);
     }
+    else if (act.equals("ping")) {
+      ans = new Response(rid, Response.ok, "pong", null);
+    }
     else {
       ans = new Response(rid, Response.err, "unknown_action", null);
     }
@@ -253,7 +247,7 @@ public class ClientHandler implements Runnable {
     }
   }
 
-  private Response handleAddLot(Request req) {
+  private Response handleaddlot(Request req) {
     try {
       Map<String, String> res = (Map<String, String>) req.getpayload();
       java.time.format.DateTimeFormatter f = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]");
@@ -267,7 +261,7 @@ public class ClientHandler implements Runnable {
     } catch (Exception e) { return new Response(req.getrequestid(), Response.err, "fail", null); }
   }
 
-  private Response handleDeposit(Request req) {
+  private Response handledeposit(Request req) {
     Map<String, String> res = (Map<String, String>) req.getpayload();
     int id = Integer.parseInt(res.get("userid"));
     double val = Double.parseDouble(res.get("amount"));

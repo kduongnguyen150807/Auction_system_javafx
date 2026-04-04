@@ -5,15 +5,13 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.Main.KhungController;
-import com.auction.shared.Item;
-import com.auction.shared.Rating;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
+import com.auction.shared.*;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.image.Image;
@@ -34,10 +32,12 @@ public class ItemInformationController {
     @FXML private Button RateButton;
     @FXML private VBox RatingsContainer;
     @FXML private javafx.scene.control.ComboBox<String> RatingFilterCombo;
+    @FXML private TextField autobidfield;
+    @FXML private Button autobidbutton;
 
     private int id = -1;
     private String n = "";
-    private double currentMaxPrice = 0;
+    private double currentmaxprice = 0;
     private int sellerid = -1;
     private int winnerid = -1;
     private java.util.List<Rating> cachedratings = new java.util.ArrayList<>();
@@ -45,7 +45,7 @@ public class ItemInformationController {
     public void setData(int iid, String iname, double p, double mp, String d, String t, String url, String sname, String surl) {
         this.id = iid;
         this.n = (iname == null) ? "" : iname;
-        this.currentMaxPrice = mp;
+        this.currentmaxprice = mp;
         if (ItemName != null) ItemName.setText(this.n);
         if (ItemDescription != null) ItemDescription.setText(d == null ? "" : d);
         if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", p));
@@ -60,10 +60,14 @@ public class ItemInformationController {
                 BidButton.setText("CLOSED");
                 BidButton.setDisable(true);
                 BidButton.setStyle("-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
+                if (autobidbutton != null) autobidbutton.setDisable(true);
+                if (autobidfield != null) autobidfield.setDisable(true);
             } else {
                 BidButton.setText("PLACE BID NOW");
                 BidButton.setDisable(false);
                 BidButton.setStyle("");
+                if (autobidbutton != null) autobidbutton.setDisable(false);
+                if (autobidfield != null) autobidfield.setDisable(false);
             }
         }
 
@@ -89,11 +93,8 @@ public class ItemInformationController {
                     });
                 }
             });
-            if (img.isError()) {
-                SellerAvatar.setImage(null);
-            } else {
-                SellerAvatar.setImage(img);
-            }
+            if (img.isError()) SellerAvatar.setImage(null);
+            else SellerAvatar.setImage(img);
         }
     }
 
@@ -106,12 +107,10 @@ public class ItemInformationController {
                     Object p = res.getpayload();
                     if (p instanceof Item i) {
                         Platform.runLater(() -> {
-                            if (CurrentHighestBidValue != null) {
-                                CurrentHighestBidValue.setText(String.format("%,.0f$", i.getcurrentprice()));
-                            }
-                            this.currentMaxPrice = i.getmaxprice();
+                            if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", i.getcurrentprice()));
+                            this.currentmaxprice = i.getmaxprice();
                             if (MaxPriceValue != null) {
-                                if (this.currentMaxPrice > 0) MaxPriceValue.setText(String.format("BUY IT NOW: %,.0f$", this.currentMaxPrice));
+                                if (this.currentmaxprice > 0) MaxPriceValue.setText(String.format("BUY IT NOW: %,.0f$", this.currentmaxprice));
                                 else MaxPriceValue.setText("NO BUY IT NOW");
                             }
                             this.sellerid = i.getsellerid();
@@ -133,9 +132,7 @@ public class ItemInformationController {
         if (res.getstatus() == com.auction.shared.ItemStatus.CLOSED || res.getstatus() == com.auction.shared.ItemStatus.FINISHED) {
             if (ClientSession.getCurrentUser() != null) {
                 int res1 = ClientSession.getCurrentUser().getid();
-                if (res1 == res.getwinnerid() || res1 == res.getsellerid()) {
-                    ans = true;
-                }
+                if (res1 == res.getwinnerid() || res1 == res.getsellerid()) ans = true;
             }
         }
         RateButton.setVisible(ans);
@@ -204,13 +201,13 @@ public class ItemInformationController {
     }
 
     @FXML
-    private void ShowBiddingForm() {
+    private void showbiddingform() {
         try {
             NodeContentLoader<VBox> l = new NodeContentLoader<>();
             l.load("/fxml/biddingform/BiddingForm.fxml");
             com.auction.client.ui.BiddingForm.BiddingFormController c = l.getController();
             if (c != null) {
-                if (id > 0) c.setData(id, n, currentMaxPrice);
+                if (id > 0) c.setData(id, n, currentmaxprice);
                 c.setParentController(this);
             }
             NodeManager.addNodeToPane(l, KhungController.getKhungChua());
@@ -218,7 +215,7 @@ public class ItemInformationController {
     }
 
     @FXML
-    private void ShowRatingForm() {
+    private void showratingform() {
         try {
             NodeContentLoader<VBox> res = new NodeContentLoader<>();
             res.load("/fxml/ratingform/RatingForm.fxml");
@@ -232,6 +229,22 @@ public class ItemInformationController {
                 });
             }
             NodeManager.addNodeToPane(res, KhungController.getKhungChua());
+        } catch (Exception e) {}
+    }
+
+    @FXML
+    private void handleautobid() {
+        try {
+            double res = Double.parseDouble(autobidfield.getText());
+            int ans = ClientSession.getCurrentUser().getid();
+            BidTransaction res1 = new BidTransaction(this.id, ans, 0);
+            res1.setmaxautobid(res);
+            res1.setisautobid(true);
+            Request ans1 = new Request(Request.bid, res1);
+            Response res2 = NetworkClient.getinstance().sendrequestandwait(ans1);
+            if (res2 != null && Response.ok.equals(res2.getstatus())) {
+                autobidfield.clear();
+            }
         } catch (Exception e) {}
     }
 
@@ -259,6 +272,8 @@ public class ItemInformationController {
                 BidButton.setText("CLOSED");
                 BidButton.setDisable(true);
                 BidButton.setStyle("-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
+                if (autobidbutton != null) autobidbutton.setDisable(true);
+                if (autobidfield != null) autobidfield.setDisable(true);
             }
             if (EndsInValue != null) EndsInValue.setText("Winner: " + com.auction.client.ClientSession.getUsername());
         });
