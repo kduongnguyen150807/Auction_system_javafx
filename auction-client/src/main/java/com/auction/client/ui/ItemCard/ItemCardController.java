@@ -73,6 +73,7 @@ public class ItemCardController {
       ItemInformationController c = l.getController();
       if (c != null) {
         c.setData(id, n, p, 0, d, t, u, sn, sa);
+        c.refresh();
         KhungController.infoc = c;
       }
       NodeManager.switchNodewithNode(l.getCurrentNode(), KhungController.getCurrentNode(), KhungController.getKhungChua());

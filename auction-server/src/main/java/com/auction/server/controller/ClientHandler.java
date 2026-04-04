@@ -68,6 +68,7 @@ public class ClientHandler implements Runnable {
       else ans = new Response(req.getrequestid(), Response.err, "duplicate_username_or_email", null);
     } else if (act.equals(Request.list)) {
       List<Item> items = this.itemdao.getall();
+      items.removeIf(i -> i.getstatus() != com.auction.shared.ItemStatus.OPEN);
       ans = new Response(req.getrequestid(), Response.ok, "success", items);
     } else if (act.equals(Request.bid)) {
       BidTransaction b = (BidTransaction) req.getpayload();

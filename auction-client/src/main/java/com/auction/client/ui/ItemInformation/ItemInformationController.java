@@ -10,6 +10,7 @@ import com.auction.shared.Response;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.image.Image;
@@ -26,6 +27,7 @@ public class ItemInformationController {
     @FXML private Label EndsInValue;
     @FXML private ImageView SellerAvatar;
     @FXML private Label SellerName;
+    @FXML private Button BidButton;
 
     private int id = -1;
     private String n = "";
@@ -43,6 +45,19 @@ public class ItemInformationController {
             else MaxPriceValue.setText("NO BUY IT NOW");
         }
         if (EndsInValue != null) EndsInValue.setText(t == null ? "" : t);
+
+        if (BidButton != null) {
+            if (t != null && (t.toLowerCase().startsWith("winner") || t.equalsIgnoreCase("closed"))) {
+                BidButton.setText("CLOSED");
+                BidButton.setDisable(true);
+                BidButton.setStyle("-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
+            } else {
+                BidButton.setText("PLACE BID NOW");
+                BidButton.setDisable(false);
+                BidButton.setStyle("");
+            }
+        }
+
         if (ItemImageHolder != null && url != null && !url.isBlank()) {
             String res = url.contains(".webp") ? url.replace(".webp", ".jpg") : url;
             ItemImageHolder.setImage(new Image(res, true));
@@ -112,9 +127,28 @@ public class ItemInformationController {
             com.auction.client.ui.BiddingForm.BiddingFormController c = l.getController();
             if (c != null) {
                 if (id > 0) c.setData(id, n, currentMaxPrice);
-                c.setbidvaluelabel(CurrentHighestBidValue);
+                c.setParentController(this);
             }
             NodeManager.addNodeToPane(l, KhungController.getKhungChua());
         } catch (Exception e) {}
+    }
+
+    public void updateCurrentBid(double val) {
+        Platform.runLater(() -> {
+            if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", val));
+        });
+    }
+
+    public void markAsSold() {
+        Platform.runLater(() -> {
+            if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText("ĐÃ CHỐT ĐỨT");
+            if (MaxPriceValue != null) MaxPriceValue.setText("SELLED");
+            if (BidButton != null) {
+                BidButton.setText("CLOSED");
+                BidButton.setDisable(true);
+                BidButton.setStyle("-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
+            }
+            if (EndsInValue != null) EndsInValue.setText("Winner: " + com.auction.client.ClientSession.getUsername());
+        });
     }
 }

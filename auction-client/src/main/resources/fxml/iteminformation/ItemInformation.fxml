@@ -74,7 +74,7 @@
                             </children>
                         </VBox>
 
-                        <Button maxWidth="Infinity" onAction="#ShowBiddingForm" prefHeight="65.0" styleClass="bid-button" text="PLACE BID NOW" />
+                        <Button fx:id="BidButton" maxWidth="Infinity" onAction="#ShowBiddingForm" prefHeight="65.0" styleClass="bid-button" text="PLACE BID NOW" />
                     </children>
                 </VBox>
             </children>

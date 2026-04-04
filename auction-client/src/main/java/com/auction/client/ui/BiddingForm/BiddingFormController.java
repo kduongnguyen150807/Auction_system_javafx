@@ -4,6 +4,7 @@ import com.auction.client.ClientSession;
 import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.shared.BidTransaction;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -21,7 +22,7 @@ public class BiddingFormController {
     @FXML private Label MaxPriceInfo;
     @FXML private TextField BidAmount;
     private int itemid = -1;
-    private Label bidvaluelabel;
+    private ItemInformationController parent;
 
     @FXML
     private void RemoveForm() {
@@ -38,8 +39,8 @@ public class BiddingFormController {
         }
     }
 
-    public void setbidvaluelabel(Label bidvaluelabel) {
-        this.bidvaluelabel = bidvaluelabel;
+    public void setParentController(ItemInformationController p) {
+        this.parent = p;
     }
 
     @FXML
@@ -69,14 +70,17 @@ public class BiddingFormController {
                 Object res3 = res2.getpayload();
                 if (res3 instanceof BidTransaction) {
                     double ans2 = ((BidTransaction) res3).getbidvalue();
-                    if (bidvaluelabel != null) {
-                        Platform.runLater(() -> bidvaluelabel.setText(String.format("%,.2f$", ans2)));
+                    if (parent != null) {
+                        parent.updateCurrentBid(ans2);
                     }
                 }
                 RemoveForm();
 
                 if ("BUY_IT_NOW_SUCCESS".equals(res2.getmessage())) {
-                    showAlert(Alert.AlertType.INFORMATION, "CHỐT ĐƠN", "Mày đã hốt trọn ổ món này!");
+                    if (parent != null) {
+                        parent.markAsSold();
+                    }
+                    showAlert(Alert.AlertType.INFORMATION, "CHỐT ĐƠN", "Mày đã hốt trọn món này! Hãy ấn 'Refresh' ở trang chủ để làm mới.");
                 } else {
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Bid placed successfully.");
                 }
