@@ -15,170 +15,151 @@ public class ItemDao {
 
   private void ensurecolumns() {
     try {
-      // Đảm bảo cột image_url tồn tại
       if (!this.columnexists("items", "image_url")) {
         Statement st = this.conn.createStatement();
         st.executeUpdate("ALTER TABLE items ADD COLUMN image_url VARCHAR(2048) NULL");
       }
-      // Thêm cột maxprice cho tính năng mua đứt
       if (!this.columnexists("items", "maxprice")) {
         Statement st = this.conn.createStatement();
         st.executeUpdate("ALTER TABLE items ADD COLUMN maxprice DOUBLE NULL");
       }
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
+    } catch (SQLException e) {}
   }
 
-  private boolean columnexists(String tableName, String columnName) throws SQLException {
-    String sql = "select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ? limit 1";
-    PreparedStatement ps = this.conn.prepareStatement(sql);
-    ps.setString(1, tableName);
-    ps.setString(2, columnName);
-    ResultSet rs = ps.executeQuery();
-    boolean ans = rs.next();
-    return ans;
+  private boolean columnexists(String res, String ans) throws SQLException {
+    String res1 = "select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ? limit 1";
+    PreparedStatement ps = this.conn.prepareStatement(res1);
+    ps.setString(1, res);
+    ps.setString(2, ans);
+    ResultSet res2 = ps.executeQuery();
+    boolean ans1 = res2.next();
+    return ans1;
   }
 
   public List<Item> getall() {
     List<Item> ans = new ArrayList<>();
     try {
-      // Truy vấn lấy thông tin sản phẩm và thông tin người bán
-      String sql = "select i.*, u.username as seller_name, u.avatar_url as seller_avatar from items i left join users u on i.sellerid = u.id";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(maprs(rs));
+      String res = "select i.*, u.username as seller_name, u.avatar_url as seller_avatar from items i left join users u on i.sellerid = u.id";
+      PreparedStatement ps = this.conn.prepareStatement(res);
+      ResultSet res1 = ps.executeQuery();
+      while (res1.next()) {
+        ans.add(maprs(res1));
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    } catch (Exception e) {}
     return ans;
   }
 
-  public Item getbyid(int id) {
+  public Item getbyid(int res) {
     Item ans = null;
     try {
-      String sql = "select i.*, u.username as seller_name, u.avatar_url as seller_avatar from items i left join users u on i.sellerid = u.id where i.id = ?";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setInt(1, id);
-      ResultSet rs = ps.executeQuery();
-      if (rs.next()) {
-        ans = maprs(rs);
+      String res1 = "select i.*, u.username as seller_name, u.avatar_url as seller_avatar from items i left join users u on i.sellerid = u.id where i.id = ?";
+      PreparedStatement ps = this.conn.prepareStatement(res1);
+      ps.setInt(1, res);
+      ResultSet res2 = ps.executeQuery();
+      if (res2.next()) {
+        ans = maprs(res2);
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    } catch (Exception e) {}
     return ans;
   }
 
-  public boolean updateprice(int id, double v, int ver) {
-    boolean ans = false;
+  public boolean updateprice(int res, double ans, int res1) {
+    boolean ans1 = false;
     try {
-      String sql = "update items set currentprice = ?, version = version + 1 where id = ? and version = ?";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setDouble(1, v);
-      ps.setInt(2, id);
-      ps.setInt(3, ver);
-      int res = ps.executeUpdate();
-      ans = res > 0;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return ans;
+      String res2 = "update items set currentprice = ?, version = version + 1 where id = ? and version = ?";
+      PreparedStatement ps = this.conn.prepareStatement(res2);
+      ps.setDouble(1, ans);
+      ps.setInt(2, res);
+      ps.setInt(3, res1);
+      int ans2 = ps.executeUpdate();
+      ans1 = ans2 > 0;
+    } catch (Exception e) {}
+    return ans1;
   }
 
-  public boolean updateendtime(int id, LocalDateTime t) {
-    boolean ans = false;
+  public boolean updateendtime(int res, LocalDateTime ans) {
+    boolean res1 = false;
     try {
-      String sql = "update items set endtime = ? where id = ?";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setTimestamp(1, Timestamp.valueOf(t));
-      ps.setInt(2, id);
-      int res = ps.executeUpdate();
-      ans = res > 0;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return ans;
+      String ans1 = "update items set endtime = ? where id = ?";
+      PreparedStatement ps = this.conn.prepareStatement(ans1);
+      ps.setTimestamp(1, Timestamp.valueOf(ans));
+      ps.setInt(2, res);
+      int res2 = ps.executeUpdate();
+      res1 = res2 > 0;
+    } catch (Exception e) {}
+    return res1;
   }
 
-  // Cập nhật phương thức insertlot để nhận tham số maxp
-  public boolean insertlot(String n, String d, double sp, double maxp, LocalDateTime st, LocalDateTime et, String sname, String url, String cat) {
-    boolean ans = false;
+  public boolean insertlot(String res, String ans, double res1, double ans1, LocalDateTime res2, LocalDateTime ans2, String res3, String ans3, String res4) {
+    boolean ans4 = false;
     try {
-      int sid = -1;
+      int res5 = -1;
       PreparedStatement ps0 = this.conn.prepareStatement("select id from users where username = ? limit 1");
-      ps0.setString(1, sname);
+      ps0.setString(1, res3);
       ResultSet rs0 = ps0.executeQuery();
-      if (rs0.next()) sid = rs0.getInt(1);
-      if (sid <= 0) return false;
+      if (rs0.next()) res5 = rs0.getInt(1);
+      if (res5 <= 0) return false;
 
-      String sql = "INSERT INTO items (category, name, description, startingprice, currentprice, maxprice, starttime, endtime, sellerid, winnerid, status, version, image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setString(1, cat == null ? "Vehicle" : cat);
-      ps.setString(2, n);
-      ps.setString(3, d);
-      ps.setDouble(4, sp);
-      ps.setDouble(5, sp);
-      ps.setDouble(6, maxp);
-      ps.setTimestamp(7, Timestamp.valueOf(st));
-      ps.setTimestamp(8, Timestamp.valueOf(et));
-      ps.setInt(9, sid);
+      String res6 = "INSERT INTO items (category, name, description, startingprice, currentprice, maxprice, starttime, endtime, sellerid, winnerid, status, version, image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+      PreparedStatement ps = this.conn.prepareStatement(res6);
+      ps.setString(1, res4 == null ? "Vehicle" : res4);
+      ps.setString(2, res);
+      ps.setString(3, ans);
+      ps.setDouble(4, res1);
+      ps.setDouble(5, res1);
+      ps.setDouble(6, ans1);
+      ps.setTimestamp(7, Timestamp.valueOf(res2));
+      ps.setTimestamp(8, Timestamp.valueOf(ans2));
+      ps.setInt(9, res5);
       ps.setNull(10, Types.INTEGER);
       ps.setString(11, ItemStatus.PENDING.name());
       ps.setInt(12, 0);
-      ps.setString(13, url);
-      int res = ps.executeUpdate();
-      ans = res > 0;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return ans;
+      ps.setString(13, ans3);
+      int res7 = ps.executeUpdate();
+      ans4 = res7 > 0;
+    } catch (Exception e) {}
+    return ans4;
   }
 
-  public void closeauction(int id, int wid, String s) {
+  public void closeauction(int res, int ans, String res1) {
     try {
-      String sql = "update items set winnerid = ?, status = ? where id = ?";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setInt(1, wid);
-      ps.setString(2, s);
-      ps.setInt(3, id);
+      String ans1 = "update items set winnerid = ?, status = ? where id = ?";
+      PreparedStatement ps = this.conn.prepareStatement(ans1);
+      ps.setInt(1, ans);
+      ps.setString(2, res1);
+      ps.setInt(3, res);
       ps.executeUpdate();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    } catch (Exception e) {}
   }
 
-  private Item maprs(ResultSet rs) throws SQLException {
-    String c = rs.getString("category");
-    Item ans = (c != null && c.equalsIgnoreCase("Electronics")) ? new Electronics() : (c != null && c.equalsIgnoreCase("Art") ? new Art() : new Vehicle());
-    ans.setid(rs.getInt("id"));
-    ans.setversion(rs.getInt("version"));
-    ans.setname(rs.getString("name"));
-    ans.setdescription(rs.getString("description"));
-    ans.setstartingprice(rs.getDouble("startingprice"));
-    ans.setcurrentprice(rs.getDouble("currentprice"));
-    // Ánh xạ maxprice từ ResultSet vào đối tượng Item
-    ans.setmaxprice(rs.getDouble("maxprice"));
+  private Item maprs(ResultSet res) throws SQLException {
+    String ans = res.getString("category");
+    Item res1 = ItemFactory.createitem(ans);
+    res1.setid(res.getInt("id"));
+    res1.setversion(res.getInt("version"));
+    res1.setname(res.getString("name"));
+    res1.setdescription(res.getString("description"));
+    res1.setstartingprice(res.getDouble("startingprice"));
+    res1.setcurrentprice(res.getDouble("currentprice"));
+    res1.setmaxprice(res.getDouble("maxprice"));
 
-    Timestamp st = rs.getTimestamp("starttime");
-    if (st != null) ans.setstarttime(st.toLocalDateTime());
-    Timestamp et = rs.getTimestamp("endtime");
-    if (et != null) ans.setendtime(et.toLocalDateTime());
-    ans.setsellerid(rs.getInt("sellerid"));
-    ans.setwinnerid(rs.getInt("winnerid"));
-    ans.setstatus(ItemStatus.valueOf(rs.getString("status")));
-    ans.setimageurl(rs.getString("image_url"));
+    Timestamp ans1 = res.getTimestamp("starttime");
+    if (ans1 != null) res1.setstarttime(ans1.toLocalDateTime());
+    Timestamp res2 = res.getTimestamp("endtime");
+    if (res2 != null) res1.setendtime(res2.toLocalDateTime());
+    res1.setsellerid(res.getInt("sellerid"));
+    res1.setwinnerid(res.getInt("winnerid"));
+    res1.setstatus(ItemStatus.valueOf(res.getString("status")));
+    res1.setimageurl(res.getString("image_url"));
     try {
-      String name = rs.getString("seller_name");
-      if (name != null) ans.setsellerusername(name);
-      String avatar = rs.getString("seller_avatar");
-      if (avatar != null) ans.setselleravatarurl(avatar);
-    } catch (SQLException e) {
-    }
-    return ans;
+      String ans2 = res.getString("seller_name");
+      if (ans2 != null) res1.setsellerusername(ans2);
+      String res3 = res.getString("seller_avatar");
+      if (res3 != null) res1.setselleravatarurl(res3);
+    } catch (SQLException e) {}
+    return res1;
   }
+
   public java.util.List<Item> getexpireditems() {
     java.util.List<Item> ans = new java.util.ArrayList<>();
     try {
@@ -186,30 +167,25 @@ public class ItemDao {
       java.sql.PreparedStatement ps = this.conn.prepareStatement(res);
       java.sql.ResultSet res1 = ps.executeQuery();
       while (res1.next()) {
-        // Dùng hàm maprs mày đã viết sẵn để bốc data lên
-        Item res2 = maprs(res1);
-        ans.add(res2);
+        Item ans1 = maprs(res1);
+        ans.add(ans1);
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    } catch (Exception e) {}
     return ans;
   }
-  public java.util.List<Item> getbysellerid(int sid) {
+
+  public java.util.List<Item> getbysellerid(int res) {
     java.util.List<Item> ans = new java.util.ArrayList<>();
     try {
-      // Đổi createdat thành id để sắp xếp, vì bảng items của mày có id chắc luôn
-      String res = "SELECT * FROM items WHERE sellerid = ? ORDER BY id DESC";
-      java.sql.PreparedStatement ps = this.conn.prepareStatement(res);
-      ps.setInt(1, sid);
-      java.sql.ResultSet res1 = ps.executeQuery();
-      while (res1.next()) {
-        Item res2 = maprs(res1);
+      String res1 = "SELECT * FROM items WHERE sellerid = ? ORDER BY id DESC";
+      java.sql.PreparedStatement ps = this.conn.prepareStatement(res1);
+      ps.setInt(1, res);
+      java.sql.ResultSet ans1 = ps.executeQuery();
+      while (ans1.next()) {
+        Item res2 = maprs(ans1);
         ans.add(res2);
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    } catch (Exception e) {}
     return ans;
   }
 
@@ -222,39 +198,34 @@ public class ItemDao {
       while (res1.next()) {
         ans.add(maprs(res1));
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    } catch (Exception e) {}
     return ans;
   }
 
-  public boolean approveitem(int id) {
+  public boolean approveitem(int res) {
     boolean ans = false;
     try {
-      String res = "update items set status = 'OPEN' where id = ? and status = 'PENDING'";
-      PreparedStatement ps = this.conn.prepareStatement(res);
-      ps.setInt(1, id);
-      int res1 = ps.executeUpdate();
-      ans = res1 > 0;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+      String res1 = "update items set status = 'OPEN' where id = ? and status = 'PENDING'";
+      PreparedStatement ps = this.conn.prepareStatement(res1);
+      ps.setInt(1, res);
+      int ans1 = ps.executeUpdate();
+      ans = ans1 > 0;
+    } catch (Exception e) {}
     return ans;
   }
 
-  public boolean rejectitem(int id) {
+  public boolean rejectitem(int res) {
     boolean ans = false;
     try {
-      String res = "update items set status = 'CANCELED' where id = ? and status = 'PENDING'";
-      PreparedStatement ps = this.conn.prepareStatement(res);
-      ps.setInt(1, id);
-      int res1 = ps.executeUpdate();
-      ans = res1 > 0;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+      String res1 = "update items set status = 'CANCELED' where id = ? and status = 'PENDING'";
+      PreparedStatement ps = this.conn.prepareStatement(res1);
+      ps.setInt(1, res);
+      int ans1 = ps.executeUpdate();
+      ans = ans1 > 0;
+    } catch (Exception e) {}
     return ans;
   }
+
   public java.util.HashMap<String, Integer> getstatusstats() {
     java.util.HashMap<String, Integer> ans = new java.util.HashMap<>();
     try {
