@@ -2,16 +2,16 @@ package com.auction.client.ui.ItemCard;
 
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
-import com.auction.client.ui.Main.KhungController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
+import com.auction.client.ui.Main.KhungController;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
-import javafx.geometry.Rectangle2D;
-import javafx.application.Platform;
 
 public class ItemCardController {
   @FXML private VBox itemRoot;
@@ -22,8 +22,23 @@ public class ItemCardController {
   private String n, d, t, u, sn, sa;
   private double p;
 
-  public void setData(int iid, String iname, double ip, String idesc, String it, String iurl, String isn, String isa) {
-    this.id = iid; this.n = iname; this.p = ip; this.d = idesc; this.t = it; this.u = iurl; this.sn = isn; this.sa = isa;
+  public void setData(
+      int iid,
+      String iname,
+      double ip,
+      String idesc,
+      String it,
+      String iurl,
+      String isn,
+      String isa) {
+    this.id = iid;
+    this.n = iname;
+    this.p = ip;
+    this.d = idesc;
+    this.t = it;
+    this.u = iurl;
+    this.sn = isn;
+    this.sa = isa;
 
     if (ItemName != null) ItemName.setText(this.n);
     if (ItemDescription != null) ItemDescription.setText(this.d);
@@ -32,11 +47,13 @@ public class ItemCardController {
 
     if (ImageHolder != null && this.u != null && !this.u.isBlank()) {
       Image img = new Image(this.u, true);
-      img.progressProperty().addListener((obs, oldv, newv) -> {
-        if (newv.doubleValue() == 1.0) {
-          Platform.runLater(() -> applyCenterCrop(ImageHolder, img));
-        }
-      });
+      img.progressProperty()
+          .addListener(
+              (obs, oldv, newv) -> {
+                if (newv.doubleValue() == 1.0) {
+                  Platform.runLater(() -> applyCenterCrop(ImageHolder, img));
+                }
+              });
       ImageHolder.setImage(img);
     }
   }
@@ -66,17 +83,17 @@ public class ItemCardController {
     iv.setViewport(new Rectangle2D(cropX, cropY, cropW, cropH));
   }
 
-  public void updateprice(double res) {
+  public void updatePrice(double res) {
     this.p = res;
     if (Price != null) Price.setText(String.format("%,.0f$", res));
   }
 
-  public int getid() {
+  public int getId() {
     int res = this.id;
     return res;
   }
 
-  public void HandleItemClicked() {
+  public void handleItemClicked() {
     try {
       NodeContentLoader<ScrollPane> l = new NodeContentLoader<>();
       l.load("/fxml/iteminformation/ItemInformation.fxml");
@@ -84,10 +101,14 @@ public class ItemCardController {
       if (c != null) {
         c.setData(id, n, p, 0, d, t, u, sn, sa);
         c.refresh();
-        KhungController.infoc = c;
+        KhungController.itemDetailController = c;
       }
-      NodeManager.switchNodewithNode(l.getCurrentNode(), KhungController.getCurrentNode(), KhungController.getKhungChua());
+      NodeManager.switchNodewithNode(
+          l.getCurrentNode(),
+          KhungController.getCurrentNode(),
+          KhungController.getMainContentPane());
       KhungController.setMainContentNode(l.getCurrentNode());
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
   }
 }

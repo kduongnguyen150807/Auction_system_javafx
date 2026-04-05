@@ -5,36 +5,36 @@ import com.auction.shared.*;
 import java.time.LocalDateTime;
 
 public class BidService {
-  private ItemDao itemdao;
-  private BidDao biddao;
+  private ItemDao itemDao;
+  private BidDao bidDao;
 
   public BidService() {
-    this.itemdao = new ItemDao();
-    this.biddao = new BidDao();
+    this.itemDao = new ItemDao();
+    this.bidDao = new BidDao();
   }
 
-  public Response placebid(BidTransaction b) {
+  public Response placeBid(BidTransaction b) {
     Response ans = null;
-    Item i = this.itemdao.getbyid(b.getitemid());
-    if (i == null || i.getstatus() != ItemStatus.OPEN) {
-      ans = new Response("sys", Response.err, "closed", null);
+    Item i = this.itemDao.getById(b.getItemId());
+    if (i == null || i.getStatus() != ItemStatus.OPEN) {
+      ans = new Response("sys", Response.ERROR, "closed", null);
       return ans;
     }
-    if (b.getbidvalue() <= i.getcurrentprice()) {
-      ans = new Response("sys", Response.err, "low", null);
+    if (b.getBidValue() <= i.getCurrentPrice()) {
+      ans = new Response("sys", Response.ERROR, "low", null);
       return ans;
     }
-    boolean res = this.biddao.placebid(b);
+    boolean res = this.bidDao.placeBid(b);
     if (res) {
-      this.itemdao.updateprice(i.getid(), b.getbidvalue(), i.getversion());
+      this.itemDao.updatePrice(i.getId(), b.getBidValue(), i.getVersion());
       LocalDateTime now = LocalDateTime.now();
-      LocalDateTime end = i.getendtime();
+      LocalDateTime end = i.getEndTime();
       if (now.plusSeconds(30).isAfter(end)) {
-        this.itemdao.updateendtime(i.getid(), end.plusSeconds(60));
+        this.itemDao.updateEndTime(i.getId(), end.plusSeconds(60));
       }
-      ans = new Response("sys", Response.ok, "success", b);
+      ans = new Response("sys", Response.OK, "success", b);
     } else {
-      ans = new Response("sys", Response.err, "conflict", null);
+      ans = new Response("sys", Response.ERROR, "conflict", null);
     }
     return ans;
   }

@@ -4,41 +4,106 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class Lot implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private int id;
-    private int itemid;
-    private String title;
-    private String description;
-    private double bidvalue;
-    private LocalDateTime starttime;
-    private LocalDateTime endtime;
-    private String imageurl;
-    private String sellerusername;
-    private String selleravatarurl;
-    private String winnerusername;
+  private static final long serialVersionUID = 1L;
+  private int id;
+  private int itemId;
+  private String title;
+  private String description;
+  private double bidValue;
+  private LocalDateTime startTime;
+  private LocalDateTime endTime;
+  private String imageUrl;
+  private String sellerUsername;
+  private String sellerAvatarUrl;
+  private String winnerUsername;
 
-    public Lot() {}
+  public Lot() {}
 
-    public int getid() { return id; }
-    public void setid(int i) { this.id = i; }
-    public int getitemid() { return itemid; }
-    public void setitemid(int i) { this.itemid = i; }
-    public String gettitle() { return title; }
-    public void settitle(String t) { this.title = t; }
-    public String getdescription() { return description; }
-    public void setdescription(String d) { this.description = d; }
-    public double getbidvalue() { return bidvalue; }
-    public void setbidvalue(double v) { this.bidvalue = v; }
-    public LocalDateTime getstarttime() { return starttime; }
-    public void setstarttime(LocalDateTime t) { this.starttime = t; }
-    public LocalDateTime getendtime() { return endtime; }
-    public void setendtime(LocalDateTime t) { this.endtime = t; }
-    public String getimageurl() { return imageurl; }
-    public void setimageurl(String u) { this.imageurl = u; }
-    public String getsellerusername() { return this.sellerusername; }
-    public void setsellerusername(String s) { this.sellerusername = s; }
-    public String getselleravatarurl() { return this.selleravatarurl; }
-    public void setselleravatarurl(String s) { this.selleravatarurl = s; }
-    public String getwinnerusername() { return this.winnerusername; }
-    public void setwinnerusername(String w) { this.winnerusername = w; }
+  public int getId() {
+    return id;
+  }
+
+  public void setId(int i) {
+    this.id = i;
+  }
+
+  public int getItemId() {
+    return itemId;
+  }
+
+  public void setItemId(int i) {
+    this.itemId = i;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public void setTitle(String t) {
+    this.title = t;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String d) {
+    this.description = d;
+  }
+
+  public double getBidValue() {
+    return bidValue;
+  }
+
+  public void setBidValue(double v) {
+    this.bidValue = v;
+  }
+
+  public LocalDateTime getStartTime() {
+    return startTime;
+  }
+
+  public void setStartTime(LocalDateTime t) {
+    this.startTime = t;
+  }
+
+  public LocalDateTime getEndTime() {
+    return endTime;
+  }
+
+  public void setEndTime(LocalDateTime t) {
+    this.endTime = t;
+  }
+
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public void setImageUrl(String u) {
+    this.imageUrl = u;
+  }
+
+  public String getSellerUsername() {
+    return this.sellerUsername;
+  }
+
+  public void setSellerUsername(String s) {
+    this.sellerUsername = s;
+  }
+
+  public String getSellerAvatarUrl() {
+    return this.sellerAvatarUrl;
+  }
+
+  public void setSellerAvatarUrl(String s) {
+    this.sellerAvatarUrl = s;
+  }
+
+  public String getWinnerUsername() {
+    return this.winnerUsername;
+  }
+
+  public void setWinnerUsername(String w) {
+    this.winnerUsername = w;
+  }
 }

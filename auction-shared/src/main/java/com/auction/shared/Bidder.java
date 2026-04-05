@@ -2,6 +2,7 @@ package com.auction.shared;
 
 public class Bidder extends User {
   private static final long serialVersionUID = 1L;
+
   public Bidder() {
     super();
   }
@@ -11,7 +12,7 @@ public class Bidder extends User {
   }
 
   @Override
-  public UserRole getrole() {
+  public UserRole getRole() {
     UserRole ans = UserRole.BIDDER;
     return ans;
   }

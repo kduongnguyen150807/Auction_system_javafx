@@ -9,13 +9,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class AuctionCloser {
-  private ItemDao itemdao;
-  private BidDao biddao;
+  private ItemDao itemDao;
+  private BidDao bidDao;
   private ScheduledExecutorService scheduler;
 
   public AuctionCloser() {
-    this.itemdao = new ItemDao();
-    this.biddao = new BidDao();
+    this.itemDao = new ItemDao();
+    this.bidDao = new BidDao();
     this.scheduler = Executors.newScheduledThreadPool(1);
   }
 
@@ -23,15 +23,15 @@ public class AuctionCloser {
     Runnable task =
         () -> {
           try {
-            List<Item> items = this.itemdao.getall();
+            List<Item> items = this.itemDao.getAll();
             LocalDateTime now = LocalDateTime.now();
             for (Item i : items) {
-              if (i.getstatus() == ItemStatus.OPEN && i.getendtime().isBefore(now)) {
-                BidTransaction w = this.biddao.getwinner(i.getid());
+              if (i.getStatus() == ItemStatus.OPEN && i.getEndTime().isBefore(now)) {
+                BidTransaction w = this.bidDao.getWinner(i.getId());
                 if (w != null) {
-                  this.itemdao.closeauction(i.getid(), w.getuserid(), "FINISHED");
-                  Response ans = new Response("sys", Response.ok, "closed", i.getid());
-                  AuctionManager.getinstance().broadcast(ans);
+                  this.itemDao.closeAuction(i.getId(), w.getUserId(), "FINISHED");
+                  Response ans = new Response("sys", Response.OK, "closed", i.getId());
+                  AuctionManager.getInstance().broadcast(ans);
                 }
               }
             }

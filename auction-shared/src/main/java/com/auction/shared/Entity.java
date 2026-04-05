@@ -7,21 +7,21 @@ public abstract class Entity implements Serializable {
   protected int id;
   protected int version;
 
-  public int getid() {
+  public int getId() {
     int ans = this.id;
     return ans;
   }
 
-  public void setid(int id) {
+  public void setId(int id) {
     this.id = id;
   }
 
-  public int getversion() {
+  public int getVersion() {
     int ans = this.version;
     return ans;
   }
 
-  public void setversion(int v) {
+  public void setVersion(int v) {
     this.version = v;
   }
 }

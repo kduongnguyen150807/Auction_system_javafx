@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="itemRoot" alignment="TOP_CENTER" onMouseClicked="#HandleItemClicked" spacing="10.0" style="-fx-background-color: #111111; -fx-background-radius: 10;" stylesheets="@/css/iteminformation/ItemInformation.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.ItemCard.ItemCardController">
+<VBox fx:id="itemRoot" alignment="TOP_CENTER" onMouseClicked="#handleItemClicked" spacing="10.0" style="-fx-background-color: #111111; -fx-background-radius: 10;" stylesheets="@/css/iteminformation/ItemInformation.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.ItemCard.ItemCardController">
     <children>
         <ImageView fx:id="ImageHolder" fitHeight="250.0" fitWidth="280.0" pickOnBounds="true" />
 

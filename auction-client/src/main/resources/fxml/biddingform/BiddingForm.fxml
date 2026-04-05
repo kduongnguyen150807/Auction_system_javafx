@@ -44,9 +44,9 @@
                 </VBox>
                 <HBox spacing="20">
                     <children>
-                        <Hyperlink fx:id="CancelBidding" text="Cancel" styleClass="AboveLabel, HyperSubText" onAction="#RemoveForm"/>
+                        <Hyperlink fx:id="CancelBidding" text="Cancel" styleClass="AboveLabel, HyperSubText" onAction="#removeForm"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Button fx:id="ConfirmBidding" text="Confirm" styleClass="btn-primary" prefHeight="50" prefWidth="150" onAction="#HandleConfirmBidding"/>
+                        <Button fx:id="ConfirmBidding" text="Confirm" styleClass="btn-primary" prefHeight="50" prefWidth="150" onAction="#handleConfirmBidding"/>
                     </children>
                 </HBox>
             </children>

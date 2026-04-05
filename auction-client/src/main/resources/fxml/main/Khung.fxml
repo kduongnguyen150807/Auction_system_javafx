@@ -80,7 +80,7 @@
                             <Label fx:id="Rank" text="Bidder" styleClass="user-rank"/>
                         </VBox>
                     </HBox>
-                    <Button fx:id="primaryactionbutton" onAction="#handleprimaryaction" text="Place a Bid" styleClass="btn-primary" maxWidth="Infinity"/>
+                    <Button fx:id="primaryactionbutton" onAction="#handlePrimaryAction" text="Place a Bid" styleClass="btn-primary" maxWidth="Infinity"/>
                 </children>
             </VBox>
         </children>

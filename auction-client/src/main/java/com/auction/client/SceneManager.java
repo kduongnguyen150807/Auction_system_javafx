@@ -9,33 +9,32 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class SceneManager {
-  private static Stage s;
+  private static Stage rootStage;
   private static final String GLOBAL_STYLE = "/css/GlobalColor.css";
 
-  public static void setstage(Stage stg) {
-    s = stg;
+  public static void setStage(Stage stage) {
+    rootStage = stage;
   }
 
-  public static Stage getstage() {
-    Stage ans = s;
-    return ans;
+  public static Stage getStage() {
+    return rootStage;
   }
 
-  public static void switchscene(String fxmlfile) throws IOException {
-    Parent res = FXMLLoader.load(Objects.requireNonNull(SceneManager.class.getResource(fxmlfile)));
-    Scene currentScene = s.getScene();
+  public static void switchScene(String fxmlPath) throws IOException {
+    Parent res = FXMLLoader.load(Objects.requireNonNull(SceneManager.class.getResource(fxmlPath)));
+    Scene currentScene = rootStage.getScene();
     if (currentScene == null) {
-      s.setScene(new Scene(res));
+      rootStage.setScene(new Scene(res));
     } else {
       currentScene.setRoot(res);
     }
     URL styleUrl = SceneManager.class.getResource(GLOBAL_STYLE);
     if (styleUrl != null) {
       String style = styleUrl.toExternalForm();
-      if (!s.getScene().getStylesheets().contains(style)) {
-        s.getScene().getStylesheets().add(style);
+      if (!rootStage.getScene().getStylesheets().contains(style)) {
+        rootStage.getScene().getStylesheets().add(style);
       }
     }
-    s.show();
+    rootStage.show();
   }
 }

@@ -8,12 +8,12 @@ import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.HBox;
@@ -26,7 +26,7 @@ public class TrangChuController {
   private String kw = "";
   private String cat = "All";
 
-  public static TrangChuController getinstance() {
+  public static TrangChuController getInstance() {
     TrangChuController ans = instance;
     return ans;
   }
@@ -34,40 +34,43 @@ public class TrangChuController {
   @FXML
   void initialize() {
     instance = this;
-    setfilters(KhungController.getSearchKeyword(), KhungController.getCategoryFilter());
+    setFilters(KhungController.getSearchKeyword(), KhungController.getCategoryFilter());
     refreshItems();
   }
 
   public void refreshItems() {
-    Thread ans = new Thread(() -> {
-      try {
-        Request res = new Request(Request.list, null);
-        Response ans1 = NetworkClient.getinstance().sendrequestandwait(res);
-        if (ans1 == null || !Response.ok.equals(ans1.getstatus())) return;
-        Object res1 = ans1.getpayload();
-        if (!(res1 instanceof List<?> list)) return;
-        Platform.runLater(() -> cacheandrender(list));
-      } catch (Exception e) {}
-    });
+    Thread ans =
+        new Thread(
+            () -> {
+              try {
+                Request res = new Request(Request.LIST, null);
+                Response ans1 = NetworkClient.getInstance().sendRequestAndWait(res);
+                if (ans1 == null || !Response.OK.equals(ans1.getStatus())) return;
+                Object res1 = ans1.getPayload();
+                if (!(res1 instanceof List<?> list)) return;
+                Platform.runLater(() -> cacheAndRender(list));
+              } catch (Exception e) {
+              }
+            });
     ans.setDaemon(true);
     ans.start();
   }
 
-  public void setfilters(String k, String c) {
+  public void setFilters(String k, String c) {
     this.kw = (k == null) ? "" : k.trim().toLowerCase();
     this.cat = (c == null || c.isBlank()) ? "All" : c;
-    renderfiltereditems();
+    renderFilteredItems();
   }
 
-  private void cacheandrender(List<?> list) {
+  private void cacheAndRender(List<?> list) {
     cacheditems.clear();
     for (Object ans : list) {
       if (ans instanceof Item i) cacheditems.add(i);
     }
-    renderfiltereditems();
+    renderFilteredItems();
   }
 
-  private void renderfiltereditems() {
+  private void renderFilteredItems() {
     if (TrendingBind == null) return;
     TrendingBind.getChildren().clear();
     cardmap.clear();
@@ -79,57 +82,56 @@ public class TrangChuController {
         ItemCardController ans1 = res.getController();
         if (ans1 != null) {
           ans1.setData(
-                  ans.getid(),
-                  safe(ans.getname()),
-                  ans.getcurrentprice(),
-                  safe(ans.getdescription()),
-                  formattime(ans.getendtime()),
-                  safe(ans.getimageurl()),
-                  safe(ans.getsellerusername()),
-                  safe(ans.getselleravatarurl())
-          );
-          cardmap.put(ans.getid(), ans1);
+              ans.getId(),
+              safe(ans.getName()),
+              ans.getCurrentPrice(),
+              safe(ans.getDescription()),
+              formatTime(ans.getEndTime()),
+              safe(ans.getImageUrl()),
+              safe(ans.getSellerUsername()),
+              safe(ans.getSellerAvatarUrl()));
+          cardmap.put(ans.getId(), ans1);
         }
         NodeManager.addNodeToPane(res, TrendingBind);
-      } catch (Exception e) {}
+      } catch (Exception e) {
+      }
     }
   }
 
-  public void updatepriceui(Item ans) {
+  public void updatePriceUi(Item ans) {
     if (ans == null) return;
-    updateitemprice(ans);
+    updateItemPrice(ans);
   }
 
-  public void updateitemprice(Item ans) {
+  public void updateItemPrice(Item ans) {
     for (int res = 0; res < cacheditems.size(); res++) {
-      if (cacheditems.get(res).getid() == ans.getid()) {
+      if (cacheditems.get(res).getId() == ans.getId()) {
         cacheditems.set(res, ans);
         break;
       }
     }
-    ItemCardController res1 = cardmap.get(ans.getid());
+    ItemCardController res1 = cardmap.get(ans.getId());
     if (res1 != null) {
       res1.setData(
-              ans.getid(),
-              safe(ans.getname()),
-              ans.getcurrentprice(),
-              safe(ans.getdescription()),
-              formattime(ans.getendtime()),
-              safe(ans.getimageurl()),
-              safe(ans.getsellerusername()),
-              safe(ans.getselleravatarurl())
-      );
+          ans.getId(),
+          safe(ans.getName()),
+          ans.getCurrentPrice(),
+          safe(ans.getDescription()),
+          formatTime(ans.getEndTime()),
+          safe(ans.getImageUrl()),
+          safe(ans.getSellerUsername()),
+          safe(ans.getSellerAvatarUrl()));
     }
   }
 
   private boolean match(Item ans) {
-    String res = safe(ans.getname()).toLowerCase();
+    String res = safe(ans.getName()).toLowerCase();
     if (!kw.isBlank() && !res.contains(kw)) return false;
-    double ans1 = KhungController.getminprice();
-    double res1 = KhungController.getmaxprice();
-    if (ans.getcurrentprice() < ans1 || ans.getcurrentprice() > res1) return false;
+    double ans1 = KhungController.getMinPrice();
+    double res1 = KhungController.getMaxPrice();
+    if (ans.getCurrentPrice() < ans1 || ans.getCurrentPrice() > res1) return false;
     if ("All".equalsIgnoreCase(cat)) return true;
-    return safe(ans.getcategory()).equalsIgnoreCase(cat);
+    return safe(ans.getCategory()).equalsIgnoreCase(cat);
   }
 
   private String safe(String ans) {
@@ -137,7 +139,7 @@ public class TrangChuController {
     return res;
   }
 
-  private String formattime(LocalDateTime ans) {
+  private String formatTime(LocalDateTime ans) {
     if (ans == null) return "N/A";
     Duration res = Duration.between(LocalDateTime.now(), ans);
     if (res.isNegative() || res.isZero()) return "closed";

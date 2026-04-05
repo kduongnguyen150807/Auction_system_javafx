@@ -16,7 +16,7 @@ public class SocketServer {
     this.pool = Executors.newFixedThreadPool(50);
   }
 
-  public void startserver() {
+  public void startServer() {
     try {
       // Kích hoạt Robot quét tiền tự động ở đây nè con lợn
       SettlementService ans = new SettlementService();

@@ -4,40 +4,45 @@ import com.auction.server.dao.UserDao;
 import com.auction.shared.*;
 
 public class UserService {
-  private UserDao userdao;
+  private UserDao userDao;
 
   public UserService() {
-    this.userdao = new UserDao();
+    this.userDao = new UserDao();
   }
 
   public User login(String u, String p) {
-    User ans = this.userdao.login(u, p);
+    User ans = this.userDao.login(u, p);
     return ans;
   }
 
   public boolean signup(User u) {
-    boolean ans = this.userdao.signup(u);
-    return ans;
-  }
-  /** @return null nếu thành công; mã lỗi nếu không (vd. duplicate_email). */
-  public String updateprofile(int userid, String fullname, String email, String phone) {
-    return this.userdao.updateuserprofile(userid, fullname, email, phone);
-  }
-
-  public void updateavatar(String username, String ans) throws Exception {
-    this.userdao.updateavatar(username, ans);
-  }
-  public java.util.List<User> getallusers() {
-    java.util.List<User> ans = this.userdao.getallusers();
-    return ans;
-  }
-  public boolean setuserlocked(String username, boolean lockstatus) {
-    boolean ans = this.userdao.setuserlocked(username, lockstatus);
+    boolean ans = this.userDao.signup(u);
     return ans;
   }
 
-  public boolean setuserrole(String username, String role) {
-    boolean ans = this.userdao.setuserrole(username, role);
+  /**
+   * @return null nếu thành công; mã lỗi nếu không (vd. duplicate_email).
+   */
+  public String updateProfile(int userId, String fullName, String email, String phone) {
+    return this.userDao.updateUserProfile(userId, fullName, email, phone);
+  }
+
+  public void updateAvatar(String username, String ans) throws Exception {
+    this.userDao.updateAvatar(username, ans);
+  }
+
+  public java.util.List<User> getAllUsers() {
+    java.util.List<User> ans = this.userDao.getAllUsers();
+    return ans;
+  }
+
+  public boolean setUserLocked(String username, boolean lockStatus) {
+    boolean ans = this.userDao.setUserLocked(username, lockStatus);
+    return ans;
+  }
+
+  public boolean setUserRole(String username, String role) {
+    boolean ans = this.userDao.setUserRole(username, role);
     return ans;
   }
 }

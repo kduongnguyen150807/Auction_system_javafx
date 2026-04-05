@@ -6,17 +6,17 @@ public abstract class Item extends Entity {
   private static final long serialVersionUID = 1L;
   protected String name;
   protected String description;
-  protected double startingprice;
-  protected double currentprice;
-  protected LocalDateTime starttime;
-  protected LocalDateTime endtime;
-  protected double maxprice;
-  protected int sellerid;
-  protected int winnerid;
+  protected double startingPrice;
+  protected double currentPrice;
+  protected LocalDateTime startTime;
+  protected LocalDateTime endTime;
+  protected double maxPrice;
+  protected int sellerId;
+  protected int winnerId;
   protected ItemStatus status;
-  protected String imageurl;
-  protected String sellerusername;
-  protected String selleravatarurl;
+  protected String imageUrl;
+  protected String sellerUsername;
+  protected String sellerAvatarUrl;
   protected String category;
 
   public Item() {}
@@ -24,41 +24,124 @@ public abstract class Item extends Entity {
   public Item(String res, String ans, double res1, double ans1, int res2) {
     this.name = res;
     this.description = ans;
-    this.startingprice = res1;
-    this.currentprice = ans1;
-    this.sellerid = res2;
-    this.winnerid = -1;
+    this.startingPrice = res1;
+    this.currentPrice = ans1;
+    this.sellerId = res2;
+    this.winnerId = -1;
     this.status = ItemStatus.OPEN;
   }
 
-  public abstract double calculatetax();
+  public abstract double calculateTax();
 
-  public String getcategory() { return this.category; }
-  public void setcategory(String res) { this.category = res; }
-  public String getname() { return this.name; }
-  public void setname(String res) { this.name = res; }
-  public String getdescription() { return this.description; }
-  public void setdescription(String res) { this.description = res; }
-  public double getstartingprice() { return this.startingprice; }
-  public void setstartingprice(double res) { this.startingprice = res; }
-  public double getcurrentprice() { return this.currentprice; }
-  public void setcurrentprice(double res) { this.currentprice = res; }
-  public LocalDateTime getstarttime() { return this.starttime; }
-  public void setstarttime(LocalDateTime res) { this.starttime = res; }
-  public LocalDateTime getendtime() { return this.endtime; }
-  public void setendtime(LocalDateTime res) { this.endtime = res; }
-  public double getmaxprice() { return this.maxprice; }
-  public void setmaxprice(double res) { this.maxprice = res; }
-  public int getsellerid() { return this.sellerid; }
-  public void setsellerid(int res) { this.sellerid = res; }
-  public int getwinnerid() { return this.winnerid; }
-  public void setwinnerid(int res) { this.winnerid = res; }
-  public ItemStatus getstatus() { return this.status; }
-  public void setstatus(ItemStatus res) { this.status = res; }
-  public String getimageurl() { return this.imageurl; }
-  public void setimageurl(String res) { this.imageurl = res; }
-  public String getsellerusername() { return this.sellerusername; }
-  public void setsellerusername(String res) { this.sellerusername = res; }
-  public String getselleravatarurl() { return this.selleravatarurl; }
-  public void setselleravatarurl(String res) { this.selleravatarurl = res; }
+  public String getCategory() {
+    return this.category;
+  }
+
+  public void setCategory(String res) {
+    this.category = res;
+  }
+
+  public String getName() {
+    return this.name;
+  }
+
+  public void setName(String res) {
+    this.name = res;
+  }
+
+  public String getDescription() {
+    return this.description;
+  }
+
+  public void setDescription(String res) {
+    this.description = res;
+  }
+
+  public double getStartingPrice() {
+    return this.startingPrice;
+  }
+
+  public void setStartingPrice(double res) {
+    this.startingPrice = res;
+  }
+
+  public double getCurrentPrice() {
+    return this.currentPrice;
+  }
+
+  public void setCurrentPrice(double res) {
+    this.currentPrice = res;
+  }
+
+  public LocalDateTime getStartTime() {
+    return this.startTime;
+  }
+
+  public void setStartTime(LocalDateTime res) {
+    this.startTime = res;
+  }
+
+  public LocalDateTime getEndTime() {
+    return this.endTime;
+  }
+
+  public void setEndTime(LocalDateTime res) {
+    this.endTime = res;
+  }
+
+  public double getMaxPrice() {
+    return this.maxPrice;
+  }
+
+  public void setMaxPrice(double res) {
+    this.maxPrice = res;
+  }
+
+  public int getSellerId() {
+    return this.sellerId;
+  }
+
+  public void setSellerId(int res) {
+    this.sellerId = res;
+  }
+
+  public int getWinnerId() {
+    return this.winnerId;
+  }
+
+  public void setWinnerId(int res) {
+    this.winnerId = res;
+  }
+
+  public ItemStatus getStatus() {
+    return this.status;
+  }
+
+  public void setStatus(ItemStatus res) {
+    this.status = res;
+  }
+
+  public String getImageUrl() {
+    return this.imageUrl;
+  }
+
+  public void setImageUrl(String res) {
+    this.imageUrl = res;
+  }
+
+  public String getSellerUsername() {
+    return this.sellerUsername;
+  }
+
+  public void setSellerUsername(String res) {
+    this.sellerUsername = res;
+  }
+
+  public String getSellerAvatarUrl() {
+    return this.sellerAvatarUrl;
+  }
+
+  public void setSellerAvatarUrl(String res) {
+    this.sellerAvatarUrl = res;
+  }
 }

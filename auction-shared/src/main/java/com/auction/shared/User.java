@@ -2,72 +2,167 @@ package com.auction.shared;
 
 public abstract class User extends Entity {
   protected String username;
-  protected String fullname;
+  protected String fullName;
   protected String password;
   protected String email;
   protected String age;
-  protected String phonenumber;
+  protected String phoneNumber;
   protected double balance;
-  protected boolean isactive;
-  protected boolean islocked;
-  protected String avatarurl;
-  protected double moneyspent;
-  protected int itemsbought;
-  protected double moneyreceived;
-  protected int itemssold;
-  protected double avgrating;
-  protected int totalratings;
+  protected boolean active;
+  protected boolean locked;
+  protected String avatarUrl;
+  protected double moneySpent;
+  protected int itemsBought;
+  protected double moneyReceived;
+  protected int itemsSold;
+  protected double avgRating;
+  protected int totalRatings;
 
   public User() {}
 
   public User(String u, String p, String e, String a, String ph) {
     this.username = u;
-    this.fullname = u;
+    this.fullName = u;
     this.password = p;
     this.email = e;
     this.age = a;
-    this.phonenumber = ph;
+    this.phoneNumber = ph;
     this.balance = 0.0;
-    this.moneyspent = 0.0;
-    this.itemsbought = 0;
-    this.moneyreceived = 0.0;
-    this.itemssold = 0;
-    this.isactive = true;
-    this.islocked = false;
+    this.moneySpent = 0.0;
+    this.itemsBought = 0;
+    this.moneyReceived = 0.0;
+    this.itemsSold = 0;
+    this.active = true;
+    this.locked = false;
   }
 
-  public abstract UserRole getrole();
+  public abstract UserRole getRole();
 
-  public String getusername() { return this.username; }
-  public void setusername(String u) { this.username = u; }
-  public String getfullname() { return this.fullname; }
-  public void setfullname(String ans) { this.fullname = ans; }
-  public String getpassword() { return this.password; }
-  public void setpassword(String p) { this.password = p; }
-  public String getemail() { return this.email; }
-  public void setemail(String e) { this.email = e; }
-  public String getage() { return this.age; }
-  public void setage(String a) { this.age = a; }
-  public String getphonenumber() { return this.phonenumber; }
-  public void setphonenumber(String ph) { this.phonenumber = ph; }
-  public double getbalance() { return this.balance; }
-  public void setbalance(double b) { this.balance = b; }
-  public boolean isactive() { return this.isactive; }
-  public void setactive(boolean a) { this.isactive = a; }
-  public boolean islocked() { return this.islocked; }
-  public void setlocked(boolean l) { this.islocked = l; }
-  public String getavatarurl() { return avatarurl; }
-  public void setavatarurl(String ans) { this.avatarurl = ans; }
-  public double getmoneyspent() { return this.moneyspent; }
-  public void setmoneyspent(double m) { this.moneyspent = m; }
-  public int getitemsbought() { return this.itemsbought; }
-  public void setitemsbought(int i) { this.itemsbought = i; }
-  public double getmoneyreceived() { return this.moneyreceived; }
-  public void setmoneyreceived(double m) { this.moneyreceived = m; }
-  public int getitemssold() { return this.itemssold; }
-  public void setitemssold(int i) { this.itemssold = i; }
-  public double getavgrating() { return this.avgrating; }
-  public void setavgrating(double r) { this.avgrating = r; }
-  public int gettotalratings() { return this.totalratings; }
-  public void settotalratings(int r) { this.totalratings = r; }
+  public String getUsername() {
+    return this.username;
+  }
+
+  public void setUsername(String u) {
+    this.username = u;
+  }
+
+  public String getFullName() {
+    return this.fullName;
+  }
+
+  public void setFullName(String ans) {
+    this.fullName = ans;
+  }
+
+  public String getPassword() {
+    return this.password;
+  }
+
+  public void setPassword(String p) {
+    this.password = p;
+  }
+
+  public String getEmail() {
+    return this.email;
+  }
+
+  public void setEmail(String e) {
+    this.email = e;
+  }
+
+  public String getAge() {
+    return this.age;
+  }
+
+  public void setAge(String a) {
+    this.age = a;
+  }
+
+  public String getPhoneNumber() {
+    return this.phoneNumber;
+  }
+
+  public void setPhoneNumber(String ph) {
+    this.phoneNumber = ph;
+  }
+
+  public double getBalance() {
+    return this.balance;
+  }
+
+  public void setBalance(double b) {
+    this.balance = b;
+  }
+
+  public boolean isActive() {
+    return this.active;
+  }
+
+  public void setActive(boolean a) {
+    this.active = a;
+  }
+
+  public boolean isLocked() {
+    return this.locked;
+  }
+
+  public void setLocked(boolean l) {
+    this.locked = l;
+  }
+
+  public String getAvatarUrl() {
+    return avatarUrl;
+  }
+
+  public void setAvatarUrl(String ans) {
+    this.avatarUrl = ans;
+  }
+
+  public double getMoneySpent() {
+    return this.moneySpent;
+  }
+
+  public void setMoneySpent(double m) {
+    this.moneySpent = m;
+  }
+
+  public int getItemsBought() {
+    return this.itemsBought;
+  }
+
+  public void setItemsBought(int i) {
+    this.itemsBought = i;
+  }
+
+  public double getMoneyReceived() {
+    return this.moneyReceived;
+  }
+
+  public void setMoneyReceived(double m) {
+    this.moneyReceived = m;
+  }
+
+  public int getItemsSold() {
+    return this.itemsSold;
+  }
+
+  public void setItemsSold(int i) {
+    this.itemsSold = i;
+  }
+
+  public double getAvgRating() {
+    return this.avgRating;
+  }
+
+  public void setAvgRating(double r) {
+    this.avgRating = r;
+  }
+
+  public int getTotalRatings() {
+    return this.totalRatings;
+  }
+
+  public void setTotalRatings(int r) {
+    this.totalRatings = r;
+  }
 }

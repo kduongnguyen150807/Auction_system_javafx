@@ -79,16 +79,16 @@
                             </children>
                         </VBox>
 
-                        <Button fx:id="BidButton" maxWidth="Infinity" onAction="#showbiddingform" prefHeight="65.0" styleClass="bid-button" text="PLACE BID NOW" />
+                        <Button fx:id="BidButton" maxWidth="Infinity" onAction="#showBiddingForm" prefHeight="65.0" styleClass="bid-button" text="PLACE BID NOW" />
 
                         <HBox spacing="10" alignment="CENTER">
                             <children>
                                 <TextField fx:id="autobidfield" promptText="Max Auto-Bid $" styleClass="search-input" prefHeight="45.0" HBox.hgrow="ALWAYS" style="-fx-background-color: #1a1a2e; -fx-text-fill: white; -fx-border-color: #e2b44d; -fx-border-radius: 5;"/>
-                                <Button fx:id="autobidbutton" onAction="#handleautobid" prefHeight="45.0" text="AUTO BID" style="-fx-background-color: #e2b44d; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;" />
+                                <Button fx:id="autobidbutton" onAction="#handleAutoBid" prefHeight="45.0" text="AUTO BID" style="-fx-background-color: #e2b44d; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;" />
                             </children>
                         </HBox>
 
-                        <Button fx:id="RateButton" maxWidth="Infinity" onAction="#showratingform" prefHeight="50.0" text="RATE THIS TRANSACTION" visible="false" managed="false" style="-fx-background-color: #e2b44d; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-font-size: 14; -fx-cursor: hand; -fx-background-radius: 8;" />
+                        <Button fx:id="RateButton" maxWidth="Infinity" onAction="#showRatingForm" prefHeight="50.0" text="RATE THIS TRANSACTION" visible="false" managed="false" style="-fx-background-color: #e2b44d; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-font-size: 14; -fx-cursor: hand; -fx-background-radius: 8;" />
 
                         <VBox fx:id="RatingsContainer" spacing="8.0" visible="false" managed="false">
                             <children>
@@ -96,7 +96,7 @@
                                     <children>
                                         <Label text="RATINGS" style="-fx-text-fill: #e2b44d; -fx-font-size: 14; -fx-font-weight: bold;" />
                                         <Region HBox.hgrow="ALWAYS" />
-                                        <ComboBox fx:id="RatingFilterCombo" onAction="#handleratingfilter" prefWidth="130" style="-fx-background-color: #16213e; -fx-text-fill: white; -fx-font-size: 12;" />
+                                        <ComboBox fx:id="RatingFilterCombo" onAction="#handleRatingFilter" prefWidth="130" style="-fx-background-color: #16213e; -fx-text-fill: white; -fx-font-size: 12;" />
                                     </children>
                                 </HBox>
                             </children>

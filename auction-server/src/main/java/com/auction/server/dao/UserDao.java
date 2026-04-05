@@ -7,7 +7,7 @@ public class UserDao {
   private Connection conn;
 
   public UserDao() {
-    this.conn = DatabaseConnection.getinstance().getconnection();
+    this.conn = DatabaseConnection.getInstance().getConnection();
     this.ensureProfileColumns();
     this.ensureUniqueIndexes();
   }
@@ -17,7 +17,8 @@ public class UserDao {
       if (!this.columnExists("users", "fullname")) {
         Statement st = this.conn.createStatement();
         st.execute("alter table users add column fullname varchar(255) null");
-        st.execute("update users set fullname = username where fullname is null or trim(fullname) = ''");
+        st.execute(
+            "update users set fullname = username where fullname is null or trim(fullname) = ''");
       }
       if (!this.columnExists("users", "avgrating")) {
         Statement st = this.conn.createStatement();
@@ -44,24 +45,30 @@ public class UserDao {
         if (r.equalsIgnoreCase("ADMIN")) ans = new Admin();
         else if (r.equalsIgnoreCase("SELLER")) ans = new Seller();
         else ans = new Bidder();
-        ans.setid(rs.getInt("id"));
-        ans.setversion(rs.getInt("version"));
-        ans.setusername(rs.getString("username"));
-        ans.setfullname(rs.getString("fullname"));
-        ans.setpassword(rs.getString("password"));
-        ans.setemail(rs.getString("email"));
-        ans.setage(rs.getString("age"));
-        ans.setphonenumber(rs.getString("phonenumber"));
-        ans.setbalance(rs.getDouble("balance"));
-        ans.setmoneyspent(rs.getDouble("moneyspent"));
-        ans.setitemsbought(rs.getInt("itemsbought"));
-        ans.setmoneyreceived(rs.getDouble("moneyreceived"));
-        ans.setitemssold(rs.getInt("itemssold"));
-        ans.setactive(rs.getBoolean("isactive"));
-        ans.setlocked(rs.getBoolean("islocked"));
-        ans.setavatarurl(rs.getString("avatar_url"));
-        try { ans.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
-        try { ans.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
+        ans.setId(rs.getInt("id"));
+        ans.setVersion(rs.getInt("version"));
+        ans.setUsername(rs.getString("username"));
+        ans.setFullName(rs.getString("fullname"));
+        ans.setPassword(rs.getString("password"));
+        ans.setEmail(rs.getString("email"));
+        ans.setAge(rs.getString("age"));
+        ans.setPhoneNumber(rs.getString("phonenumber"));
+        ans.setBalance(rs.getDouble("balance"));
+        ans.setMoneySpent(rs.getDouble("moneyspent"));
+        ans.setItemsBought(rs.getInt("itemsbought"));
+        ans.setMoneyReceived(rs.getDouble("moneyreceived"));
+        ans.setItemsSold(rs.getInt("itemssold"));
+        ans.setActive(rs.getBoolean("isactive"));
+        ans.setLocked(rs.getBoolean("islocked"));
+        ans.setAvatarUrl(rs.getString("avatar_url"));
+        try {
+          ans.setAvgRating(rs.getDouble("avgrating"));
+        } catch (Exception e) {
+        }
+        try {
+          ans.setTotalRatings(rs.getInt("totalratings"));
+        } catch (Exception e) {
+        }
       }
     } catch (Exception e) {
     }
@@ -71,24 +78,24 @@ public class UserDao {
   public boolean signup(User u) {
     boolean ans = false;
     try {
-      String normalizedUsername = normalize(u.getusername());
-      String normalizedEmail = normalize(u.getemail());
+      String normalizedUsername = normalize(u.getUsername());
+      String normalizedEmail = normalize(u.getEmail());
       if (this.existsDuplicateUser(normalizedUsername, normalizedEmail)) {
         return false;
       }
 
       String sql =
-              "insert into users(username, fullname, password, email, age, phonenumber, role, isactive, islocked) values(?,?,?,?,?,?,?,?,?)";
+          "insert into users(username, fullname, password, email, age, phonenumber, role, isactive, islocked) values(?,?,?,?,?,?,?,?,?)";
       PreparedStatement ps = this.conn.prepareStatement(sql);
       ps.setString(1, normalizedUsername);
-      String profileName = normalize(u.getfullname());
+      String profileName = normalize(u.getFullName());
       if (profileName.isBlank()) profileName = normalizedUsername;
       ps.setString(2, profileName);
-      ps.setString(3, u.getpassword());
+      ps.setString(3, u.getPassword());
       ps.setString(4, normalizedEmail);
-      ps.setString(5, u.getage());
-      ps.setString(6, u.getphonenumber());
-      ps.setString(7, u.getrole().name());
+      ps.setString(5, u.getAge());
+      ps.setString(6, u.getPhoneNumber());
+      ps.setString(7, u.getRole().name());
       ps.setBoolean(8, true);
       ps.setBoolean(9, false);
       ans = ps.executeUpdate() > 0;
@@ -115,8 +122,8 @@ public class UserDao {
 
   private boolean indexExists(String tableName, String indexName) throws SQLException {
     String sql =
-            "select 1 from information_schema.statistics "
-                    + "where table_schema = database() and table_name = ? and index_name = ? limit 1";
+        "select 1 from information_schema.statistics "
+            + "where table_schema = database() and table_name = ? and index_name = ? limit 1";
     PreparedStatement ps = this.conn.prepareStatement(sql);
     ps.setString(1, tableName);
     ps.setString(2, indexName);
@@ -126,8 +133,8 @@ public class UserDao {
 
   private boolean columnExists(String tableName, String columnName) throws SQLException {
     String sql =
-            "select 1 from information_schema.columns "
-                    + "where table_schema = database() and table_name = ? and column_name = ? limit 1";
+        "select 1 from information_schema.columns "
+            + "where table_schema = database() and table_name = ? and column_name = ? limit 1";
     PreparedStatement ps = this.conn.prepareStatement(sql);
     ps.setString(1, tableName);
     ps.setString(2, columnName);
@@ -137,7 +144,7 @@ public class UserDao {
 
   private boolean existsDuplicateUser(String username, String email) throws SQLException {
     String sql =
-            "select 1 from users where lower(trim(username)) = lower(trim(?)) or lower(trim(email)) = lower(trim(?)) limit 1";
+        "select 1 from users where lower(trim(username)) = lower(trim(?)) or lower(trim(email)) = lower(trim(?)) limit 1";
     PreparedStatement ps = this.conn.prepareStatement(sql);
     ps.setString(1, username);
     ps.setString(2, email);
@@ -150,18 +157,18 @@ public class UserDao {
     return value.trim();
   }
 
-  public String updateuserprofile(int userid, String fullname, String email, String phone) {
-    String fn = normalize(fullname);
+  public String updateUserProfile(int userId, String fullName, String email, String phone) {
+    String fn = normalize(fullName);
     String em = normalize(email);
     String ph = normalize(phone);
     if (em.isEmpty()) {
       return "invalid_email";
     }
     try {
-      if (emailTakenByOtherUser(userid, em)) {
+      if (emailTakenByOtherUser(userId, em)) {
         return "duplicate_email";
       }
-      if (!ph.isEmpty() && phoneTakenByOtherUser(userid, ph)) {
+      if (!ph.isEmpty() && phoneTakenByOtherUser(userId, ph)) {
         return "duplicate_phone";
       }
       String sql = "UPDATE users SET fullname = ?, email = ?, phonenumber = ? WHERE id = ?";
@@ -169,7 +176,7 @@ public class UserDao {
         stmt.setString(1, fn);
         stmt.setString(2, em);
         stmt.setString(3, ph);
-        stmt.setInt(4, userid);
+        stmt.setInt(4, userId);
         stmt.executeUpdate();
       }
       return null;
@@ -180,11 +187,11 @@ public class UserDao {
     }
   }
 
-  private boolean emailTakenByOtherUser(int userid, String email) throws SQLException {
+  private boolean emailTakenByOtherUser(int userId, String email) throws SQLException {
     String sql =
-            "select 1 from users where id <> ? and lower(trim(email)) = lower(trim(?)) limit 1";
+        "select 1 from users where id <> ? and lower(trim(email)) = lower(trim(?)) limit 1";
     try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
-      ps.setInt(1, userid);
+      ps.setInt(1, userId);
       ps.setString(2, email);
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next();
@@ -192,12 +199,12 @@ public class UserDao {
     }
   }
 
-  private boolean phoneTakenByOtherUser(int userid, String phone) throws SQLException {
+  private boolean phoneTakenByOtherUser(int userId, String phone) throws SQLException {
     String sql =
-            "select 1 from users where id <> ? and trim(coalesce(phonenumber,'')) <> '' "
-                    + "and lower(trim(phonenumber)) = lower(trim(?)) limit 1";
+        "select 1 from users where id <> ? and trim(coalesce(phonenumber,'')) <> '' "
+            + "and lower(trim(phonenumber)) = lower(trim(?)) limit 1";
     try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
-      ps.setInt(1, userid);
+      ps.setInt(1, userId);
       ps.setString(2, phone);
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next();
@@ -205,7 +212,7 @@ public class UserDao {
     }
   }
 
-  public void updateavatar(String username, String ans) throws Exception {
+  public void updateAvatar(String username, String ans) throws Exception {
     String query = "UPDATE users SET avatar_url = ? WHERE username = ?";
     java.sql.PreparedStatement stmt = this.conn.prepareStatement(query);
     stmt.setString(1, ans);
@@ -213,11 +220,11 @@ public class UserDao {
     int res = stmt.executeUpdate();
   }
 
-  public boolean setuserlocked(String username, boolean lockstatus) {
+  public boolean setUserLocked(String username, boolean lockStatus) {
     boolean ans = false;
     String sql = "UPDATE users SET islocked = ? WHERE username = ?";
     try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
-      stmt.setBoolean(1, lockstatus);
+      stmt.setBoolean(1, lockStatus);
       stmt.setString(2, username);
       int res = stmt.executeUpdate();
       ans = res > 0;
@@ -226,7 +233,7 @@ public class UserDao {
     return ans;
   }
 
-  public boolean setuserrole(String username, String role) {
+  public boolean setUserRole(String username, String role) {
     boolean ans = false;
     String sql = "UPDATE users SET role = ? WHERE username = ?";
     try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
@@ -239,7 +246,7 @@ public class UserDao {
     return ans;
   }
 
-  public java.util.List<User> getallusers() {
+  public java.util.List<User> getAllUsers() {
     java.util.List<User> ans = new java.util.ArrayList<>();
     String sql = "select * from users";
     try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
@@ -250,24 +257,30 @@ public class UserDao {
         if (r.equalsIgnoreCase("ADMIN")) u = new Admin();
         else if (r.equalsIgnoreCase("SELLER")) u = new Seller();
         else u = new Bidder();
-        u.setid(rs.getInt("id"));
-        u.setversion(rs.getInt("version"));
-        u.setusername(rs.getString("username"));
-        u.setfullname(rs.getString("fullname"));
-        u.setpassword(rs.getString("password"));
-        u.setemail(rs.getString("email"));
-        u.setage(rs.getString("age"));
-        u.setphonenumber(rs.getString("phonenumber"));
-        u.setbalance(rs.getDouble("balance"));
-        u.setmoneyspent(rs.getDouble("moneyspent"));
-        u.setitemsbought(rs.getInt("itemsbought"));
-        u.setmoneyreceived(rs.getDouble("moneyreceived"));
-        u.setitemssold(rs.getInt("itemssold"));
-        u.setactive(rs.getBoolean("isactive"));
-        u.setlocked(rs.getBoolean("islocked"));
-        u.setavatarurl(rs.getString("avatar_url"));
-        try { u.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
-        try { u.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
+        u.setId(rs.getInt("id"));
+        u.setVersion(rs.getInt("version"));
+        u.setUsername(rs.getString("username"));
+        u.setFullName(rs.getString("fullname"));
+        u.setPassword(rs.getString("password"));
+        u.setEmail(rs.getString("email"));
+        u.setAge(rs.getString("age"));
+        u.setPhoneNumber(rs.getString("phonenumber"));
+        u.setBalance(rs.getDouble("balance"));
+        u.setMoneySpent(rs.getDouble("moneyspent"));
+        u.setItemsBought(rs.getInt("itemsbought"));
+        u.setMoneyReceived(rs.getDouble("moneyreceived"));
+        u.setItemsSold(rs.getInt("itemssold"));
+        u.setActive(rs.getBoolean("isactive"));
+        u.setLocked(rs.getBoolean("islocked"));
+        u.setAvatarUrl(rs.getString("avatar_url"));
+        try {
+          u.setAvgRating(rs.getDouble("avgrating"));
+        } catch (Exception e) {
+        }
+        try {
+          u.setTotalRatings(rs.getInt("totalratings"));
+        } catch (Exception e) {
+        }
         ans.add(u);
       }
     } catch (SQLException e) {
@@ -275,7 +288,7 @@ public class UserDao {
     return ans;
   }
 
-  public boolean updatebalance(int id, double b) {
+  public boolean updateBalance(int id, double b) {
     boolean ans = false;
     try {
       String sql = "UPDATE users SET balance = ? WHERE id = ?";
@@ -284,39 +297,45 @@ public class UserDao {
       ps.setInt(2, id);
       int res = ps.executeUpdate();
       ans = res > 0;
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     return ans;
   }
 
-  public boolean addbiddermetrics(int userid, double amount) {
+  public boolean addBidderMetrics(int userId, double amount) {
     boolean ans = false;
     try {
-      String sql = "UPDATE users SET moneyspent = moneyspent + ?, itemsbought = itemsbought + 1 WHERE id = ?";
+      String sql =
+          "UPDATE users SET moneyspent = moneyspent + ?, itemsbought = itemsbought + 1 WHERE id = ?";
       PreparedStatement ps = this.conn.prepareStatement(sql);
       ps.setDouble(1, amount);
-      ps.setInt(2, userid);
+      ps.setInt(2, userId);
       int res = ps.executeUpdate();
       ans = res > 0;
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     return ans;
   }
 
-  public boolean addsellermetrics(int userid, double amount) {
+  public boolean addSellerMetrics(int userId, double amount) {
     boolean ans = false;
     try {
-      String sql = "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";
+      String sql =
+          "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";
       PreparedStatement ps = this.conn.prepareStatement(sql);
       ps.setDouble(1, amount);
-      ps.setInt(2, userid);
+      ps.setInt(2, userId);
       int res = ps.executeUpdate();
       ans = res > 0;
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     return ans;
   }
 
-  public java.util.List<User> searchusers(String keyword) {
+  public java.util.List<User> searchUsers(String keyword) {
     java.util.List<User> ans = new java.util.ArrayList<>();
-    String sql = "select * from users where (lower(username) like ? or lower(fullname) like ?) and isactive = true and lower(role) != 'admin' limit 20";
+    String sql =
+        "select * from users where (lower(username) like ? or lower(fullname) like ?) and isactive = true and lower(role) != 'admin' limit 20";
     try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
       String kw = "%" + keyword.toLowerCase().trim() + "%";
       ps.setString(1, kw);
@@ -328,25 +347,32 @@ public class UserDao {
         if (r.equalsIgnoreCase("ADMIN")) u = new Admin();
         else if (r.equalsIgnoreCase("SELLER")) u = new Seller();
         else u = new Bidder();
-        u.setid(rs.getInt("id"));
-        u.setusername(rs.getString("username"));
-        u.setfullname(rs.getString("fullname"));
-        u.setemail(rs.getString("email"));
-        u.setavatarurl(rs.getString("avatar_url"));
-        try { u.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
-        try { u.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
-        u.setmoneyspent(rs.getDouble("moneyspent"));
-        u.setitemsbought(rs.getInt("itemsbought"));
-        u.setmoneyreceived(rs.getDouble("moneyreceived"));
-        u.setitemssold(rs.getInt("itemssold"));
-        u.setpassword("");
+        u.setId(rs.getInt("id"));
+        u.setUsername(rs.getString("username"));
+        u.setFullName(rs.getString("fullname"));
+        u.setEmail(rs.getString("email"));
+        u.setAvatarUrl(rs.getString("avatar_url"));
+        try {
+          u.setAvgRating(rs.getDouble("avgrating"));
+        } catch (Exception e) {
+        }
+        try {
+          u.setTotalRatings(rs.getInt("totalratings"));
+        } catch (Exception e) {
+        }
+        u.setMoneySpent(rs.getDouble("moneyspent"));
+        u.setItemsBought(rs.getInt("itemsbought"));
+        u.setMoneyReceived(rs.getDouble("moneyreceived"));
+        u.setItemsSold(rs.getInt("itemssold"));
+        u.setPassword("");
         ans.add(u);
       }
-    } catch (SQLException e) {}
+    } catch (SQLException e) {
+    }
     return ans;
   }
 
-  public User getbyid(String id) {
+  public User getById(String id) {
     User ans = null;
     try {
       String sql = "SELECT * FROM users WHERE id = ?";
@@ -358,26 +384,33 @@ public class UserDao {
         if (r.equalsIgnoreCase("ADMIN")) ans = new Admin();
         else if (r.equalsIgnoreCase("SELLER")) ans = new Seller();
         else ans = new Bidder();
-        ans.setid(rs.getInt("id"));
-        ans.setversion(rs.getInt("version"));
-        ans.setusername(rs.getString("username"));
-        ans.setfullname(rs.getString("fullname"));
-        ans.setpassword(rs.getString("password"));
-        ans.setemail(rs.getString("email"));
-        ans.setage(rs.getString("age"));
-        ans.setphonenumber(rs.getString("phonenumber"));
-        ans.setbalance(rs.getDouble("balance"));
-        ans.setmoneyspent(rs.getDouble("moneyspent"));
-        ans.setitemsbought(rs.getInt("itemsbought"));
-        ans.setmoneyreceived(rs.getDouble("moneyreceived"));
-        ans.setitemssold(rs.getInt("itemssold"));
-        ans.setactive(rs.getBoolean("isactive"));
-        ans.setlocked(rs.getBoolean("islocked"));
-        ans.setavatarurl(rs.getString("avatar_url"));
-        try { ans.setavgrating(rs.getDouble("avgrating")); } catch (Exception e) {}
-        try { ans.settotalratings(rs.getInt("totalratings")); } catch (Exception e) {}
+        ans.setId(rs.getInt("id"));
+        ans.setVersion(rs.getInt("version"));
+        ans.setUsername(rs.getString("username"));
+        ans.setFullName(rs.getString("fullname"));
+        ans.setPassword(rs.getString("password"));
+        ans.setEmail(rs.getString("email"));
+        ans.setAge(rs.getString("age"));
+        ans.setPhoneNumber(rs.getString("phonenumber"));
+        ans.setBalance(rs.getDouble("balance"));
+        ans.setMoneySpent(rs.getDouble("moneyspent"));
+        ans.setItemsBought(rs.getInt("itemsbought"));
+        ans.setMoneyReceived(rs.getDouble("moneyreceived"));
+        ans.setItemsSold(rs.getInt("itemssold"));
+        ans.setActive(rs.getBoolean("isactive"));
+        ans.setLocked(rs.getBoolean("islocked"));
+        ans.setAvatarUrl(rs.getString("avatar_url"));
+        try {
+          ans.setAvgRating(rs.getDouble("avgrating"));
+        } catch (Exception e) {
+        }
+        try {
+          ans.setTotalRatings(rs.getInt("totalratings"));
+        } catch (Exception e) {
+        }
       }
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     return ans;
   }
 }

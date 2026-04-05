@@ -35,16 +35,16 @@ public class LoginController {
     data.put("username", user);
     data.put("password", pass);
 
-    Request req = new Request(Request.login, data);
-    Response res = NetworkClient.getinstance().sendrequestandwait(req);
+    Request req = new Request(Request.LOGIN, data);
+    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
 
-    if (res != null && res.getstatus().equals(Response.ok)) {
-      if (res.getpayload() instanceof User loggedInUser) {
+    if (res != null && res.getStatus().equals(Response.OK)) {
+      if (res.getPayload() instanceof User loggedInUser) {
         ClientSession.setCurrentUser(loggedInUser);
       }
       this.ans.setText("đăng nhập thành công!");
       try {
-        SceneManager.switchscene("/fxml/main/Khung.fxml");
+        SceneManager.switchScene("/fxml/main/Khung.fxml");
       } catch (Exception ex) {
         this.ans.setText("đăng nhập ok nhưng không mở được trang chủ");
       }
@@ -56,11 +56,11 @@ public class LoginController {
   // Thêm @FXML cho các hàm sự kiện khác để tránh lỗi tương tự
   @FXML
   public void back(ActionEvent e) throws Exception {
-    SceneManager.switchscene("/fxml/welcome.fxml");
+    SceneManager.switchScene("/fxml/welcome.fxml");
   }
 
   @FXML
-  public void toregister(ActionEvent e) throws Exception {
-    SceneManager.switchscene("/fxml/register.fxml");
+  public void toRegister(ActionEvent e) throws Exception {
+    SceneManager.switchScene("/fxml/register.fxml");
   }
 }

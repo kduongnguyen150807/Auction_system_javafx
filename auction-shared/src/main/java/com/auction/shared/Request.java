@@ -6,56 +6,56 @@ import java.util.UUID;
 
 public class Request implements Serializable {
   private static final long serialVersionUID = 1L;
-  public static final String login = "LOGIN";
-  public static final String signup = "SIGNUP";
-  public static final String bid = "BID";
-  public static final String add = "ADD";
-  public static final String list = "LIST";
-  public static final String updateprofile = "UPDATE_PROFILE";
-  public static final String updateavatar = "UPDATE_AVATAR";
-  public static final String getallusers = "GET_ALL_USERS";
-  public static final String lockuser = "LOCK_USER";
-  public static final String unlockuser = "UNLOCK_USER";
-  public static final String addlot = "ADD_LOT";
-  public static final String getongoingbids = "GET_ONGOING_BIDS";
-  public static final String getupcomingbids = "GET_UPCOMING_BIDS";
-  public static final String submitrating = "SUBMIT_RATING";
-  public static final String getratings = "GET_RATINGS";
-  public static final String getpendingitems = "GET_PENDING_ITEMS";
-  public static final String approveitem = "APPROVE_ITEM";
-  public static final String rejectitem = "REJECT_ITEM";
-  public static final String getitembyid = "GET_ITEM_BY_ID";
-  public static final String promoteadmin = "PROMOTE_ADMIN";
-  public static final String searchusers = "SEARCH_USERS";
-  public static final String getuserbyid = "GET_USER_BY_ID";
-  protected String requestid;
+  public static final String LOGIN = "LOGIN";
+  public static final String SIGNUP = "SIGNUP";
+  public static final String BID = "BID";
+  public static final String ADD = "ADD";
+  public static final String LIST = "LIST";
+  public static final String UPDATE_PROFILE = "UPDATE_PROFILE";
+  public static final String UPDATE_AVATAR = "UPDATE_AVATAR";
+  public static final String GET_ALL_USERS = "GET_ALL_USERS";
+  public static final String LOCK_USER = "LOCK_USER";
+  public static final String UNLOCK_USER = "UNLOCK_USER";
+  public static final String ADD_LOT = "ADD_LOT";
+  public static final String GET_ONGOING_BIDS = "GET_ONGOING_BIDS";
+  public static final String GET_UPCOMING_BIDS = "GET_UPCOMING_BIDS";
+  public static final String SUBMIT_RATING = "SUBMIT_RATING";
+  public static final String GET_RATINGS = "GET_RATINGS";
+  public static final String GET_PENDING_ITEMS = "GET_PENDING_ITEMS";
+  public static final String APPROVE_ITEM = "APPROVE_ITEM";
+  public static final String REJECT_ITEM = "REJECT_ITEM";
+  public static final String GET_ITEM_BY_ID = "GET_ITEM_BY_ID";
+  public static final String PROMOTE_ADMIN = "PROMOTE_ADMIN";
+  public static final String SEARCH_USERS = "SEARCH_USERS";
+  public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
+  protected String requestId;
   protected String action;
   protected Object payload;
   protected LocalDateTime timestamp;
 
   public Request(String act, Object obj) {
-    this.requestid = UUID.randomUUID().toString();
+    this.requestId = UUID.randomUUID().toString();
     this.action = act;
     this.payload = obj;
     this.timestamp = LocalDateTime.now();
   }
 
-  public String getrequestid() {
-    String ans = this.requestid;
+  public String getRequestId() {
+    String ans = this.requestId;
     return ans;
   }
 
-  public String getaction() {
+  public String getAction() {
     String ans = this.action;
     return ans;
   }
 
-  public Object getpayload() {
+  public Object getPayload() {
     Object ans = this.payload;
     return ans;
   }
 
-  public LocalDateTime gettimestamp() {
+  public LocalDateTime getTimestamp() {
     LocalDateTime ans = this.timestamp;
     return ans;
   }

@@ -43,12 +43,12 @@ public class RegisterController {
     data.put("email", email);
     data.put("age", age);
     data.put("password", pass);
-    Request req = new Request(Request.signup, data);
-    Response res = NetworkClient.getinstance().sendrequestandwait(req);
-    if (res != null && res.getstatus().equals(Response.ok)) {
+    Request req = new Request(Request.SIGNUP, data);
+    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+    if (res != null && res.getStatus().equals(Response.OK)) {
       this.ans.setText("đăng ký thành công!");
     } else {
-      if (res != null && "duplicate_username_or_email".equals(res.getmessage())) {
+      if (res != null && "duplicate_username_or_email".equals(res.getMessage())) {
         this.ans.setText("username hoặc email đã tồn tại!");
       } else {
         this.ans.setText("đăng ký thất bại!");
@@ -58,11 +58,11 @@ public class RegisterController {
 
   @FXML
   public void back(ActionEvent ev) throws Exception {
-    SceneManager.switchscene("/fxml/login.fxml");
+    SceneManager.switchScene("/fxml/login.fxml");
   }
 
   @FXML
   public void goWelcome(ActionEvent ev) throws Exception {
-    SceneManager.switchscene("/fxml/welcome.fxml");
+    SceneManager.switchScene("/fxml/welcome.fxml");
   }
 }

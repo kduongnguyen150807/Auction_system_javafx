@@ -31,8 +31,8 @@
                                         <ImageView fx:id="avatarimageview" fitWidth="68" fitHeight="68" />
                                     </children>
                                 </StackPane>
-                                <Button text="Change Avatar" onAction="#handlechangeavatar" styleClass="profile-btn"/>
-                                <Button text="Refresh" onAction="#handlerefresh" styleClass="profile-btn"/>
+                                <Button text="Change Avatar" onAction="#handleChangeAvatar" styleClass="profile-btn"/>
+                                <Button text="Refresh" onAction="#handleRefresh" styleClass="profile-btn"/>
                             </children>
                         </VBox>
                         <VBox spacing="4">

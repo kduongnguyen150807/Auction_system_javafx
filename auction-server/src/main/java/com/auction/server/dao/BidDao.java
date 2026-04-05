@@ -8,25 +8,25 @@ public class BidDao {
   private Connection conn;
 
   public BidDao() {
-    this.conn = DatabaseConnection.getinstance().getconnection();
+    this.conn = DatabaseConnection.getInstance().getConnection();
   }
 
-  public boolean placebid(BidTransaction b) {
+  public boolean placeBid(BidTransaction b) {
     boolean ans = false;
     try {
       this.conn.setAutoCommit(false);
       String sql = "insert into bid_transactions(itemid,userid,bidvalue,timestamp) values(?,?,?,?)";
       PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setInt(1, b.getitemid());
-      ps.setInt(2, b.getuserid());
-      ps.setDouble(3, b.getbidvalue());
-      ps.setTimestamp(4, Timestamp.valueOf(b.gettimestamp()));
+      ps.setInt(1, b.getItemId());
+      ps.setInt(2, b.getUserId());
+      ps.setDouble(3, b.getBidValue());
+      ps.setTimestamp(4, Timestamp.valueOf(b.getTimestamp()));
       int res = ps.executeUpdate();
       if (res > 0) {
         String sql2 = "update items set currentprice = ? where id = ?";
         PreparedStatement ps2 = this.conn.prepareStatement(sql2);
-        ps2.setDouble(1, b.getbidvalue());
-        ps2.setInt(2, b.getitemid());
+        ps2.setDouble(1, b.getBidValue());
+        ps2.setInt(2, b.getItemId());
         ps2.executeUpdate();
       }
       this.conn.commit();
@@ -48,15 +48,15 @@ public class BidDao {
     return ans;
   }
 
-  public boolean addbid(BidTransaction b) {
+  public boolean addBid(BidTransaction b) {
     boolean ans = false;
     try {
       String sql = "insert into bid_transactions(itemid,userid,bidvalue,timestamp) values(?,?,?,?)";
       PreparedStatement ps = this.conn.prepareStatement(sql);
-      ps.setInt(1, b.getitemid());
-      ps.setInt(2, b.getuserid());
-      ps.setDouble(3, b.getbidvalue());
-      ps.setTimestamp(4, Timestamp.valueOf(b.gettimestamp()));
+      ps.setInt(1, b.getItemId());
+      ps.setInt(2, b.getUserId());
+      ps.setDouble(3, b.getBidValue());
+      ps.setTimestamp(4, Timestamp.valueOf(b.getTimestamp()));
       ans = ps.executeUpdate() > 0;
     } catch (Exception e) {
       e.printStackTrace();
@@ -64,7 +64,7 @@ public class BidDao {
     return ans;
   }
 
-  public List<BidTransaction> getbyitem(int iid) {
+  public List<BidTransaction> getByItem(int iid) {
     List<BidTransaction> ans = new ArrayList<>();
     try {
       String sql = "select * from bid_transactions where itemid = ? order by timestamp asc";
@@ -74,9 +74,9 @@ public class BidDao {
       while (rs.next()) {
         BidTransaction b =
             new BidTransaction(rs.getInt("itemid"), rs.getInt("userid"), rs.getDouble("bidvalue"));
-        b.setid(rs.getInt("id"));
-        b.setversion(rs.getInt("version"));
-        b.settimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
+        b.setId(rs.getInt("id"));
+        b.setVersion(rs.getInt("version"));
+        b.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
         ans.add(b);
       }
     } catch (Exception e) {
@@ -85,7 +85,7 @@ public class BidDao {
     return ans;
   }
 
-  public BidTransaction getwinner(int iid) {
+  public BidTransaction getWinner(int iid) {
     BidTransaction ans = null;
     try {
       String sql =
@@ -96,9 +96,9 @@ public class BidDao {
       if (rs.next()) {
         ans =
             new BidTransaction(rs.getInt("itemid"), rs.getInt("userid"), rs.getDouble("bidvalue"));
-        ans.setid(rs.getInt("id"));
-        ans.setversion(rs.getInt("version"));
-        ans.settimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
+        ans.setId(rs.getInt("id"));
+        ans.setVersion(rs.getInt("version"));
+        ans.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
       }
     } catch (Exception e) {
       e.printStackTrace();

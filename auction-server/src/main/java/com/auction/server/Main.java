@@ -7,6 +7,6 @@ public class Main {
   public static void main(String[] args) {
     new AuctionCloser().start();
     SocketServer server = new SocketServer(8080);
-    server.startserver();
+    server.startServer();
   }
 }

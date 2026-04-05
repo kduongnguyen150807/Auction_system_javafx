@@ -30,10 +30,10 @@
 
                 <HBox spacing="20" alignment="CENTER_RIGHT">
                     <children>
-                        <Hyperlink text="Cancel" onAction="#handlecancel"
+                        <Hyperlink text="Cancel" onAction="#handleCancel"
                                    style="-fx-text-fill: #999; -fx-font-size: 14;" />
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Button text="Submit Rating" onAction="#handlesubmit" prefHeight="40" prefWidth="150"
+                        <Button text="Submit Rating" onAction="#handleSubmit" prefHeight="40" prefWidth="150"
                                 style="-fx-background-color: #e2b44d; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-font-size: 14; -fx-cursor: hand; -fx-background-radius: 8;" />
                     </children>
                 </HBox>

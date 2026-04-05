@@ -20,7 +20,7 @@ public class DatabaseConnection {
     }
   }
 
-  public static DatabaseConnection getinstance() {
+  public static DatabaseConnection getInstance() {
     if (instance == null) {
       instance = new DatabaseConnection();
     }
@@ -28,7 +28,7 @@ public class DatabaseConnection {
     return ans;
   }
 
-  public Connection getconnection() {
+  public Connection getConnection() {
     Connection ans = this.connection;
     return ans;
   }

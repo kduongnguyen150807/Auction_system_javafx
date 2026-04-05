@@ -25,7 +25,7 @@
                                         </image>
                                     </ImageView>
                                 </StackPane>
-                                <Button maxWidth="1.7976931348623157E308" onAction="#handlechoosepicture" styleClass="btn-primary" text="CHOOSE PICTURE" />
+                                <Button maxWidth="1.7976931348623157E308" onAction="#handleChoosePicture" styleClass="btn-primary" text="CHOOSE PICTURE" />
                                 <Label fx:id="lblStatus" alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="form-status" wrapText="true" />
                             </children>
                         </VBox>
@@ -63,8 +63,8 @@
                                 <Region VBox.vgrow="ALWAYS" />
                                 <HBox spacing="15.0">
                                     <children>
-                                        <Button maxWidth="1.7976931348623157E308" onAction="#handlecancel" styleClass="btn-logout" text="CANCEL" HBox.hgrow="ALWAYS" />
-                                        <Button maxWidth="1.7976931348623157E308" onAction="#handlesubmit" styleClass="btn-primary" text="CONFIRM UPLOAD" HBox.hgrow="ALWAYS" />
+                                        <Button maxWidth="1.7976931348623157E308" onAction="#handleCancel" styleClass="btn-logout" text="CANCEL" HBox.hgrow="ALWAYS" />
+                                        <Button maxWidth="1.7976931348623157E308" onAction="#handleSubmit" styleClass="btn-primary" text="CONFIRM UPLOAD" HBox.hgrow="ALWAYS" />
                                     </children>
                                 </HBox>
                             </children>

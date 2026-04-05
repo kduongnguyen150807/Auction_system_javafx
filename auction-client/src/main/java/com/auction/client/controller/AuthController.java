@@ -25,12 +25,12 @@ public class AuthController {
 
   public Response login(String u, String pass) {
     if (u == null || u.trim().isEmpty() || pass == null || pass.trim().isEmpty()) {
-      return new Response("local", Response.err, "Vui lòng nhập đầy đủ thông tin", null);
+      return new Response("local", Response.ERROR, "Vui lòng nhập đầy đủ thông tin", null);
     }
     Map<String, Object> payload = new HashMap<>();
     payload.put("username", u);
     payload.put("password", pass);
-    Request request = new Request(Request.login, payload);
+    Request request = new Request(Request.LOGIN, payload);
     Response ans = sendToServer(request);
     return ans;
   }
@@ -46,30 +46,30 @@ public class AuthController {
         || e.trim().isEmpty()
         || age == null
         || age.trim().isEmpty()) {
-      return new Response("local", Response.err, "Vui lòng điền đầy đủ các trường", null);
+      return new Response("local", Response.ERROR, "Vui lòng điền đầy đủ các trường", null);
     }
     if (!pass.equals(cp)) {
-      return new Response("local", Response.err, "Mật khẩu nhập lại không khớp", null);
+      return new Response("local", Response.ERROR, "Mật khẩu nhập lại không khớp", null);
     }
     if (u.length() < 3 || u.length() > 20) {
-      return new Response("local", Response.err, "Tên đăng nhập phải từ 3-20 ký tự", null);
+      return new Response("local", Response.ERROR, "Tên đăng nhập phải từ 3-20 ký tự", null);
     }
     if (u.contains(" ")) {
       return new Response(
-          "local", Response.err, "Tên đăng nhập không được chứa khoảng trắng", null);
+          "local", Response.ERROR, "Tên đăng nhập không được chứa khoảng trắng", null);
     }
     if (pass.length() < 6) {
-      return new Response("local", Response.err, "Mật khẩu phải có ít nhất 6 ký tự", null);
+      return new Response("local", Response.ERROR, "Mật khẩu phải có ít nhất 6 ký tự", null);
     }
     if (!AuthController.isValidEmail(e)) {
-      return new Response("local", Response.err, "Định dạng email không hợp lệ", null);
+      return new Response("local", Response.ERROR, "Định dạng email không hợp lệ", null);
     }
     Map<String, Object> payload = new HashMap<>();
     payload.put("username", u);
     payload.put("password", pass);
     payload.put("email", e);
     payload.put("age", age);
-    Request request = new Request(Request.signup, payload);
+    Request request = new Request(Request.SIGNUP, payload);
     Response ans = sendToServer(request);
     return ans;
   }
@@ -83,9 +83,12 @@ public class AuthController {
         return res;
       }
       return new Response(
-          request.getrequestid(), Response.err, "Định dạng phản hồi từ server không hợp lệ", null);
+          request.getRequestId(),
+          Response.ERROR,
+          "Định dạng phản hồi từ server không hợp lệ",
+          null);
     } catch (IOException | ClassNotFoundException e) {
-      return new Response(request.getrequestid(), Response.err, "Mất kết nối tới máy chủ", null);
+      return new Response(request.getRequestId(), Response.ERROR, "Mất kết nối tới máy chủ", null);
     }
   }
 }
