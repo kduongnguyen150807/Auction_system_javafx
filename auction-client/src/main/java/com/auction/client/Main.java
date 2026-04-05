@@ -7,7 +7,7 @@ public class Main extends Application {
   @Override
   public void start(Stage primarystage) throws Exception {
     SceneManager.setstage(primarystage);
-    primarystage.setTitle("hệ thống đấu giá online");
+    primarystage.setTitle("Hệ thống đấu giá online");
     SceneManager.switchscene("/fxml/welcome.fxml");
   }
 

@@ -29,6 +29,17 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.auction.client.App</mainClass>
+                    <jlinkImageName>auctionapp</jlinkImageName>
+                    <jlinkZipName>auctionapp_dist</jlinkZipName>
+                    <launcher>launch_auction</launcher>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.0</version>
