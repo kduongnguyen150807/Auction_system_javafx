@@ -15,7 +15,7 @@ public class AuctionManager {
   private ItemDao itemdao;
   private UserDao userdao;
   private TransactionLogDao logdao;
-  private java.util.Map<Integer, java.util.Map<Integer, Double>> autobids;
+  private java.util.Map<Integer, java.util.PriorityQueue<BidTransaction>> autobids;
 
   private AuctionManager() {
     this.clients = new CopyOnWriteArrayList<>();
@@ -50,13 +50,21 @@ public class AuctionManager {
     if (res != null && res.getsellerid() == b.getuserid()) return new Response("", Response.err, "Fail", null);
 
     if (b.getisautobid()) {
-      java.util.Map<Integer, Double> res1 = this.autobids.computeIfAbsent(b.getitemid(), k -> new java.util.concurrent.ConcurrentHashMap<>());
-      res1.put(b.getuserid(), b.getmaxautobid());
-      b.setbidvalue(res.getcurrentprice() + 10.0);
+      java.util.PriorityQueue<BidTransaction> res1 = this.autobids.get(b.getitemid());
+      if (res1 == null) {
+        res1 = new java.util.PriorityQueue<>(10, new java.util.Comparator<BidTransaction>() {
+          public int compare(BidTransaction ans1, BidTransaction ans2) {
+            return Double.compare(ans2.getmaxautobid(), ans1.getmaxautobid());
+          }
+        });
+        this.autobids.put(b.getitemid(), res1);
+      }
+      res1.add(b);
+      b.setbidvalue(res.getcurrentprice() + b.getautobidincrement());
     }
 
     if (res != null && b.getbidvalue() <= res.getcurrentprice()) {
-      b.setbidvalue(res.getcurrentprice() + 10.0);
+      b.setbidvalue(res.getcurrentprice() + b.getautobidincrement());
     }
 
     if (ans != null && ans.getbalance() < b.getbidvalue()) return new Response("", Response.err, "Fail", null);
@@ -124,20 +132,28 @@ public class AuctionManager {
       }
     }
 
-    java.util.Map<Integer, Double> ans5 = this.autobids.get(b.getitemid());
-    if (ans5 != null) {
+    java.util.PriorityQueue<BidTransaction> ans5 = this.autobids.get(b.getitemid());
+    if (ans5 != null && !ans5.isEmpty()) {
       double res6 = itemdao.getbyid(b.getitemid()).getcurrentprice();
       int res7 = getprevioushighestbidder(b.getitemid());
-      for (java.util.Map.Entry<Integer, Double> res8 : ans5.entrySet()) {
-        if (res8.getKey() != res7 && res8.getValue() > res6) {
-          double ans6 = res6 + 10.0;
-          if (ans6 <= res8.getValue()) {
-            BidTransaction ans7 = new BidTransaction(b.getitemid(), res8.getKey(), ans6);
-            ans7.setisautobid(false);
-            processbid(ans7);
+      java.util.List<BidTransaction> res8 = new java.util.ArrayList<>();
+      while (!ans5.isEmpty()) {
+        res8.add(ans5.poll());
+      }
+      for (BidTransaction ans7 : res8) {
+        if (ans7.getuserid() != res7 && ans7.getmaxautobid() > res6) {
+          double res9 = res6 + ans7.getautobidincrement();
+          if (res9 <= ans7.getmaxautobid()) {
+            BidTransaction ans8 = new BidTransaction(b.getitemid(), ans7.getuserid(), res9);
+            ans8.setisautobid(false);
+            ans8.setautobidincrement(ans7.getautobidincrement());
+            processbid(ans8);
             break;
           }
         }
+      }
+      for (BidTransaction ans7 : res8) {
+        ans5.add(ans7);
       }
     }
     return ans4;
