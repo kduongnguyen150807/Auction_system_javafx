@@ -1,73 +1,91 @@
-# 🔨 Hệ Thống Đấu Giá Trực Tuyến (Online Auction System)
+# Hệ Thống Đấu Giá Trực Tuyến (Online Auction System)
 
-Dự án phát triển hệ thống đấu giá trực tuyến thuộc bài tập lớn môn Lập trình nâng cao. Hệ thống cho phép nhiều người dùng tham gia cạnh tranh giá realtime để mua sản phẩm trong một khoảng thời gian xác định.
+[![CI/CD Pipeline](https://github.com/kduongnguyen150807/Auction_system_javafx/actions/workflows/build.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
 
-Dự án được phát triển bởi nhóm 4 thành viên, áp dụng kiến trúc Client-Server phân tầng, thiết kế hướng đối tượng (OOP) và các Design Pattern chuẩn mực.
+Dự án phát triển hệ thống đấu giá trực tuyến thuộc bài tập lớn môn Lập trình nâng cao. Hệ thống mô phỏng môi trường đấu giá thời gian thực, cho phép nhiều người dùng (concurrent users) tham gia cạnh tranh giá sản phẩm với độ trễ thấp và đảm bảo tính toàn vẹn dữ liệu.
 
-## 🏗 Kiến Trúc Hệ Thống (Architecture)
+Dự án áp dụng chặt chẽ kiến trúc Client-Server phân tầng, thiết kế hướng đối tượng (OOP) và các Design Pattern chuẩn mực trong công nghiệp phần mềm.
 
-Hệ thống được chia làm 3 module chính để phân tách rõ ràng giao diện và logic xử lý:
+## 1. Kiến Trúc Hệ Thống (Architecture)
 
-1. **`auction-shared`**: Chứa các Entity (User, Item, BidTransaction) dùng chung cho cả Client và Server.
+Hệ thống được thiết kế theo mô hình 3 modules độc lập nhằm tối ưu hóa việc quản lý mã nguồn và tái sử dụng:
 
-2. **`auction-server`**: Áp dụng mô hình MVC (Controller → Model → DAO/Database), là nơi duy nhất truy cập cơ sở dữ liệu. Xử lý các nghiệp vụ cốt lõi, concurrent bidding và quản lý kết nối.
+* **auction-shared:** Chứa các định nghĩa về Entity (User, Item, BidTransaction), Interfaces và các gói dữ liệu giao tiếp chung.
+* **auction-server:** Đóng vai trò là trung tâm xử lý nghiệp vụ (Business Logic). Áp dụng mô hình MVC, quản lý kết nối Socket đa luồng (Multi-threading) và trực tiếp thao tác với cơ sở dữ liệu qua các lớp DAO.
+* **auction-client:** Đóng vai trò giao diện người dùng (Presentation Layer). Áp dụng mô hình MVC với JavaFX, xử lý luồng sự kiện UI và giao tiếp với Server qua giao thức TCP/IP.
 
-3. **`auction-client`**: Áp dụng mô hình MVC với JavaFX và FXML. Xử lý giao diện người dùng và giao tiếp với Server qua mạng.(Anh Tuấn, Trọng Nhân)
+## 2. Công Nghệ Sử Dụng (Tech Stack)
 
-## 🚀 Các Tính Năng Nổi Bật
+* **Nền tảng & Ngôn ngữ:** Java (JDK 25)
+* **Giao diện (GUI):** JavaFX, FXML, CSS
+* **Cơ sở dữ liệu:** MySQL (JDBC)
+* **Mạng & Giao tiếp:** Java Socket (TCP), Imgur REST API (Image Hosting)
+* **Build Tool & CI/CD:** Maven, GitHub Actions
+* **Testing:** JUnit 5 (Unit Testing)
 
-Chức Năng Cốt Lõi
+## 3. Thiết Kế Hệ Thống & Cấu Trúc Dữ Liệu
 
-- **Quản lý đa vai trò:** Hỗ trợ Admin, Seller (đăng sản phẩm) và Bidder (tham gia đấu giá).
+Dự án triển khai nghiêm ngặt các nguyên lý OOP và Design Patterns để giải quyết các bài toán phức tạp:
 
-- **Quản lý phiên đấu giá:** Tự động mở/đóng phiên theo thời gian thực, cập nhật người dẫn đầu và xác định người thắng cuộc.
+* **Design Patterns:**
+  * *Factory Method:* Được áp dụng trong `ItemFactory` để khởi tạo linh hoạt các loại tài sản đấu giá (Vehicle, Electronics, Art).
+  * *Singleton:* Quản lý các tài nguyên duy nhất như `DatabaseConnection`, `AuctionManager`, và `ClientSession`.
+  * *Observer (Biến thể qua Socket):* Cập nhật trạng thái và giá đấu theo thời gian thực (Realtime Broadcasting) tới toàn bộ Clients kết nối.
+* **Tính Đa hình (Polymorphism):** Lớp trừu tượng `Item` định nghĩa phương thức `calculatetax()`, cho phép các lớp con (Vehicle, Art, Electronics) tự triển khai logic tính thuế khác biệt.
+* **Cấu trúc dữ liệu & Thuật toán:**
+  * Sử dụng `PriorityQueue` kết hợp với thuật toán so sánh `maxBid` để vận hành hệ thống Auto-Bidding, đảm bảo thứ tự ưu tiên trúng thầu chính xác.
+  * Cấu trúc luồng an toàn (Thread-safe) với `ConcurrentHashMap` và `CopyOnWriteArrayList` trong môi trường đa luồng.
 
-- **Bảo vệ toàn vẹn dữ liệu:** Xử lý triệt để các lỗi ngoại lệ như đặt giá thấp hơn giá hiện tại hoặc đấu giá khi phiên đã đóng.
+## 4. Chức Năng Kỹ Thuật Cốt Lõi
 
-Kỹ Thuật Nâng Cao
+* **Concurrent Bidding & Thread Safety:** Xử lý đấu giá đồng thời an toàn với từ khóa `synchronized`, ngăn chặn triệt để tình trạng Race Condition, Lost Update hoặc tranh chấp dữ liệu khi nhiều người cùng đặt giá.
+* **Auto-Bidding:** Cho phép người dùng thiết lập giá trần (`maxBid`) và bước giá (`increment`). Hệ thống tự động proxy đấm giá thay mặt người dùng dựa trên hàng đợi ưu tiên.
+* **Anti-Sniping:** Tự động bù giờ (cộng thêm 60 giây) nếu có giao dịch đặt giá hợp lệ trong những giây cuối cùng của phiên đấu giá.
+* **Realtime Analytics:** Vẽ biểu đồ đường (Line Chart) mô tả lịch sử biến động giá của sản phẩm theo thời gian thực.
+* **System Integration:** Tích hợp `java.awt.SystemTray` để đẩy thông báo (Push Notifications) trực tiếp ra màn hình hệ điều hành của người dùng khi bị vượt giá.
 
-- **Realtime Bidding (Observer Pattern):** Cập nhật giá đấu ngay lập tức cho toàn bộ client mà không cần polling.
+## 5. Hướng Dẫn Cài Đặt (Setup Instructions)
 
-- **Concurrent Bidding:** Xử lý đấu giá đồng thời an toàn, ngăn chặn tình trạng lost update, rollback giá hay hai người cùng thắng.
+**Yêu cầu hệ thống:**
 
-- **Auto-Bidding & Anti-Sniping:** Hỗ trợ tự động trả giá với `maxBid` và tự động gia hạn thời gian nếu có biến động ở những giây cuối.
+* JDK 25 trở lên.
+* Maven 3.8+
+* MySQL Server 8.0+
 
-- **Realtime Price Curve:** Trực quan hóa lịch sử đấu giá bằng biểu đồ đường cập nhật theo thời gian thực.
+**Bước 1: Khởi tạo Cơ sở dữ liệu**
 
-## 🛠 Công Nghệ Sử Dụng
+1. Mở hệ quản trị MySQL.
+2. Tạo database mới: `CREATE DATABASE auction_db;`
+3. Import file dữ liệu mẫu (nếu có) hoặc để hệ thống DAO tự động tạo bảng (Alter Table) khi chạy lần đầu.
+4. Cập nhật thông tin cấu hình (URL, Username, Password) tại lớp `DatabaseConnection` trong module `auction-server`.
 
-- **Ngôn ngữ:** Java
+**Bước 2: Build dự án**
+Mở Terminal tại thư mục gốc của project và chạy lệnh:
 
-- **Giao diện (GUI):** JavaFX
+```bash
+mvn clean verify
+```
 
-- **Database:** MySQL / PostgreSQL
+**Bước 3: Khởi chạy Server**
+Mở Terminal tại thư mục `auction-server` và thực thi:
 
-- **Giao tiếp mạng:** Socket / REST API
+```bash
+mvn exec:java -Dexec.mainClass="com.auction.server.Main"
+```
 
-- **Build Tool:** Maven
+*(Đảm bảo Server báo khởi tạo thành công và đang lắng nghe ở cổng mặc định).*
 
-- **Testing & CI/CD:** JUnit, GitHub Actions
+**Bước 4: Khởi chạy Client**
+Mở Terminal mới tại thư mục `auction-client` và thực thi:
 
-- ```API``` : Dùng Imgur để có thể upload 
+```bash
+mvn clean javafx:run
+```
 
-## 📝 Quy Định Làm Việc Nhóm (Dành cho thành viên)
+*(Để test concurrent bidding, có thể chạy lệnh này trên nhiều cửa sổ Terminal khác nhau để mở nhiều Client song song).*
 
-Để đảm bảo tiến độ và tránh conflict mã nguồn, toàn bộ thành viên tuân thủ các quy tắc sau:
+## 6. Quy Định Phát Triển (Dành cho thành viên)
 
-1. **Không push trực tiếp lên nhánh `main`.** Mọi tính năng mới phải được phát triển trên nhánh riêng (ví dụ: `feat/login`, `fix/bid-error`) và tạo Pull Request (PR) để review. (có thể push lên test để check)
-
-2. **Quy tắc Commit:** Sử dụng Conventional Commits. Ví dụ:
-   
-   - `feat: ...` (Thêm tính năng mới)
-   
-   - `fix: ...` (Sửa lỗi)
-   
-   - `refactor: ...` (Tối ưu code)
-
-3. **Trách nhiệm chéo:** Frontend (JavaFX) có thể sử dụng Mock Data trong lúc chờ Backend hoàn thiện API. Backend phải viết Unit Test (JUnit) cho các logic quan trọng trước khi tích hợp. Bất kỳ thành viên nào không hiểu phần code của mình, cả nhóm sẽ bị 0 điểm.
-
-## ⚙️ Hướng Dẫn Cài Đặt & Chạy (Setup Instructions)
-
-*(Phần này điền lệnh chạy maven/gradle để build project sau khi nhóm đã chốt xong công cụ)*
-
-Để chạy trước thì cần khởi chạy server thông qua Main trong auction-server và để hiện thị giao diện thì chạy App.java trong (auction-shared) (dùng Main bị lỗi JAVAFX)
+1. **Branching:** Không push trực tiếp lên nhánh `main`. Phân nhánh theo tính năng (VD: `feat/realtime-chart`, `fix/login-bug`) và merge qua Pull Request.
+2. **Commit Message:** Sử dụng chuẩn Conventional Commits (`feat:`, `fix:`, `refactor:`).
+3. **CI/CD Quality Gate:** Mọi nhánh trước khi merge phải vượt qua toàn bộ Unit Tests trên GitHub Actions pipeline.
