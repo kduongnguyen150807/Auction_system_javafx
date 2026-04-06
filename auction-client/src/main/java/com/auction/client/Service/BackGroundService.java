@@ -47,7 +47,7 @@ public class BackGroundService {
 
     public static void apply(Pane root) {
         if (root == null) {
-            System.out.println("⚠️ Cảnh báo: Root Pane bị null, không thể áp dụng nền!");
+            System.out.println("Root Pane bị null, không thể áp dụng nền!");
             return;
         }
 
@@ -97,7 +97,7 @@ public class BackGroundService {
                 // Nếu ảnh lỗi (đường dẫn sai), in ra để debug
                 String finalBgUrl = bgUrl;
                 img.errorProperty().addListener((obs, oldV, isError) -> {
-                    if (isError) System.err.println("❌ Lỗi load ảnh từ URL: " + finalBgUrl);
+                    if (isError) System.err.println("Lỗi load ảnh từ URL: " + finalBgUrl);
                 });
             }
         } catch (Exception e) {
