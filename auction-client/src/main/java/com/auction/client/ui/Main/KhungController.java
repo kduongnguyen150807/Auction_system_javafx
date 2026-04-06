@@ -167,7 +167,7 @@ public class KhungController {
   public void handleSignout() {
     ClientSession.clear();
     try {
-      javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
+      javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/fxml/welcome.fxml"));
       // ĐÃ FIX: Dùng ContentArea thay vì editButton
       javafx.stage.Stage stage = (javafx.stage.Stage) ContentArea.getScene().getWindow();
       javafx.scene.Scene scene = new javafx.scene.Scene(root);

@@ -173,7 +173,24 @@
     -fx-background-color: linear-gradient(to right, #ffbb33, #ffaa00);
     -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.7), 15, 0, 0, 0);
 }
+.btn-signout {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 20;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-transition-duration: 0.3s;
+}
 
+.btn-signout:hover {
+    -fx-background-color: rgba(255, 68, 68, 0.9);
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 68, 68, 0.6), 15, 0, 0, 0);
+}
 /* Xóa phông nền đen của content, để lộ ảnh xuyên thấu */
 .content-area {
     -fx-background-color: transparent;
