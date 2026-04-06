@@ -2,3 +2,4 @@ target/
 .idea/
 *.iml
 
+auction-server/dependency-reduced-pom.xml
