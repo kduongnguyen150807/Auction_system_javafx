@@ -1,122 +1,107 @@
+/* Tông màu chủ đạo cho User: Pink & White */
 .profile-root {
-    -fx-background-color: -color-bg;
-    -fx-min-height: 760;
+    -fx-background-color: transparent;
+    -fx-font-family: "Consolas";
 }
 
-.profile-header {
-    -fx-background-color: #0f0f0f;
-    -fx-background-radius: 12;
-    -fx-padding: 16 18;
+.glass-panel-user {
+    -fx-background-color: rgba(30, 30, 30, 0.7);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 42, 109, 0.3); /* Viền hồng rực sáng nhẹ */
+    -fx-border-radius: 20;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 42, 109, 0.2), 30, 0, 0, 0);
 }
 
-.profile-avatar {
-    -fx-fill: #090909;
-    -fx-stroke: -color-primary;
-    -fx-stroke-width: 2;
+/* Hiệu ứng Avatar rực sáng hồng */
+.avatar-glow {
+    -fx-fill: transparent;
+    -fx-stroke: linear-gradient(to bottom, #ff2a6d, #ff7eb3);
+    -fx-stroke-width: 3;
+    -fx-effect: dropshadow(three-pass-box, #ff2a6d, 15, 0, 0, 0);
 }
 
-.profile-title {
+.avatar-bg {
+    -fx-fill: rgba(0, 0, 0, 0.5);
+}
+
+.user-name-big {
     -fx-text-fill: white;
-    -fx-font-size: 36;
-    -fx-font-weight: 800;
+    -fx-font-size: 36px;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 255, 255, 0.3), 10, 0, 0, 0);
 }
 
-.profile-subtitle {
-    -fx-text-fill: #999;
-    -fx-font-size: 16;
-}
-
-.back-btn {
-    -fx-background-color: #2b2b2b;
-    -fx-text-fill: #ffaa00;
-    -fx-background-radius: 8;
-    -fx-padding: 8 16;
-    -fx-cursor: hand;
+.badge-role {
+    -fx-background-color: rgba(255, 42, 109, 0.2);
+    -fx-text-fill: #ff2a6d;
+    -fx-padding: 4 12;
+    -fx-background-radius: 10;
+    -fx-border-color: #ff2a6d;
+    -fx-border-radius: 10;
     -fx-font-weight: bold;
-    -fx-font-size: 14;
+    -fx-font-size: 12px;
 }
 
-.back-btn:hover {
-    -fx-background-color: #3a3a3a;
+.user-email {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 15px;
+    -fx-alignment: center-left;
+}
+
+/* Các khối thống kê */
+.stat-box {
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 12;
+    -fx-padding: 20;
+}
+
+.stat-label {
+    -fx-text-fill: #999999;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.stat-value {
+    -fx-text-fill: white;
+    -fx-font-size: 32px;
+    -fx-font-weight: 900;
+}
+
+.stat-value-glow {
+    -fx-text-fill: #ffcc00;
+    -fx-font-size: 32px;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 204, 0, 0.5), 10, 0, 0, 0);
 }
 
 .section-title {
     -fx-text-fill: white;
-    -fx-font-size: 22;
-    -fx-font-weight: 700;
-}
-
-.metric-card {
-    -fx-background-color: #181818;
-    -fx-background-radius: 12;
-}
-
-.metric-title-sm {
-    -fx-text-fill: #d9d9d9;
-    -fx-font-size: 13;
-    -fx-font-weight: 700;
-}
-
-.metric-value-sm {
-    -fx-text-fill: -color-primary;
-    -fx-font-size: 32;
-    -fx-font-weight: 900;
-}
-
-.metric-value-role {
-    -fx-text-fill: #44cc44;
-    -fx-font-size: 24;
-    -fx-font-weight: 800;
-}
-
-.field-label {
-    -fx-text-fill: #8b8b8b;
-    -fx-font-size: 13;
-    -fx-font-weight: 700;
-}
-
-.field-box {
-    -fx-background-color: #121212;
-    -fx-background-radius: 8;
-    -fx-padding: 14;
-    -fx-text-fill: white;
-    -fx-min-height: 50;
-    -fx-alignment: center-left;
-}
-
-.scroll-pane {
-    -fx-background: -color-bg;
-    -fx-background-color: -color-bg;
-}
-
-.scroll-pane > .viewport {
-    -fx-background-color: -color-bg;
-}
-
-.item-card-mini {
-    -fx-background-color: #1a1a1a;
-    -fx-background-radius: 10;
-    -fx-padding: 12;
-    -fx-cursor: hand;
-    -fx-pref-width: 200;
-}
-
-.item-card-mini:hover {
-    -fx-background-color: #252525;
-}
-
-.item-card-mini-name {
-    -fx-text-fill: white;
-    -fx-font-size: 14;
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
 }
 
-.item-card-mini-price {
-    -fx-text-fill: #ffaa00;
-    -fx-font-size: 13;
+.section-subtitle {
+    -fx-text-fill: #ff2a6d; /* Màu hồng điểm xuyết */
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
 }
 
-.item-card-mini-status {
-    -fx-text-fill: #44cc44;
-    -fx-font-size: 11;
+/* Nút back kiểu macOS */
+.btn-back-mac {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 8;
+}
+
+.btn-back-mac:hover {
+    -fx-background-color: rgba(255, 42, 109, 0.3);
+    -fx-border-color: #ff2a6d;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 42, 109, 0.5), 10, 0, 0, 0);
 }

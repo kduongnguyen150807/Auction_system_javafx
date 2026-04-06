@@ -15,12 +15,13 @@
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.ui.Main.KhungController"
       styleClass="main-container" fx:id="MainKhung"
-      stylesheets="@/css/main/MucLuc.css">
+      stylesheets="/css/main/MucLuc.css">
+
     <VBox prefWidth="256" minWidth="256" styleClass="sidebar" spacing="30">
         <children>
             <VBox styleClass="logo-container">
                 <children>
-                    <Label text="Binding88" styleClass="logo-text"/>
+                    <Label text="Bidding88" styleClass="logo-text"/>
                     <Label text="Auction Online" styleClass="logo-subtext"/>
                 </children>
             </VBox>

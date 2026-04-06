@@ -1,152 +1,190 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.geometry.Pos?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.text.Font?>
 
-<ScrollPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-            fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
-            maxWidth="Infinity" maxHeight="Infinity"
-            fx:controller="com.auction.client.ui.Profile.ProfileController"
-            stylesheets="@/css/profile/Profile.css">
+<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" maxHeight="Infinity" maxWidth="Infinity" style="-fx-background-color: transparent; -fx-background: transparent;" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.Profile.ProfileController">
     <content>
-        <VBox spacing="18" styleClass="profile-root">
+        <VBox alignment="TOP_CENTER" styleClass="root">
             <children>
-                <HBox spacing="14" alignment="CENTER_LEFT" styleClass="profile-header">
+                <VBox maxWidth="850.0" spacing="25.0" styleClass="glass-panel">
                     <children>
-                        <VBox alignment="CENTER" spacing="5">
+
+                        <HBox alignment="CENTER_LEFT" spacing="25.0">
                             <children>
-                                <StackPane prefWidth="88" minWidth="88" maxWidth="88" prefHeight="88" alignment="CENTER">
+                                <VBox alignment="CENTER" spacing="12.0">
                                     <children>
-                                        <Circle radius="34" styleClass="profile-avatar"/>
-                                        <ImageView fx:id="avatarimageview" fitWidth="68" fitHeight="68" />
+                                        <StackPane prefHeight="100.0" prefWidth="100.0">
+                                            <children>
+                                                <Circle radius="45.0" stroke="WHITE" strokeType="INSIDE" strokeWidth="2.0" style="-fx-fill: rgba(255,255,255,0.1); -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 5);" />
+                                                <ImageView fx:id="avatarimageview" fitHeight="86.0" fitWidth="86.0" pickOnBounds="true" preserveRatio="true" />
+                                            </children>
+                                        </StackPane>
+                                        <HBox spacing="10.0">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#handleChangeAvatar" styleClass="btn-secondary" text="Đổi Avatar">
+                                                    <font><Font size="12.0" /></font>
+                                                </Button>
+                                                <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="btn-secondary" text="Làm mới">
+                                                    <font><Font size="12.0" /></font>
+                                                </Button>
+                                            </children>
+                                        </HBox>
                                     </children>
-                                </StackPane>
-                                <Button text="Change Avatar" onAction="#handleChangeAvatar" styleClass="profile-btn"/>
-                                <Button text="Refresh" onAction="#handleRefresh" styleClass="profile-btn"/>
-                            </children>
-                        </VBox>
-                        <VBox spacing="4">
-                            <children>
-                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                </VBox>
+
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" HBox.hgrow="ALWAYS">
                                     <children>
-                                        <Label fx:id="usernameLabel" text="username" styleClass="profile-title"/>
-                                        <Label fx:id="verifiedLabel" text="Unverified" style="-fx-background-color: #ff4444; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;"/>
+                                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                            <children>
+                                                <Label fx:id="usernameLabel" text="username" textFill="WHITE">
+                                                    <font><Font name="System Bold" size="32.0" /></font>
+                                                </Label>
+                                                <Label fx:id="verifiedLabel" style="-fx-background-color: rgba(255, 68, 68, 0.8); -fx-text-fill: white; -fx-padding: 4 12; -fx-background-radius: 12; -fx-font-weight: bold; -fx-border-color: rgba(255,255,255,0.3); -fx-border-radius: 12;" text="Unverified" />
+                                            </children>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                            <children>
+                                                <Label fx:id="ratingStarsLabel" style="-fx-text-fill: #ffcc00; -fx-effect: dropshadow(three-pass-box, rgba(255, 204, 0, 0.5), 5, 0, 0, 0);" text="★★★★★">
+                                                    <font><Font size="18.0" /></font>
+                                                </Label>
+                                                <Label fx:id="ratingCountLabel" style="-fx-text-fill: #cccccc;" text="(0 đánh giá)">
+                                                    <font><Font size="14.0" /></font>
+                                                </Label>
+                                            </children>
+                                        </HBox>
+                                        <Label fx:id="reputationWarning" managed="false" style="-fx-text-fill: #ff4d4d; -fx-font-weight: bold; -fx-font-size: 14px;" text="Cảnh báo uy tín!" visible="false" />
+                                    </children>
+                                </VBox>
+
+                                <VBox alignment="TOP_RIGHT" spacing="12.0">
+                                    <children>
+                                        <Button fx:id="editButton" mnemonicParsing="false" onAction="#handleEditProfile" prefWidth="130.0" styleClass="btn-primary" text="Sửa hồ sơ" />
+                                        <Button mnemonicParsing="false" onAction="#handleLogout" prefWidth="130.0" style="-fx-background-color: rgba(255, 68, 68, 0.15); -fx-text-fill: #ff4d4d; -fx-font-weight: bold; -fx-border-color: rgba(255, 68, 68, 0.4); -fx-border-radius: 8; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 10 20; -fx-transition-duration: 0.3s;" text="Đăng xuất" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <Region style="-fx-background-color: rgba(255,255,255,0.1); -fx-pref-height: 1;" />
+
+                        <HBox fx:id="bidderMetricsRow" spacing="20.0">
+                            <children>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: rgba(0,0,0,0.4); -fx-background-radius: 12; -fx-border-color: rgba(255,255,255,0.1); -fx-border-radius: 12; -fx-padding: 20;" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label style="-fx-text-fill: #aaaaaa; -fx-font-weight: bold;" text="TIỀN ĐÃ TIÊU" />
+                                        <Label fx:id="moneySpentLabel" style="-fx-text-fill: #007aff; -fx-font-weight: bold;" text="0$">
+                                            <font><Font size="26.0" /></font>
+                                        </Label>
+                                    </children>
+                                </VBox>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: rgba(0,0,0,0.4); -fx-background-radius: 12; -fx-border-color: rgba(255,255,255,0.1); -fx-border-radius: 12; -fx-padding: 20;" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label style="-fx-text-fill: #aaaaaa; -fx-font-weight: bold;" text="SẢN PHẨM ĐÃ MUA" />
+                                        <Label fx:id="itemsBoughtLabel" style="-fx-text-fill: white; -fx-font-weight: bold;" text="0">
+                                            <font><Font size="26.0" /></font>
+                                        </Label>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <HBox fx:id="sellerMetricsRow" managed="false" spacing="20.0" visible="false">
+                            <children>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: rgba(0,0,0,0.4); -fx-background-radius: 12; -fx-border-color: rgba(255,255,255,0.1); -fx-border-radius: 12; -fx-padding: 20;" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label style="-fx-text-fill: #aaaaaa; -fx-font-weight: bold;" text="DOANH THU" />
+                                        <Label fx:id="moneyReceivedLabel" style="-fx-text-fill: #34c759; -fx-font-weight: bold;" text="0$">
+                                            <font><Font size="26.0" /></font>
+                                        </Label>
+                                    </children>
+                                </VBox>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: rgba(0,0,0,0.4); -fx-background-radius: 12; -fx-border-color: rgba(255,255,255,0.1); -fx-border-radius: 12; -fx-padding: 20;" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label style="-fx-text-fill: #aaaaaa; -fx-font-weight: bold;" text="SẢN PHẨM ĐÃ BÁN" />
+                                        <Label fx:id="itemsSoldLabel" style="-fx-text-fill: white; -fx-font-weight: bold;" text="0">
+                                            <font><Font size="26.0" /></font>
+                                        </Label>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <VBox spacing="20.0">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <Label text="Thông tin cá nhân" textFill="WHITE">
+                                            <font><Font name="System Bold" size="22.0" /></font>
+                                        </Label>
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <Label style="-fx-text-fill: #cccccc;" text="Vai trò hiện tại:" />
+                                        <Label fx:id="roleLabel" style="-fx-background-color: rgba(255,255,255,0.15); -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 8; -fx-border-color: rgba(255,255,255,0.2); -fx-border-radius: 8; -fx-font-weight: bold;" text="Bidder" />
+                                        <Button fx:id="toggleRoleButton" mnemonicParsing="false" onAction="#handleToggleRole" styleClass="btn-secondary" text="Đổi sang Seller" />
                                     </children>
                                 </HBox>
-                                <HBox spacing="6" alignment="CENTER_LEFT">
+
+                                <HBox spacing="25.0">
                                     <children>
-                                        <Label fx:id="ratingStarsLabel" text="" style="-fx-text-fill: #e2b44d; -fx-font-size: 16;"/>
-                                        <Label fx:id="ratingCountLabel" text="" style="-fx-text-fill: #999; -fx-font-size: 12;"/>
+                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-text-fill: #aaaaaa; -fx-font-weight: bold;" text="HỌ VÀ TÊN" />
+                                                <Label fx:id="fullNameLabel" maxWidth="Infinity" style="-fx-text-fill: white; -fx-padding: 12; -fx-background-color: rgba(0,0,0,0.2); -fx-background-radius: 8; -fx-border-color: rgba(255,255,255,0.05); -fx-border-radius: 8;" text="username" />
+                                                <TextField fx:id="fullNameInput" managed="false" styleClass="clean-input" text="username" visible="false" />
+
+                                                <Label style="-fx-text-fill: #aaaaaa; -fx-font-weight: bold;" text="SỐ ĐIỆN THOẠI" />
+                                                <Label fx:id="phoneLabel" maxWidth="Infinity" style="-fx-text-fill: white; -fx-padding: 12; -fx-background-color: rgba(0,0,0,0.2); -fx-background-radius: 8; -fx-border-color: rgba(255,255,255,0.05); -fx-border-radius: 8;" text="N/A" />
+                                                <TextField fx:id="phoneInput" managed="false" styleClass="clean-input" text="N/A" visible="false" />
+                                            </children>
+                                        </VBox>
+                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-text-fill: #aaaaaa; -fx-font-weight: bold;" text="ĐỊA CHỈ EMAIL" />
+                                                <Label fx:id="emailLabel" maxWidth="Infinity" style="-fx-text-fill: white; -fx-padding: 12; -fx-background-color: rgba(0,0,0,0.2); -fx-background-radius: 8; -fx-border-color: rgba(255,255,255,0.05); -fx-border-radius: 8;" text="username@mail.com" />
+                                                <TextField fx:id="emailInput" managed="false" styleClass="clean-input" text="username@mail.com" visible="false" />
+                                            </children>
+                                        </VBox>
                                     </children>
                                 </HBox>
-                                <Label fx:id="reputationWarning" text="" style="-fx-text-fill: #ff4444; -fx-font-weight: bold; -fx-font-size: 13;" visible="false" managed="false"/>
                             </children>
                         </VBox>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <VBox spacing="8" alignment="TOP_RIGHT">
-                            <children>
-                                <Button fx:id="editButton" text="Edit Profile" styleClass="profile-btn" onAction="#handleEditProfile"/>
-                                <Button text="Log Out" styleClass="logout-btn" onAction="#handleLogout"/>
-                            </children>
-                        </VBox>
-                    </children>
-                </HBox>
 
-                <HBox fx:id="bidderMetricsRow" spacing="14">
-                    <children>
-                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
-                            <children>
-                                <Label text="MONEY SPENT" styleClass="metric-title"/>
-                                <Label fx:id="moneySpentLabel" text="0$" styleClass="metric-value"/>
-                            </children>
-                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
-                        </VBox>
-                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
-                            <children>
-                                <Label text="ITEMS BOUGHT" styleClass="metric-title"/>
-                                <Label fx:id="itemsBoughtLabel" text="0" styleClass="metric-value"/>
-                            </children>
-                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
-                        </VBox>
-                    </children>
-                </HBox>
+                        <Region style="-fx-background-color: rgba(255,255,255,0.1); -fx-pref-height: 1;" />
 
-                <HBox fx:id="sellerMetricsRow" spacing="14" visible="false" managed="false">
-                    <children>
-                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
+                        <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: rgba(255, 204, 0, 0.1); -fx-background-radius: 12; -fx-border-color: rgba(255, 204, 0, 0.3); -fx-border-radius: 12; -fx-padding: 20;">
                             <children>
-                                <Label text="MONEY RECEIVED" styleClass="metric-title"/>
-                                <Label fx:id="moneyReceivedLabel" text="0$" styleClass="metric-value"/>
+                                <Label text="VÍ TIỀN:" textFill="WHITE">
+                                    <font><Font name="System Bold" size="20.0" /></font>
+                                </Label>
+                                <Label fx:id="balanceLabel" style="-fx-text-fill: #ffcc00; -fx-font-weight: bold; -fx-effect: dropshadow(three-pass-box, rgba(255, 204, 0, 0.4), 10, 0, 0, 0);" text="0$">
+                                    <font><Font size="26.0" /></font>
+                                </Label>
+                                <Region HBox.hgrow="ALWAYS" />
+                                <TextField fx:id="DepositAmountField" prefWidth="180.0" promptText="Nhập số tiền..." styleClass="clean-input" />
+                                <Button mnemonicParsing="false" onAction="#handleDeposit" style="-fx-background-color: linear-gradient(to right, #ffcc00, #e6b800); -fx-text-fill: #000000; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 10 20; -fx-effect: dropshadow(three-pass-box, rgba(255, 204, 0, 0.4), 10, 0, 0, 0);" text="Nạp Tiền" />
+                                <Button mnemonicParsing="false" onAction="#handleShowHistory" styleClass="btn-secondary" text="Xem Lịch Sử" />
                             </children>
-                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
-                        </VBox>
-                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
-                            <children>
-                                <Label text="ITEMS SOLD" styleClass="metric-title"/>
-                                <Label fx:id="itemsSoldLabel" text="0" styleClass="metric-value"/>
-                            </children>
-                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
-                        </VBox>
-                    </children>
-                </HBox>
+                        </HBox>
 
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <children>
-                        <Label text="Personal Information" styleClass="section-title"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="Current role:" styleClass="field-label"/>
-                        <Label fx:id="roleLabel" text="Bidder" styleClass="pill-value"/>
-                        <Button fx:id="toggleRoleButton" text="Switch to Seller" styleClass="profile-btn" onAction="#handleToggleRole"/>
                     </children>
-                </HBox>
-                <HBox spacing="14">
-                    <children>
-                        <VBox spacing="8" HBox.hgrow="ALWAYS">
-                            <children>
-                                <Label text="FULL NAME" styleClass="field-label"/>
-                                <Label fx:id="fullNameLabel" text="username" styleClass="field-box"/>
-                                <TextField fx:id="fullNameInput" text="username" styleClass="field-input" visible="false" managed="false"/>
-                            </children>
-                        </VBox>
-                        <VBox spacing="8" HBox.hgrow="ALWAYS">
-                            <children>
-                                <Label text="EMAIL ADDRESS" styleClass="field-label"/>
-                                <Label fx:id="emailLabel" text="username@mail.com" styleClass="field-box"/>
-                                <TextField fx:id="emailInput" text="username@mail.com" styleClass="field-input" visible="false" managed="false"/>
-                            </children>
-                        </VBox>
-                    </children>
-                </HBox>
-                <VBox spacing="8">
-                    <children>
-                        <Label text="PHONE NUMBER" styleClass="field-label"/>
-                        <Label fx:id="phoneLabel" text="N/A" styleClass="field-box"/>
-                        <TextField fx:id="phoneInput" text="N/A" styleClass="field-input" visible="false" managed="false"/>
-                    </children>
+                    <padding>
+                        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+                    </padding>
+                    <VBox.margin>
+                        <Insets bottom="40.0" top="40.0" />
+                    </VBox.margin>
                 </VBox>
-
-                <HBox alignment="CENTER_LEFT" spacing="15.0">
-                    <children>
-                        <Label style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px;" text="VÍ TIỀN:" />
-                        <Label fx:id="balanceLabel" style="-fx-text-fill: #ffaa00; -fx-font-size: 18px; -fx-font-weight: bold;" text="0$" />
-                        <TextField fx:id="DepositAmountField" promptText="Nhập số tiền..." style="-fx-background-color: #333333; -fx-text-fill: white; -fx-pref-width: 150;" />
-                        <Button onAction="#handleDeposit" style="-fx-background-color: #ffaa00; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;" text="Nạp Tiền" />
-                        <Button onAction="#handleShowHistory" style="-fx-background-color: #333333; -fx-text-fill: #ffaa00; -fx-border-color: #ffaa00; -fx-border-radius: 4; -fx-background-radius: 4; -fx-font-weight: bold; -fx-cursor: hand;" text="Xem Lịch Sử" />
-                    </children>
-                    <padding><Insets top="10" /></padding>
-                </HBox>
             </children>
-            <padding><Insets top="26" right="24" bottom="24" left="24"/></padding>
         </VBox>
     </content>
 </ScrollPane>

@@ -1,81 +1,92 @@
+/* Thanh chứa tổng thể - Hiệu ứng kính mờ trong suốt bám sát viền trên */
 .search-bar-container {
-    -fx-background-color: -color-bg;
-    -fx-border-color: #0E0E0E;
-    -fx-border-width: 0 0 2 0;
+    -fx-background-color: rgba(20, 20, 20, 0.5);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 30;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 5);
 }
 
+/* Ô nhập liệu tìm kiếm & khoảng giá */
 .search-input {
-    -fx-background-color: #0E0E0E;
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #999999;
     -fx-background-radius: 8;
-    -fx-text-fill: -color-text-muted;
-    -fx-prompt-text-fill: #505A81;
-    -fx-font-size: 16px;
-    -fx-padding: 0 15 0 15;
-    -fx-border-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 8;
+    -fx-font-family: "Consolas";
+    -fx-font-size: 14px;
+    -fx-padding: 0 15;
+    -fx-transition-duration: 0.3s;
 }
 
 .search-input:focused {
-    -fx-border-color: -color-primary;
-    -fx-border-radius: 8;
-    -fx-text-fill: white;
+    -fx-border-color: #ffaa00;
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.3), 10, 0, 0, 0);
 }
 
+/* Combobox Lọc danh mục */
 .category-filter {
-    -fx-background-color: #0E0E0E;
+    -fx-background-color: rgba(0, 0, 0, 0.3);
     -fx-background-radius: 8;
-    -fx-text-fill: -color-text-main;
-    -fx-prompt-text-fill: #505A81;
-    -fx-border-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 8;
+    -fx-font-family: "Consolas";
 }
 
 .category-filter .list-cell {
-    -fx-background-color: #0E0E0E;
-    -fx-text-fill: -color-text-main;
+    -fx-text-fill: white;
+    -fx-font-family: "Consolas";
+    -fx-background-color: transparent;
 }
 
+.category-filter:showing > .list-view {
+    -fx-background-color: rgba(30, 30, 30, 0.9);
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Nút chuông thông báo */
 .bell-btn {
-    -fx-background-color: #3a3b3c;
-    -fx-text-fill: #ffaa00;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
     -fx-font-size: 18px;
-    -fx-background-radius: 50%;
+    -fx-background-radius: 20;
     -fx-min-width: 40px;
     -fx-min-height: 40px;
     -fx-cursor: hand;
+    -fx-transition-duration: 0.3s;
+    -fx-border-color: transparent;
 }
 
 .bell-btn:hover {
-    -fx-background-color: #4a4b4c;
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-border-color: rgba(255, 255, 255, 0.4);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 255, 255, 0.3), 10, 0, 0, 0);
 }
 
+/* Nhóm nút Toggle Items/Users */
 .search-toggle-group {
     -fx-padding: 0;
 }
 
 .search-toggle {
-    -fx-background-color: #1a1a2e;
-    -fx-text-fill: #888;
-    -fx-font-size: 13px;
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-padding: 8 16;
+    -fx-padding: 8 20;
     -fx-cursor: hand;
-    -fx-border-color: #333;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-width: 1;
-}
-
-.search-toggle:selected {
-    -fx-background-color: #ffaa00;
-    -fx-text-fill: #000;
-    -fx-border-color: #ffaa00;
+    -fx-font-family: "Consolas";
+    -fx-transition-duration: 0.3s;
 }
 
 .search-toggle:hover {
-    -fx-background-color: #252540;
+    -fx-background-color: rgba(255, 255, 255, 0.15);
     -fx-text-fill: white;
-}
-
-.search-toggle:selected:hover {
-    -fx-background-color: #ffbb33;
-    -fx-text-fill: #000;
 }
 
 .search-toggle-left {
@@ -88,20 +99,44 @@
     -fx-border-radius: 0 8 8 0;
 }
 
-.search-results-popup {
-    -fx-background-color: #1a1a2e;
-    -fx-background-radius: 10;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 20, 0.3, 0, 4);
-    -fx-border-color: #333;
-    -fx-border-radius: 10;
-    -fx-border-width: 1;
+/* =================================================== */
+/* ĐÂY, ITEMS CHỌN THÌ XANH DƯƠNG RỰC SÁNG */
+/* =================================================== */
+#itemsToggle:selected {
+    -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
+    -fx-text-fill: white;
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.7), 15, 0, 0, 0);
 }
 
-.search-results-popup .scroll-pane {
-    -fx-background: #1a1a2e;
-    -fx-background-color: #1a1a2e;
+/* =================================================== */
+/* CÒN USERS CHỌN THÌ MÀU HỒNG RỰC SÁNG NHÉ */
+/* =================================================== */
+#usersToggle:selected {
+    -fx-background-color: linear-gradient(to right, #ff2a6d, #ff7eb3);
+    -fx-text-fill: white;
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 42, 109, 0.7), 15, 0, 0, 0);
 }
 
-.search-results-popup .scroll-pane > .viewport {
-    -fx-background-color: #1a1a2e;
+/* Nút Apply (Lọc) - Đồng bộ màu cam của app */
+.btn-apply {
+    -fx-background-color: linear-gradient(to right, #ffaa00, #ff8c00);
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-width: 1.5;
+    -fx-cursor: hand;
+    -fx-padding: 0 25;
+    -fx-font-family: "Consolas";
+    -fx-transition-duration: 0.3s;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.4), 10, 0, 0, 0);
+}
+
+.btn-apply:hover {
+    -fx-background-color: linear-gradient(to right, #ffbb33, #ffaa00);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.7), 15, 0, 0, 0);
+    -fx-border-color: rgba(255, 255, 255, 0.6);
 }

@@ -12,91 +12,85 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<ScrollPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-            fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
-            maxWidth="Infinity" maxHeight="Infinity"
-            fx:controller="com.auction.client.ui.UserProfile.UserProfileController"
-            stylesheets="@/css/userprofile/UserProfile.css">
+<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent;" stylesheets="/css/userprofile/UserProfile.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.UserProfile.UserProfileController">
     <content>
-        <VBox spacing="18" styleClass="profile-root">
+        <VBox alignment="TOP_CENTER" styleClass="profile-root">
             <children>
-                <HBox alignment="CENTER_LEFT" spacing="10">
+                <VBox maxWidth="900.0" spacing="25.0" styleClass="glass-panel-user">
                     <children>
-                        <Button fx:id="backButton" text="← Back" styleClass="back-btn" onAction="#handleBack"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                    </children>
-                </HBox>
-
-                <HBox spacing="14" alignment="CENTER_LEFT" styleClass="profile-header">
-                    <children>
-                        <StackPane prefWidth="88" minWidth="88" maxWidth="88" prefHeight="88" alignment="CENTER">
+                        <HBox alignment="CENTER_LEFT" spacing="15.0">
                             <children>
-                                <Circle radius="34" styleClass="profile-avatar"/>
-                                <ImageView fx:id="avatarImageView" fitWidth="68" fitHeight="68"/>
+                                <Button fx:id="backButton" onAction="#handleBack" styleClass="btn-back-mac" text="← Back" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="section-title" text="User Information" />
                             </children>
-                        </StackPane>
-                        <VBox spacing="4">
+                        </HBox>
+
+                        <HBox alignment="CENTER_LEFT" spacing="30.0" styleClass="info-header">
                             <children>
-                                <Label fx:id="usernameLabel" text="username" styleClass="profile-title"/>
-                                <Label fx:id="fullNameLabel" text="" styleClass="profile-subtitle"/>
-                                <HBox spacing="6" alignment="CENTER_LEFT">
+                                <StackPane>
                                     <children>
-                                        <Label fx:id="ratingStarsLabel" text="" style="-fx-text-fill: #e2b44d; -fx-font-size: 16;"/>
-                                        <Label fx:id="ratingCountLabel" text="" style="-fx-text-fill: #999; -fx-font-size: 12;"/>
+                                        <Circle radius="48.0" styleClass="avatar-glow-pink" />
+                                        <Circle radius="44.0" styleClass="avatar-bg" />
+                                        <ImageView fx:id="avatarImageView" fitHeight="80.0" fitWidth="80.0" preserveRatio="true" />
                                     </children>
-                                </HBox>
-                                <Label fx:id="reputationWarning" text="" style="-fx-text-fill: #ff4444; -fx-font-weight: bold; -fx-font-size: 13;" visible="false" managed="false"/>
+                                </StackPane>
+                                <VBox spacing="8.0">
+                                    <children>
+                                        <Label fx:id="usernameLabel" styleClass="user-name-pink" text="username" />
+                                        <Label fx:id="fullNameLabel" styleClass="user-fullname" text="Full Name" />
+                                        <HBox spacing="10.0" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label fx:id="ratingStarsLabel" styleClass="stars-pink" text="★★★★★" />
+                                                <Label fx:id="ratingCountLabel" styleClass="rating-count" text="(0)" />
+                                                <Label fx:id="roleLabel" styleClass="badge-role-pink" text="BIDDER" />
+                                            </children>
+                                        </HBox>
+                                        <Label fx:id="reputationWarning" styleClass="warning-label" text="Cảnh báo!" visible="false" managed="false" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <HBox spacing="20.0">
+                            <children>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label styleClass="stat-title-sm" text="ITEMS BOUGHT" />
+                                        <Label fx:id="itemsBoughtLabel" styleClass="stat-value-pink" text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label styleClass="stat-title-sm" text="ITEMS SOLD" />
+                                        <Label fx:id="itemsSoldLabel" styleClass="stat-value-pink" text="0" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <VBox spacing="10.0">
+                            <children>
+                                <Label styleClass="field-label" text="EMAIL ADDRESS" />
+                                <Label fx:id="emailLabel" styleClass="field-box-mac" text="email@example.com" />
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="15.0">
+                            <children>
+                                <Label styleClass="section-subtitle" text="Seller Listings" />
+                                <FlowPane fx:id="itemsContainer" hgap="20.0" prefWrapLength="850.0" vgap="20.0" />
                             </children>
                         </VBox>
                     </children>
-                </HBox>
-
-                <Label text="Statistics" styleClass="section-title"/>
-
-                <HBox spacing="14">
-                    <children>
-                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
-                            <children>
-                                <Label text="ITEMS BOUGHT" styleClass="metric-title-sm"/>
-                                <Label fx:id="itemsBoughtLabel" text="0" styleClass="metric-value-sm"/>
-                            </children>
-                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
-                        </VBox>
-                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
-                            <children>
-                                <Label text="ITEMS SOLD" styleClass="metric-title-sm"/>
-                                <Label fx:id="itemsSoldLabel" text="0" styleClass="metric-value-sm"/>
-                            </children>
-                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
-                        </VBox>
-                        <VBox HBox.hgrow="ALWAYS" styleClass="metric-card" spacing="8" alignment="CENTER_LEFT">
-                            <children>
-                                <Label text="ROLE" styleClass="metric-title-sm"/>
-                                <Label fx:id="roleLabel" text="" styleClass="metric-value-role"/>
-                            </children>
-                            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
-                        </VBox>
-                    </children>
-                </HBox>
-
-                <Label text="Contact" styleClass="section-title"/>
-
-                <HBox spacing="14">
-                    <children>
-                        <VBox spacing="8" HBox.hgrow="ALWAYS">
-                            <children>
-                                <Label text="EMAIL" styleClass="field-label"/>
-                                <Label fx:id="emailLabel" text="" styleClass="field-box"/>
-                            </children>
-                        </VBox>
-                    </children>
-                </HBox>
-
-                <Label text="Seller Listings" styleClass="section-title"/>
-                <FlowPane fx:id="itemsContainer" hgap="12" vgap="12" prefWrapLength="900"/>
-
+                    <padding>
+                        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+                    </padding>
+                </VBox>
             </children>
-            <padding><Insets top="26" right="24" bottom="24" left="24"/></padding>
+            <padding>
+                <Insets bottom="30.0" top="30.0" />
+            </padding>
         </VBox>
     </content>
 </ScrollPane>

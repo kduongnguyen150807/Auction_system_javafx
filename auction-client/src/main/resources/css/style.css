@@ -31,29 +31,55 @@
     -fx-background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Nút bấm */
+/* =============== NÚT CHÍNH (Login, Xác nhận) =============== */
 .btn-primary {
-    -fx-background-color: #007aff;
+    -fx-background-color: linear-gradient(to right, #007aff, #005ce6);
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1.5;
     -fx-cursor: hand;
     -fx-padding: 10 20;
-}
-.btn-primary:hover {
-    -fx-background-color: #339aff;
+    -fx-transition-duration: 0.3s;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 4);
 }
 
+/* Hiệu ứng hover phát sáng chất */
+.btn-primary:hover {
+    -fx-background-color: linear-gradient(to right, #1a8cff, #007aff);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.6), 25, 0, 0, 0),
+                dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 8);
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+}
+.btn-primary:pressed {
+    -fx-background-color: linear-gradient(to right, #005ce6, #004cb3);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1);
+}
+
+/* =============== NÚT PHỤ (Trở lại, Back) =============== */
 .btn-secondary {
     -fx-background-color: rgba(255, 255, 255, 0.15);
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1.5;
     -fx-cursor: hand;
     -fx-padding: 10 20;
+    -fx-transition-duration: 0.3s;
 }
+
+/* Hiệu ứng hover sáng viền */
 .btn-secondary:hover {
     -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 255, 255, 0.3), 15, 0, 0, 0);
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+}
+.btn-secondary:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Link */
@@ -64,48 +90,5 @@
 }
 .link-mac:hover {
     -fx-text-fill: #339aff;
-    -fx-underline: true;
-}
-.root {
-    -fx-font-family: "Consolas";
-}
-
-.glass-pane {
-    -fx-background-color: rgba(0, 0, 0, 0.45);
-    -fx-background-radius: 20;
-    -fx-border-color: rgba(255, 255, 255, 0.15);
-    -fx-border-radius: 20;
-    -fx-border-width: 1.5;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 15, 0, 0, 5);
-}
-
-.text-field-mac, .password-field-mac {
-    -fx-background-color: rgba(0, 0, 0, 0.3);
-    -fx-text-fill: white;
-    -fx-background-radius: 8;
-    -fx-border-color: rgba(255, 255, 255, 0.2);
-    -fx-border-radius: 8;
-    -fx-prompt-text-fill: #aaaaaa;
-    -fx-padding: 10 12 10 12;
-}
-
-.btn-mac-primary {
-    -fx-background-color: linear-gradient(to bottom, #148eff, #0a66c2);
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-radius: 8;
-    -fx-cursor: hand;
-}
-
-.btn-mac-secondary {
-    -fx-background-color: rgba(255, 255, 255, 0.15);
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-radius: 8;
-    -fx-cursor: hand;
-}
-
-.link-mac {
-    -fx-text-fill: #007aff;
     -fx-underline: true;
 }
