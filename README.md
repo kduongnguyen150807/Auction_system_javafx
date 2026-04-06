@@ -19,7 +19,7 @@ Hệ thống được thiết kế theo mô hình 3 modules độc lập nhằm 
 * **Nền tảng & Ngôn ngữ:** Java (JDK 25)
 * **Giao diện (GUI):** JavaFX, FXML, CSS
 * **Cơ sở dữ liệu:** MySQL (JDBC)
-* **Mạng & Giao tiếp:** Java Socket (TCP), Imgur REST API (Image Hosting)
+* **Mạng & Giao tiếp:** Java Socket (TCP), Cloudinary REST API (Image Hosting)
 * **Build Tool & CI/CD:** Maven, GitHub Actions
 * **Testing:** JUnit 5 (Unit Testing)
 
