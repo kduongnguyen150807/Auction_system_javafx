@@ -8,6 +8,8 @@
 
 .TrendingBind {
     -fx-background-color: -color-bg;
+    -fx-background-radius: 20;
+    -fx-padding: 16 20 20 20;
 }
 
 .TopLabel {

@@ -77,17 +77,13 @@
                                 <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label styleClass="label-sm-gray" text="TIỀN ĐÃ TIÊU" />
-                                        <Label fx:id="moneySpentLabel" style="-fx-text-fill: #007aff; -fx-font-weight: bold;" text="0$">
-                                            <font><Font size="26.0" /></font>
-                                        </Label>
+                                        <Label fx:id="moneySpentLabel" styleClass="metric-value-number metric-money-spent" text="0$" />
                                     </children>
                                 </VBox>
                                 <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label styleClass="label-sm-gray" text="SẢN PHẨM ĐÃ MUA" />
-                                        <Label fx:id="itemsBoughtLabel" style="-fx-text-fill: white; -fx-font-weight: bold;" text="0">
-                                            <font><Font size="26.0" /></font>
-                                        </Label>
+                                        <Label fx:id="itemsBoughtLabel" styleClass="metric-value-number metric-count" text="0" />
                                     </children>
                                 </VBox>
                             </children>
@@ -98,17 +94,13 @@
                                 <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label styleClass="label-sm-gray" text="DOANH THU" />
-                                        <Label fx:id="moneyReceivedLabel" style="-fx-text-fill: #34c759; -fx-font-weight: bold;" text="0$">
-                                            <font><Font size="26.0" /></font>
-                                        </Label>
+                                        <Label fx:id="moneyReceivedLabel" styleClass="metric-value-number metric-money-received" text="0$" />
                                     </children>
                                 </VBox>
                                 <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label styleClass="label-sm-gray" text="SẢN PHẨM ĐÃ BÁN" />
-                                        <Label fx:id="itemsSoldLabel" style="-fx-text-fill: white; -fx-font-weight: bold;" text="0">
-                                            <font><Font size="26.0" /></font>
-                                        </Label>
+                                        <Label fx:id="itemsSoldLabel" styleClass="metric-value-number metric-count" text="0" />
                                     </children>
                                 </VBox>
                             </children>

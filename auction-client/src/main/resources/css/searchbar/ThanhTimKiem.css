@@ -1,20 +1,24 @@
-/* Thanh chứa tổng thể - Hiệu ứng kính mờ trong suốt bám sát viền trên */
+/* ================================================== */
+/* THANH CHỨA TỔNG THỂ - ĐÃ BO GÓC 20 VÀ NỔI LỀNH BỀNH */
+/* ================================================== */
 .search-bar-container {
-    -fx-background-color: rgba(20, 20, 20, 0.5);
+    -fx-background-color: rgba(30, 30, 30, 0.65); /* Kính mờ sang chảnh */
+    -fx-background-radius: 20; /* FIX BO GÓC */
     -fx-border-color: rgba(255, 255, 255, 0.15);
-    -fx-border-width: 0 0 1 0;
-    -fx-padding: 12 30;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 5);
+    -fx-border-radius: 20;
+    -fx-border-width: 1.5;
+    -fx-padding: 12 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 5);
 }
 
 /* Ô nhập liệu tìm kiếm & khoảng giá */
 .search-input {
-    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-color: rgba(0, 0, 0, 0.4);
     -fx-text-fill: white;
     -fx-prompt-text-fill: #999999;
-    -fx-background-radius: 8;
+    -fx-background-radius: 12;
     -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-radius: 8;
+    -fx-border-radius: 12;
     -fx-font-family: "Consolas";
     -fx-font-size: 14px;
     -fx-padding: 0 15;
@@ -23,29 +27,53 @@
 
 .search-input:focused {
     -fx-border-color: #ffaa00;
-    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-background-color: rgba(0, 0, 0, 0.6);
     -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.3), 10, 0, 0, 0);
 }
 
-/* Combobox Lọc danh mục */
+/* ================================================== */
+/* COMBOBOX - BO GÓC MƯỢT NHƯ APPLE                   */
+/* ================================================== */
 .category-filter {
-    -fx-background-color: rgba(0, 0, 0, 0.3);
-    -fx-background-radius: 8;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-radius: 8;
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 12;
     -fx-font-family: "Consolas";
+    -fx-padding: 0 5;
+    -fx-cursor: hand;
+    -fx-transition-duration: 0.2s;
+}
+
+.category-filter .label { -fx-text-fill: white; }
+
+.category-filter:showing {
+    -fx-background-color: #007aff;
+    -fx-background-radius: 12 12 0 0;
+    -fx-border-radius: 12 12 0 0;
+}
+
+.category-filter .list-view {
+    -fx-background-color: rgba(25, 25, 25, 0.95);
+    -fx-background-radius: 0 0 12 12;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 0 0 12 12;
+    -fx-padding: 5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 15, 0, 0, 5);
 }
 
 .category-filter .list-cell {
     -fx-text-fill: white;
-    -fx-font-family: "Consolas";
     -fx-background-color: transparent;
+    -fx-padding: 8 15;
+    -fx-background-radius: 8;
+    -fx-font-family: "Consolas";
 }
 
-.category-filter:showing > .list-view {
-    -fx-background-color: rgba(30, 30, 30, 0.9);
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-}
+.category-filter .list-cell:hover { -fx-background-color: rgba(255, 255, 255, 0.1); }
+.category-filter .list-cell:selected { -fx-background-color: #007aff; -fx-text-fill: white; }
+.category-filter .arrow-button { -fx-background-radius: 0 12 12 0; }
+.category-filter .arrow-button .arrow { -fx-background-color: white; }
 
 /* Nút chuông thông báo */
 .bell-btn {
@@ -67,9 +95,7 @@
 }
 
 /* Nhóm nút Toggle Items/Users */
-.search-toggle-group {
-    -fx-padding: 0;
-}
+.search-toggle-group { -fx-padding: 0; }
 
 .search-toggle {
     -fx-background-color: rgba(0, 0, 0, 0.4);
@@ -90,18 +116,15 @@
 }
 
 .search-toggle-left {
-    -fx-background-radius: 8 0 0 8;
-    -fx-border-radius: 8 0 0 8;
+    -fx-background-radius: 12 0 0 12;
+    -fx-border-radius: 12 0 0 12;
 }
 
 .search-toggle-right {
-    -fx-background-radius: 0 8 8 0;
-    -fx-border-radius: 0 8 8 0;
+    -fx-background-radius: 0 12 12 0;
+    -fx-border-radius: 0 12 12 0;
 }
 
-/* =================================================== */
-/* ĐÂY, ITEMS CHỌN THÌ XANH DƯƠNG RỰC SÁNG */
-/* =================================================== */
 #itemsToggle:selected {
     -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
     -fx-text-fill: white;
@@ -109,9 +132,6 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.7), 15, 0, 0, 0);
 }
 
-/* =================================================== */
-/* CÒN USERS CHỌN THÌ MÀU HỒNG RỰC SÁNG NHÉ */
-/* =================================================== */
 #usersToggle:selected {
     -fx-background-color: linear-gradient(to right, #ff2a6d, #ff7eb3);
     -fx-text-fill: white;
@@ -119,13 +139,13 @@
     -fx-effect: dropshadow(three-pass-box, rgba(255, 42, 109, 0.7), 15, 0, 0, 0);
 }
 
-/* Nút Apply (Lọc) - Đồng bộ màu cam của app */
+/* Nút Apply (Lọc) */
 .btn-apply {
     -fx-background-color: linear-gradient(to right, #ffaa00, #ff8c00);
     -fx-text-fill: black;
     -fx-font-weight: bold;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
     -fx-border-color: rgba(255, 255, 255, 0.3);
     -fx-border-width: 1.5;
     -fx-cursor: hand;
@@ -140,50 +160,20 @@
     -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.7), 15, 0, 0, 0);
     -fx-border-color: rgba(255, 255, 255, 0.6);
 }
-/* 1. Thân chính của ComboBox */
-.category-filter {
-    -fx-background-color: rgba(0, 0, 0, 0.4);
-    -fx-background-radius: 12;
+.search-bar-container {
+    -fx-background-color: rgba(30, 30, 30, 0.65);
+    -fx-background-radius: 20;
     -fx-border-color: rgba(255, 255, 255, 0.15);
-    -fx-border-radius: 12;
-    -fx-font-family: "Consolas";
-    -fx-padding: 0 5;
-    -fx-cursor: hand;
+    -fx-border-radius: 20;
+    -fx-border-width: 1.5;
+    -fx-padding: 12 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 5);
 }
-
-/* 2. Chữ hiển thị ở ngoài */
-.category-filter .label {
-    -fx-text-fill: white;
-}
-
-/* 3. TRỊ DỨT ĐIỂM KHỐI TRẮNG - Ép cái list-view dropdown về màu tối */
-.category-filter .list-view {
-    -fx-background-color: rgba(25, 25, 25, 0.95); /* Tối sâu để nổi chữ trắng */
-    -fx-background-radius: 10;
-    -fx-border-color: rgba(255, 255, 255, 0.2);
-    -fx-border-radius: 10;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 15, 0, 0, 5);
-}
-
-/* 4. Các dòng (cell) bên trong dropdown */
-.category-filter .list-cell {
-    -fx-text-fill: white;
-    -fx-background-color: transparent;
-    -fx-padding: 10 15;
-    -fx-font-family: "Consolas";
-}
-
-/* 5. Khi di chuột qua hoặc chọn dòng (Hover/Selection) */
-.category-filter .list-cell:hover {
-    -fx-background-color: rgba(0, 122, 255, 0.3); /* Xanh Blue Mac cho chuyên nghiệp */
-}
-
-.category-filter .list-cell:selected {
-    -fx-background-color: #007aff;
-    -fx-text-fill: white;
-}
-
-/* 6. Fix cái mũi tên cho nó màu trắng luôn */
-.category-filter .arrow-button .arrow {
-    -fx-background-color: white;
+.search-bar-glass {
+    -fx-background-color: rgba(30, 30, 30, 0.65);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 20;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 5);
 }

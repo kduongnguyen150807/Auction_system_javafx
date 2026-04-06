@@ -324,41 +324,60 @@ public class ItemInformationController {
 
   public void updatePriceUi(Item res) {
     if (res == null || res.getId() != this.id) return;
-    Platform.runLater(
+    Runnable ans =
         () -> {
-          if (CurrentHighestBidValue != null)
-            CurrentHighestBidValue.setText(String.format("%,.0f$", res.getCurrentPrice()));
-          if (EndsInValue != null && res.getEndTime() != null) {
-            java.time.Duration ans =
-                java.time.Duration.between(java.time.LocalDateTime.now(), res.getEndTime());
-            if (!ans.isNegative() && !ans.isZero()) {
-              long res1 = ans.toHours();
-              if (res1 / 24 > 0) EndsInValue.setText((res1 / 24) + "d " + (res1 % 24) + "h");
-              else
-                EndsInValue.setText(
-                    (res1 % 24)
-                        + "h "
-                        + (ans.toMinutes() % 60)
-                        + "m "
-                        + (ans.getSeconds() % 60)
-                        + "s");
-            }
-          }
-          if (pricechart != null && ans1 != null) {
-            String ans2 =
-                java.time.LocalTime.now()
-                    .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
-            ans1.getData().add(new javafx.scene.chart.XYChart.Data<>(ans2, res.getCurrentPrice()));
-          }
-        });
+          applyPriceFromItem(res);
+        };
+    if (Platform.isFxApplicationThread()) ans.run();
+    else Platform.runLater(ans);
+  }
+
+  private void applyPriceFromItem(Item res) {
+    if (CurrentHighestBidValue != null)
+      CurrentHighestBidValue.setText(String.format("%,.0f$", res.getCurrentPrice()));
+    if (EndsInValue != null && res.getEndTime() != null) {
+      java.time.Duration ans =
+          java.time.Duration.between(java.time.LocalDateTime.now(), res.getEndTime());
+      if (!ans.isNegative() && !ans.isZero()) {
+        long res1 = ans.toHours();
+        if (res1 / 24 > 0) EndsInValue.setText((res1 / 24) + "d " + (res1 % 24) + "h");
+        else
+          EndsInValue.setText(
+              (res1 % 24)
+                  + "h "
+                  + (ans.toMinutes() % 60)
+                  + "m "
+                  + (ans.getSeconds() % 60)
+                  + "s");
+      }
+    }
+    appendPriceToChart(res.getCurrentPrice());
+  }
+
+  private void appendPriceToChart(double price) {
+    if (pricechart == null || ans1 == null) return;
+    if (!pricechart.getData().contains(ans1)) {
+      pricechart.getData().add(ans1);
+      ans1.setName("Price Curve");
+    }
+    String res =
+        java.time.LocalTime.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+    ans1.getData().add(new javafx.scene.chart.XYChart.Data<>(res, price));
+    if (ans1.getData().size() > 20) {
+      ans1.getData().remove(0);
+    }
   }
 
   public void updateCurrentBid(double val) {
-    Platform.runLater(
+    Runnable res =
         () -> {
           if (CurrentHighestBidValue != null)
             CurrentHighestBidValue.setText(String.format("%,.0f$", val));
-        });
+          appendPriceToChart(val);
+        };
+    if (Platform.isFxApplicationThread()) res.run();
+    else Platform.runLater(res);
   }
 
   public void markAsSold() {

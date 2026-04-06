@@ -94,7 +94,7 @@ public class ClientHandler implements Runnable {
         e.printStackTrace();
         ans = new Response(rid, Response.ERROR, "server_error", null);
       }
-    } else if (act.equals(Request.LIST)) {
+    } else if (act.equals(Request.LIST) || act.equals(Request.GET_ONGOING_LOTS)) {
       List<Item> res = this.itemDao.getAll();
       res.removeIf(i -> i.getStatus() != com.auction.shared.ItemStatus.OPEN);
       ans = new Response(rid, Response.OK, "success", res);

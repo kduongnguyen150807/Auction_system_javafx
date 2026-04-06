@@ -52,20 +52,9 @@ public class AuctionManager {
     if (res != null && res.getSellerId() == b.getUserId())
       return new Response("", Response.ERROR, "Fail", null);
 
+    /* Auto-bid: chỉ đặt mức đấu tối thiểu (giá hiện tại + bước nhảy). Trần maxAutoBid dùng khi có người khác đấu.
+    Không add vào queue ở đây — phải sau placeBid OK, tránh queue rỗng / sai khi hết tiền hoặc bid lỗi. */
     if (b.isAutoBid()) {
-      java.util.PriorityQueue<BidTransaction> res1 = this.autobids.get(b.getItemId());
-      if (res1 == null) {
-        res1 =
-            new java.util.PriorityQueue<>(
-                10,
-                new java.util.Comparator<BidTransaction>() {
-                  public int compare(BidTransaction ans1, BidTransaction ans2) {
-                    return Double.compare(ans2.getMaxAutoBid(), ans1.getMaxAutoBid());
-                  }
-                });
-        this.autobids.put(b.getItemId(), res1);
-      }
-      res1.add(b);
       b.setBidValue(res.getCurrentPrice() + b.getAutoBidIncrement());
     }
 
@@ -106,7 +95,7 @@ public class AuctionManager {
       }
       Item res5 = itemDao.getById(b.getItemId());
       if (res5 != null) {
-        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res5));
+        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res5));
       }
       return ans2;
     }
@@ -142,39 +131,61 @@ public class AuctionManager {
           itemDao.updateEndTime(res4.getId(), res6);
           res4.setEndTime(res6);
         }
-        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res4));
+        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res4));
       }
       broadcast(ans4);
       if (res2 > 0) {
         sendToUser(res2, new Response("", "OUTBID_NOTIFY", "outbid", b.getItemId()));
       }
+      if (b.isAutoBid()) {
+        registerAutoBidQueue(b);
+      }
+      tryProcessAutoCounters(b.getItemId());
     }
 
-    java.util.PriorityQueue<BidTransaction> ans5 = this.autobids.get(b.getItemId());
-    if (ans5 != null && !ans5.isEmpty()) {
-      double res6 = itemDao.getById(b.getItemId()).getCurrentPrice();
-      int res7 = getPreviousHighestBidder(b.getItemId());
-      java.util.List<BidTransaction> res8 = new java.util.ArrayList<>();
-      while (!ans5.isEmpty()) {
-        res8.add(ans5.poll());
-      }
-      for (BidTransaction ans7 : res8) {
-        if (ans7.getUserId() != res7 && ans7.getMaxAutoBid() > res6) {
-          double res9 = res6 + ans7.getAutoBidIncrement();
-          if (res9 <= ans7.getMaxAutoBid()) {
-            BidTransaction ans8 = new BidTransaction(b.getItemId(), ans7.getUserId(), res9);
-            ans8.setAutoBid(false);
-            ans8.setAutoBidIncrement(ans7.getAutoBidIncrement());
-            processBid(ans8);
-            break;
-          }
+    return ans4;
+  }
+
+  /** Ghi nhận trần auto-bid sau khi đặt giá thành công (chỉ lúc này mới có trong hàng đợi). */
+  private void registerAutoBidQueue(BidTransaction b) {
+    java.util.PriorityQueue<BidTransaction> q =
+        this.autobids.computeIfAbsent(
+            b.getItemId(),
+            k ->
+                new java.util.PriorityQueue<>(
+                    10,
+                    (a1, a2) -> Double.compare(a2.getMaxAutoBid(), a1.getMaxAutoBid())));
+    q.add(b);
+  }
+
+  /**
+   * Sau mỗi lần giá thay đổi thành công: nếu có người đăng ký auto-bid (không phải người đang dẫn) và trần
+   * cho phép, đặt giúp một bước (giá hiện tại + increment).
+   */
+  private void tryProcessAutoCounters(int itemId) {
+    java.util.PriorityQueue<BidTransaction> queue = this.autobids.get(itemId);
+    if (queue == null || queue.isEmpty()) return;
+    double currentPrice = itemDao.getById(itemId).getCurrentPrice();
+    int currentLeader = getPreviousHighestBidder(itemId);
+    java.util.List<BidTransaction> snapshot = new java.util.ArrayList<>();
+    while (!queue.isEmpty()) {
+      snapshot.add(queue.poll());
+    }
+    for (BidTransaction reg : snapshot) {
+      if (reg.getUserId() != currentLeader && reg.getMaxAutoBid() > currentPrice) {
+        double nextBid = currentPrice + reg.getAutoBidIncrement();
+        if (nextBid <= reg.getMaxAutoBid()) {
+          BidTransaction counter = new BidTransaction(itemId, reg.getUserId(), nextBid);
+          counter.setAutoBid(false);
+          counter.setAutoBidIncrement(reg.getAutoBidIncrement());
+          processBid(counter);
+          break;
         }
       }
-      for (BidTransaction ans7 : res8) {
-        ans5.add(ans7);
-      }
     }
-    return ans4;
+    for (BidTransaction reg : snapshot) {
+      queue.add(reg);
+    }
   }
 
   private int getPreviousHighestBidder(int id) {

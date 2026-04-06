@@ -52,7 +52,7 @@ public class NetworkClient {
       startListener();
     } catch (Exception e) {
       System.err.println("LỖI KẾT NỐI BAN ĐẦU:");
-      e.printStackTrace(); // Hiện lỗi kết nối ở đây
+      e.printStackTrace();
     }
   }
 
@@ -95,8 +95,18 @@ public class NetworkClient {
     }
 
     if ("OUTBID_NOTIFY".equals(res.getStatus())) {
-      int res2 = (int) res.getPayload();
+      Object payload = res.getPayload();
+      String res2 = payload != null ? payload.toString() : "N/A";
       NotificationCenter.addNotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res2 + " bị đè giá rồi!");
+      return;
+    }
+
+    if ("NEW_BID_UPDATE".equals(res.getStatus())
+        || ("priceupdate".equals(res.getMessage()) && res.getPayload() instanceof Item)) {
+      Object res3 = res.getPayload();
+      if (res3 instanceof Item i) {
+        KhungController.updateRealtimeUi(i);
+      }
       return;
     }
 
@@ -139,7 +149,6 @@ public class NetworkClient {
     return ans;
   }
 
-  // Giữ nguyên uploadFile của mày
   public static String uploadFile(String urlString, byte[] fileBytes) throws Exception {
     String res = "boundary" + System.currentTimeMillis();
     java.net.URL ans1 = java.net.URI.create(urlString).toURL();
