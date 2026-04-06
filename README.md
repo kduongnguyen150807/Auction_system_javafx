@@ -11,7 +11,7 @@ Dự án áp dụng chặt chẽ kiến trúc Client-Server phân tầng, thiế
 Hệ thống được thiết kế theo mô hình 3 modules độc lập nhằm tối ưu hóa việc quản lý mã nguồn và tái sử dụng:
 
 * **auction-shared:** Chứa các định nghĩa về Entity (User, Item, BidTransaction), Interfaces và các gói dữ liệu giao tiếp chung.
-* **auction-server:** Đóng vai trò là trung tâm xử lý nghiệp vụ (Business Logic). Áp dụng mô hình MVC, quản lý kết nối Socket đa luồng (Multi-threading) và trực tiếp thao tác với cơ sở dữ liệu qua các lớp DAO.
+* **auction-server:** Đóng vai trò là trung tâm xử lý nghiệp vụ (Business Logic). Áp dụng mô hình MVC, quản lý kết nối Socket đa luồng (Multi-threading) và trực tiếp thao tác với cơ sở dữ liệu qua các lớp DAO. (host phải có inbound rule cho port 8080 hoặc port host)
 * **auction-client:** Đóng vai trò giao diện người dùng (Presentation Layer). Áp dụng mô hình MVC với JavaFX, xử lý luồng sự kiện UI và giao tiếp với Server qua giao thức TCP/IP.
 
 ## 2. Công Nghệ Sử Dụng (Tech Stack)
