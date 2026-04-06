@@ -1,7 +1,6 @@
 /* Đặt background ảnh rừng tuyết cho toàn bộ khung main */
 .main-container {
     -fx-font-family: "Consolas";
-    -fx-background-image: url("/images/bg.jpg"); /* Đảm bảo bg.jpg nằm trong folder resources/images */
     -fx-background-size: cover;
     -fx-background-position: center center;
 }

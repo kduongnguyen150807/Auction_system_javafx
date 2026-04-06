@@ -2,6 +2,8 @@ package com.auction.client.controller;
 
 import com.auction.client.ClientSession;
 import com.auction.client.SceneManager;
+import com.auction.client.app.NodeContentLoader;
+import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
 import java.util.HashMap;
@@ -56,11 +58,17 @@ public class LoginController {
   // Thêm @FXML cho các hàm sự kiện khác để tránh lỗi tương tự
   @FXML
   public void back(ActionEvent e) throws Exception {
-    SceneManager.switchScene("/fxml/welcome.fxml");
+    NodeContentLoader<AnchorPane> Welcome2 = new NodeContentLoader<>();
+    Welcome2.load("/fxml/Welcome2.fxml");
+    WelcomeController.getKhung().getChildren().clear();
+    NodeManager.addNodeToPane(Welcome2, WelcomeController.getKhung());
   }
 
   @FXML
   public void toRegister(ActionEvent e) throws Exception {
-    SceneManager.switchScene("/fxml/register.fxml");
+    NodeContentLoader<AnchorPane> login = new NodeContentLoader<>();
+    login.load("/fxml/register.fxml");
+    WelcomeController.getKhung().getChildren().clear();
+    NodeManager.addNodeToPane(login, WelcomeController.getKhung());
   }
 }

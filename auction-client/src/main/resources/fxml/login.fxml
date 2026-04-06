@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="rootPane" focusTraversable="true" minHeight="768.0" minWidth="1024.0" prefHeight="768.0" prefWidth="1024.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.LoginController">
+<AnchorPane fx:id="rootPane" focusTraversable="true" minHeight="768.0" minWidth="1024.0" prefHeight="768.0" prefWidth="1024.0" stylesheets="@../css/styleForLoginAndRegister.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.LoginController">
    <children>
       <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>

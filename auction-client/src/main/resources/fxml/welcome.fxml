@@ -8,35 +8,8 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane minHeight="768.0" minWidth="1024.0" prefHeight="768.0" prefWidth="1024.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.WelcomeController">
+<AnchorPane minHeight="768.0" minWidth="1024.0" prefHeight="768.0" prefWidth="1024.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.WelcomeController"
+            fx:id="MainBackGround">
    <children>
-      <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <children>
-            <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="350.0" prefWidth="450.0" spacing="30.0" styleClass="glass-panel">
-               <children>
-                  <VBox alignment="CENTER" spacing="5.0">
-                     <children>
-                        <Label text="Bidding88" textFill="WHITE">
-                           <font><Font name="System Bold" size="48.0" /></font>
-                        </Label>
-                        <Label text="Online Auctions" textFill="#cccccc">
-                           <font><Font size="18.0" /></font>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <HBox alignment="CENTER" spacing="20.0">
-                     <children>
-                        <Button mnemonicParsing="false" onAction="#toLogin" prefHeight="45.0" prefWidth="150.0" styleClass="btn-primary" text="Đăng nhập">
-                           <font><Font size="16.0" /></font>
-                        </Button>
-                        <Button mnemonicParsing="false" onAction="#toRegister" prefHeight="45.0" prefWidth="150.0" styleClass="btn-secondary" text="Đăng ký">
-                           <font><Font size="16.0" /></font>
-                        </Button>
-                     </children>
-                  </HBox>
-               </children>
-            </VBox>
-         </children>
-      </StackPane>
    </children>
 </AnchorPane>

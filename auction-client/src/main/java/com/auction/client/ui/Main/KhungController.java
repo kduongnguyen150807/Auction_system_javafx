@@ -1,6 +1,7 @@
 package com.auction.client.ui.Main;
 
 import com.auction.client.ClientSession;
+import com.auction.client.Service.BackGroundService;
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
@@ -39,6 +40,7 @@ public class KhungController {
   private YourItemController yc;
   private HistoryController hc;
 
+  @FXML private HBox MainKhung;
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
   @FXML private HBox AuctionMenu;
@@ -53,6 +55,7 @@ public class KhungController {
 
   @FXML
   public void initialize() {
+    BackGroundService.apply(MainKhung);
     instance = this;
     mainContentPane = ContentArea;
     try {

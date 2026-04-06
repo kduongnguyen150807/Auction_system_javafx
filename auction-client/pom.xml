@@ -8,6 +8,11 @@
     <artifactId>auction-client</artifactId>
     <dependencies>
         <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http5</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.auction</groupId>
             <artifactId>auction-shared</artifactId>
             <version>${project.version}</version>

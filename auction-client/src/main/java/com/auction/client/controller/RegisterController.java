@@ -1,6 +1,8 @@
 package com.auction.client.controller;
 
 import com.auction.client.SceneManager;
+import com.auction.client.app.NodeContentLoader;
+import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
 import javafx.application.Platform;
@@ -71,11 +73,17 @@ public class RegisterController {
 
   @FXML
   public void back(ActionEvent ev) throws Exception {
-    SceneManager.switchScene("/fxml/login.fxml");
+    NodeContentLoader<AnchorPane> login = new NodeContentLoader<>();
+    login.load("/fxml/register.fxml");
+    WelcomeController.getKhung().getChildren().clear();
+    NodeManager.addNodeToPane(login, WelcomeController.getKhung());
   }
 
   @FXML
   public void goWelcome(ActionEvent ev) throws Exception {
-    SceneManager.switchScene("/fxml/welcome.fxml");
+    NodeContentLoader<AnchorPane> Welcome2 = new NodeContentLoader<>();
+    Welcome2.load("/fxml/Welcome2.fxml");
+    WelcomeController.getKhung().getChildren().clear();
+    NodeManager.addNodeToPane(Welcome2, WelcomeController.getKhung());
   }
 }
