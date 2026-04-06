@@ -26,7 +26,24 @@ public class NetworkClient {
 
   private NetworkClient() {
     try {
-      this.socket = new Socket("localhost", 8080);
+      String ans1 = "127.0.0.1";
+      if (Platform.isFxApplicationThread()) {
+        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("10.11.");
+        ans.setTitle("IP");
+        ans.setHeaderText("IP:");
+        ans1 = ans.showAndWait().orElse("127.0.0.1");
+      } else {
+        java.util.concurrent.FutureTask<String> res = new java.util.concurrent.FutureTask<>(() -> {
+          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("10.11.");
+          ans.setTitle("IP");
+          ans.setHeaderText("IP:");
+          return ans.showAndWait().orElse("127.0.0.1");
+        });
+        Platform.runLater(res);
+        ans1 = res.get();
+      }
+
+      this.socket = new Socket(ans1, 8080);
       this.out = new ObjectOutputStream(this.socket.getOutputStream());
       this.out.flush();
       this.in = new ObjectInputStream(this.socket.getInputStream());
