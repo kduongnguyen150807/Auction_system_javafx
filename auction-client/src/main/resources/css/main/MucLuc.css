@@ -1,17 +1,24 @@
 /* Đặt background ảnh rừng tuyết cho toàn bộ khung main */
 .main-container {
     -fx-font-family: "Consolas";
-    -fx-background-image: url("/images/bg.jpg"); /* Đảm bảo bg.jpg nằm trong folder resources/images */
+    -fx-background-image: url("/images/bg.jpg");
     -fx-background-size: cover;
     -fx-background-position: center center;
 }
 
-/* Kính mờ thanh menu bên trái */
+/* Kính mờ thanh menu bên trái - BO GÓC TRÁI */
 .sidebar {
     -fx-background-color: rgba(20, 20, 20, 0.45);
     -fx-border-color: rgba(255, 255, 255, 0.15) transparent transparent transparent;
     -fx-border-width: 1;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 0);
+    -fx-background-radius: 20 0 0 20;
+}
+
+/* ĐÃ FIX: ÉP VỀ TRONG SUỐT ĐỂ KHÔNG BỊ TỐI MÙ RỪNG TUYẾT */
+.main-content {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0 20 20 0;
 }
 
 .logo-text {
@@ -47,7 +54,6 @@
     -fx-cursor: hand;
 }
 
-/* Hover bình thường sáng lên xíu */
 .menu-item:hover {
     -fx-background-color: rgba(255, 255, 255, 0.15);
     -fx-border-color: rgba(255, 255, 255, 0.3);
@@ -64,11 +70,14 @@
     -fx-fill: rgba(255, 255, 255, 0.7);
 }
 
+.menu-item:hover .icon, .menu-item.active .icon {
+    -fx-fill: #ffaa00;
+}
+
 .menu-icon-slot {
     -fx-alignment: center;
 }
 
-/* Active rực sáng màu cam */
 .menu-item.active {
     -fx-background-color: linear-gradient(to right, rgba(255, 170, 0, 0.6), rgba(255, 170, 0, 0.1));
     -fx-border-color: rgba(255, 255, 255, 0.4);
@@ -100,7 +109,6 @@
     -fx-border-color: transparent;
 }
 
-/* Ghi đè Auction behavior do mày set cứng ID */
 .menu-item-auction .menu-icon-slot,
 .menu-item-auction .menu-text {
     -fx-translate-x: 8;
@@ -133,8 +141,7 @@
     -fx-fill: white;
 }
 
-/* Thẻ Profile góc trái dưới kiểu kính mờ */
-.profile-card {
+.profile-card-bo {
     -fx-background-color: rgba(0, 0, 0, 0.4);
     -fx-padding: 15;
     -fx-background-radius: 12;
@@ -158,7 +165,6 @@
     -fx-font-weight: bold;
 }
 
-/* Nút bấm tổng */
 .btn-primary {
     -fx-background-color: linear-gradient(to right, #ffaa00, #ff8c00);
     -fx-text-fill: black;
@@ -175,7 +181,33 @@
     -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.7), 15, 0, 0, 0);
 }
 
-/* Xóa phông nền đen của content, để lộ ảnh xuyên thấu */
+.btn-signout {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 20;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-transition-duration: 0.3s;
+}
+
+.btn-signout:hover {
+    -fx-background-color: rgba(255, 68, 68, 0.9);
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 68, 68, 0.6), 15, 0, 0, 0);
+}
+
 .content-area {
     -fx-background-color: transparent;
+}
+/* Thẻ Profile góc trái dưới kiểu kính mờ */
+.profile-card-bo {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-padding: 15;
+    -fx-background-radius: 20; /* Bo tròn nền 20px */
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 20; /* FIX LỖI VIỀN VUÔNG: Ép cái viền bo cong theo nền */
 }
