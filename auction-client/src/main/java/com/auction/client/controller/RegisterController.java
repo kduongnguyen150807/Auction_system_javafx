@@ -29,26 +29,35 @@ public class RegisterController {
 
   @FXML
   public void handleRegister(ActionEvent ev) {
-    String user = this.u.getText();
-    String email = this.e.getText();
-    String age = this.a.getText();
-    String pass = this.p.getText();
-    String cpass = this.cp.getText();
-    if (!pass.equals(cpass)) {
+    String u1 = this.u.getText();
+    String e1 = this.e.getText();
+    String a1 = this.a.getText();
+    String p1 = this.p.getText();
+    String p2 = this.cp.getText();
+
+    if (!p1.equals(p2)) {
       this.ans.setText("mật khẩu không khớp!");
       return;
     }
+
     Map<String, String> data = new HashMap<>();
-    data.put("username", user);
-    data.put("email", email);
-    data.put("age", age);
-    data.put("password", pass);
+    data.put("username", u1);
+    data.put("email", e1);
+    data.put("age", a1);
+    data.put("password", p1);
+
     Request req = new Request(Request.SIGNUP, data);
     Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+
     if (res != null && res.getStatus().equals(Response.OK)) {
-      this.ans.setText("đăng ký thành công!");
+      try {
+        SceneManager.switchScene("/fxml/login.fxml");
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
     } else {
-      if (res != null && "duplicate_username_or_email".equals(res.getMessage())) {
+      String msg = (res != null) ? res.getMessage() : "timeout";
+      if ("duplicate_username_or_email".equals(msg)) {
         this.ans.setText("username hoặc email đã tồn tại!");
       } else {
         this.ans.setText("đăng ký thất bại!");

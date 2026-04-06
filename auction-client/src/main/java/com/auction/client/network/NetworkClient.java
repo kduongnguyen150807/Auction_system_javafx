@@ -22,33 +22,37 @@ public class NetworkClient {
   private ObjectOutputStream out;
   private ObjectInputStream in;
   private final ConcurrentHashMap<String, LinkedBlockingQueue<Response>> pendingMap =
-      new ConcurrentHashMap<>();
+          new ConcurrentHashMap<>();
 
   private NetworkClient() {
     try {
       String ans1 = "127.0.0.1";
       if (Platform.isFxApplicationThread()) {
-        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("10.11.");
-        ans.setTitle("IP");
-        ans.setHeaderText("IP:");
+        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
+        ans.setTitle("IP Setup");
+        ans.setHeaderText("Nhập IP Server đi mày:");
         ans1 = ans.showAndWait().orElse("127.0.0.1");
       } else {
         java.util.concurrent.FutureTask<String> res = new java.util.concurrent.FutureTask<>(() -> {
-          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("10.11.");
-          ans.setTitle("IP");
-          ans.setHeaderText("IP:");
+          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
+          ans.setTitle("IP Setup");
+          ans.setHeaderText("Nhập IP Server đi mày:");
           return ans.showAndWait().orElse("127.0.0.1");
         });
         Platform.runLater(res);
         ans1 = res.get();
       }
 
+      System.out.println("Đang thử kết nối tới: " + ans1 + ":8080...");
       this.socket = new Socket(ans1, 8080);
       this.out = new ObjectOutputStream(this.socket.getOutputStream());
       this.out.flush();
       this.in = new ObjectInputStream(this.socket.getInputStream());
+      System.out.println("Kết nối Socket THÀNH CÔNG!");
       startListener();
     } catch (Exception e) {
+      System.err.println("LỖI KẾT NỐI BAN ĐẦU:");
+      e.printStackTrace(); // Hiện lỗi kết nối ở đây
     }
   }
 
@@ -59,75 +63,58 @@ public class NetworkClient {
 
   private void startListener() {
     Thread res =
-        new Thread(
-            () -> {
-              try {
-                while (true) {
-                  Object ans = in.readObject();
-                  if (ans instanceof Response) {
-                    try {
-                      handleIncoming((Response) ans);
-                    } catch (Exception e) {
-                    }
-                  }
-                }
-              } catch (Exception e) {
-              }
-            });
+            new Thread(
+                    () -> {
+                      try {
+                        while (true) {
+                          Object ans = in.readObject();
+                          System.out.println("Client nhận được object: " + ans.getClass().getSimpleName());
+                          if (ans instanceof Response) {
+                            handleIncoming((Response) ans);
+                          }
+                        }
+                      } catch (Exception e) {
+                        System.err.println("Mất kết nối với Server (Listener dừng):");
+                        e.printStackTrace();
+                      }
+                    });
     res.setDaemon(true);
     res.start();
   }
 
   private void handleIncoming(Response res) {
+    System.out.println("Đang xử lý Response. ID: " + res.getRequestId() + " | Status: " + res.getStatus());
+
     if ("BALANCE_UPDATE".equals(res.getStatus())) {
       User res1 = (User) res.getPayload();
-      Platform.runLater(
-          () -> {
-            if (ProfileController.getInstance() != null) {
-              ProfileController.getInstance().updateBalanceDirectly(res1);
-            } else {
-              ClientSession.setCurrentUser(res1);
-            }
-          });
+      Platform.runLater(() -> {
+        if (ProfileController.getInstance() != null) ProfileController.getInstance().updateBalanceDirectly(res1);
+        else ClientSession.setCurrentUser(res1);
+      });
       return;
     }
+
     if ("OUTBID_NOTIFY".equals(res.getStatus())) {
       int res2 = (int) res.getPayload();
-      NotificationCenter.addNotification(
-          "\uD83D\uDD25 B\u00C1O \u0110\u1ED8NG: S\u1EA3n ph\u1EA9m m\u00E3 "
-              + res2
-              + " v\u1EEBa b\u1ECB ng\u01B0\u1EDDi kh\u00E1c tr\u1EA3 gi\u00E1 cao h\u01A1n! H\u00FAp l\u1EA1i ngay!");
+      NotificationCenter.addNotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res2 + " bị đè giá rồi!");
       return;
     }
-    if ("PRICE_UPDATE".equals(res.getStatus())) {
-      Object res3 = res.getPayload();
-      if (res3 instanceof Item) {
-        Item res4 = (Item) res3;
-        Platform.runLater(
-            () -> {
-              if (KhungController.itemDetailController != null
-                  && KhungController.itemDetailController.getId() == res4.getId()) {
-                KhungController.itemDetailController.updatePriceUi(res4);
-              }
-              TrangChuController ans2 = TrangChuController.getInstance();
-              if (ans2 != null) {
-                ans2.updateItemPrice(res4);
-              }
-            });
-      }
-      return;
-    }
+
     String res5 = res.getRequestId();
     if (res5 != null) {
       LinkedBlockingQueue<Response> res6 = pendingMap.get(res5);
       if (res6 != null) {
         res6.offer(res);
+        System.out.println("Đã đẩy Response vào queue cho RequestID: " + res5);
+      } else {
+        System.err.println("CẢNH BÁO: Nhận được Response nhưng không tìm thấy queue nào đợi ID: " + res5);
       }
     }
   }
 
   public Response sendRequestAndWait(Request req) {
     Response ans = null;
+    System.out.println("Gửi Request ID: " + req.getRequestId());
     try {
       LinkedBlockingQueue<Response> res = new LinkedBlockingQueue<>();
       pendingMap.put(req.getRequestId(), res);
@@ -135,13 +122,24 @@ public class NetworkClient {
         out.writeObject(req);
         out.flush();
       }
+
       ans = res.poll(30, TimeUnit.SECONDS);
+
+      if (ans == null) {
+        System.err.println("LỖI: Server không phản hồi (Timeout 30s) ID: " + req.getRequestId());
+      } else {
+        System.out.println("Đã nhận phản hồi thành công!");
+      }
+
       pendingMap.remove(req.getRequestId());
     } catch (Exception e) {
+      System.err.println("LỖI SOCKET KHI GỬI/NHẬN:");
+      e.printStackTrace();
     }
     return ans;
   }
 
+  // Giữ nguyên uploadFile của mày
   public static String uploadFile(String urlString, byte[] fileBytes) throws Exception {
     String res = "boundary" + System.currentTimeMillis();
     java.net.URL ans1 = java.net.URI.create(urlString).toURL();
@@ -151,9 +149,7 @@ public class NetworkClient {
     conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + res);
     try (OutputStream out = conn.getOutputStream()) {
       out.write(("--" + res + "\r\n").getBytes());
-      out.write(
-          ("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n")
-              .getBytes());
+      out.write(("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n").getBytes());
       out.write(fileBytes);
       out.write(("\r\n--" + res + "\r\n").getBytes());
       out.write(("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n").getBytes());
