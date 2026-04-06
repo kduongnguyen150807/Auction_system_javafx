@@ -13,7 +13,10 @@ import com.auction.shared.UserRole;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -23,6 +26,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
+import javafx.stage.Stage;
+import java.io.IOException;
 
 public class KhungController {
   private static KhungController instance;
@@ -90,20 +95,20 @@ public class KhungController {
       update();
 
       Platform.runLater(
-          () -> {
-            javafx.scene.Scene ans3 = mainContentPane.getScene();
-            if (ans3 != null) {
-              ans3.addEventFilter(
-                  javafx.scene.input.KeyEvent.KEY_PRESSED,
-                  res4 -> {
-                    if (res4.getCode() == javafx.scene.input.KeyCode.F11) {
-                      javafx.stage.Stage ans4 = (javafx.stage.Stage) ans3.getWindow();
-                      ans4.setFullScreen(!ans4.isFullScreen());
-                      res4.consume();
-                    }
-                  });
-            }
-          });
+              () -> {
+                javafx.scene.Scene ans3 = mainContentPane.getScene();
+                if (ans3 != null) {
+                  ans3.addEventFilter(
+                          javafx.scene.input.KeyEvent.KEY_PRESSED,
+                          res4 -> {
+                            if (res4.getCode() == javafx.scene.input.KeyCode.F11) {
+                              javafx.stage.Stage ans4 = (javafx.stage.Stage) ans3.getWindow();
+                              ans4.setFullScreen(!ans4.isFullScreen());
+                              res4.consume();
+                            }
+                          });
+                }
+              });
     } catch (Exception e) {
     }
   }
@@ -155,6 +160,22 @@ public class KhungController {
     }
   }
 
+  @FXML
+  public void handleSignout() {
+    ClientSession.clear();
+    try {
+      javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
+      // ĐÃ FIX: Dùng ContentArea thay vì editButton
+      javafx.stage.Stage stage = (javafx.stage.Stage) ContentArea.getScene().getWindow();
+      javafx.scene.Scene scene = new javafx.scene.Scene(root);
+      stage.setScene(scene);
+      stage.centerOnScreen();
+      stage.show();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   private void switchPage(Node t, HBox m) {
     if (t == null || currentContentNode == t) return;
     if (ContentArea != null) {
@@ -182,9 +203,9 @@ public class KhungController {
       User res = ClientSession.getCurrentUser();
       if (res.getTotalRatings() > 0) {
         String ans1 =
-            res.getAvgRating() <= 2.0
-                ? "Negative"
-                : (res.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
+                res.getAvgRating() <= 2.0
+                        ? "Negative"
+                        : (res.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
         ans = ans + " | " + String.format("%.1f\u2605 %s", res.getAvgRating(), ans1);
       }
       Rank.setText(ans);
@@ -198,27 +219,27 @@ public class KhungController {
     if (sidebaravatar != null && res1 != null && !res1.isBlank()) {
       Image ans2 = new Image(res1, true);
       ans2.progressProperty()
-          .addListener(
-              (obs, oldv, newv) -> {
-                if (newv.doubleValue() == 1.0 && !ans2.isError()) {
-                  double res2 = ans2.getWidth();
-                  double ans3 = ans2.getHeight();
-                  double res3 = Math.min(res2, ans3);
-                  double ans4 = (res2 - res3) / 2;
-                  double res4 = (ans3 - res3) / 2;
-                  Platform.runLater(
-                      () -> {
-                        sidebaravatar.setImage(ans2);
-                        sidebaravatar.setViewport(
-                            new javafx.geometry.Rectangle2D(ans4, res4, res3, res3));
-                        sidebaravatar.setFitWidth(48);
-                        sidebaravatar.setFitHeight(48);
-                        sidebaravatar.setPreserveRatio(false);
-                        double ans5 = 24.0;
-                        sidebaravatar.setClip(new Circle(ans5, ans5, ans5));
+              .addListener(
+                      (obs, oldv, newv) -> {
+                        if (newv.doubleValue() == 1.0 && !ans2.isError()) {
+                          double res2 = ans2.getWidth();
+                          double ans3 = ans2.getHeight();
+                          double res3 = Math.min(res2, ans3);
+                          double ans4 = (res2 - res3) / 2;
+                          double res4 = (ans3 - res3) / 2;
+                          Platform.runLater(
+                                  () -> {
+                                    sidebaravatar.setImage(ans2);
+                                    sidebaravatar.setViewport(
+                                            new javafx.geometry.Rectangle2D(ans4, res4, res3, res3));
+                                    sidebaravatar.setFitWidth(48);
+                                    sidebaravatar.setFitHeight(48);
+                                    sidebaravatar.setPreserveRatio(false);
+                                    double ans5 = 24.0;
+                                    sidebaravatar.setClip(new Circle(ans5, ans5, ans5));
+                                  });
+                        }
                       });
-                }
-              });
     }
   }
 
@@ -251,14 +272,14 @@ public class KhungController {
 
   public static void updateRealtimeUi(Item ans) {
     Platform.runLater(
-        () -> {
-          if (itemDetailController != null) {
-            itemDetailController.updatePriceUi(ans);
-          }
-          if (instance != null && instance.tc != null) {
-            instance.tc.updatePriceUi(ans);
-          }
-        });
+            () -> {
+              if (itemDetailController != null) {
+                itemDetailController.updatePriceUi(ans);
+              }
+              if (instance != null && instance.tc != null) {
+                instance.tc.updatePriceUi(ans);
+              }
+            });
   }
 
   public static String getSearchKeyword() {
@@ -286,22 +307,22 @@ public class KhungController {
   public static void showUserProfile(User user) {
     if (instance == null || user == null) return;
     Platform.runLater(
-        () -> {
-          try {
-            NodeContentLoader<javafx.scene.Parent> ans = new NodeContentLoader<>();
-            ans.load("/fxml/userprofile/UserProfile.fxml");
-            UserProfileController res = ans.getController();
-            res.setUser(user);
-            javafx.scene.Node ans1 = ans.getCurrentNode();
-            if (instance.ContentArea != null) {
-              instance.ContentArea.getChildren().clear();
-              instance.ContentArea.getChildren().add(ans1);
-            }
-            currentContentNode = ans1;
-            instance.setMenu(null);
-          } catch (Exception e) {
-          }
-        });
+            () -> {
+              try {
+                NodeContentLoader<javafx.scene.Parent> ans = new NodeContentLoader<>();
+                ans.load("/fxml/userprofile/UserProfile.fxml");
+                UserProfileController res = ans.getController();
+                res.setUser(user);
+                javafx.scene.Node ans1 = ans.getCurrentNode();
+                if (instance.ContentArea != null) {
+                  instance.ContentArea.getChildren().clear();
+                  instance.ContentArea.getChildren().add(ans1);
+                }
+                currentContentNode = ans1;
+                instance.setMenu(null);
+              } catch (Exception e) {
+              }
+            });
   }
 
   public static void returnToAuction() {
