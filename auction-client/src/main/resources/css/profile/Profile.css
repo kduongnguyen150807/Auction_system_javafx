@@ -87,5 +87,20 @@
 }
 
 .label-sm-gray { -fx-text-fill: #aaaaaa; -fx-font-weight: bold; -fx-font-size: 12px; }
+
+/* Số tiền / số lượng trong thẻ metric — khớp FXML cũ (Font size="26" = 26pt, không phải px) nên dùng pt để giữ đúng “to” như lúc mới mở */
+.metric-value-number {
+    -fx-font-size: 26pt;
+    -fx-font-weight: bold;
+}
+.metric-money-spent {
+    -fx-text-fill: #007aff;
+}
+.metric-count {
+    -fx-text-fill: white;
+}
+.metric-money-received {
+    -fx-text-fill: #34c759;
+}
 .badge-verified { -fx-background-color: #34c759; -fx-text-fill: white; -fx-padding: 4 12; -fx-background-radius: 15; -fx-font-weight: bold; }
 .stars-glow { -fx-text-fill: #ffcc00; -fx-effect: dropshadow(three-pass-box, rgba(255, 204, 0, 0.5), 5, 0, 0, 0); }
