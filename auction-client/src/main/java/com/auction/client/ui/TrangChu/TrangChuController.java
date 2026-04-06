@@ -43,7 +43,7 @@ public class TrangChuController {
         new Thread(
             () -> {
               try {
-                Request res = new Request(Request.LIST, null);
+                Request res = new Request(Request.GET_ONGOING_LOTS, null);
                 Response ans1 = NetworkClient.getInstance().sendRequestAndWait(res);
                 if (ans1 == null || !Response.OK.equals(ans1.getStatus())) return;
                 Object res1 = ans1.getPayload();

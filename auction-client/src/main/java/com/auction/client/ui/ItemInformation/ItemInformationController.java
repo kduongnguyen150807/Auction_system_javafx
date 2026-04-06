@@ -345,10 +345,17 @@ public class ItemInformationController {
             }
           }
           if (pricechart != null && ans1 != null) {
+            if (!pricechart.getData().contains(ans1)) {
+              pricechart.getData().add(ans1);
+              ans1.setName("Price Curve");
+            }
             String ans2 =
                 java.time.LocalTime.now()
                     .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
             ans1.getData().add(new javafx.scene.chart.XYChart.Data<>(ans2, res.getCurrentPrice()));
+            if (ans1.getData().size() > 20) {
+              ans1.getData().remove(0);
+            }
           }
         });
   }

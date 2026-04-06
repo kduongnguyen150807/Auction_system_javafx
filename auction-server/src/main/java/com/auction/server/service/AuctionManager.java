@@ -106,7 +106,7 @@ public class AuctionManager {
       }
       Item res5 = itemDao.getById(b.getItemId());
       if (res5 != null) {
-        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res5));
+        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res5));
       }
       return ans2;
     }
@@ -142,7 +142,7 @@ public class AuctionManager {
           itemDao.updateEndTime(res4.getId(), res6);
           res4.setEndTime(res6);
         }
-        broadcast(new Response("", "PRICE_UPDATE", "priceupdate", res4));
+        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res4));
       }
       broadcast(ans4);
       if (res2 > 0) {

@@ -28,6 +28,7 @@ public class Request implements Serializable {
   public static final String PROMOTE_ADMIN = "PROMOTE_ADMIN";
   public static final String SEARCH_USERS = "SEARCH_USERS";
   public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
+  public static final String GET_ONGOING_LOTS = "GET_ONGOING_LOTS";
   protected String requestId;
   protected String action;
   protected Object payload;
