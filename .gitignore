@@ -3,3 +3,6 @@ target/
 *.iml
 
 auction-server/dependency-reduced-pom.xml
+auction-client/AuctionSystem-1.0.exe
+auction-client/error_log.txt
+auction-server/dependency-reduced-pom.xml
