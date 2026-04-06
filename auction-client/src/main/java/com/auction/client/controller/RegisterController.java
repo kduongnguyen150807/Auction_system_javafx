@@ -3,8 +3,6 @@ package com.auction.client.controller;
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
-import java.util.HashMap;
-import java.util.Map;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,28 +33,34 @@ public class RegisterController {
     String p1 = this.p.getText();
     String p2 = this.cp.getText();
 
+    if (u1.isEmpty() || e1.isEmpty() || p1.isEmpty()) {
+      this.ans.setText("nhập đủ thông tin vào!");
+      return;
+    }
+
     if (!p1.equals(p2)) {
       this.ans.setText("mật khẩu không khớp!");
       return;
     }
 
-    Map<String, String> data = new HashMap<>();
-    data.put("username", u1);
-    data.put("email", e1);
-    data.put("age", a1);
-    data.put("password", p1);
+    Bidder res = new Bidder();
+    res.setUsername(u1);
+    res.setEmail(e1);
+    res.setAge(a1);
+    res.setPassword(p1);
+    res.setFullName(u1);
 
-    Request req = new Request(Request.SIGNUP, data);
-    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+    Request req = new Request(Request.SIGNUP, res);
+    Response ans_res = NetworkClient.getInstance().sendRequestAndWait(req);
 
-    if (res != null && res.getStatus().equals(Response.OK)) {
+    if (ans_res != null && ans_res.getStatus().equals(Response.OK)) {
       try {
         SceneManager.switchScene("/fxml/login.fxml");
       } catch (Exception ex) {
         ex.printStackTrace();
       }
     } else {
-      String msg = (res != null) ? res.getMessage() : "timeout";
+      String msg = (ans_res != null) ? ans_res.getMessage() : "timeout";
       if ("duplicate_username_or_email".equals(msg)) {
         this.ans.setText("username hoặc email đã tồn tại!");
       } else {

@@ -83,14 +83,17 @@ public class ClientHandler implements Runnable {
         ans = new Response(rid, Response.OK, "success", u);
       } else ans = new Response(rid, Response.ERROR, "fail", null);
     } else if (act.equals(Request.SIGNUP)) {
-      Map<String, String> res = (Map<String, String>) pay;
-      User u =
-          new Bidder(
-              res.get("username"), res.get("password"), res.get("email"), res.get("age"), "");
-      boolean res2 = this.userService.signup(u);
-      ans =
-          new Response(
-              rid, res2 ? Response.OK : Response.ERROR, res2 ? "success" : "duplicate", null);
+      try {
+        User res = (User) pay;
+        boolean res2 = this.userService.signup(res);
+        ans = new Response(rid, res2 ? Response.OK : Response.ERROR, res2 ? "success" : "duplicate", null);
+      } catch (ClassCastException e) {
+        e.printStackTrace();
+        ans = new Response(rid, Response.ERROR, "class_cast_error", null);
+      } catch (Exception e) {
+        e.printStackTrace();
+        ans = new Response(rid, Response.ERROR, "server_error", null);
+      }
     } else if (act.equals(Request.LIST)) {
       List<Item> res = this.itemDao.getAll();
       res.removeIf(i -> i.getStatus() != com.auction.shared.ItemStatus.OPEN);
@@ -108,14 +111,14 @@ public class ClientHandler implements Runnable {
     } else if (act.equals(Request.UPDATE_PROFILE)) {
       Map<String, String> res = (Map<String, String>) pay;
       String err =
-          this.userService.updateProfile(
-              Integer.parseInt(res.get("userid")),
-              res.get("fullname"),
-              res.get("email"),
-              res.get("phone"));
+              this.userService.updateProfile(
+                      Integer.parseInt(res.get("userid")),
+                      res.get("fullname"),
+                      res.get("email"),
+                      res.get("phone"));
       ans =
-          new Response(
-              rid, err == null ? Response.OK : Response.ERROR, err == null ? "success" : err, null);
+              new Response(
+                      rid, err == null ? Response.OK : Response.ERROR, err == null ? "success" : err, null);
     } else if (act.equals(Request.UPDATE_AVATAR)) {
       String[] res = ((String) pay).split(" ");
       try {
@@ -138,61 +141,61 @@ public class ClientHandler implements Runnable {
         String res4 = res2.length > 1 ? res2[1] : UserRole.ADMIN.name();
         boolean res5 = this.userService.setUserRole(res3, res4);
         ans =
-            new Response(rid, res5 ? Response.OK : Response.ERROR, res5 ? "success" : "fail", null);
+                new Response(rid, res5 ? Response.OK : Response.ERROR, res5 ? "success" : "fail", null);
       } else {
         ans = new Response(rid, Response.ERROR, "forbidden", null);
       }
     } else if (act.equals(Request.GET_ONGOING_BIDS)) {
       ans =
-          new Response(
-              rid,
-              Response.OK,
-              "success",
-              (java.io.Serializable) this.lotDao.getOngoingBids((int) pay));
+              new Response(
+                      rid,
+                      Response.OK,
+                      "success",
+                      (java.io.Serializable) this.lotDao.getOngoingBids((int) pay));
     } else if (act.equals(Request.GET_UPCOMING_BIDS)) {
       ans =
-          new Response(
-              rid,
-              Response.OK,
-              "success",
-              (java.io.Serializable) this.lotDao.getUpcomingBids((int) pay));
+              new Response(
+                      rid,
+                      Response.OK,
+                      "success",
+                      (java.io.Serializable) this.lotDao.getUpcomingBids((int) pay));
     } else if (act.equals("getclosedbids")) {
       ans =
-          new Response(
-              rid,
-              Response.OK,
-              "success",
-              (java.io.Serializable) this.lotDao.getClosedBids((int) pay));
+              new Response(
+                      rid,
+                      Response.OK,
+                      "success",
+                      (java.io.Serializable) this.lotDao.getClosedBids((int) pay));
     } else if (act.equals("getpastbids")) {
       ans =
-          new Response(
-              rid,
-              Response.OK,
-              "success",
-              (java.io.Serializable) this.lotDao.getPastBids((int) pay));
+              new Response(
+                      rid,
+                      Response.OK,
+                      "success",
+                      (java.io.Serializable) this.lotDao.getPastBids((int) pay));
     } else if (act.equals("deposit")) {
       ans = handleDeposit(req);
     } else if (act.equals("refresh_user")) {
       User u = new com.auction.server.dao.UserDao().getById(String.valueOf(pay));
       ans =
-          new Response(
-              rid, u != null ? Response.OK : Response.ERROR, u != null ? "success" : "fail", u);
+              new Response(
+                      rid, u != null ? Response.OK : Response.ERROR, u != null ? "success" : "fail", u);
     } else if (act.equals("get_transactions")) {
       ans =
-          new Response(
-              rid,
-              Response.OK,
-              "success",
-              (java.io.Serializable) this.logDao.getByUserId((int) pay));
+              new Response(
+                      rid,
+                      Response.OK,
+                      "success",
+                      (java.io.Serializable) this.logDao.getByUserId((int) pay));
     } else if (act.equals(Request.GET_ITEM_BY_ID)) {
       int res = (int) pay;
       Item res2 = this.itemDao.getById(res);
       ans =
-          new Response(
-              rid,
-              res2 != null ? Response.OK : Response.ERROR,
-              res2 != null ? "success" : "not_found",
-              res2);
+              new Response(
+                      rid,
+                      res2 != null ? Response.OK : Response.ERROR,
+                      res2 != null ? "success" : "not_found",
+                      res2);
     } else if (act.equals(Request.SUBMIT_RATING)) {
       ans = handleSubmitRating(req);
     } else if (act.equals(Request.GET_RATINGS)) {
@@ -211,7 +214,7 @@ public class ClientHandler implements Runnable {
         int res = (int) pay;
         boolean res2 = this.itemDao.approveItem(res);
         ans =
-            new Response(rid, res2 ? Response.OK : Response.ERROR, res2 ? "success" : "fail", null);
+                new Response(rid, res2 ? Response.OK : Response.ERROR, res2 ? "success" : "fail", null);
       } else {
         ans = new Response(rid, Response.ERROR, "forbidden", null);
       }
@@ -220,7 +223,7 @@ public class ClientHandler implements Runnable {
         int res = (int) pay;
         boolean res2 = this.itemDao.rejectItem(res);
         ans =
-            new Response(rid, res2 ? Response.OK : Response.ERROR, res2 ? "success" : "fail", null);
+                new Response(rid, res2 ? Response.OK : Response.ERROR, res2 ? "success" : "fail", null);
       } else {
         ans = new Response(rid, Response.ERROR, "forbidden", null);
       }
@@ -233,11 +236,11 @@ public class ClientHandler implements Runnable {
       User u = new com.auction.server.dao.UserDao().getById(String.valueOf(res));
       if (u != null) u.setPassword("");
       ans =
-          new Response(
-              rid,
-              u != null ? Response.OK : Response.ERROR,
-              u != null ? "success" : "not_found",
-              u);
+              new Response(
+                      rid,
+                      u != null ? Response.OK : Response.ERROR,
+                      u != null ? "success" : "not_found",
+                      u);
     } else if (act.equals("get_status_stats")) {
       if (this.currentUser != null && this.currentUser.getRole() == UserRole.ADMIN) {
         ans = new Response(rid, Response.OK, "success", this.itemDao.getStatusStats());
@@ -251,10 +254,10 @@ public class ClientHandler implements Runnable {
       java.util.List<BidTransaction> ans2 = new java.util.ArrayList<>();
       try {
         java.sql.Connection res1 =
-            com.auction.server.dao.DatabaseConnection.getInstance().getConnection();
+                com.auction.server.dao.DatabaseConnection.getInstance().getConnection();
         java.sql.PreparedStatement ans1 =
-            res1.prepareStatement(
-                "SELECT * FROM bid_transactions WHERE itemid = ? ORDER BY timestamp ASC");
+                res1.prepareStatement(
+                        "SELECT * FROM bid_transactions WHERE itemid = ? ORDER BY timestamp ASC");
         ans1.setInt(1, res);
         java.sql.ResultSet res2 = ans1.executeQuery();
         while (res2.next()) {
@@ -310,31 +313,31 @@ public class ClientHandler implements Runnable {
     try {
       Map<String, String> res = (Map<String, String>) req.getPayload();
       java.time.format.DateTimeFormatter f =
-          java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]");
+              java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]");
       java.time.LocalDateTime st =
-          java.time.LocalDateTime.parse(
-              res.get("starttime").length() == 16
-                  ? res.get("starttime") + ":00"
-                  : res.get("starttime"),
-              f);
+              java.time.LocalDateTime.parse(
+                      res.get("starttime").length() == 16
+                              ? res.get("starttime") + ":00"
+                              : res.get("starttime"),
+                      f);
       java.time.LocalDateTime et =
-          java.time.LocalDateTime.parse(
-              res.get("endtime").length() == 16 ? res.get("endtime") + ":00" : res.get("endtime"),
-              f);
+              java.time.LocalDateTime.parse(
+                      res.get("endtime").length() == 16 ? res.get("endtime") + ":00" : res.get("endtime"),
+                      f);
 
       boolean ok =
-          this.itemDao.insertLot(
-              res.get("name"),
-              res.get("description"),
-              Double.parseDouble(res.get("startingprice")),
-              Double.parseDouble(res.getOrDefault("maxprice", "0")),
-              st,
-              et,
-              res.get("sellerusername"),
-              res.getOrDefault("imageurl", ""),
-              res.getOrDefault("category", "Vehicle"));
+              this.itemDao.insertLot(
+                      res.get("name"),
+                      res.get("description"),
+                      Double.parseDouble(res.get("startingprice")),
+                      Double.parseDouble(res.getOrDefault("maxprice", "0")),
+                      st,
+                      et,
+                      res.get("sellerusername"),
+                      res.getOrDefault("imageurl", ""),
+                      res.getOrDefault("category", "Vehicle"));
       return new Response(
-          req.getRequestId(), ok ? Response.OK : Response.ERROR, ok ? "success" : "fail", null);
+              req.getRequestId(), ok ? Response.OK : Response.ERROR, ok ? "success" : "fail", null);
     } catch (Exception e) {
       return new Response(req.getRequestId(), Response.ERROR, "fail", null);
     }
