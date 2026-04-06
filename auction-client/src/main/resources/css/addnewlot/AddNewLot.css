@@ -1,48 +1,61 @@
-.BackGroundNewLot{
-    -fx-background-color: #191919;
+.root { -fx-font-family: "Consolas"; }
+
+.glass-panel-add {
+    -fx-background-color: rgba(30, 30, 30, 0.85);
+    -fx-background-radius: 30;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 30;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.2), 30, 0, 0, 0);
 }
 
-.form-title{
-    -fx-text-fill: #fd9420;
-    -fx-font-weight: 800;
-    -fx-font-size: 40;
-}
+.form-header { -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 26px; }
+.form-brand { -fx-text-fill: #007aff; -fx-font-weight: bold; -fx-font-size: 14px; }
 
-.form-sub-title{
-    -fx-text-fill: #b06716;
-    -fx-font-weight: 600;
-    -fx-font-size: 30;
-}
-
-
-.box-info{
-    -fx-background-color: #121212;
+.input-mac {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
     -fx-text-fill: white;
-    -fx-border-color: #333333;
-    -fx-border-radius: 5;
-    -fx-padding: 12;
-    -fx-pref-width: 400;
-    -fx-pref-height: 60;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 12;
 }
 
-.btn-logout{
-    -fx-text-fill: red;
-    -fx-background-radius: 20;
-    -fx-background-color: black;
-    -fx-font-weight: 800;
-    -fx-padding: 10 20;
+.input-mac:focused { -fx-border-color: #007aff; }
+
+/* NÚT CONFIRM - XANH BLUE BO TRÒN */
+.btn-rounded-blue {
+    -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.5), 15, 0, 0, 0);
+}
+
+/* NÚT CANCEL - HỒNG NEON BO TRÒN */
+.btn-rounded-pink {
+    -fx-background-color: linear-gradient(to right, #ff2a6d, #ff7eb3);
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 42, 109, 0.5), 15, 0, 0, 0);
+}
+
+.btn-rounded-outline {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: white;
+    -fx-background-radius: 25;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-radius: 25;
     -fx-cursor: hand;
 }
 
-.btn-primary {
-    -fx-background-color: #FE8F00;
-    -fx-text-fill: black;
-    -fx-font-weight: 800;
-    -fx-background-radius: 20;
-    -fx-padding: 10 20;
-    -fx-cursor: hand;
+.img-frame-mac {
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 15;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 15;
 }
 
-.btn-primary:hover {
-    -fx-background-color: #e07e00;
-}
+.status-msg { -fx-text-fill: #44cc44; -fx-font-size: 13px; }
