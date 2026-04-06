@@ -101,7 +101,8 @@ public class NetworkClient {
       return;
     }
 
-    if ("NEW_BID_UPDATE".equals(res.getStatus())) {
+    if ("NEW_BID_UPDATE".equals(res.getStatus())
+        || ("priceupdate".equals(res.getMessage()) && res.getPayload() instanceof Item)) {
       Object res3 = res.getPayload();
       if (res3 instanceof Item i) {
         KhungController.updateRealtimeUi(i);
