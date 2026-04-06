@@ -25,7 +25,7 @@
 
 .input-mac-blue, .date-mac, .combo-mac {
     -fx-background-color: rgba(0, 0, 0, 0.3);
-    -fx-control-inner-background: rgba(0, 0, 0, 0.3); /* Khử nền trắng cốt lõi */
+    -fx-control-inner-background: rgba(0, 0, 0, 0.3);
     -fx-text-fill: white;
     -fx-background-radius: 8;
     -fx-border-color: rgba(255, 255, 255, 0.1);
