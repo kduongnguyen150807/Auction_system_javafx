@@ -6,46 +6,43 @@
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" fitToHeight="false" style="-fx-background-color: #000000;" stylesheets="@/css/history/History.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.History.HistoryController">
+<ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
+            style="-fx-background-color: transparent; -fx-background: transparent;"
+            stylesheets="/css/history/History.css"
+            xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.History.HistoryController">
     <content>
-        <VBox alignment="TOP_LEFT" spacing="10.0" style="-fx-background-color: #000000;">
+        <VBox alignment="TOP_LEFT" spacing="30.0" styleClass="history-main-container">
             <children>
-                <AnchorPane style="-fx-border-color: #333333; -fx-border-width: 0 0 1 0;">
+                <VBox styleClass="history-section-glass">
                     <children>
-                        <Label layoutX="14.0" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;" text="Trending Lots" AnchorPane.bottomAnchor="15.0" AnchorPane.topAnchor="25.0" />
+                        <Label styleClass="section-header-glow" text="Trending Lots" />
+                        <FlowPane fx:id="ongoingcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
                     </children>
-                </AnchorPane>
-                <FlowPane fx:id="ongoingcontainer" alignment="TOP_LEFT" hgap="30.0" vgap="30.0" style="-fx-background-color: #1a1a1a;">
-                    <padding><Insets bottom="20.0" left="20.0" right="20.0" top="20.0" /></padding>
-                </FlowPane>
+                </VBox>
 
-                <AnchorPane style="-fx-border-color: #333333; -fx-border-width: 0 0 1 0;">
+                <VBox styleClass="history-section-glass">
                     <children>
-                        <Label layoutX="14.0" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;" text="New Lots Coming Up!" AnchorPane.bottomAnchor="15.0" AnchorPane.topAnchor="25.0" />
+                        <Label styleClass="section-header-glow" text="New Lots Coming Up!" />
+                        <FlowPane fx:id="upcomingcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
                     </children>
-                </AnchorPane>
-                <FlowPane fx:id="upcomingcontainer" alignment="TOP_LEFT" hgap="30.0" vgap="30.0" style="-fx-background-color: #1a1a1a;">
-                    <padding><Insets bottom="20.0" left="20.0" right="20.0" top="20.0" /></padding>
-                </FlowPane>
+                </VBox>
 
-                <AnchorPane style="-fx-border-color: #333333; -fx-border-width: 0 0 1 0;">
+                <VBox styleClass="history-section-glass">
                     <children>
-                        <Label layoutX="14.0" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;" text="Closed Lot" AnchorPane.bottomAnchor="15.0" AnchorPane.topAnchor="25.0" />
+                        <Label styleClass="section-header-glow" text="Closed Lot" />
+                        <FlowPane fx:id="closedcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
                     </children>
-                </AnchorPane>
-                <FlowPane fx:id="closedcontainer" alignment="TOP_LEFT" hgap="30.0" vgap="30.0" style="-fx-background-color: #1a1a1a;">
-                    <padding><Insets bottom="20.0" left="20.0" right="20.0" top="20.0" /></padding>
-                </FlowPane>
+                </VBox>
 
-                <AnchorPane style="-fx-border-color: #333333; -fx-border-width: 0 0 1 0;">
+                <VBox styleClass="history-section-glass">
                     <children>
-                        <Label layoutX="14.0" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #ffffff;" text="Past Bids" AnchorPane.bottomAnchor="15.0" AnchorPane.topAnchor="25.0" />
+                        <Label styleClass="section-header-glow" text="Past Bids" />
+                        <FlowPane fx:id="pastcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
                     </children>
-                </AnchorPane>
-                <FlowPane fx:id="pastcontainer" alignment="TOP_LEFT" hgap="30.0" vgap="30.0" style="-fx-background-color: #1a1a1a;">
-                    <padding><Insets bottom="20.0" left="20.0" right="20.0" top="20.0" /></padding>
-                </FlowPane>
+                </VBox>
             </children>
+            <padding><Insets bottom="40.0" left="40.0" right="40.0" top="30.0" /></padding>
         </VBox>
     </content>
 </ScrollPane>

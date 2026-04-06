@@ -17,8 +17,11 @@
 <AnchorPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: transparent;" stylesheets="/css/addnewlot/AddNewLot.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.AddNewLot.AddNewLotController">
     <children>
         <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <padding>
+                <Insets top="30.0" bottom="30.0" left="40.0" right="40.0" />
+            </padding>
             <children>
-                <VBox alignment="TOP_CENTER" maxWidth="850.0" spacing="25.0" styleClass="glass-panel-item-blue">
+                <VBox alignment="CENTER" maxWidth="940.0" spacing="15.0" styleClass="glass-panel-item-blue">
                     <children>
                         <HBox alignment="CENTER_LEFT">
                             <children>
@@ -32,13 +35,13 @@
                             </children>
                         </HBox>
 
-                        <HBox alignment="TOP_CENTER" spacing="40.0" VBox.vgrow="ALWAYS">
+                        <HBox alignment="TOP_CENTER" spacing="35.0" VBox.vgrow="ALWAYS">
                             <children>
-                                <VBox alignment="TOP_CENTER" prefWidth="300.0" spacing="20.0">
+                                <VBox alignment="TOP_CENTER" prefWidth="300.0" spacing="15.0">
                                     <children>
-                                        <StackPane prefHeight="220.0" prefWidth="300.0" styleClass="image-frame-mac">
+                                        <StackPane prefHeight="200.0" prefWidth="300.0" styleClass="image-frame-mac">
                                             <children>
-                                                <ImageView fx:id="productImageView" fitHeight="200.0" fitWidth="280.0" pickOnBounds="true" preserveRatio="true" />
+                                                <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="280.0" pickOnBounds="true" preserveRatio="true" />
                                             </children>
                                         </StackPane>
                                         <Button maxWidth="Infinity" onAction="#handleChoosePicture" styleClass="btn-secondary-mac" text="CHOOSE PICTURE" />
@@ -46,7 +49,7 @@
                                     </children>
                                 </VBox>
 
-                                <VBox prefWidth="400.0" spacing="12.0">
+                                <VBox prefWidth="480.0" spacing="10.0">
                                     <children>
                                         <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="input-mac-blue" />
                                         <HBox spacing="10.0">
@@ -55,7 +58,7 @@
                                                 <TextField fx:id="txtMaxPrice" promptText="BUY NOW ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
                                             </children>
                                         </HBox>
-                                        <TextArea fx:id="txtQuantity" prefRowCount="3" promptText="DESCRIPTION" styleClass="input-mac-blue" wrapText="true" />
+                                        <TextArea fx:id="txtQuantity" prefRowCount="2" promptText="DESCRIPTION" styleClass="input-mac-blue" wrapText="true" />
 
                                         <Label styleClass="label-sm" text="AUCTION START" />
                                         <HBox spacing="8.0">
@@ -84,7 +87,7 @@
                                                 <Button maxWidth="Infinity" onAction="#handleCancel" styleClass="btn-cancel-mac" text="CANCEL" HBox.hgrow="ALWAYS" />
                                                 <Button maxWidth="Infinity" onAction="#handleSubmit" styleClass="btn-primary-mac" text="CONFIRM UPLOAD" HBox.hgrow="ALWAYS" />
                                             </children>
-                                            <padding><Insets top="10.0" /></padding>
+                                            <padding><Insets top="5.0" /></padding>
                                         </HBox>
                                     </children>
                                 </VBox>
@@ -92,7 +95,7 @@
                         </HBox>
                     </children>
                     <padding>
-                        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+                        <Insets bottom="25.0" left="30.0" right="30.0" top="25.0" />
                     </padding>
                 </VBox>
             </children>

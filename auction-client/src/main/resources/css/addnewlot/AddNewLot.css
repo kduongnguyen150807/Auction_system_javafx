@@ -1,61 +1,72 @@
-.root { -fx-font-family: "Consolas"; }
-
-.glass-panel-add {
-    -fx-background-color: rgba(30, 30, 30, 0.85);
-    -fx-background-radius: 30;
-    -fx-border-color: rgba(255, 255, 255, 0.15);
-    -fx-border-radius: 30;
-    -fx-border-width: 1.5;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.2), 30, 0, 0, 0);
+.root {
+    -fx-font-family: "Consolas";
 }
 
-.form-header { -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 26px; }
-.form-brand { -fx-text-fill: #007aff; -fx-font-weight: bold; -fx-font-size: 14px; }
+.glass-panel-item-blue {
+    -fx-background-color: rgba(20, 20, 20, 0.75);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(0, 122, 255, 0.35);
+    -fx-border-radius: 20;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.25), 30, 0, 0, 0);
+}
 
-.input-mac {
-    -fx-background-color: rgba(0, 0, 0, 0.4);
+.form-title-mac {
     -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-font-size: 26px; /* Thu nhỏ tiêu đề */
+}
+
+.form-sub-title-mac {
+    -fx-text-fill: #007aff;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px; /* Thu nhỏ sub-title */
+}
+
+.input-mac-blue, .date-mac, .combo-mac {
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 8;
+    -fx-prompt-text-fill: #666666;
+    -fx-padding: 8; /* Giảm padding cho gọn */
+}
+
+.input-mac-blue:focused, .date-mac:focused, .combo-mac:focused {
+    -fx-border-color: #007aff;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.4), 10, 0, 0, 0);
+}
+
+.image-frame-mac {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
     -fx-background-radius: 12;
     -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-radius: 12;
 }
 
-.input-mac:focused { -fx-border-color: #007aff; }
-
-/* NÚT CONFIRM - XANH BLUE BO TRÒN */
-.btn-rounded-blue {
+.btn-primary-mac {
     -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
     -fx-text-fill: white;
-    -fx-font-weight: 900;
-    -fx-background-radius: 25;
+    -fx-font-weight: 800;
+    -fx-background-radius: 10;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.5), 15, 0, 0, 0);
+    -fx-padding: 10 20; /* Giảm padding */
 }
 
-/* NÚT CANCEL - HỒNG NEON BO TRÒN */
-.btn-rounded-pink {
-    -fx-background-color: linear-gradient(to right, #ff2a6d, #ff7eb3);
+.btn-secondary-mac, .btn-cancel-mac {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
     -fx-text-fill: white;
-    -fx-font-weight: 900;
-    -fx-background-radius: 25;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
     -fx-cursor: hand;
-    -fx-effect: dropshadow(three-pass-box, rgba(255, 42, 109, 0.5), 15, 0, 0, 0);
+    -fx-padding: 8 15;
 }
 
-.btn-rounded-outline {
-    -fx-background-color: rgba(255, 255, 255, 0.05);
-    -fx-text-fill: white;
-    -fx-background-radius: 25;
-    -fx-border-color: rgba(255, 255, 255, 0.3);
-    -fx-border-radius: 25;
-    -fx-cursor: hand;
+.btn-cancel-mac:hover {
+    -fx-text-fill: #ff2a6d;
+    -fx-border-color: #ff2a6d;
 }
 
-.img-frame-mac {
-    -fx-background-color: rgba(0, 0, 0, 0.3);
-    -fx-background-radius: 15;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-radius: 15;
-}
-
-.status-msg { -fx-text-fill: #44cc44; -fx-font-size: 13px; }
+.label-sm { -fx-text-fill: #888888; -fx-font-size: 11px; }
+.status-label { -fx-text-fill: #00ff00; -fx-font-size: 13px; }

@@ -1,80 +1,90 @@
-/* NỀN ĐEN TUYỀN CHO CẢ CỬA SỔ */
 .history-root {
-    -fx-background-color: #121212;
+    -fx-background-color: transparent; /* TRỊ KHOẢNG TRẮNG - Ép nền về trong suốt */
+    -fx-font-family: "Consolas";
 }
 
-/* TIÊU ĐỀ CHỮ CAM NỔI BẬT */
-.history-title {
-    -fx-text-fill: #ffaa00;
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
+/* Panel kính mờ xuyên thấu rừng tuyết */
+.glass-panel-history {
+    -fx-background-color: rgba(25, 25, 25, 0.8);
+    -fx-background-radius: 25;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 25;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 25, 0, 0, 10);
 }
 
-/* CẤU HÌNH BẢNG ĐEN TUYỀN */
-.transaction-table {
-    -fx-background-color: #1e1e1e;
-    -fx-border-color: #333333;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
+.history-title-glow {
+    -fx-text-fill: white;
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.6), 12, 0, 0, 0);
 }
 
-/* CẤU HÌNH HEADERS BẢNG (CHỮ CAM) */
-.transaction-table .column-header-background {
-    -fx-background-color: #2a2a2a;
-    -fx-background-radius: 8px 8px 0 0;
-}
-
-.transaction-table .column-header, .transaction-table .filler {
+/* Style TableView theo kiểu Minimalism */
+.transaction-table-glass {
     -fx-background-color: transparent;
-    -fx-size: 40px;
+    -fx-background-insets: 0;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-radius: 12;
+}
+
+/* Header của bảng - Kính mờ nhẹ */
+.transaction-table-glass .column-header-background {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 12 12 0 0;
+}
+
+.transaction-table-glass .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 45px;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-width: 0 0 1 0;
-    -fx-border-color: #444444;
 }
 
-.transaction-table .column-header .label {
-    -fx-text-fill: #ffaa00; /* Tiêu đề chữ cam */
+.transaction-table-glass .column-header .label {
+    -fx-text-fill: #ffaa00; /* Màu cam đặc trưng của Bidding88 */
     -fx-font-weight: bold;
-    -fx-font-size: 14px;
-    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 13px;
 }
 
-/* CẤU HÌNH Ô DATA TRONG BẢNG (CHỮ TRẮNG, BACKGROUND ĐEN) */
+/* Các dòng dữ liệu trong suốt */
 .table-row-cell {
-    -fx-background-color: #1e1e1e; /* Background đen cho ô dữ liệu */
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.03);
     -fx-border-width: 0 0 1 0;
-    -fx-border-color: #2a2a2a;
-    -fx-cell-size: 40px;
+    -fx-cell-size: 45px;
 }
 
-/* Ô DATA LẺ/CHẴN CHO DỄ NHÌN */
 .table-row-cell:odd {
-    -fx-background-color: #242424;
+    -fx-background-color: rgba(255, 255, 255, 0.02);
 }
 
-.table-row-cell:even {
-    -fx-background-color: #1e1e1e;
-}
-
-/* HOVER VÀO DÒNG THÌ HIỆN MÀU CAM */
 .table-row-cell:hover {
-    -fx-background-color: #333333;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* KHI CHỌN DÒNG THÌ HIỆN MÀU CAM */
+/* Khi chọn dòng - Rực sáng cam */
 .table-row-cell:selected {
-    -fx-background-color: #ffaa00;
+    -fx-background-color: linear-gradient(to right, rgba(255, 170, 0, 0.3), transparent);
 }
 
-/* CHỮ TRẮNG CHO DATA CỦA Ô */
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffcc00;
+    -fx-font-weight: bold;
+}
+
 .table-cell {
-    -fx-text-fill: white; /* TEXT MÀU TRẮNG NỔI TRÊN NỀN ĐEN */
+    -fx-text-fill: #dddddd;
     -fx-font-size: 14px;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 0 10 0 10;
+    -fx-padding: 0 15 0 15;
 }
 
-/* KHI DÒNG ĐƯỢC CHỌN, CHỮ DATA CHUYỂN THÀNH ĐEN CHO DỄ ĐỌC */
-.table-row-cell:selected .table-cell {
-    -fx-text-fill: #121212;
-    -fx-font-weight: bold;
+/* Ẩn cái sọc trắng khi không có dữ liệu */
+.transaction-table-glass .placeholder .label {
+    -fx-text-fill: #666666;
+}
+
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
 }

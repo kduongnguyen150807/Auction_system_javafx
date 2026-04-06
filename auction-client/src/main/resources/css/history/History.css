@@ -1,87 +1,47 @@
-.history-root {
-    -fx-background-color: -color-bg;
-    -fx-min-height: 1000;
+/* Tổng thể trong suốt để thấy background rừng tuyết */
+.history-main-container {
+    -fx-background-color: transparent;
+    -fx-font-family: "Consolas";
 }
 
-.history-title {
-    -fx-text-fill: white;
-    -fx-font-size: 34;
-    -fx-font-weight: 800;
-}
-
-.section-label {
-    -fx-text-fill: #d4d4d4;
-    -fx-font-size: 18;
-    -fx-font-weight: 700;
-}
-
-.history-card {
-    -fx-background-color: #1f1f1f;
-    -fx-background-radius: 10;
-    -fx-min-width: 180;
-    -fx-min-height: 90;
-    -fx-padding: 12;
-}
-
-.card-text {
-    -fx-text-fill: white;
-    -fx-font-size: 16;
-    -fx-font-weight: 700;
-}
-
-.history-subtitle {
-    -fx-text-fill: -subText;
-    -fx-font-size: 16;
-}
-
+/* Ép Viewport của ScrollPane về trong suốt */
 .scroll-pane {
-    -fx-background: -color-bg;
-    -fx-background-color: -color-bg;
+    -fx-background: transparent;
+    -fx-background-color: transparent;
 }
 
 .scroll-pane > .viewport {
-    -fx-background-color: -color-bg;
-}
-.history-root {
-    -fx-background-color: #121212;
-}
-
-.history-title {
-    -fx-text-fill: #ffaa00;
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-}
-
-.table-view {
-    -fx-background-color: #1e1e1e;
-    -fx-border-color: #333333;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-}
-
-.table-view .column-header-background {
-    -fx-background-color: #2a2a2a;
-    -fx-background-radius: 8px 8px 0 0;
-}
-
-.table-view .column-header, .table-view .filler {
     -fx-background-color: transparent;
-    -fx-size: 40px;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #444444;
 }
 
-.table-view .column-header .label {
-    -fx-text-fill: #ffaa00;
-    -fx-font-weight: bold;
-    -fx-font-size: 14px;
-    -fx-alignment: CENTER_LEFT;
+/* Từng khối section kiểu kính mờ */
+.history-section-glass {
+    -fx-background-color: rgba(30, 30, 30, 0.4);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 0 0 1 0; /* Chỉ để viền dưới cho tinh tế */
+    -fx-padding: 20;
 }
 
-.table-row-cell {
-    -fx-background-color: #1e1e1e;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #2a2a2a;
-    -fx-cell-size: 40px;
+/* Tiêu đề rực sáng cam */
+.section-header-glow {
+    -fx-text-fill: white;
+    -fx-font-size: 26px;
+    -fx-font-weight: 900;
+    -fx-padding: 0 0 15 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.4), 10, 0, 0, 0);
 }
 
+.flow-pane-clean {
+    -fx-background-color: transparent;
+}
+
+/* Đồng bộ thanh cuộn cho sang */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 10;
+}

@@ -1,84 +1,84 @@
-.main-scroll-pane {
-    -fx-background-color: #000000;
+.main-scroll-root {
+    -fx-background-color: transparent;
+    -fx-font-family: "Consolas";
 }
 
-.main-scroll-pane .viewport {
-    -fx-background-color: #000000;
+/* Ép Viewport của ScrollPane về trong suốt */
+.scroll-pane { -fx-background: transparent; -fx-background-color: transparent; }
+.scroll-pane > .viewport { -fx-background-color: transparent; }
+
+/* Panel kính mờ trung tâm */
+.glass-panel-info {
+    -fx-background-color: rgba(25, 25, 25, 0.85);
+    -fx-background-radius: 30;
+    -fx-border-color: rgba(0, 122, 255, 0.3);
+    -fx-border-radius: 30;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 30, 0, 0, 10);
 }
 
-.main-container {
-    -fx-background-color: #000000;
+.item-title-glow {
+    -fx-text-fill: white;
+    -fx-font-size: 42px;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.3), 10, 0, 0, 0);
 }
 
-/* Tiêu đề trắng to rõ */
-.title-label {
-    -fx-font-family: "Montserrat Bold";
-    -fx-font-size: 48px;
-    -fx-text-fill: #FFFFFF;
+.seller-name-blue { -fx-text-fill: #00d4ff; -fx-font-size: 20px; -fx-font-weight: bold; }
+.label-sm-gray { -fx-text-fill: #888888; -fx-font-size: 12px; -fx-font-weight: bold; -fx-letter-spacing: 1px; }
+.desc-text-mac { -fx-text-fill: #dddddd; -fx-font-size: 16px; -fx-line-spacing: 5px; }
+
+.price-val-blue {
+    -fx-text-fill: #007aff; -fx-font-size: 34px; -fx-font-weight: 900;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.5), 10, 0, 0, 0);
 }
 
-/* Hugo màu cam/đỏ nổi bần bật */
-.seller-name-label {
-    -fx-font-family: "Montserrat Bold";
-    -fx-font-size: 22px;
-    -fx-text-fill: #FF9800;
-}
+.price-val-white { -fx-text-fill: white; -fx-font-size: 30px; -fx-font-weight: 800; }
+.timer-val-glow { -fx-text-fill: #ffaa00; -fx-font-size: 32px; -fx-font-weight: 900; }
 
-.label-small {
-    -fx-font-family: "Montserrat Medium";
-    -fx-font-size: 13px;
-    -fx-text-fill: #888888;
-    -fx-letter-spacing: 1px;
-}
-
-.description-text {
-    -fx-font-family: "Montserrat Medium";
-    -fx-font-size: 16px;
-    -fx-text-fill: #DDDDDD;
-    -fx-line-spacing: 5px;
-}
-
-/* Giá tiền màu đỏ rực rỡ */
-.price-label {
-    -fx-font-family: "Montserrat Bold";
-    -fx-font-size: 38px;
-    -fx-text-fill: #FF5252;
-}
-
-/* Thời gian màu vàng/cam */
-.timer-label {
-    -fx-font-family: "Montserrat Bold";
-    -fx-font-size: 32px;
-    -fx-text-fill: #FFB300;
-}
-
-.bid-button {
-    -fx-background-color: #FF9800;
-    -fx-text-fill: #000000;
-    -fx-font-family: "Montserrat Bold";
+/* NÚT BID CHÍNH - XANH BLUE RỰC SÁNG */
+.btn-bid-main {
+    -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
     -fx-font-size: 20px;
-    -fx-background-radius: 10px;
+    -fx-background-radius: 30;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.6), 15, 0, 0, 0);
+}
+
+.btn-bid-main:hover {
+    -fx-background-color: linear-gradient(to right, #00d4ff, #007aff);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.8), 20, 0, 0, 0);
+}
+
+/* NÚT VÀNG SM (AUTO BID / RATE) */
+.btn-rounded-gold-sm {
+    -fx-background-color: #ffaa00;
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 25;
     -fx-cursor: hand;
 }
 
-.bid-button:hover {
-    -fx-background-color: #FFA726;
-    -fx-effect: dropshadow(three-pass-box, rgba(255, 152, 0, 0.4), 15, 0, 0, 0);
+.input-mac-blue {
+    -fx-background-color: rgba(0,0,0,0.4);
+    -fx-text-fill: white;
+    -fx-background-radius: 25;
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-border-radius: 25;
+    -fx-padding: 0 20;
 }
 
-.seller-box {
-    -fx-padding: 10px 0;
-}
-/* Màu trắng cho tên sản phẩm ở màn hình chính */
-.card-title {
-    -fx-font-family: "Montserrat Bold";
-    -fx-font-size: 18px;
-    -fx-text-fill: #FFFFFF !important;
+.img-frame-mac {
+    -fx-background-color: rgba(0,0,0,0.3);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-border-radius: 20;
 }
 
-/* Chỉnh luôn cho cái description sáng lên tí đọc cho rõ [cite: 22, 23] */
-.card-text {
-    -fx-font-family: "Montserrat Medium";
-    -fx-font-size: 13px;
-    -fx-text-fill: #BBBBBB;
-}
+/* Style biểu đồ kính */
+.chart-glass { -fx-background-color: transparent; }
+.chart-plot-background { -fx-background-color: rgba(255,255,255,0.02); }
+.chart-series-line { -fx-stroke: #007aff; -fx-stroke-width: 3px; }
+.axis { -fx-tick-label-fill: white; }

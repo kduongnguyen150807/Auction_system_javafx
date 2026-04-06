@@ -140,3 +140,50 @@
     -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.7), 15, 0, 0, 0);
     -fx-border-color: rgba(255, 255, 255, 0.6);
 }
+/* 1. Thân chính của ComboBox */
+.category-filter {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 12;
+    -fx-font-family: "Consolas";
+    -fx-padding: 0 5;
+    -fx-cursor: hand;
+}
+
+/* 2. Chữ hiển thị ở ngoài */
+.category-filter .label {
+    -fx-text-fill: white;
+}
+
+/* 3. TRỊ DỨT ĐIỂM KHỐI TRẮNG - Ép cái list-view dropdown về màu tối */
+.category-filter .list-view {
+    -fx-background-color: rgba(25, 25, 25, 0.95); /* Tối sâu để nổi chữ trắng */
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 15, 0, 0, 5);
+}
+
+/* 4. Các dòng (cell) bên trong dropdown */
+.category-filter .list-cell {
+    -fx-text-fill: white;
+    -fx-background-color: transparent;
+    -fx-padding: 10 15;
+    -fx-font-family: "Consolas";
+}
+
+/* 5. Khi di chuột qua hoặc chọn dòng (Hover/Selection) */
+.category-filter .list-cell:hover {
+    -fx-background-color: rgba(0, 122, 255, 0.3); /* Xanh Blue Mac cho chuyên nghiệp */
+}
+
+.category-filter .list-cell:selected {
+    -fx-background-color: #007aff;
+    -fx-text-fill: white;
+}
+
+/* 6. Fix cái mũi tên cho nó màu trắng luôn */
+.category-filter .arrow-button .arrow {
+    -fx-background-color: white;
+}
