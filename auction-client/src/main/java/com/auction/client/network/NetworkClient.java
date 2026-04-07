@@ -1,9 +1,11 @@
 package com.auction.client.network;
 
 import com.auction.client.ClientSession;
+import com.auction.client.controller.WelcomeController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.client.ui.Profile.ProfileController;
 import com.auction.client.ui.TrangChu.TrangChuController;
+import com.auction.client.ui.WorldChat.WorldChatController;
 import com.auction.client.util.NotificationCenter;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
@@ -11,6 +13,7 @@ import com.auction.shared.Response;
 import com.auction.shared.User;
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -108,6 +111,19 @@ public class NetworkClient {
         KhungController.updateRealtimeUi(i);
       }
       return;
+    }
+
+    if ("NEW_MESSAGE".equals(res.getStatus())) {
+      HashMap<String, String> data = (HashMap<String, String>) res.getPayload();
+      String username = data.get("username");
+      String msg = data.get("message");
+
+      System.out.println("Cập nhật Chat từ: " + username);
+        try {
+            KhungController.updateChat(res);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     String res5 = res.getRequestId();

@@ -6,9 +6,11 @@ import com.auction.server.dao.RatingDao;
 import com.auction.server.dao.TransactionLogDao;
 import com.auction.server.service.AuctionManager;
 import com.auction.server.service.UserService;
+import com.auction.server.service.WorldChatService;
 import com.auction.shared.*;
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +37,7 @@ public class ClientHandler implements Runnable {
       this.out.flush();
       this.in = new ObjectInputStream(this.socket.getInputStream());
       AuctionManager.getInstance().addClient(this);
+      WorldChatService.getInstance().addClient(this);
     } catch (Exception e) {
     }
   }
@@ -272,7 +275,14 @@ public class ClientHandler implements Runnable {
       ans = new Response(rid, Response.OK, "success", (java.io.Serializable) ans2);
     } else if (act.equals("ping")) {
       ans = new Response(rid, Response.OK, "pong", null);
-    } else {
+    } else if (act.equals(Request.SEND_MESSAGE)) {
+      WorldChatService.getInstance().enqueueMessage(req);
+      System.out.println("processing message");
+    } else if(act.equals(Request.GET_CHAT_HISTORY)){
+      List<HashMap<String, String>> history = WorldChatService.getInstance().getChatHistory();
+      ans = new Response(rid, Response.OK, "success", history);
+    }
+    else {
       ans = new Response(rid, Response.ERROR, "unknown_action", null);
     }
     return ans;

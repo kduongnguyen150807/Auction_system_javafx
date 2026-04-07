@@ -29,6 +29,8 @@ public class Request implements Serializable {
   public static final String SEARCH_USERS = "SEARCH_USERS";
   public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
   public static final String GET_ONGOING_LOTS = "GET_ONGOING_LOTS";
+  public static final String SEND_MESSAGE = "SEND_MESSAGE";
+  public static final String GET_CHAT_HISTORY = "GET_CHAT_HISTORY";
   protected String requestId;
   protected String action;
   protected Object payload;

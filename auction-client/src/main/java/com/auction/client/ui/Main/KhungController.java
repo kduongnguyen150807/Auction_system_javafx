@@ -6,17 +6,16 @@ import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.UserProfile.UserProfileController;
+import com.auction.client.ui.WorldChat.WorldChatController;
 import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.shared.Item;
+import com.auction.shared.Response;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -26,8 +25,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
-import javafx.stage.Stage;
+
 import java.io.IOException;
+import java.util.HashMap;
 
 public class KhungController {
   private static KhungController instance;
@@ -39,15 +39,17 @@ public class KhungController {
   private static double filterMaxPrice = Double.MAX_VALUE;
   public static ItemInformationController itemDetailController;
 
-  private Node an, hn, mn, pn, adn, aln;
+  private Node an, hn, mn, pn, adn, aln, wc;
   private TrangChuController tc;
   private YourItemController yc;
   private HistoryController hc;
+  private static WorldChatController wcc;
 
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
   @FXML private HBox AuctionMenu;
   @FXML private HBox HistoryMenu;
+  @FXML private HBox WorldChat;
   @FXML private HBox MyItemMenu;
   @FXML private HBox ProfileMenu;
   @FXML private HBox ManageUsersMenu;
@@ -75,6 +77,8 @@ public class KhungController {
       ans2.load("/fxml/main/AdminDashboard.fxml");
       NodeContentLoader<Pane> res3 = new NodeContentLoader<>();
       res3.load("/fxml/addnewlot/AddNewLot.fxml");
+      NodeContentLoader<Pane> WCLD = new NodeContentLoader<>();
+      WCLD.load("/fxml/worldchat/WorldChat.fxml");
 
       if (ContentArea != null) ContentArea.getChildren().add(ans.getCurrentNode());
       if (SearchContainer != null) SearchContainer.getChildren().add(res.getCurrentNode());
@@ -85,10 +89,12 @@ public class KhungController {
       pn = res2.getCurrentNode();
       adn = ans2.getCurrentNode();
       aln = res3.getCurrentNode();
+      wc = WCLD.getCurrentNode();
 
       tc = ans.getController();
       yc = ans1.getController();
       hc = res1.getController();
+      wcc = WCLD.getController();
 
       currentContentNode = an;
       setMenu(AuctionMenu);
@@ -132,6 +138,16 @@ public class KhungController {
   @FXML
   public void openProfile(MouseEvent e) {
     switchPage(pn, ProfileMenu);
+  }
+
+  @FXML
+  public void openWorldChat(MouseEvent e) {
+    switchPage(wc, WorldChat);
+      try {
+          wcc.loadChatHistory();
+      } catch (IOException ex) {
+          throw new RuntimeException(ex);
+      }
   }
 
   @FXML
@@ -192,6 +208,7 @@ public class KhungController {
     if (MyItemMenu != null) MyItemMenu.getStyleClass().remove("active");
     if (ProfileMenu != null) ProfileMenu.getStyleClass().remove("active");
     if (ManageUsersMenu != null) ManageUsersMenu.getStyleClass().remove("active");
+    if (WorldChat != null) WorldChat.getStyleClass().remove("active");
     if (a != null && !a.getStyleClass().contains("active")) a.getStyleClass().add("active");
   }
 
@@ -328,5 +345,9 @@ public class KhungController {
   public static void returnToAuction() {
     if (instance == null) return;
     Platform.runLater(() -> instance.switchPage(instance.an, instance.AuctionMenu));
+  }
+
+  public static void updateChat(Response r) throws IOException {
+    wcc.updateChat((HashMap<String, String>) r.getPayload());
   }
 }

@@ -7,9 +7,9 @@ import java.sql.SQLException;
 public class DatabaseConnection {
   private static DatabaseConnection instance;
   private Connection connection;
-  private String url = "jdbc:mysql://localhost:3306/auction_db";
-  private String user = "ba_nin";
-  private String pass = "banin123";
+  private String url = "jdbc:mysql://localhost:3306/nhandatabase";
+  private String user = "nhan_nguyen";
+  private String pass = "nhancoi21";
 
   private DatabaseConnection() {
     try {
