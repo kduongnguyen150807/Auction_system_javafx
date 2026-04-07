@@ -193,6 +193,7 @@ public class KhungController {
   }
 
   private void switchPage(Node t, HBox m) {
+    wcc.clearChat();
     if (t == null || currentContentNode == t) return;
     if (ContentArea != null) {
       ContentArea.getChildren().clear();

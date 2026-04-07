@@ -63,5 +63,8 @@ public class WorldChatController {
         });
     }
 
+    public void clearChat(){
+        ChatContainer.getChildren().clear();
+    }
 
 }
