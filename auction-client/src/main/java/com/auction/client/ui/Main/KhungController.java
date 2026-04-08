@@ -13,10 +13,7 @@ import com.auction.shared.UserRole;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -26,8 +23,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
-import javafx.stage.Stage;
-import java.io.IOException;
 
 public class KhungController {
   private static KhungController instance;
@@ -39,11 +34,15 @@ public class KhungController {
   private static double filterMaxPrice = Double.MAX_VALUE;
   public static ItemInformationController itemDetailController;
 
-  private Node an, hn, mn, pn, adn, aln;
+  private Node chatNode;
+  private com.auction.client.Chat.client.ChatController chatController;
+
+  private Node an, hn, mn, pn, adn, aln, cn;
   private TrangChuController tc;
   private YourItemController yc;
   private HistoryController hc;
 
+  @FXML private HBox MessageMenu;
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
   @FXML private HBox AuctionMenu;
@@ -61,18 +60,34 @@ public class KhungController {
     instance = this;
     mainContentPane = ContentArea;
     try {
+      NodeContentLoader<Pane> chatLoader = new NodeContentLoader<>();
+      chatLoader.load("/fxml/GlobalChat/chat-view.fxml");
+      chatNode = chatLoader.getCurrentNode();
+      chatController = chatLoader.getController();
+      System.out.println("✅ Đã load FXML Chat thành công (Load đầu tiên)!");
+    } catch (Exception e) {
+      System.out.println("❌ LỖI KHI LOAD GIAO DIỆN CHAT:");
+      e.printStackTrace();
+    }
+    try {
       NodeContentLoader<HBox> res = new NodeContentLoader<>();
       res.load("/fxml/searchbar/ThanhTimKiem.fxml");
+
       NodeContentLoader<Pane> ans = new NodeContentLoader<>();
       ans.load("/fxml/trangchu/TrangChu.fxml");
+
       NodeContentLoader<Pane> res1 = new NodeContentLoader<>();
       res1.load("/fxml/history/History.fxml");
+
       NodeContentLoader<Pane> ans1 = new NodeContentLoader<>();
       ans1.load("/fxml/youritem/YourItem.fxml");
+
       NodeContentLoader<Pane> res2 = new NodeContentLoader<>();
       res2.load("/fxml/profile/Profile.fxml");
+
       NodeContentLoader<Pane> ans2 = new NodeContentLoader<>();
       ans2.load("/fxml/main/AdminDashboard.fxml");
+
       NodeContentLoader<Pane> res3 = new NodeContentLoader<>();
       res3.load("/fxml/addnewlot/AddNewLot.fxml");
 
@@ -110,6 +125,7 @@ public class KhungController {
                 }
               });
     } catch (Exception e) {
+      System.out.println("⚠️ Lỗi khi load các màn hình chính (Do Server tắt hoặc mạng): " + e.getMessage());
     }
   }
 
@@ -122,6 +138,16 @@ public class KhungController {
   public void openHistory(MouseEvent e) {
     switchPage(hn, HistoryMenu);
     if (hc != null) hc.refreshHistory();
+  }
+
+  @FXML
+  public void openMessage(MouseEvent e) {
+    System.out.println("Đã bấm nút Message! chatNode hiện tại là: " + chatNode);
+    switchPage(chatNode, MessageMenu);
+
+    if (chatController != null && ClientSession.getCurrentUser() != null) {
+      chatController.initUserData(ClientSession.getUsername());
+    }
   }
 
   @FXML
@@ -165,7 +191,6 @@ public class KhungController {
     ClientSession.clear();
     try {
       javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
-      // ĐÃ FIX: Dùng ContentArea thay vì editButton
       javafx.stage.Stage stage = (javafx.stage.Stage) ContentArea.getScene().getWindow();
       javafx.scene.Scene scene = new javafx.scene.Scene(root);
       stage.setScene(scene);
@@ -192,6 +217,8 @@ public class KhungController {
     if (MyItemMenu != null) MyItemMenu.getStyleClass().remove("active");
     if (ProfileMenu != null) ProfileMenu.getStyleClass().remove("active");
     if (ManageUsersMenu != null) ManageUsersMenu.getStyleClass().remove("active");
+    if (MessageMenu != null) MessageMenu.getStyleClass().remove("active");
+
     if (a != null && !a.getStyleClass().contains("active")) a.getStyleClass().add("active");
   }
 

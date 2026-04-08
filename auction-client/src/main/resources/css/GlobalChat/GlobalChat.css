@@ -1,0 +1,64 @@
+.chat-container {
+    -fx-background-color: rgba(30, 30, 30, 0.6);
+    -fx-background-radius: 15;
+    -fx-padding: 20;
+    -fx-spacing: 15;
+}
+
+.chat-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0, 0, 2);
+}
+.chat-messages {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+.chat-messages .content {
+    -fx-background-color: transparent;
+}
+.chat-messages .viewport {
+    -fx-background-color: transparent;
+}
+.chat-messages:focused {
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-border-color: #ff9900;
+}
+.chat-messages .scroll-bar:vertical,
+.chat-messages .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+.chat-messages .scroll-bar:vertical .thumb,
+.chat-messages .scroll-bar:horizontal .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-background-radius: 5;
+}
+.chat-input {
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 8 15 8 15;
+}
+.chat-input:focused {
+    -fx-border-color: #ff9900;
+}
+
+.chat-send-btn {
+    -fx-background-color: #ff9900;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-padding: 8 20 8 20;
+}
+.chat-send-btn:hover {
+    -fx-background-color: #ffaa33;
+}

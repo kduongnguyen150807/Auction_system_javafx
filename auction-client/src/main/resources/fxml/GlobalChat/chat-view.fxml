@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" stylesheets="/css/GlobalChat/GlobalChat.css" styleClass="chat-container" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21" fx:controller="com.auction.client.Chat.client.ChatController">
+
+    <Label text="PHÒNG CHAT TRỰC TUYẾN" styleClass="chat-title"/>
+
+    <TextArea fx:id="messageArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS" styleClass="chat-messages" />
+
+    <HBox spacing="15" alignment="CENTER">
+        <TextField fx:id="inputField" promptText="Nhập tin nhắn..." HBox.hgrow="ALWAYS" styleClass="chat-input" onAction="#onSendButtonClick"/>
+        <Button text="Gửi" onAction="#onSendButtonClick" styleClass="chat-send-btn" />
+    </HBox>
+
+</VBox>
