@@ -64,6 +64,13 @@ public class KhungController {
       chatLoader.load("/fxml/GlobalChat/chat-view.fxml");
       chatNode = chatLoader.getCurrentNode();
       chatController = chatLoader.getController();
+
+      if (ClientSession.getCurrentUser() != null) {
+        String tenDangNhap = ClientSession.getCurrentUser().getUsername();
+        chatController.initUserData(tenDangNhap);
+      } else {
+        chatController.initUserData("Khách Vãng Lai");
+      }
       System.out.println("✅ Đã load FXML Chat thành công (Load đầu tiên)!");
     } catch (Exception e) {
       System.out.println("❌ LỖI KHI LOAD GIAO DIỆN CHAT:");
