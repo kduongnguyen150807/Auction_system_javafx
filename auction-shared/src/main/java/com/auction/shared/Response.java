@@ -13,6 +13,9 @@ public class Response implements Serializable {
   protected Object payload;
   protected LocalDateTime timestamp;
 
+  public Response(){
+
+  }
   public Response(String rid, String st, String msg, Object obj) {
     this.requestId = rid;
     this.status = st;
@@ -44,5 +47,25 @@ public class Response implements Serializable {
   public LocalDateTime getTimestamp() {
     LocalDateTime ans = this.timestamp;
     return ans;
+  }
+
+  public void setRequestId(String requestId) {
+    this.requestId = requestId;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
+  }
+
+  public void setPayload(Object payload) {
+    this.payload = payload;
+  }
+
+  public void setTimestamp(LocalDateTime timestamp) {
+    this.timestamp = timestamp;
   }
 }
