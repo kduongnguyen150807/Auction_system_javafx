@@ -1,8 +1,8 @@
 package com.auction.shared;
 
 public enum AuctionStatus {
-    OPEN,
     RUNNING,
+    OPEN,
     FINISHED,
     PAID,
     CANCELED,
