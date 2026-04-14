@@ -1,0 +1,19 @@
+package com.auction.server.command;
+
+import com.auction.server.dao.ItemDao;
+import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+
+import java.util.List;
+
+public class GetOnGoingBindCommand implements Command{
+    @Override
+    public Response execute(Object data, String rid, User u) {
+        Response ans = null;
+        List<Item> ongoingItem = ItemDao.getInstance().getItemByStatus(ItemStatus.OPEN);
+        ans = new Response(rid, Response.OK, "success", (java.io.Serializable) ongoingItem);
+        return ans;
+    }
+}
