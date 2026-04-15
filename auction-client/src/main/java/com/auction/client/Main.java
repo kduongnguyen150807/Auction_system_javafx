@@ -8,7 +8,7 @@ public class Main extends Application {
   public void start(Stage primaryStage) throws Exception {
     SceneManager.setStage(primaryStage);
     primaryStage.setTitle("hệ thống đấu giá online");
-    SceneManager.switchScene("/fxml/main/khung.fxml");
+    SceneManager.switchScene("/fxml/welcome.fxml");
   }
 
   public static void main(String[] args) {

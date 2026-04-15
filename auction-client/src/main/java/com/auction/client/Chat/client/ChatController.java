@@ -77,6 +77,9 @@ public class ChatController {
     }
 
     private void connectWebSocket() {
+        if (stompSession != null && stompSession.isConnected()){
+            return;
+        }
         WebSocketStompClient stompClient = new WebSocketStompClient(new StandardWebSocketClient());
         stompClient.setMessageConverter(new org.springframework.messaging.converter.MappingJackson2MessageConverter());
         String url = "ws://" + SERVER_IP + ":8081/ws-chat";
