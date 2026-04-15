@@ -89,3 +89,26 @@ mvn clean javafx:run
 1. **Branching:** Không push trực tiếp lên nhánh `main`. Phân nhánh theo tính năng (VD: `feat/realtime-chart`, `fix/login-bug`) và merge qua Pull Request.
 2. **Commit Message:** Sử dụng chuẩn Conventional Commits (`feat:`, `fix:`, `refactor:`).
 3. **CI/CD Quality Gate:** Mọi nhánh trước khi merge phải vượt qua toàn bộ Unit Tests trên GitHub Actions pipeline.
+   
+   ## 7. Phân công công việc (Team Contributions)
+
+Dự án được phân chia công việc rõ ràng dựa trên thế mạnh của từng thành viên, đảm bảo tiến độ và chất lượng mã nguồn từ Front-end đến Back-end:
+
+* **Khánh (Fullstack Developer & System Architect):**
+  
+  * Thiết kế kiến trúc tổng thể 3 module (`auction-shared`, `auction-server`, `auction-client`).
+  * Phát triển các logic cốt lõi (Core Business Logic): Giao tiếp Socket TCP, Kiểm soát đồng thời (Concurrency Control / Optimistic Locking), thuật toán Auto-Bidding và Anti-Sniping.
+  * Tích hợp hệ thống xuyên suốt từ tầng Database lên giao diện người dùng.
+  * Thiết kế cơ sở dữ liệu và kiểm soát các thông tin thiết yếu của hệ thống.
+
+* **Nhân (UI/UX Designer & Client Controller):**
+  
+  * Thiết kế trải nghiệm và giao diện người dùng (GUI) hiện đại bằng JavaFX (FXML & CSS).
+  * Xử lý luồng sự kiện phía Client (Event Handling), kiểm duyệt dữ liệu đầu vào (Input Validation).
+  * Liên kết giao diện với tầng logic mạng, đóng gói và xử lý các gói tin Request/Response.
+
+* **Nin & Tuấn (Backend Server & UI Components):**
+  
+  * Phát triển module `auction-server`: Xây dựng các lớp DAO (Data Access Object) và truy vấn CSDL MySQL an toàn.
+  * Xử lý đa luồng (Thread Pool), quản lý vòng đời của các phiên kết nối Socket (ClientHandler) và các dịch vụ chạy ngầm (Scheduled Services).
+  * Hỗ trợ xây dựng, lắp ráp và tinh chỉnh các Component giao diện phía Client.
