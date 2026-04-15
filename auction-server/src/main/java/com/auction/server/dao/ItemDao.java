@@ -1,5 +1,6 @@
 package com.auction.server.dao;
 
+import com.auction.server.Service.SQLService;
 import com.auction.shared.Item;
 import com.auction.shared.ItemFactory;
 import com.auction.shared.ItemStatus;
@@ -26,83 +27,74 @@ public class ItemDao {
         return instance;
     }
 
-    public boolean insertLot(String res,
-                             String ans,
-                             double res1,
-                             double ans1,
-                             LocalDateTime res2,
-                             LocalDateTime ans2,
-                             String res3,
-                             String ans3,
-                             String res4){
-        boolean ans4 = false;
-        try{
-            int res5 = -1;
-            PreparedStatement ps0 = this.conn.prepareStatement("select id from users where username = ? limit 1");
-            ps0.setString(1, res3);
-            ResultSet rs0 = ps0.executeQuery();
-            if(rs0.next()) res5 = rs0.getInt(1);
-            if(res5 <= 0) return false;
+    public boolean insertLot(String itemName, String description, double startingPrice, double maxPrice,
+                             LocalDateTime startTime, LocalDateTime endTime, String sellerUsername,
+                             String imageUrl, String category) {
 
-            String res6 =
-                    "INSERT INTO items (category, name, description, startingprice, currentprice, maxprice, starttime, endtime, sellerid, winnerid, status, version, image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-            PreparedStatement ps = this.conn.prepareStatement(res6);
-            ps.setString(1, res4 == null ? "Vehicle" : res4);
-            ps.setString(2, res);
-            ps.setString(3, ans);
-            ps.setDouble(4, res1);
-            ps.setDouble(5, res1);
-            ps.setDouble(6, ans1);
-            ps.setTimestamp(7, Timestamp.valueOf(res2));
-            ps.setTimestamp(8, Timestamp.valueOf(ans2));
-            ps.setInt(9, res5);
-            ps.setNull(10, Types.INTEGER);
-            ps.setString(11, ItemStatus.PENDING.name());
-            ps.setInt(12, 0);
-            ps.setString(13, ans3);
-            int res7 = ps.executeUpdate();
-            ans4 = res7 > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
+        String sqlFindId = "SELECT id FROM users WHERE username = ? LIMIT 1";
+        Integer sellerId = SQLService.Fetch(sqlFindId, List.of(sellerUsername), this.conn, rs -> rs.getInt(1))
+                .stream().findFirst().orElse(-1);
+
+        if (sellerId <= 0) {
+            System.err.println("Không tìm thấy Seller với username: " + sellerUsername);
             return false;
         }
-        return ans4;
+
+        String sqlInsert = "INSERT INTO items (category, name, description, startingprice, currentprice, " +
+                "maxprice, starttime, endtime, sellerid, winnerid, status, version, image_url) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        List<Object> args = new ArrayList<>();
+        args.add(category == null ? "Vehicle" : category);
+        args.add(itemName);
+        args.add(description);
+        args.add(startingPrice);
+        args.add(startingPrice);
+        args.add(maxPrice);
+        args.add(Timestamp.valueOf(startTime));
+        args.add(Timestamp.valueOf(endTime));
+        args.add(sellerId);
+        args.add(null);
+        args.add(ItemStatus.PENDING.name());
+        args.add(0);
+        args.add(imageUrl == null ? "" : imageUrl);
+
+        return SQLService.Update(sqlInsert, args, this.conn);
+    }
+
+    public int getPreviousHighestBidder(int itemid){
+        String sql = "SELECT userid FROM bid_transactions WHERE itemid = ? " +
+                "ORDER BY bidvalue DESC LIMIT 1 OFFSET 1";
+        List<Integer> results = SQLService.Fetch(sql, List.of(itemid), this.conn, rs -> rs.getInt("userid"));
+        return results.isEmpty() ? -1 : results.get(0);
+    }
+
+    public boolean updatePrice(int itemId, double boughtPrice, int version){
+        String sql = "UPDATE items SET currentprice = ?, version = version + 1 WHERE id = ? AND version = ?";
+        return SQLService.Update(sql, List.of(boughtPrice, itemId, version), this.conn);
+    }
+
+    public void closeAuction(int itemId, int winnerId, String status){
+        String sql = "UPDATE items SET winnerid = ?, status = ? WHERE id =?";
+        SQLService.Update(sql, List.of(winnerId, status, itemId), this.conn);
     }
 
     public List<Item> getItemByStatus(ItemStatus status){
-        List<Item> itemList = new ArrayList<>();
-        String sql = "SELECT i.*, u.username AS seller_name, u.avatar_url AS seller_avatar " +
-                "FROM items i " +
-                "LEFT JOIN users u ON i.sellerid = u.id " +
-                "WHERE i.status = ? " +
-                "ORDER BY i.id DESC";
-        try (PreparedStatement statement = this.conn.prepareStatement(sql)) {
-            statement.setString(1, status.name());
+        String sql = "SELECT * FROM items WHERE status = ?";
+        return SQLService.Fetch(sql, List.of(status.name()), this.conn, this::mapResultSet);
+    }
 
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    itemList.add(mapResultSet(resultSet));
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error fetching items by status: " + e.getMessage());
-        }
-        return itemList;
+    public Item getById(int Id){
+        String sql = "SELECT i.*, u.username as seller_name, u.avatar_url as seller_avatar " +
+                "FROM items i LEFT JOIN users u ON i.sellerid = u.id " +
+                "WHERE i.id = ?";
+        List<Item> results = SQLService.Fetch(sql, List.of(Id), this.conn, this::mapResultSet);
+        return results.isEmpty() ? null : results.get(0);
     }
 
     public boolean approveItem(int itemId){
-        boolean isSuccess = false;
         String sql = "UPDATE items SET status = 'OPEN' WHERE id = ? AND status = 'PENDING'";
-
-        try (PreparedStatement statement = this.conn.prepareStatement(sql)) {
-            statement.setInt(1, itemId);
-
-            int rowsAffected = statement.executeUpdate();
-            isSuccess = rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Lỗi khi duyệt sản phẩm: " + e.getMessage());
-        }
-        return isSuccess;
+        return SQLService.Update(sql, List.of(itemId), this.conn);
     }
 
     private Item mapResultSet(ResultSet resultSet) throws SQLException{

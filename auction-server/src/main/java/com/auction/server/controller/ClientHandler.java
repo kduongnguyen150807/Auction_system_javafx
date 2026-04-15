@@ -67,4 +67,19 @@ public class ClientHandler implements Runnable{
       e.printStackTrace();
     }
   }
+
+  public User getCurrentUser(){
+    return currentUser;
+  }
+
+  public void send(Response r) {
+    try {
+      synchronized (this.out) {
+        this.out.reset();
+        this.out.writeObject(r);
+        this.out.flush();
+      }
+    } catch (Exception e) {
+    }
+  }
 }

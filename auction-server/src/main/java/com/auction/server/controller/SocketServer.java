@@ -1,5 +1,7 @@
 package com.auction.server.controller;
 
+import com.auction.server.Service.AuctionManager;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -23,6 +25,7 @@ public class SocketServer {
         Socket client = ss.accept();
         ClientHandler handler = new ClientHandler(client);
         this.pool.execute(handler);
+        AuctionManager.getInstance().addClient(handler);
         System.out.println("client connected");
       }
     } catch (IOException e) {

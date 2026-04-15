@@ -16,6 +16,7 @@ public class RequestDispatcher {
         commands.put(Request.GET_PENDING_ITEMS, new GetPendingItemsCommand());
         commands.put(Request.APPROVE_ITEM, new ApproveItemCommand());
         commands.put(Request.GET_ONGOING_BIDS, new GetOnGoingBindCommand());
+        commands.put(Request.BID, new BidCommand());
     }
 
     public static Response dispatch(Request req, User u){
