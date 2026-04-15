@@ -1,7 +1,7 @@
 # UML Bản Dễ Đọc (Giảm Rối)
 
 Tài liệu này là phiên bản UML tinh gọn để đọc nhanh.  
-Bản đầy đủ vẫn nằm ở: `project-uml-bản đầy đủ.md`.
+Bản đầy đủ vẫn nằm ở: `Summary/project-uml-bản đầy đủ.md`.
 
 ---
 
