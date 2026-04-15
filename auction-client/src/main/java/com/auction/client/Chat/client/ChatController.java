@@ -24,8 +24,9 @@ public class ChatController {
 
     private StompSession stompSession;
     private String currentUsername = "Unknown";
+    private boolean isHistoryLoaded = false;
 
-    private final String SERVER_IP = "localhost";
+    private final String SERVER_IP = "192.168.1.66";
 
     @FXML
     public void initialize() {
@@ -40,6 +41,8 @@ public class ChatController {
     }
 
     private void loadChatHistory() {
+        if (isHistoryLoaded) return;
+
         new Thread(() -> {
             try {
                 String apiUrl = "http://" + SERVER_IP + ":8081/api/chat-history";
@@ -52,25 +55,25 @@ public class ChatController {
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
                 if (response.statusCode() == 200) {
+                    isHistoryLoaded = true;
                     String jsonLichSu = response.body();
-
                     Gson gson = new Gson();
                     Type listType = new TypeToken<List<ChatMessage>>() {}.getType();
                     List<ChatMessage> history = gson.fromJson(jsonLichSu, listType);
 
                     Platform.runLater(() -> {
+                        messageArea.clear();
                         for (ChatMessage msg : history) {
                             messageArea.appendText(msg.getSender() + ": " + msg.getContent() + "\n");
                         }
                         messageArea.appendText("--- Bắt đầu tin nhắn mới ---\n");
-
                         connectWebSocket();
                     });
                 } else {
                     Platform.runLater(this::connectWebSocket);
                 }
             } catch (Exception e) {
-                System.out.println("❌ Không thể tải lịch sử chat! Lỗi: " + e.getMessage());
+                System.out.println("❌ Lỗi load sử: " + e.getMessage());
                 Platform.runLater(this::connectWebSocket);
             }
         }).start();
