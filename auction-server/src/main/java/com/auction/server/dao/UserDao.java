@@ -26,6 +26,11 @@ public class UserDao {
         return results.isEmpty() ? null : results.get(0);
     }
 
+    public List<User> getAllUser(){
+        String sql = "select * from users";
+        return SQLService.Fetch(sql, null, this.connection, this::mapUser);
+    }
+
     public boolean updateBalance(int id, double b){
         String sql = "UPDATE users SET BALANCE = ? WHERE id = ?";
         return SQLService.Update(sql, List.of(b, id), this.connection);

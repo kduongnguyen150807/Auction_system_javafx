@@ -74,13 +74,18 @@ public class ItemDao {
         return SQLService.Update(sql, List.of(boughtPrice, itemId, version), this.conn);
     }
 
+    public boolean updateEndtime(int itemId, LocalDateTime newEndTime){
+        String sql = "UPDATE items SET endtime = ? where id = ?";
+        return SQLService.Update(sql, List.of(Timestamp.valueOf(newEndTime), itemId), this.conn);
+    }
+
     public void closeAuction(int itemId, int winnerId, String status){
         String sql = "UPDATE items SET winnerid = ?, status = ? WHERE id =?";
         SQLService.Update(sql, List.of(winnerId, status, itemId), this.conn);
     }
 
     public List<Item> getItemByStatus(ItemStatus status){
-        String sql = "SELECT * FROM items WHERE status = ?";
+        String sql = "select i.*, u.username as seller_name, u.avatar_url as seller_avatar from items i left join users u on i.sellerid = u.id where i.status = ? order by i.id desc";
         return SQLService.Fetch(sql, List.of(status.name()), this.conn, this::mapResultSet);
     }
 
@@ -100,6 +105,7 @@ public class ItemDao {
     private Item mapResultSet(ResultSet resultSet) throws SQLException{
         String category = resultSet.getString("category");
         Item item = ItemFactory.createItem(category);
+
 
         item.setId(resultSet.getInt("id"));
         item.setVersion(resultSet.getInt("version"));
@@ -128,12 +134,13 @@ public class ItemDao {
             if (sellerName != null) {
                 item.setSellerUsername(sellerName);
             }
-
             String sellerAvatar = resultSet.getString("seller_avatar");
             if (sellerAvatar != null) {
                 item.setSellerAvatarUrl(sellerAvatar);
             }
         } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("error");
         }
         return item;
     }
