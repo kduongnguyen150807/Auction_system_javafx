@@ -24,11 +24,51 @@ public class SQLService {
         return ans;
     }
 
+    public static boolean MultiUpdate(List<String> sqls, List<List<Object>> objects, Connection conn){
+        if (sqls == null || objects == null || sqls.size() != objects.size()) {
+            return false;
+        }
+        try {
+            conn.setAutoCommit(false);
+            for (int i = 0; i< sqls.size(); i++){
+                try(PreparedStatement ps = conn.prepareStatement(sqls.get(i))){
+                    for(int j = 1; j<= objects.get(i).size(); j++){
+                        ps.setObject(j, objects.get(i).get(j-1));
+                    }
+                    ps.executeUpdate();
+                }
+            }
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
     public static <T> List<T> Fetch(String sql, List<Object> args, Connection conn, ResultSetMapper<T> mapper) {
         List<T> results = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 0; i < args.size(); i++) {
-                ps.setObject(i + 1, args.get(i));
+            if(args!= null){
+                for (int i = 0; i < args.size(); i++) {
+                    ps.setObject(i + 1, args.get(i));
+                }
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
