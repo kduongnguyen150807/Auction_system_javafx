@@ -3,7 +3,6 @@ package com.auction.client.network;
 import com.auction.client.ClientSession;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.client.ui.Profile.ProfileController;
-import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.util.NotificationCenter;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
@@ -26,18 +25,18 @@ public class NetworkClient {
 
   private NetworkClient() {
     try {
-      String ans1 = "127.0.0.1";
+      String ans1 = "192.168.1.139";
       if (Platform.isFxApplicationThread()) {
-        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
+        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("192.168.1.139");
         ans.setTitle("IP Setup");
         ans.setHeaderText("Nhập IP Server đi mày:");
-        ans1 = ans.showAndWait().orElse("127.0.0.1");
+        ans1 = ans.showAndWait().orElse("192.168.1.139");
       } else {
         java.util.concurrent.FutureTask<String> res = new java.util.concurrent.FutureTask<>(() -> {
-          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
+          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("192.168.1.139");
           ans.setTitle("IP Setup");
           ans.setHeaderText("Nhập IP Server đi mày:");
-          return ans.showAndWait().orElse("127.0.0.1");
+          return ans.showAndWait().orElse("192.168.1.139");
         });
         Platform.runLater(res);
         ans1 = res.get();
@@ -95,9 +94,7 @@ public class NetworkClient {
     }
 
     if ("OUTBID_NOTIFY".equals(res.getStatus())) {
-      Object payload = res.getPayload();
-      String res2 = payload != null ? payload.toString() : "N/A";
-      NotificationCenter.addNotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res2 + " bị đè giá rồi!");
+      NotificationCenter.addOutbidNotification(res.getPayload());
       return;
     }
 
@@ -105,6 +102,7 @@ public class NetworkClient {
         || ("priceupdate".equals(res.getMessage()) && res.getPayload() instanceof Item)) {
       Object res3 = res.getPayload();
       if (res3 instanceof Item i) {
+        NotificationCenter.cacheItem(i);
         KhungController.updateRealtimeUi(i);
       }
       return;
