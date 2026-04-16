@@ -53,102 +53,115 @@ public class AuctionManager {
         this.clients.remove(c);
     }
 
-    public synchronized Response processBid(BidTransaction bidTransaction){
+    public Response processBid(BidTransaction bidTransaction){
         Item item = itemDao.getById(bidTransaction.getItemId());
-        User user = userDao.getById(String.valueOf(bidTransaction.getUserId()));
+        User bidder = userDao.getById(String.valueOf(bidTransaction.getUserId()));
 
-        if(user!=null){
-            String phoneNumber = user.getPhoneNumber();
-            if(phoneNumber == null || phoneNumber.trim().isEmpty()){
-                return new Response(
-                        "", Response.ERROR, "Unverified account. Add a phone number to bid.", null);
+        Response validationError =  validateBid(item, bidder, bidTransaction);
+        if(validationError != null) return validationError;
+
+        if (isBuyItNow(item, bidTransaction)) {
+            return handleBuyItNow(item, bidder, bidTransaction);
+        } else {
+            return handleNormalBid(item, bidder, bidTransaction);
+        }
+    }
+
+    private Response handleNormalBid(Item item, User bidder, BidTransaction bid) {
+        int oldBidderId = itemDao.getPreviousHighestBidder(item.getId());
+        double oldPrice = item.getCurrentPrice();
+
+        userDao.updateBalance(bidder.getId(), bidder.getBalance() - bid.getBidValue());
+        logDao.insertLog(bidder.getId(), "BID_HOLD", -bid.getBidValue(), item.getId());
+        sendToUser(bidder.getId(), new Response(
+                        "", "BALANCE_UPDATE", "Success", bidder));
+
+        if (oldBidderId > 0 && oldBidderId != bidder.getId()) {
+            User oldUser = userDao.getById(String.valueOf(oldBidderId));
+            if (oldUser != null) {
+                userDao.updateBalance(oldBidderId, oldUser.getBalance() + oldPrice);
+                logDao.insertLog(oldBidderId, "BID_REFUND", oldPrice, item.getId());
+                sendToUser(oldUser.getId(), new Response("", "BALANCE_UPDATE", "Outbid", oldUser));
             }
         }
 
-        if(item!=null && item.getSellerId() == bidTransaction.getUserId()){
+        Response result = this.bidService.placeBid(bid);
+
+        if (result.getStatus().equals(Response.OK)) {
+            java.time.LocalDateTime res5 = java.time.LocalDateTime.now();
+            java.time.LocalDateTime ans5 = item.getEndTime();
+            if (ans5 != null && java.time.Duration.between(res5, ans5).getSeconds() < 60) {
+                java.time.LocalDateTime res6 = ans5.plusSeconds(60);
+                itemDao.updateEndtime(item.getId(), res6);
+                item.setEndTime(res6);
+            }
+        }
+
+        broadcast(result);
+        return result;
+    }
+
+    private Response handleBuyItNow(Item item, User bidder, BidTransaction bid) {
+        double price = item.getMaxPrice();
+
+        // Cập nhật Bidder
+        userDao.updateBalance(bidder.getId(), bidder.getBalance() - price);
+        userDao.addBidderMetrics(bidder.getId(), price);
+        logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, item.getId());
+        sendToUser(bidder.getId(), new Response(
+                "", "BALANCE_UPDATE", "Success", UserDao.getInstance().getById(String.valueOf(bidder.getId()))));
+
+        // Cập nhật Seller
+        User seller = userDao.getById(String.valueOf(item.getSellerId()));
+        if (seller != null) {
+            userDao.updateBalance(seller.getId(), seller.getBalance() + price);
+            userDao.addSellerMetrics(seller.getId(), price);
+            logDao.insertLog(seller.getId(), "ITEM_SOLD", price, item.getId());
+            sendToUser(seller.getId(), new Response(
+                    "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(seller.getId()))));
+
+        }
+
+        // Chốt Item
+        itemDao.updatePrice(item.getId(), price, item.getVersion());
+        itemDao.closeAuction(item.getId(), bidder.getId(), "CLOSED");
+
+        // Thông báo toàn hệ thống
+        Response successRes = new Response("sys", Response.OK, "BUY_IT_NOW_SUCCESS", item.getId());
+        broadcast(successRes);
+        int previousHighestBidderId = itemDao.getPreviousHighestBidder(bid.getItemId());
+
+        if (previousHighestBidderId > 0) {
+            Response outbidResponse = new Response("", "OUTBID_NOTIFY", "outbid", bid.getItemId());
+            sendToUser(previousHighestBidderId, outbidResponse);
+        }
+        return successRes;
+    }
+
+    private Response validateBid(Item item, User bidder, BidTransaction bid){
+        if ("CLOSED".equals(String.valueOf(item.getStatus()))) {
+            return new Response("", Response.ERROR, "please refresh your fucking page", null);
+        }
+
+        if (bidder != null && (bidder.getPhoneNumber() == null || bidder.getPhoneNumber().trim().isEmpty())) {
+            return new Response("", Response.ERROR, "Unverified account. Add a phone number to bid.", null);
+        }
+        if (item.getSellerId() == bid.getUserId()) {
             return new Response("", Response.ERROR, "fail", null);
         }
 
-        if(item!=null && bidTransaction.getBidValue() <= item.getCurrentPrice()){
-            bidTransaction.setBidValue(item.getCurrentPrice() + bidTransaction.getAutoBidIncrement());
+        if (bid.getBidValue() <= item.getCurrentPrice()) {
+            return new Response("", Response.ERROR, "Bid price is too low. Please refresh and try again.", null);
         }
 
-        if(user!=null && user.getBalance() < bidTransaction.getBidValue()){
+        if (bidder != null && bidder.getBalance() < bid.getBidValue()) {
             return new Response("", Response.ERROR, "Fail", null);
         }
 
-        //1. logic mua dut
-        System.out.println(bidTransaction.getBidValue());
-        System.out.println(item.getMaxPrice());
-        if(item!=null && item.getMaxPrice() > 0 && bidTransaction.getBidValue() >= item.getMaxPrice()){
-            System.out.println("mua dut thanh cong");
-            //tru tien va update cho bidder
-            double OldMax = item.getMaxPrice();
-            userDao.updateBalance(user.getId(), user.getBalance() - OldMax);
-            userDao.addBidderMetrics(user.getId(), OldMax);
-            logDao.insertLog(user.getId(), "ITEM_BOUGHT", -OldMax, bidTransaction.getItemId());
-            sendToUser(user.getId(), new Response(
-                    "", "BALANCE_UPDATE", "Success", UserDao.getInstance().getById(String.valueOf(user.getId()))));
-            //Cong tien va update cho seller
-            User seller = userDao.getById(String.valueOf(item.getSellerId()));
-            if (seller != null) {
-                UserDao.getInstance().updateBalance(seller.getId(), seller.getBalance() + OldMax);
-                userDao.addSellerMetrics(seller.getId(), OldMax);
-                logDao.insertLog(seller.getId(), "ITEM_SOLD", OldMax, bidTransaction.getItemId());
-                sendToUser(
-                        seller.getId(),
-                        new Response(
-                                "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(seller.getId()))));
-            }
-            //update item va lot
-            itemDao.updatePrice(item.getId(), OldMax, item.getVersion());
-            itemDao.closeAuction(item.getId(), bidTransaction.getUserId(), "CLOSED");
+        return null;
+    }
 
-            // announce client mon hang da bi mua dut
-            Response buySuccessResponse = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bidTransaction.getItemId());
-            broadcast(buySuccessResponse);
-
-            // chia buon voi nguoi tra gia truoc do
-            int previousHighestBidderId = itemDao.getPreviousHighestBidder(bidTransaction.getItemId());
-            if (previousHighestBidderId > 0) {
-                Response outbidResponse = new Response("", "OUTBID_NOTIFY", "outbid", bidTransaction.getItemId());
-                sendToUser(previousHighestBidderId, outbidResponse);
-            }
-            // 3. Lấy thông tin món hàng đã cập nhật để đồng bộ giao diện cho tất cả Client
-            Item updatedItem = itemDao.getById(bidTransaction.getItemId());
-            if (updatedItem != null) {
-                Response updateResponse = new Response("", "NEW_BID_UPDATE", "priceupdate", updatedItem);
-                broadcast(updateResponse);
-            }
-            return buySuccessResponse;
-        }
-        System.out.println("loi ky thuat");
-
-        //tru tien nguoi dau gia moi va announce
-        int oldUserId = itemDao.getPreviousHighestBidder(bidTransaction.getItemId());
-        double OldPrice = item.getCurrentPrice();
-        userDao.updateBalance(user.getId(), user.getBalance() - bidTransaction.getBidValue());
-        logDao.insertLog(user.getId(), "BID_HOLD", -bidTransaction.getBidValue(), bidTransaction.getItemId());
-        sendToUser(
-                user.getId(),
-                new Response(
-                        "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(user.getId()))));
-        //refund va announce cho bidder cu
-        if(oldUserId > 0 && OldPrice > 0){
-            User oldUser = userDao.getById(String.valueOf(oldUserId));
-            if(oldUser != null){
-                userDao.updateBalance(oldUserId, oldUser.getBalance() + OldPrice);
-                logDao.insertLog(oldUserId, "BID_REFUND", OldPrice, bidTransaction.getItemId());
-                sendToUser(
-                        oldUserId,
-                        new Response("", "BALANCE_UPDATE", "Outbid", oldUser));
-            }
-        }
-        //update item
-        Response NormalRes = this.bidService.placeBid(bidTransaction);
-        if (NormalRes.getStatus().equals(Response.OK)) {
-            
-        }
-
+    private boolean isBuyItNow(Item item, BidTransaction bid) {
+        return item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice();
     }
 }
