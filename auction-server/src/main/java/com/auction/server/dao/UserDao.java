@@ -26,6 +26,30 @@ public class UserDao {
         return results.isEmpty() ? null : results.get(0);
     }
 
+    public boolean signup(User u){
+        String profileName = normalize(u.getFullName());
+        if (profileName.isBlank()) profileName = normalize(u.getUsername());
+        String sql = "INSERT INTO users (username, fullname, password, email, age, phonenumber, role, isactive, islocked) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try {
+            return SQLService.Update(sql, List.of(
+                    normalize(u.getUsername()),
+                    profileName,
+                    u.getPassword(),
+                    normalize(u.getEmail()),
+                    u.getAge(),
+                    normalize(u.getPhoneNumber()),
+                    normalize(u.getRole().name()),
+                    true,
+                    false
+            ), this.connection);
+        } catch (Exception e) {
+            System.err.println("Lỗi Signup: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public List<User> getAllUser(){
         String sql = "select * from users";
         return SQLService.Fetch(sql, null, this.connection, this::mapUser);
@@ -37,12 +61,12 @@ public class UserDao {
     }
 
     public boolean addBidderMetrics(int userId, double amount){
-        String sql = "UPDATE users SET moneyspent = moneyspent  + ?, itembought = itembought + 1 WHERE id = ?";
+        String sql = "UPDATE users SET moneyspent = moneyspent  + ?, itemsbought = itemsbought + 1 WHERE id = ?";
         return SQLService.Update(sql, List.of(amount, userId), this.connection);
     }
 
     public boolean addSellerMetrics(int userId, double amount){
-        String sql = "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";;
+        String sql = "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";
         return SQLService.Update(sql, List.of(amount, userId), this.connection);
     }
 
@@ -78,6 +102,11 @@ public class UserDao {
             System.out.println("error setting attribute");
         }
         return null;
+    }
+
+    private String normalize(String value) {
+        if (value == null) return "";
+        return value.trim();
     }
 
     public static UserDao getInstance() {
