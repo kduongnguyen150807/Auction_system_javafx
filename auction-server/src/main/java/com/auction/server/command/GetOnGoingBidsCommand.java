@@ -8,7 +8,7 @@ import com.auction.shared.User;
 
 import java.util.List;
 
-public class GetOnGoingBindCommand implements Command{
+public class GetOnGoingBidsCommand implements Command{
     @Override
     public Response execute(Object data, String rid, User u) {
         Response ans = null;

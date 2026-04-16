@@ -10,6 +10,8 @@ public class BidCommand implements Command{
     public Response execute(Object data, String requestId, User u){
         BidTransaction bidTransaction = (BidTransaction) data;
         Response res = AuctionManager.getInstance().processBid(bidTransaction);
+        System.out.println("returning");
+        System.out.println(res.getMessage());
         if(res == null){
             return new Response(requestId, null, null, null);
         }

@@ -9,6 +9,7 @@ public class GetAllUserCommand implements Command{
     @Override
     public Response execute(Object data, String requestId, User u){
         List<User> userList = UserDao.getInstance().getAllUser();
+        System.out.println("get all user completed");
         return new Response(requestId, Response.OK, "success", userList);
     }
 }
