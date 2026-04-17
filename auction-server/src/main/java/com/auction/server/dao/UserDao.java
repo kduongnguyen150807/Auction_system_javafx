@@ -1,28 +1,21 @@
 package com.auction.server.dao;
 
-import com.auction.server.Factory.UserFactory;
+import com.auction.shared.UserFactory;
 import com.auction.server.Service.SQLService;
 import com.auction.shared.User;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-public class UserDao {
+public class UserDao extends BaseDao{
     private static UserDao instance;
-    private final Connection connection;
-
-    private UserDao() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
-    }
+    private UserDao() {}
 
     public User login(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ? AND isactive = true";
-        List<User> results =  SQLService.Fetch(sql, List.of(username, password), this.connection, this::mapUser);
+        List<User> results =  executeFetch(sql, List.of(username, password), this::mapUser);
         return results.isEmpty() ? null : results.get(0);
     }
 
@@ -32,7 +25,7 @@ public class UserDao {
         String sql = "INSERT INTO users (username, fullname, password, email, age, phonenumber, role, isactive, islocked) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try {
-            return SQLService.Update(sql, List.of(
+            return executeUpdate(sql, List.of(
                     normalize(u.getUsername()),
                     profileName,
                     u.getPassword(),
@@ -42,7 +35,7 @@ public class UserDao {
                     normalize(u.getRole().name()),
                     true,
                     false
-            ), this.connection);
+            ));
         } catch (Exception e) {
             System.err.println("Lỗi Signup: " + e.getMessage());
             e.printStackTrace();
@@ -52,27 +45,33 @@ public class UserDao {
 
     public List<User> getAllUser(){
         String sql = "select * from users";
-        return SQLService.Fetch(sql, null, this.connection, this::mapUser);
+        return executeFetch(sql, null, this::mapUser);
     }
 
     public boolean updateBalance(int id, double b){
         String sql = "UPDATE users SET BALANCE = ? WHERE id = ?";
-        return SQLService.Update(sql, List.of(b, id), this.connection);
+        return executeUpdate(sql, List.of(b, id));
     }
 
     public boolean addBidderMetrics(int userId, double amount){
         String sql = "UPDATE users SET moneyspent = moneyspent  + ?, itemsbought = itemsbought + 1 WHERE id = ?";
-        return SQLService.Update(sql, List.of(amount, userId), this.connection);
+        return executeUpdate(sql, List.of(amount, userId));
     }
 
     public boolean addSellerMetrics(int userId, double amount){
         String sql = "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";
-        return SQLService.Update(sql, List.of(amount, userId), this.connection);
+        return executeUpdate(sql, List.of(amount, userId));
     }
 
     public User getById(String id){
         String sql = "SELECT * FROM users WHERE id = ?";
-        List<User> results = SQLService.Fetch(sql, List.of(id), this.connection, this::mapUser);
+        List<User> results = executeFetch(sql, List.of(id), this::mapUser);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    public User getByUsername(String username){
+        String sql = "SELECT * FROM users WHERE username = ?";
+        List<User> results = executeFetch(sql, List.of(username), this::mapUser);
         return results.isEmpty() ? null : results.get(0);
     }
 
