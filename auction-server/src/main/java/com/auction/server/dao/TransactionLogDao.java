@@ -6,13 +6,10 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransactionLogDao {
+public class TransactionLogDao extends BaseDao{
     private static TransactionLogDao instance;
-    private Connection conn;
 
-    private TransactionLogDao() {
-        this.conn = DatabaseConnection.getInstance().getConnection();
-    }
+    private TransactionLogDao() {}
 
     public static TransactionLogDao getInstance() {
         if (instance == null) {
@@ -23,12 +20,12 @@ public class TransactionLogDao {
 
     public boolean insertLog(int u, String t, double a, int i) {
         String sql = "INSERT INTO transaction_logs (userid, type, amount, itemid) VALUES (?, ?, ?, ?)";
-        return SQLService.Update(sql, List.of(i,t,a,i), this.conn);
+        return executeUpdate(sql, List.of(u,t,a,i));
     }
 
     public List<TransactionLog> getByUserId(int userId) {
         String sql = "SELECT * FROM transaction_logs WHERE userid = ? ORDER BY createdat DESC";
-        return SQLService.Fetch(sql, List.of(userId), this.conn, this::mapResultSet);
+        return executeFetch(sql, List.of(userId), this::mapResultSet);
     }
 
     private TransactionLog mapResultSet(ResultSet rs) throws SQLException {
