@@ -1,6 +1,4 @@
-package com.auction.server.Factory;
-
-import com.auction.shared.*;
+package com.auction.shared;
 
 public class UserFactory {
     public static User create(String role) {
