@@ -1,6 +1,9 @@
-package com.auction.server.command;
+package com.auction.server.command.commands;
 
+import com.auction.server.command.Authorizable;
+import com.auction.server.command.Command;
 import com.auction.server.dao.ItemDao;
+import com.auction.server.dao.UserDao;
 import com.auction.shared.Response;
 import com.auction.shared.User;
 
@@ -8,11 +11,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-public class AddLotCommand implements Command {
+public class AddLotCommand implements Command, Authorizable {
     @Override
     public Response execute(Object data, String requestId, User user) {
         try {
             Map<String, String> lotData = (Map<String, String>) data;
+
+            int sellerId = UserDao.getInstance().getByUsername(lotData.get("sellerusername")).getId();
+            if (sellerId <= 0 || !isOwner(user, sellerId)){
+                return new Response(requestId, Response.ERROR, "Người dùng không tồn tại", null);
+            }
 
             DateTimeFormatter dateTimeFormatter =
                     DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]");
@@ -34,7 +42,7 @@ public class AddLotCommand implements Command {
                     Double.parseDouble(lotData.getOrDefault("maxprice", "0")),
                     startDateTime,
                     endDateTime,
-                    lotData.get("sellerusername"),
+                    sellerId,
                     lotData.getOrDefault("imageurl", ""),
                     lotData.getOrDefault("category", "Vehicle")
             );

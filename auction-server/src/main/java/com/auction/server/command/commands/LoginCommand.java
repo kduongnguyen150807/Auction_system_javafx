@@ -1,12 +1,12 @@
-package com.auction.server.command;
+package com.auction.server.command.commands;
 
+import com.auction.server.command.Command;
 import com.auction.server.dao.UserDao;
 import com.auction.shared.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public class LoginCommand implements Command{
+public class LoginCommand implements Command {
     @Override
     public Response execute(Object data,String rid, User u) {
         if(!(data instanceof Map)){

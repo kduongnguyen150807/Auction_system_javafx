@@ -1,11 +1,11 @@
-package com.auction.server.command;
+package com.auction.server.command.commands;
 
+import com.auction.server.command.Command;
 import com.auction.server.dao.UserDao;
-import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.auction.shared.User;
 
-public class SignUpCommand implements Command{
+public class SignUpCommand implements Command {
     @Override
     public Response execute(Object data, String requestId, User u){
         try {
