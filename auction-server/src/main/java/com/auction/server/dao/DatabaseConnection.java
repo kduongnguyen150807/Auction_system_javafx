@@ -27,8 +27,8 @@ public class DatabaseConnection {
       } else {
         LOGGER.warning("db.properties not found on classpath, using defaults");
         props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
-        props.setProperty("db.user", "root");
-        props.setProperty("db.password", "Tolabaninne123!");
+        props.setProperty("db.user", "ba_nin");
+        props.setProperty("db.password", "banin123");
       }
 
       this.url = props.getProperty("db.url");
