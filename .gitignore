@@ -4,6 +4,5 @@ target/
 
 auction-server/dependency-reduced-pom.xml
 auction-client/AuctionSystem-1.0.exe
-db.properties
 auction-client/error_log.txt
 auction-server/dependency-reduced-pom.xml
