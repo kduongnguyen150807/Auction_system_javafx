@@ -2,11 +2,15 @@ package com.auction.client.ui.Main;
 
 import com.auction.client.ClientSession;
 import com.auction.client.app.NodeContentLoader;
+import com.auction.client.ui.Chat.ChatPageController;
 import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.UserProfile.UserProfileController;
 import com.auction.client.ui.YourItem.YourItemController;
+import com.auction.client.util.NotificationCenter;
+import com.auction.shared.ChatMessage;
+import com.auction.shared.Friendship;
 import com.auction.shared.Item;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
@@ -25,11 +29,14 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
+import com.auction.client.network.NetworkClient;
+import com.auction.client.network.NetworkEventListener;
 import java.io.IOException;
 
-public class KhungController {
+public class KhungController implements NetworkEventListener {
   private static KhungController instance;
   private static Pane mainContentPane;
   private static Node currentContentNode;
@@ -39,10 +46,11 @@ public class KhungController {
   private static double filterMaxPrice = Double.MAX_VALUE;
   public static ItemInformationController itemDetailController;
 
-  private Node an, hn, mn, pn, adn, aln;
+  private Node an, hn, mn, pn, adn, aln, chn;
   private TrangChuController tc;
   private YourItemController yc;
   private HistoryController hc;
+  private ChatPageController chatCtrl;
 
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
@@ -50,6 +58,7 @@ public class KhungController {
   @FXML private HBox HistoryMenu;
   @FXML private HBox MyItemMenu;
   @FXML private HBox ProfileMenu;
+  @FXML private HBox ChatMenu;
   @FXML private HBox ManageUsersMenu;
   @FXML private Label UserName;
   @FXML private Label Rank;
@@ -60,6 +69,7 @@ public class KhungController {
   public void initialize() {
     instance = this;
     mainContentPane = ContentArea;
+    NetworkClient.getInstance().addListener(this);
     try {
       NodeContentLoader<HBox> res = new NodeContentLoader<>();
       res.load("/fxml/searchbar/ThanhTimKiem.fxml");
@@ -75,6 +85,8 @@ public class KhungController {
       ans2.load("/fxml/main/AdminDashboard.fxml");
       NodeContentLoader<Pane> res3 = new NodeContentLoader<>();
       res3.load("/fxml/addnewlot/AddNewLot.fxml");
+      NodeContentLoader<Pane> chatLoader = new NodeContentLoader<>();
+      chatLoader.load("/fxml/chat/ChatPage.fxml");
 
       if (ContentArea != null) ContentArea.getChildren().add(ans.getCurrentNode());
       if (SearchContainer != null) SearchContainer.getChildren().add(res.getCurrentNode());
@@ -85,10 +97,12 @@ public class KhungController {
       pn = res2.getCurrentNode();
       adn = ans2.getCurrentNode();
       aln = res3.getCurrentNode();
+      chn = chatLoader.getCurrentNode();
 
       tc = ans.getController();
       yc = ans1.getController();
       hc = res1.getController();
+      chatCtrl = chatLoader.getController();
 
       currentContentNode = an;
       setMenu(AuctionMenu);
@@ -132,6 +146,11 @@ public class KhungController {
   @FXML
   public void openProfile(MouseEvent e) {
     switchPage(pn, ProfileMenu);
+  }
+
+  @FXML
+  public void openChat(MouseEvent e) {
+    switchPage(chn, ChatMenu);
   }
 
   @FXML
@@ -191,6 +210,7 @@ public class KhungController {
     if (HistoryMenu != null) HistoryMenu.getStyleClass().remove("active");
     if (MyItemMenu != null) MyItemMenu.getStyleClass().remove("active");
     if (ProfileMenu != null) ProfileMenu.getStyleClass().remove("active");
+    if (ChatMenu != null) ChatMenu.getStyleClass().remove("active");
     if (ManageUsersMenu != null) ManageUsersMenu.getStyleClass().remove("active");
     if (a != null && !a.getStyleClass().contains("active")) a.getStyleClass().add("active");
   }
@@ -267,6 +287,81 @@ public class KhungController {
     if (instance != null) {
       if (instance.tc != null) instance.tc.setFilters(searchKeyword, categoryFilter);
       if (instance.yc != null) instance.yc.refreshItems();
+    }
+  }
+
+  @Override
+  public void onNewBidUpdate(Item item) {
+    if (itemDetailController != null) {
+      itemDetailController.updatePriceUi(item);
+    }
+    if (tc != null) {
+      tc.updatePriceUi(item);
+    }
+  }
+
+  @Override
+  public void onItemClosed(Item item) {
+    if (tc != null) {
+      tc.removeClosedItem(item);
+    }
+    if (itemDetailController != null) {
+      itemDetailController.markItemClosed(item);
+    }
+    User me = ClientSession.getCurrentUser();
+    if (me != null && item.getSellerId() == me.getId()) {
+      NotificationCenter.addNotification(
+          "Sản phẩm \"" + item.getName() + "\" đã được đóng đấu giá!");
+    }
+  }
+
+  @Override
+  public void onSellerBidNotify(Item item, double newPrice) {
+    NotificationCenter.addNotification(
+        "Sản phẩm \"" + item.getName() + "\" có bid mới: "
+            + String.format("%,.0f", newPrice) + " VND");
+  }
+
+  @Override
+  public void onOutbidNotify(int itemId) {
+    NotificationCenter.addNotification(
+        "Bạn đã bị vượt giá ở item #" + itemId + "!");
+  }
+
+  @Override
+  public void onGlobalChat(ChatMessage message) {
+    if (chatCtrl != null) chatCtrl.onGlobalChat(message);
+  }
+
+  @Override
+  public void onPrivateChat(ChatMessage message) {
+    if (chatCtrl != null) chatCtrl.onPrivateChat(message);
+  }
+
+  @Override
+  public void onFriendRequest(Friendship friendship) {
+    NotificationCenter.addNotification(
+        friendship.getRequesterUsername() + " đã gửi lời mời kết bạn!");
+    if (chatCtrl != null) chatCtrl.onFriendRequest(friendship);
+  }
+
+  @Override
+  public void onFriendRequestSent(Friendship friendship) {
+    NotificationCenter.addNotification(
+        "Đã gửi lời mời kết bạn đến " + friendship.getAddresseeUsername() + "!");
+    if (chatCtrl != null) chatCtrl.onFriendRequestSent(friendship);
+  }
+
+  @Override
+  public void onFriendAccepted(Friendship friendship) {
+    if (chatCtrl != null) chatCtrl.onFriendAccepted(friendship);
+    User me = ClientSession.getCurrentUser();
+    if (me != null && friendship.getRequesterId() == me.getId()) {
+      NotificationCenter.addNotification(
+          friendship.getAddresseeUsername() + " đã chấp nhận lời mời kết bạn!");
+    } else {
+      NotificationCenter.addNotification(
+          "Bạn và " + friendship.getRequesterUsername() + " đã trở thành bạn bè!");
     }
   }
 

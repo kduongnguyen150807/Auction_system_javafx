@@ -3,6 +3,7 @@ package com.auction.client.ui.Profile;
 import com.auction.client.ClientSession;
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
+import com.auction.client.network.NetworkEventListener;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.*;
 import java.io.IOException;
@@ -13,7 +14,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 
-public class ProfileController {
+public class ProfileController implements NetworkEventListener {
   @FXML private javafx.scene.image.ImageView avatarimageview;
   @FXML private Label usernameLabel, fullNameLabel, emailLabel, phoneLabel, roleLabel, balanceLabel;
   @FXML private Label moneySpentLabel, itemsBoughtLabel, moneyReceivedLabel, itemsSoldLabel;
@@ -32,8 +33,15 @@ public class ProfileController {
   @FXML
   public void initialize() {
     instance = this;
+    NetworkClient.getInstance().addListener(this);
     refreshData();
     setEditingMode(false);
+  }
+
+  @Override
+  public void onBalanceUpdate(User user) {
+    ClientSession.setCurrentUser(user);
+    refreshData();
   }
 
   public void updateBalanceDirectly(User u) {

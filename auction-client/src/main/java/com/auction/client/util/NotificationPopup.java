@@ -8,27 +8,27 @@ import javafx.stage.Popup;
 import javafx.stage.Window;
 
 public class NotificationPopup {
-  private Popup ans;
+  private Popup popup;
 
   public NotificationPopup() {
-    ans = new Popup();
-    ans.setAutoHide(true);
+    popup = new Popup();
+    popup.setAutoHide(true);
 
-    VBox res = new VBox();
-    res.setStyle(
+    VBox container = new VBox();
+    container.setStyle(
         "-fx-background-color: #242526; -fx-border-color: #3e4042; -fx-border-radius: 8; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 5);");
-    res.setPrefSize(350, 450);
+    container.setPrefSize(350, 450);
 
-    Label res1 = new Label("Thông Báo Của Tôi");
-    res1.setStyle(
+    Label titleLabel = new Label("Thông Báo Của Tôi");
+    titleLabel.setStyle(
         "-fx-text-fill: #ffaa00; -fx-font-size: 20px; -fx-font-weight: bold; -fx-padding: 15;");
 
-    ListView<String> res2 = new ListView<>(NotificationCenter.getNotifications());
-    res2.setStyle(
+    ListView<String> listView = new ListView<>(NotificationCenter.getNotifications());
+    listView.setStyle(
         "-fx-background-color: transparent; -fx-control-inner-background: transparent; -fx-padding: 5;");
-    res2.setPrefHeight(400);
+    listView.setPrefHeight(400);
 
-    res2.setCellFactory(
+    listView.setCellFactory(
         lv ->
             new ListCell<String>() {
               @Override
@@ -53,12 +53,12 @@ public class NotificationPopup {
               }
             });
 
-    res.getChildren().addAll(res1, res2);
-    ans.getContent().add(res);
+    container.getChildren().addAll(titleLabel, listView);
+    popup.getContent().add(container);
   }
 
-  public void show(Window res, double x, double y) {
-    if (ans.isShowing()) ans.hide();
-    else ans.show(res, x, y);
+  public void show(Window owner, double x, double y) {
+    if (popup.isShowing()) popup.hide();
+    else popup.show(owner, x, y);
   }
 }

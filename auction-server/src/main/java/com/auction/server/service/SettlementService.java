@@ -1,5 +1,6 @@
 package com.auction.server.service;
 
+import com.auction.server.dao.BidDao;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.TransactionLogDao;
 import com.auction.server.dao.UserDao;
@@ -7,15 +8,21 @@ import com.auction.shared.*;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SettlementService {
-  private ItemDao itemDao;
-  private UserDao userDao;
-  private TransactionLogDao logDao;
+  private static final Logger LOGGER = Logger.getLogger(SettlementService.class.getName());
+
+  private final ItemDao itemDao;
+  private final UserDao userDao;
+  private final BidDao bidDao;
+  private final TransactionLogDao logDao;
 
   public SettlementService() {
     this.itemDao = new ItemDao();
     this.userDao = new UserDao();
+    this.bidDao = new BidDao();
     this.logDao = new TransactionLogDao();
   }
 
@@ -24,59 +31,45 @@ public class SettlementService {
         .scheduleAtFixedRate(
             () -> {
               try {
-                List<Item> res = itemDao.getExpiredItems();
-                for (Item res1 : res) {
-                  settle(res1);
+                List<Item> expiredItems = itemDao.getExpiredItems();
+                for (Item item : expiredItems) {
+                  settle(item);
                 }
               } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Settlement cycle failed", e);
               }
             },
-            0,
-            10,
-            TimeUnit.SECONDS);
+            5, 10, TimeUnit.SECONDS);
   }
 
-  private void settle(Item res) {
-    int res1 = getWinnerId(res.getId());
-    if (res1 > 0) {
-      double res2 = res.getCurrentPrice();
-      userDao.addBidderMetrics(res1, 0); // Thắng bid thì cộng 1 itemsbought
+  private void settle(Item item) {
+    int winnerId = bidDao.getPreviousHighestBidder(item.getId());
 
-      User res3 = userDao.getById(String.valueOf(res.getSellerId()));
-      if (res3 != null) {
-        userDao.updateBalance(res3.getId(), res3.getBalance() + res2);
-        userDao.addSellerMetrics(res3.getId(), res2);
-        logDao.insertLog(res3.getId(), "ITEM_SOLD", res2, res.getId());
-        AuctionManager.getInstance()
-            .sendToUser(
-                res3.getId(),
-                new Response(
-                    "",
-                    "BALANCE_UPDATE",
-                    "Success",
-                    userDao.getById(String.valueOf(res3.getId()))));
+    if (winnerId > 0) {
+      boolean closed = itemDao.atomicCloseAuction(item.getId(), winnerId, "CLOSED");
+      if (!closed) return;
+
+      double finalPrice = item.getCurrentPrice();
+      userDao.addBidderMetrics(winnerId, 0);
+
+      userDao.atomicCreditBalance(item.getSellerId(), finalPrice);
+      userDao.addSellerMetrics(item.getSellerId(), finalPrice);
+      logDao.insertLog(item.getSellerId(), "ITEM_SOLD", finalPrice, item.getId());
+
+      User freshSeller = userDao.getById(String.valueOf(item.getSellerId()));
+      if (freshSeller != null) {
+        AuctionManager.getInstance().sendToUser(item.getSellerId(),
+            new Response("", "BALANCE_UPDATE", "Success", freshSeller));
       }
-      itemDao.closeAuction(res.getId(), res1, "CLOSED");
     } else {
-      itemDao.closeAuction(res.getId(), 0, "EXPIRED");
+      boolean closed = itemDao.atomicCloseAuction(item.getId(), 0, "EXPIRED");
+      if (!closed) return;
     }
-    AuctionManager.getInstance().broadcast(new Response("", "ITEM_CLOSED", "Success", res.getId()));
-  }
 
-  private int getWinnerId(int id) {
-    int ans = -1;
-    try {
-      java.sql.Connection res =
-          com.auction.server.dao.DatabaseConnection.getInstance().getConnection();
-      String res1 =
-          "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
-      java.sql.PreparedStatement res2 = res.prepareStatement(res1);
-      res2.setInt(1, id);
-      java.sql.ResultSet res3 = res2.executeQuery();
-      if (res3.next()) ans = res3.getInt("userid");
-    } catch (Exception e) {
+    Item closedItem = itemDao.getById(item.getId());
+    if (closedItem != null) {
+      AuctionManager.getInstance().broadcast(
+          new Response("", "ITEM_CLOSED", "closed", closedItem));
     }
-    return ans;
   }
 }

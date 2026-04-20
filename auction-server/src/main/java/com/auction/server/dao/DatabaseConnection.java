@@ -1,35 +1,64 @@
 package com.auction.server.dao;
 
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DatabaseConnection {
-  private static DatabaseConnection instance;
-  private Connection connection;
-  private String url = "jdbc:mysql://localhost:3306/auction_db";
-  private String user = "ba_nin";
-  private String pass = "banin123";
+  private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
+
+  private static final class Holder {
+    static final DatabaseConnection INSTANCE = new DatabaseConnection();
+  }
+
+  private String url;
+  private String user;
+  private String password;
 
   private DatabaseConnection() {
     try {
+      Properties props = new Properties();
+      InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties");
+      if (input != null) {
+        props.load(input);
+      } else {
+        LOGGER.warning("db.properties not found on classpath, using defaults");
+        props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
+        props.setProperty("db.user", "root");
+        props.setProperty("db.password", "");
+      }
+
+      this.url = props.getProperty("db.url");
+      this.user = props.getProperty("db.user");
+      this.password = props.getProperty("db.password");
+
       Class.forName("com.mysql.cj.jdbc.Driver");
-      this.connection = DriverManager.getConnection(this.url, this.user, this.pass);
-    } catch (ClassNotFoundException | SQLException e) {
-      e.printStackTrace();
+      // Validate by opening a test connection
+      Connection test = DriverManager.getConnection(url, user, password);
+      test.close();
+      LOGGER.info("Database connection validated successfully.");
+    } catch (Exception e) {
+      LOGGER.log(Level.SEVERE, "Failed to initialize database connection", e);
     }
   }
 
   public static DatabaseConnection getInstance() {
-    if (instance == null) {
-      instance = new DatabaseConnection();
-    }
-    DatabaseConnection ans = instance;
-    return ans;
+    return Holder.INSTANCE;
   }
 
+  /**
+   * Returns a NEW connection each call. Callers are responsible for closing it,
+   * or using try-with-resources. This avoids sharing a single Connection across threads.
+   */
   public Connection getConnection() {
-    Connection ans = this.connection;
-    return ans;
+    try {
+      return DriverManager.getConnection(url, user, password);
+    } catch (Exception e) {
+      LOGGER.log(Level.SEVERE, "Failed to create database connection", e);
+      return null;
+    }
   }
 }

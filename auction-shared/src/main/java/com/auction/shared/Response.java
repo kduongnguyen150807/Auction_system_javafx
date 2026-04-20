@@ -7,42 +7,38 @@ public class Response implements Serializable {
   private static final long serialVersionUID = 1L;
   public static final String OK = "SUCCESS";
   public static final String ERROR = "ERROR";
+
   protected String requestId;
   protected String status;
   protected String message;
   protected Object payload;
   protected LocalDateTime timestamp;
 
-  public Response(String rid, String st, String msg, Object obj) {
-    this.requestId = rid;
-    this.status = st;
-    this.message = msg;
-    this.payload = obj;
+  public Response(String requestId, String status, String message, Object payload) {
+    this.requestId = requestId;
+    this.status = status;
+    this.message = message;
+    this.payload = payload;
     this.timestamp = LocalDateTime.now();
   }
 
   public String getRequestId() {
-    String ans = this.requestId;
-    return ans;
+    return this.requestId;
   }
 
   public String getStatus() {
-    String ans = this.status;
-    return ans;
+    return this.status;
   }
 
   public String getMessage() {
-    String ans = this.message;
-    return ans;
+    return this.message;
   }
 
   public Object getPayload() {
-    Object ans = this.payload;
-    return ans;
+    return this.payload;
   }
 
   public LocalDateTime getTimestamp() {
-    LocalDateTime ans = this.timestamp;
-    return ans;
+    return this.timestamp;
   }
 }

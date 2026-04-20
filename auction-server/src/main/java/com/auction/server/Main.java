@@ -1,11 +1,11 @@
 package com.auction.server;
 
 import com.auction.server.controller.SocketServer;
-import com.auction.server.service.AuctionCloser;
+import com.auction.server.dao.DatabaseMigration;
 
 public class Main {
   public static void main(String[] args) {
-    new AuctionCloser().start();
+    DatabaseMigration.runAll();
     SocketServer server = new SocketServer(8080);
     server.startServer();
   }

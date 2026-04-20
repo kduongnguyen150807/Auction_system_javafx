@@ -21,12 +21,12 @@ public abstract class Item extends Entity {
 
   public Item() {}
 
-  public Item(String res, String ans, double res1, double ans1, int res2) {
-    this.name = res;
-    this.description = ans;
-    this.startingPrice = res1;
-    this.currentPrice = ans1;
-    this.sellerId = res2;
+  public Item(String name, String description, double startingPrice, double currentPrice, int sellerId) {
+    this.name = name;
+    this.description = description;
+    this.startingPrice = startingPrice;
+    this.currentPrice = currentPrice;
+    this.sellerId = sellerId;
     this.winnerId = -1;
     this.status = ItemStatus.OPEN;
   }
@@ -37,111 +37,111 @@ public abstract class Item extends Entity {
     return this.category;
   }
 
-  public void setCategory(String res) {
-    this.category = res;
+  public void setCategory(String category) {
+    this.category = category;
   }
 
   public String getName() {
     return this.name;
   }
 
-  public void setName(String res) {
-    this.name = res;
+  public void setName(String name) {
+    this.name = name;
   }
 
   public String getDescription() {
     return this.description;
   }
 
-  public void setDescription(String res) {
-    this.description = res;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
   public double getStartingPrice() {
     return this.startingPrice;
   }
 
-  public void setStartingPrice(double res) {
-    this.startingPrice = res;
+  public void setStartingPrice(double startingPrice) {
+    this.startingPrice = startingPrice;
   }
 
   public double getCurrentPrice() {
     return this.currentPrice;
   }
 
-  public void setCurrentPrice(double res) {
-    this.currentPrice = res;
+  public void setCurrentPrice(double currentPrice) {
+    this.currentPrice = currentPrice;
   }
 
   public LocalDateTime getStartTime() {
     return this.startTime;
   }
 
-  public void setStartTime(LocalDateTime res) {
-    this.startTime = res;
+  public void setStartTime(LocalDateTime startTime) {
+    this.startTime = startTime;
   }
 
   public LocalDateTime getEndTime() {
     return this.endTime;
   }
 
-  public void setEndTime(LocalDateTime res) {
-    this.endTime = res;
+  public void setEndTime(LocalDateTime endTime) {
+    this.endTime = endTime;
   }
 
   public double getMaxPrice() {
     return this.maxPrice;
   }
 
-  public void setMaxPrice(double res) {
-    this.maxPrice = res;
+  public void setMaxPrice(double maxPrice) {
+    this.maxPrice = maxPrice;
   }
 
   public int getSellerId() {
     return this.sellerId;
   }
 
-  public void setSellerId(int res) {
-    this.sellerId = res;
+  public void setSellerId(int sellerId) {
+    this.sellerId = sellerId;
   }
 
   public int getWinnerId() {
     return this.winnerId;
   }
 
-  public void setWinnerId(int res) {
-    this.winnerId = res;
+  public void setWinnerId(int winnerId) {
+    this.winnerId = winnerId;
   }
 
   public ItemStatus getStatus() {
     return this.status;
   }
 
-  public void setStatus(ItemStatus res) {
-    this.status = res;
+  public void setStatus(ItemStatus status) {
+    this.status = status;
   }
 
   public String getImageUrl() {
     return this.imageUrl;
   }
 
-  public void setImageUrl(String res) {
-    this.imageUrl = res;
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
   }
 
   public String getSellerUsername() {
     return this.sellerUsername;
   }
 
-  public void setSellerUsername(String res) {
-    this.sellerUsername = res;
+  public void setSellerUsername(String sellerUsername) {
+    this.sellerUsername = sellerUsername;
   }
 
   public String getSellerAvatarUrl() {
     return this.sellerAvatarUrl;
   }
 
-  public void setSellerAvatarUrl(String res) {
-    this.sellerAvatarUrl = res;
+  public void setSellerAvatarUrl(String sellerAvatarUrl) {
+    this.sellerAvatarUrl = sellerAvatarUrl;
   }
 }

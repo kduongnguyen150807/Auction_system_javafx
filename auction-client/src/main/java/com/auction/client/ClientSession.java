@@ -1,7 +1,12 @@
 package com.auction.client;
 
+import com.auction.client.network.NetworkClient;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class ClientSession {
   private static User currentUser;
@@ -26,47 +31,42 @@ public final class ClientSession {
   }
 
   public static User getCurrentUser() {
-    User ans = currentUser;
-    return ans;
+    return currentUser;
   }
 
   public static String getUsername() {
-    String ans = currentUser == null ? "" : safe(currentUser.getUsername());
-    return ans;
+    return currentUser == null ? "" : safe(currentUser.getUsername());
   }
 
   public static String getFullName() {
-    String ans = fullName;
-    return ans;
+    return fullName;
   }
 
   public static String getEmail() {
-    String ans = email;
-    return ans;
+    return email;
   }
 
   public static String getPhone() {
-    String ans = phone;
-    return ans;
+    return phone;
   }
 
   public static UserRole getActiveRole() {
-    UserRole ans = activeRole;
-    return ans;
+    return activeRole;
   }
 
   public static String updateProfile(String newFullName, String newEmail, String newPhone) {
     if (currentUser == null) return "not_logged_in";
-    java.util.Map<String, String> res = new java.util.HashMap<>();
-    res.put("userid", String.valueOf(currentUser.getId()));
-    res.put("fullname", newFullName);
-    res.put("email", newEmail);
-    res.put("phone", newPhone);
-    com.auction.shared.Request req =
-        new com.auction.shared.Request(com.auction.shared.Request.UPDATE_PROFILE, res);
-    com.auction.shared.Response ans =
-        com.auction.client.network.NetworkClient.getInstance().sendRequestAndWait(req);
-    if (ans != null && com.auction.shared.Response.OK.equals(ans.getStatus())) {
+
+    Map<String, String> data = new HashMap<>();
+    data.put("userid", String.valueOf(currentUser.getId()));
+    data.put("fullname", newFullName);
+    data.put("email", newEmail);
+    data.put("phone", newPhone);
+
+    Request request = new Request(Request.UPDATE_PROFILE, data);
+    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+
+    if (response != null && Response.OK.equals(response.getStatus())) {
       fullName = safe(newFullName);
       email = safe(newEmail);
       phone = safe(newPhone);
@@ -75,17 +75,14 @@ public final class ClientSession {
       currentUser.setPhoneNumber(phone);
       return null;
     }
-    String ans2 = ans != null ? ans.getMessage() : "fail";
-    return ans2;
+    return response != null ? response.getMessage() : "fail";
   }
 
-  public static void updateAvatar(String ans) {
+  public static void updateAvatar(String avatarUrl) {
     if (currentUser != null) {
-      currentUser.setAvatarUrl(ans);
-      com.auction.shared.Request req =
-          new com.auction.shared.Request(
-              com.auction.shared.Request.UPDATE_AVATAR, currentUser.getUsername() + " " + ans);
-      com.auction.client.network.NetworkClient.getInstance().sendRequestAndWait(req);
+      currentUser.setAvatarUrl(avatarUrl);
+      Request request = new Request(Request.UPDATE_AVATAR, currentUser.getUsername() + " " + avatarUrl);
+      NetworkClient.getInstance().sendRequestAndWait(request);
     }
   }
 
@@ -103,7 +100,6 @@ public final class ClientSession {
   }
 
   private static String safe(String value) {
-    String ans = value == null ? "" : value;
-    return ans;
+    return value == null ? "" : value;
   }
 }

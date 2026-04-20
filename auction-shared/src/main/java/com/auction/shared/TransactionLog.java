@@ -14,65 +14,59 @@ public class TransactionLog implements Serializable {
 
   public TransactionLog() {}
 
-  public TransactionLog(int u, String t, double a, int i, LocalDateTime c) {
-    this.userId = u;
-    this.type = t;
-    this.amount = a;
-    this.itemId = i;
-    this.createdAt = c;
+  public TransactionLog(int userId, String type, double amount, int itemId, LocalDateTime createdAt) {
+    this.userId = userId;
+    this.type = type;
+    this.amount = amount;
+    this.itemId = itemId;
+    this.createdAt = createdAt;
   }
 
   public int getId() {
-    int ans = this.id;
-    return ans;
+    return this.id;
   }
 
-  public void setId(int res) {
-    this.id = res;
+  public void setId(int id) {
+    this.id = id;
   }
 
   public int getUserId() {
-    int ans = this.userId;
-    return ans;
+    return this.userId;
   }
 
-  public void setUserId(int res) {
-    this.userId = res;
+  public void setUserId(int userId) {
+    this.userId = userId;
   }
 
   public String getType() {
-    String ans = this.type;
-    return ans;
+    return this.type;
   }
 
-  public void setType(String res) {
-    this.type = res;
+  public void setType(String type) {
+    this.type = type;
   }
 
   public double getAmount() {
-    double ans = this.amount;
-    return ans;
+    return this.amount;
   }
 
-  public void setAmount(double res) {
-    this.amount = res;
+  public void setAmount(double amount) {
+    this.amount = amount;
   }
 
   public int getItemId() {
-    int ans = this.itemId;
-    return ans;
+    return this.itemId;
   }
 
-  public void setItemId(int res) {
-    this.itemId = res;
+  public void setItemId(int itemId) {
+    this.itemId = itemId;
   }
 
   public LocalDateTime getCreatedAt() {
-    LocalDateTime ans = this.createdAt;
-    return ans;
+    return this.createdAt;
   }
 
-  public void setCreatedAt(LocalDateTime res) {
-    this.createdAt = res;
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
   }
 }

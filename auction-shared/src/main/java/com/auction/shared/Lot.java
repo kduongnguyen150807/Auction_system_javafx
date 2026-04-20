@@ -20,90 +20,90 @@ public class Lot implements Serializable {
   public Lot() {}
 
   public int getId() {
-    return id;
+    return this.id;
   }
 
-  public void setId(int i) {
-    this.id = i;
+  public void setId(int id) {
+    this.id = id;
   }
 
   public int getItemId() {
-    return itemId;
+    return this.itemId;
   }
 
-  public void setItemId(int i) {
-    this.itemId = i;
+  public void setItemId(int itemId) {
+    this.itemId = itemId;
   }
 
   public String getTitle() {
-    return title;
+    return this.title;
   }
 
-  public void setTitle(String t) {
-    this.title = t;
+  public void setTitle(String title) {
+    this.title = title;
   }
 
   public String getDescription() {
-    return description;
+    return this.description;
   }
 
-  public void setDescription(String d) {
-    this.description = d;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
   public double getBidValue() {
-    return bidValue;
+    return this.bidValue;
   }
 
-  public void setBidValue(double v) {
-    this.bidValue = v;
+  public void setBidValue(double bidValue) {
+    this.bidValue = bidValue;
   }
 
   public LocalDateTime getStartTime() {
-    return startTime;
+    return this.startTime;
   }
 
-  public void setStartTime(LocalDateTime t) {
-    this.startTime = t;
+  public void setStartTime(LocalDateTime startTime) {
+    this.startTime = startTime;
   }
 
   public LocalDateTime getEndTime() {
-    return endTime;
+    return this.endTime;
   }
 
-  public void setEndTime(LocalDateTime t) {
-    this.endTime = t;
+  public void setEndTime(LocalDateTime endTime) {
+    this.endTime = endTime;
   }
 
   public String getImageUrl() {
-    return imageUrl;
+    return this.imageUrl;
   }
 
-  public void setImageUrl(String u) {
-    this.imageUrl = u;
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
   }
 
   public String getSellerUsername() {
     return this.sellerUsername;
   }
 
-  public void setSellerUsername(String s) {
-    this.sellerUsername = s;
+  public void setSellerUsername(String sellerUsername) {
+    this.sellerUsername = sellerUsername;
   }
 
   public String getSellerAvatarUrl() {
     return this.sellerAvatarUrl;
   }
 
-  public void setSellerAvatarUrl(String s) {
-    this.sellerAvatarUrl = s;
+  public void setSellerAvatarUrl(String sellerAvatarUrl) {
+    this.sellerAvatarUrl = sellerAvatarUrl;
   }
 
   public String getWinnerUsername() {
     return this.winnerUsername;
   }
 
-  public void setWinnerUsername(String w) {
-    this.winnerUsername = w;
+  public void setWinnerUsername(String winnerUsername) {
+    this.winnerUsername = winnerUsername;
   }
 }

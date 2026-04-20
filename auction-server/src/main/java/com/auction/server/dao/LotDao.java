@@ -4,104 +4,72 @@ import com.auction.shared.Lot;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class LotDao {
-  private Connection conn;
+public class LotDao implements LotRepository {
+  private static final Logger LOGGER = Logger.getLogger(LotDao.class.getName());
 
-  public LotDao() {
-    this.conn = DatabaseConnection.getInstance().getConnection();
+  private Connection getConn() {
+    return DatabaseConnection.getInstance().getConnection();
   }
 
+  @Override
   public List<Lot> getOngoingBids(int userId) {
-    List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
-      }
-    } catch (Exception e) {
-    }
-    return ans;
+    return queryLots("SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+        + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+        + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()");
   }
 
+  @Override
   public List<Lot> getUpcomingBids(int userId) {
-    List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "WHERE i.status = 'OPEN' AND i.starttime > NOW()";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
-      }
-    } catch (Exception e) {
-    }
-    return ans;
+    return queryLots("SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+        + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+        + "WHERE i.status = 'OPEN' AND i.starttime > NOW()");
   }
 
+  @Override
   public List<Lot> getClosedBids(int userId) {
-    List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "LEFT JOIN users w ON i.winnerid = w.id "
-              + "WHERE i.status = 'CLOSED'";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
-      }
-    } catch (Exception e) {
-    }
-    return ans;
+    return queryLots("SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+        + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+        + "LEFT JOIN users w ON i.winnerid = w.id "
+        + "WHERE i.status = 'CLOSED'");
   }
 
+  @Override
   public List<Lot> getPastBids(int userId) {
-    List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "LEFT JOIN users w ON i.winnerid = w.id "
-              + "WHERE i.status IN ('FINISHED', 'CANCELED') OR (i.status = 'OPEN' AND i.endtime <= NOW())";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
-      }
-    } catch (Exception e) {
-    }
-    return ans;
+    return queryLots("SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+        + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+        + "LEFT JOIN users w ON i.winnerid = w.id "
+        + "WHERE i.status IN ('FINISHED', 'CANCELED') OR (i.status = 'OPEN' AND i.endtime <= NOW())");
   }
 
-  private Lot mapResultSet(ResultSet rs) throws SQLException {
-    Lot ans = new Lot();
-    ans.setId(rs.getInt("id"));
-    ans.setTitle(rs.getString("name"));
-    ans.setDescription(rs.getString("description"));
-    ans.setBidValue(rs.getDouble("currentprice"));
-    ans.setStartTime(rs.getTimestamp("starttime").toLocalDateTime());
-    ans.setEndTime(rs.getTimestamp("endtime").toLocalDateTime());
-    ans.setImageUrl(rs.getString("image_url"));
-    ans.setSellerUsername(rs.getString("s_name"));
-    ans.setSellerAvatarUrl(rs.getString("s_avatar"));
-    try {
-      String wname = rs.getString("w_name");
-      if (wname != null) ans.setWinnerUsername(wname);
+  private List<Lot> queryLots(String sql) {
+    List<Lot> lots = new ArrayList<>();
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) lots.add(mapResultSetToLot(rs));
     } catch (Exception e) {
+      LOGGER.log(Level.WARNING, "Lot query failed", e);
     }
-    return ans;
+    return lots;
+  }
+
+  private Lot mapResultSetToLot(ResultSet rs) throws SQLException {
+    Lot lot = new Lot();
+    lot.setId(rs.getInt("id"));
+    lot.setTitle(rs.getString("name"));
+    lot.setDescription(rs.getString("description"));
+    lot.setBidValue(rs.getDouble("currentprice"));
+    lot.setStartTime(rs.getTimestamp("starttime").toLocalDateTime());
+    lot.setEndTime(rs.getTimestamp("endtime").toLocalDateTime());
+    lot.setImageUrl(rs.getString("image_url"));
+    lot.setSellerUsername(rs.getString("s_name"));
+    lot.setSellerAvatarUrl(rs.getString("s_avatar"));
+    try {
+      String winnerName = rs.getString("w_name");
+      if (winnerName != null) lot.setWinnerUsername(winnerName);
+    } catch (Exception e) { /* w_name may not exist */ }
+    return lot;
   }
 }

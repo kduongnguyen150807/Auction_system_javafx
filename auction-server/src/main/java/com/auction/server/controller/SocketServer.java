@@ -1,36 +1,39 @@
 package com.auction.server.controller;
 
-import com.auction.server.service.SettlementService; // Nhớ import cái này
+import com.auction.server.service.SettlementService;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SocketServer {
-  private int port;
-  private ExecutorService pool;
+  private static final Logger LOGGER = Logger.getLogger(SocketServer.class.getName());
 
-  public SocketServer(int p) {
-    this.port = p;
+  private final int port;
+  private final ExecutorService pool;
+
+  public SocketServer(int port) {
+    this.port = port;
     this.pool = Executors.newFixedThreadPool(50);
   }
 
   public void startServer() {
     try {
-      // Kích hoạt Robot quét tiền tự động ở đây nè con lợn
-      SettlementService ans = new SettlementService();
-      ans.start();
+      SettlementService settlement = new SettlementService();
+      settlement.start();
 
-      ServerSocket ss = new ServerSocket(this.port);
-      System.out.println("server is running");
+      ServerSocket serverSocket = new ServerSocket(this.port);
+      LOGGER.info("Server is running on port " + this.port);
       while (true) {
-        Socket client = ss.accept();
+        Socket client = serverSocket.accept();
         ClientHandler handler = new ClientHandler(client);
         this.pool.execute(handler);
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      LOGGER.log(Level.SEVERE, "Server startup failed", e);
     }
   }
 }

@@ -119,6 +119,15 @@ public class TrangChuController {
     }
   }
 
+  public void removeClosedItem(Item item) {
+    if (item == null) return;
+    cacheditems.removeIf(lot -> lot.getId() == item.getId());
+    ItemCardController card = cardmap.remove(item.getId());
+    if (card != null) {
+      renderFilteredItems();
+    }
+  }
+
   public void updatePriceUi(Item ans) {
     if (ans == null) return;
     updateItemPrice(ans);

@@ -1,216 +1,386 @@
 package com.auction.server.service;
 
 import com.auction.server.controller.ClientHandler;
+import com.auction.server.dao.BidDao;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.TransactionLogDao;
 import com.auction.server.dao.UserDao;
 import com.auction.shared.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AuctionManager {
-  private static AuctionManager instance;
-  private List<ClientHandler> clients;
-  private BidService bidservice;
-  private ItemDao itemDao;
-  private UserDao userDao;
-  private TransactionLogDao logDao;
-  private java.util.Map<Integer, java.util.PriorityQueue<BidTransaction>> autobids;
+  private static final Logger LOGGER = Logger.getLogger(AuctionManager.class.getName());
+  private static final long ANTI_SNIPE_THRESHOLD_SECONDS = 60;
+  private static final int MAX_AUTO_BID_ROUNDS = 50;
+
+  private static volatile AuctionManager instance;
+  private final List<ClientHandler> clients;
+  private final ItemDao itemDao;
+  private final UserDao userDao;
+  private final BidDao bidDao;
+  private final TransactionLogDao logDao;
+  private final ConcurrentHashMap<Integer, ReentrantLock> itemLocks;
+
+  /**
+   * Per-item list of active auto-bid registrations. Each entry represents
+   * a user's standing instruction to auto-bid up to their maxAutoBid ceiling.
+   */
+  private final ConcurrentHashMap<Integer, List<AutoBidRegistration>> autoBidRegistry;
 
   private AuctionManager() {
     this.clients = new CopyOnWriteArrayList<>();
-    this.bidservice = new BidService();
     this.itemDao = new ItemDao();
     this.userDao = new UserDao();
+    this.bidDao = new BidDao();
     this.logDao = new TransactionLogDao();
-    this.autobids = new java.util.concurrent.ConcurrentHashMap<>();
+    this.itemLocks = new ConcurrentHashMap<>();
+    this.autoBidRegistry = new ConcurrentHashMap<>();
   }
 
-  public static synchronized AuctionManager getInstance() {
-    if (instance == null) instance = new AuctionManager();
+  public static AuctionManager getInstance() {
+    if (instance == null) {
+      synchronized (AuctionManager.class) {
+        if (instance == null) instance = new AuctionManager();
+      }
+    }
     return instance;
   }
 
-  public void addClient(ClientHandler c) {
-    this.clients.add(c);
+  private ReentrantLock getLockForItem(int itemId) {
+    return this.itemLocks.computeIfAbsent(itemId, k -> new ReentrantLock(true));
   }
 
-  public void removeClient(ClientHandler c) {
-    this.clients.remove(c);
+  public void addClient(ClientHandler client) {
+    this.clients.add(client);
   }
 
-  public synchronized Response processBid(BidTransaction b) {
-    Item res = itemDao.getById(b.getItemId());
-    User ans = userDao.getById(String.valueOf(b.getUserId()));
-
-    if (ans != null) {
-      String ph = ans.getPhoneNumber();
-      if (ph == null || ph.trim().isEmpty())
-        return new Response(
-            "", Response.ERROR, "Unverified account. Add a phone number to bid.", null);
-    }
-    if (res != null && res.getSellerId() == b.getUserId())
-      return new Response("", Response.ERROR, "Fail", null);
-
-    /* Auto-bid: chỉ đặt mức đấu tối thiểu (giá hiện tại + bước nhảy). Trần maxAutoBid dùng khi có người khác đấu.
-    Không add vào queue ở đây — phải sau placeBid OK, tránh queue rỗng / sai khi hết tiền hoặc bid lỗi. */
-    if (b.isAutoBid()) {
-      b.setBidValue(res.getCurrentPrice() + b.getAutoBidIncrement());
-    }
-
-    if (res != null && b.getBidValue() <= res.getCurrentPrice()) {
-      b.setBidValue(res.getCurrentPrice() + b.getAutoBidIncrement());
-    }
-
-    if (ans != null && ans.getBalance() < b.getBidValue())
-      return new Response("", Response.ERROR, "Fail", null);
-
-    if (res != null && res.getMaxPrice() > 0 && b.getBidValue() >= res.getMaxPrice()) {
-      double res1 = res.getMaxPrice();
-      userDao.updateBalance(ans.getId(), ans.getBalance() - res1);
-      userDao.addBidderMetrics(ans.getId(), res1);
-      logDao.insertLog(ans.getId(), "ITEM_BOUGHT", -res1, b.getItemId());
-      sendToUser(
-          ans.getId(),
-          new Response(
-              "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(ans.getId()))));
-
-      User ans1 = userDao.getById(String.valueOf(res.getSellerId()));
-      if (ans1 != null) {
-        userDao.updateBalance(ans1.getId(), ans1.getBalance() + res1);
-        userDao.addSellerMetrics(ans1.getId(), res1);
-        logDao.insertLog(ans1.getId(), "ITEM_SOLD", res1, b.getItemId());
-        sendToUser(
-            ans1.getId(),
-            new Response(
-                "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(ans1.getId()))));
-      }
-      itemDao.updatePrice(res.getId(), res1, res.getVersion());
-      itemDao.closeAuction(res.getId(), b.getUserId(), "CLOSED");
-      Response ans2 = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", b.getItemId());
-      broadcast(ans2);
-      int res4 = getPreviousHighestBidder(b.getItemId());
-      if (res4 > 0) {
-        sendToUser(res4, new Response("", "OUTBID_NOTIFY", "outbid", b.getItemId()));
-      }
-      Item res5 = itemDao.getById(b.getItemId());
-      if (res5 != null) {
-        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res5));
-      }
-      return ans2;
-    }
-
-    int res2 = getPreviousHighestBidder(b.getItemId());
-    double res3 = res.getCurrentPrice();
-    userDao.updateBalance(ans.getId(), ans.getBalance() - b.getBidValue());
-    logDao.insertLog(ans.getId(), "BID_HOLD", -b.getBidValue(), b.getItemId());
-    sendToUser(
-        ans.getId(),
-        new Response(
-            "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(ans.getId()))));
-
-    if (res2 > 0 && res3 > 0) {
-      User ans3 = userDao.getById(String.valueOf(res2));
-      if (ans3 != null) {
-        userDao.updateBalance(res2, ans3.getBalance() + res3);
-        logDao.insertLog(res2, "BID_REFUND", res3, b.getItemId());
-        sendToUser(
-            res2,
-            new Response("", "BALANCE_UPDATE", "Outbid", userDao.getById(String.valueOf(res2))));
-      }
-    }
-
-    Response ans4 = this.bidservice.placeBid(b);
-    if (ans4.getStatus().equals(Response.OK)) {
-      Item res4 = itemDao.getById(b.getItemId());
-      if (res4 != null) {
-        java.time.LocalDateTime res5 = java.time.LocalDateTime.now();
-        java.time.LocalDateTime ans5 = res4.getEndTime();
-        if (ans5 != null && java.time.Duration.between(res5, ans5).getSeconds() < 60) {
-          java.time.LocalDateTime res6 = ans5.plusSeconds(60);
-          itemDao.updateEndTime(res4.getId(), res6);
-          res4.setEndTime(res6);
-        }
-        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res4));
-      }
-      broadcast(ans4);
-      if (res2 > 0) {
-        sendToUser(res2, new Response("", "OUTBID_NOTIFY", "outbid", b.getItemId()));
-      }
-      if (b.isAutoBid()) {
-        registerAutoBidQueue(b);
-      }
-      tryProcessAutoCounters(b.getItemId());
-    }
-
-    return ans4;
+  public void removeClient(ClientHandler client) {
+    this.clients.remove(client);
   }
 
-  /** Ghi nhận trần auto-bid sau khi đặt giá thành công (chỉ lúc này mới có trong hàng đợi). */
-  private void registerAutoBidQueue(BidTransaction b) {
-    java.util.PriorityQueue<BidTransaction> q =
-        this.autobids.computeIfAbsent(
-            b.getItemId(),
-            k ->
-                new java.util.PriorityQueue<>(
-                    10,
-                    (a1, a2) -> Double.compare(a2.getMaxAutoBid(), a1.getMaxAutoBid())));
-    q.add(b);
-  }
+  // ─── Public entry point ────────────────────────────────────────────
 
-  /**
-   * Sau mỗi lần giá thay đổi thành công: nếu có người đăng ký auto-bid (không phải người đang dẫn) và trần
-   * cho phép, đặt giúp một bước (giá hiện tại + increment).
-   */
-  private void tryProcessAutoCounters(int itemId) {
-    java.util.PriorityQueue<BidTransaction> queue = this.autobids.get(itemId);
-    if (queue == null || queue.isEmpty()) return;
-    double currentPrice = itemDao.getById(itemId).getCurrentPrice();
-    int currentLeader = getPreviousHighestBidder(itemId);
-    java.util.List<BidTransaction> snapshot = new java.util.ArrayList<>();
-    while (!queue.isEmpty()) {
-      snapshot.add(queue.poll());
-    }
-    for (BidTransaction reg : snapshot) {
-      if (reg.getUserId() != currentLeader && reg.getMaxAutoBid() > currentPrice) {
-        double nextBid = currentPrice + reg.getAutoBidIncrement();
-        if (nextBid <= reg.getMaxAutoBid()) {
-          BidTransaction counter = new BidTransaction(itemId, reg.getUserId(), nextBid);
-          counter.setAutoBid(false);
-          counter.setAutoBidIncrement(reg.getAutoBidIncrement());
-          processBid(counter);
-          break;
-        }
-      }
-    }
-    for (BidTransaction reg : snapshot) {
-      queue.add(reg);
-    }
-  }
-
-  private int getPreviousHighestBidder(int id) {
-    int ans = -1;
+  public Response processBid(BidTransaction bid) {
+    ReentrantLock lock = getLockForItem(bid.getItemId());
+    lock.lock();
     try {
-      java.sql.Connection res =
-          com.auction.server.dao.DatabaseConnection.getInstance().getConnection();
-      String res1 =
-          "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
-      java.sql.PreparedStatement ans1 = res.prepareStatement(res1);
-      ans1.setInt(1, id);
-      java.sql.ResultSet res2 = ans1.executeQuery();
-      if (res2.next()) ans = res2.getInt("userid");
-    } catch (Exception e) {
-    }
-    return ans;
-  }
-
-  public void sendToUser(int id, Response r) {
-    for (ClientHandler ans : this.clients) {
-      if (ans.getCurrentUser() != null && ans.getCurrentUser().getId() == id) ans.send(r);
+      if (bid.isAutoBid()) {
+        return handleAutoBidRegistration(bid);
+      }
+      Response result = doProcessManualBid(bid);
+      if (result != null && Response.OK.equals(result.getStatus())) {
+        runAutoBidRounds(bid.getItemId());
+      }
+      return result;
+    } finally {
+      lock.unlock();
     }
   }
 
-  public void broadcast(Response r) {
-    for (ClientHandler ans : this.clients) ans.send(r);
+  // ─── Auto-bid registration ────────────────────────────────────────
+
+  private Response handleAutoBidRegistration(BidTransaction bid) {
+    Item item = itemDao.getById(bid.getItemId());
+    User bidder = userDao.getById(String.valueOf(bid.getUserId()));
+
+    Response validation = validateBid(bid, item, bidder);
+    if (validation != null) return validation;
+
+    if (bid.getMaxAutoBid() <= item.getCurrentPrice()) {
+      return new Response("", Response.ERROR,
+          "Max auto-bid must be higher than current price", null);
+    }
+
+    List<AutoBidRegistration> regs = autoBidRegistry.computeIfAbsent(
+        bid.getItemId(), k -> new ArrayList<>());
+
+    regs.removeIf(r -> r.userId == bid.getUserId());
+
+    double increment = bid.getAutoBidIncrement();
+    if (increment <= 0) increment = 10.0;
+
+    regs.add(new AutoBidRegistration(
+        bid.getUserId(), bid.getMaxAutoBid(), increment));
+    LOGGER.info("AutoBid registered: user=" + bid.getUserId()
+        + " item=" + bid.getItemId() + " max=" + bid.getMaxAutoBid());
+
+    double firstBid = item.getCurrentPrice() + increment;
+    if (firstBid > bid.getMaxAutoBid()) {
+      firstBid = bid.getMaxAutoBid();
+    }
+    if (firstBid <= item.getCurrentPrice()) {
+      return new Response("", Response.ERROR, "Auto-bid ceiling too low for current price", null);
+    }
+
+    BidTransaction initialBid = new BidTransaction(
+        bid.getItemId(), bid.getUserId(), firstBid);
+    initialBid.setAutoBid(false);
+    initialBid.setTimestamp(LocalDateTime.now());
+
+    Response result = doProcessManualBid(initialBid);
+
+    if (result != null && Response.OK.equals(result.getStatus())) {
+      runAutoBidRounds(bid.getItemId());
+    }
+
+    return result;
+  }
+
+  // ─── Core bid processing (manual / counter bids) ──────────────────
+
+  private Response doProcessManualBid(BidTransaction bid) {
+    Item item = itemDao.getById(bid.getItemId());
+    User bidder = userDao.getById(String.valueOf(bid.getUserId()));
+
+    Response validation = validateBid(bid, item, bidder);
+    if (validation != null) return validation;
+
+    if (isBuyItNow(item, bid)) {
+      return processBuyItNow(bid, item, bidder);
+    }
+
+    return processRegularBid(bid, item, bidder);
+  }
+
+  private Response validateBid(BidTransaction bid, Item item, User bidder) {
+    if (item == null) {
+      return new Response("", Response.ERROR, "Item not found", null);
+    }
+    if (item.getStatus() != ItemStatus.OPEN) {
+      return new Response("", Response.ERROR, "Auction is no longer open", null);
+    }
+    if (item.getEndTime() != null && item.getEndTime().isBefore(LocalDateTime.now())) {
+      return new Response("", Response.ERROR, "Auction has ended", null);
+    }
+    if (bidder == null) {
+      return new Response("", Response.ERROR, "User not found", null);
+    }
+    String phone = bidder.getPhoneNumber();
+    if (phone == null || phone.trim().isEmpty()) {
+      return new Response("", Response.ERROR,
+          "Unverified account. Add a phone number to bid.", null);
+    }
+    if (item.getSellerId() == bid.getUserId()) {
+      return new Response("", Response.ERROR, "Cannot bid on your own item", null);
+    }
+    return null;
+  }
+
+  private boolean isBuyItNow(Item item, BidTransaction bid) {
+    return item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice();
+  }
+
+  private Response processBuyItNow(BidTransaction bid, Item item, User bidder) {
+    double buyPrice = item.getMaxPrice();
+
+    if (!userDao.atomicDeductBalance(bidder.getId(), buyPrice)) {
+      return new Response("", Response.ERROR, "Insufficient balance", null);
+    }
+    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -buyPrice, bid.getItemId());
+    userDao.addBidderMetrics(bidder.getId(), buyPrice);
+
+    boolean closed = itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED");
+    if (!closed) {
+      userDao.atomicCreditBalance(bidder.getId(), buyPrice);
+      logDao.insertLog(bidder.getId(), "BUY_REFUND", buyPrice, bid.getItemId());
+      return new Response("", Response.ERROR, "Auction already closed", null);
+    }
+
+    itemDao.updatePrice(item.getId(), buyPrice, item.getVersion());
+    creditSeller(item, buyPrice);
+
+    sendBalanceUpdateToUser(bidder.getId());
+    broadcastItemClosed(item.getId());
+    cleanupAutoBids(item.getId());
+
+    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
+  }
+
+  private Response processRegularBid(BidTransaction bid, Item item, User bidder) {
+    if (bid.getBidValue() <= item.getCurrentPrice()) {
+      return new Response("", Response.ERROR, "Bid too low", null);
+    }
+
+    if (!userDao.atomicDeductBalance(bidder.getId(), bid.getBidValue())) {
+      return new Response("", Response.ERROR, "Insufficient balance", null);
+    }
+    logDao.insertLog(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId());
+
+    int previousBidderId = bidDao.getPreviousHighestBidder(bid.getItemId());
+    double previousPrice = item.getCurrentPrice();
+
+    boolean bidPlaced = bidDao.placeBid(bid);
+    if (!bidPlaced) {
+      userDao.atomicCreditBalance(bidder.getId(), bid.getBidValue());
+      logDao.insertLog(bidder.getId(), "BID_REFUND", bid.getBidValue(), bid.getItemId());
+      return new Response("", Response.ERROR, "conflict", null);
+    }
+
+    itemDao.updatePrice(item.getId(), bid.getBidValue(), item.getVersion());
+    refundPreviousBidder(previousBidderId, previousPrice, bid.getItemId());
+
+    applyAntiSnipeExtension(bid.getItemId());
+    sendBalanceUpdateToUser(bidder.getId());
+    broadcastPriceUpdate(bid.getItemId());
+
+    if (previousBidderId > 0) {
+      sendToUser(previousBidderId,
+          new Response("", "OUTBID_NOTIFY", "outbid", bid.getItemId()));
+    }
+
+    return new Response("", Response.OK, "success", bid);
+  }
+
+  // ─── Auto-bid counter rounds (iterative, no recursion) ────────────
+
+  private void runAutoBidRounds(int itemId) {
+    List<AutoBidRegistration> regs = autoBidRegistry.get(itemId);
+    if (regs == null || regs.isEmpty()) return;
+
+    for (int round = 0; round < MAX_AUTO_BID_ROUNDS; round++) {
+      Item item = itemDao.getById(itemId);
+      if (item == null || item.getStatus() != ItemStatus.OPEN) break;
+
+      double currentPrice = item.getCurrentPrice();
+      int currentLeader = bidDao.getPreviousHighestBidder(itemId);
+
+      AutoBidRegistration best = null;
+      double bestNextBid = 0;
+
+      for (AutoBidRegistration reg : regs) {
+        if (reg.userId == currentLeader) continue;
+        if (reg.maxAutoBid <= currentPrice) continue;
+
+        double nextBid = currentPrice + reg.increment;
+        if (nextBid > reg.maxAutoBid) nextBid = reg.maxAutoBid;
+        if (nextBid <= currentPrice) continue;
+
+        if (best == null || nextBid > bestNextBid
+            || (nextBid == bestNextBid && reg.maxAutoBid > best.maxAutoBid)) {
+          best = reg;
+          bestNextBid = nextBid;
+        }
+      }
+
+      if (best == null) break;
+
+      final AutoBidRegistration chosen = best;
+      BidTransaction counterBid = new BidTransaction(itemId, chosen.userId, bestNextBid);
+      counterBid.setAutoBid(false);
+      counterBid.setTimestamp(LocalDateTime.now());
+
+      Response result = doProcessManualBid(counterBid);
+      if (result == null || !Response.OK.equals(result.getStatus())) {
+        regs.removeIf(r -> r.userId == chosen.userId);
+        LOGGER.info("AutoBid removed (bid failed): user=" + chosen.userId);
+        continue;
+      }
+    }
+
+    pruneExhaustedRegistrations(itemId);
+  }
+
+  private void pruneExhaustedRegistrations(int itemId) {
+    List<AutoBidRegistration> regs = autoBidRegistry.get(itemId);
+    if (regs == null) return;
+
+    Item item = itemDao.getById(itemId);
+    if (item == null) {
+      regs.clear();
+      return;
+    }
+    double currentPrice = item.getCurrentPrice();
+    regs.removeIf(r -> r.maxAutoBid <= currentPrice);
+  }
+
+  private void cleanupAutoBids(int itemId) {
+    autoBidRegistry.remove(itemId);
+  }
+
+  // ─── Balance / notification helpers ────────────────────────────────
+
+  private void sendBalanceUpdateToUser(int userId) {
+    User freshUser = userDao.getById(String.valueOf(userId));
+    if (freshUser != null) {
+      sendToUser(userId, new Response("", "BALANCE_UPDATE", "Success", freshUser));
+    }
+  }
+
+  private void creditSeller(Item item, double amount) {
+    userDao.atomicCreditBalance(item.getSellerId(), amount);
+    userDao.addSellerMetrics(item.getSellerId(), amount);
+    logDao.insertLog(item.getSellerId(), "ITEM_SOLD", amount, item.getId());
+    sendBalanceUpdateToUser(item.getSellerId());
+  }
+
+  private void refundPreviousBidder(int previousBidderId, double previousPrice, int itemId) {
+    if (previousBidderId <= 0 || previousPrice <= 0) return;
+    userDao.atomicCreditBalance(previousBidderId, previousPrice);
+    logDao.insertLog(previousBidderId, "BID_REFUND", previousPrice, itemId);
+    sendBalanceUpdateToUser(previousBidderId);
+  }
+
+  private void applyAntiSnipeExtension(int itemId) {
+    Item item = itemDao.getById(itemId);
+    if (item == null || item.getEndTime() == null) return;
+    LocalDateTime now = LocalDateTime.now();
+    if (Duration.between(now, item.getEndTime()).getSeconds() < ANTI_SNIPE_THRESHOLD_SECONDS) {
+      itemDao.updateEndTime(item.getId(),
+          item.getEndTime().plusSeconds(ANTI_SNIPE_THRESHOLD_SECONDS));
+    }
+  }
+
+  private void broadcastPriceUpdate(int itemId) {
+    Item updatedItem = itemDao.getById(itemId);
+    if (updatedItem != null) {
+      broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", updatedItem));
+      sendToUser(updatedItem.getSellerId(),
+          new Response("", "SELLER_BID_NOTIFY", "new_bid_on_your_item", updatedItem));
+    }
+  }
+
+  private void broadcastItemClosed(int itemId) {
+    Item closedItem = itemDao.getById(itemId);
+    if (closedItem != null) {
+      broadcast(new Response("", "ITEM_CLOSED", "closed", closedItem));
+    }
+  }
+
+  public void sendToUser(int userId, Response response) {
+    for (ClientHandler client : this.clients) {
+      if (client.getCurrentUser() != null && client.getCurrentUser().getId() == userId) {
+        client.send(response);
+      }
+    }
+  }
+
+  public void broadcast(Response response) {
+    for (ClientHandler client : this.clients) {
+      client.send(response);
+    }
+  }
+
+  // ─── Inner class for auto-bid registration ────────────────────────
+
+  private static class AutoBidRegistration {
+    final int userId;
+    final double maxAutoBid;
+    final double increment;
+
+    AutoBidRegistration(int userId, double maxAutoBid, double increment) {
+      this.userId = userId;
+      this.maxAutoBid = maxAutoBid;
+      this.increment = increment;
+    }
   }
 }

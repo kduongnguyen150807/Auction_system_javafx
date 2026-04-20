@@ -37,55 +37,55 @@ public class Rating implements Serializable {
     return this.itemId;
   }
 
-  public void setItemId(int res) {
-    this.itemId = res;
+  public void setItemId(int itemId) {
+    this.itemId = itemId;
   }
 
   public int getRaterUserId() {
     return this.raterUserId;
   }
 
-  public void setRaterUserId(int res) {
-    this.raterUserId = res;
+  public void setRaterUserId(int raterUserId) {
+    this.raterUserId = raterUserId;
   }
 
   public int getRatedUserId() {
     return this.ratedUserId;
   }
 
-  public void setRatedUserId(int res) {
-    this.ratedUserId = res;
+  public void setRatedUserId(int ratedUserId) {
+    this.ratedUserId = ratedUserId;
   }
 
   public int getStars() {
     return this.stars;
   }
 
-  public void setStars(int res) {
-    this.stars = res;
+  public void setStars(int stars) {
+    this.stars = stars;
   }
 
   public String getFeedback() {
     return this.feedback;
   }
 
-  public void setFeedback(String res) {
-    this.feedback = res;
+  public void setFeedback(String feedback) {
+    this.feedback = feedback;
   }
 
   public LocalDateTime getCreatedAt() {
     return this.createdAt;
   }
 
-  public void setCreatedAt(LocalDateTime res) {
-    this.createdAt = res;
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
   }
 
   public String getRaterUsername() {
     return this.raterUsername;
   }
 
-  public void setRaterUsername(String res) {
-    this.raterUsername = res;
+  public void setRaterUsername(String raterUsername) {
+    this.raterUsername = raterUsername;
   }
 }

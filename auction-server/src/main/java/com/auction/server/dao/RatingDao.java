@@ -4,111 +4,95 @@ import com.auction.shared.Rating;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class RatingDao {
-  private Connection conn;
+public class RatingDao implements RatingRepository {
+  private static final Logger LOGGER = Logger.getLogger(RatingDao.class.getName());
 
-  public RatingDao() {
-    this.conn = DatabaseConnection.getInstance().getConnection();
-    ensureTable();
+  private Connection getConn() {
+    return DatabaseConnection.getInstance().getConnection();
   }
 
-  private void ensureTable() {
-    try {
-      Statement res = this.conn.createStatement();
-      res.executeUpdate(
-          "CREATE TABLE IF NOT EXISTS ratings ("
-              + "id INT AUTO_INCREMENT PRIMARY KEY, "
-              + "itemid INT NOT NULL, "
-              + "rateruserid INT NOT NULL, "
-              + "rateduserid INT NOT NULL, "
-              + "stars INT NOT NULL, "
-              + "feedback TEXT, "
-              + "createdat DATETIME DEFAULT CURRENT_TIMESTAMP, "
-              + "UNIQUE KEY uq_rating (itemid, rateruserid))");
+  @Override
+  public boolean insertRating(Rating rating) {
+    String sql = "INSERT INTO ratings (itemid, rateruserid, rateduserid, stars, feedback) VALUES (?, ?, ?, ?, ?)";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, rating.getItemId());
+      ps.setInt(2, rating.getRaterUserId());
+      ps.setInt(3, rating.getRatedUserId());
+      ps.setInt(4, rating.getStars());
+      ps.setString(5, rating.getFeedback());
+      return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, "insertRating failed", e);
+      return false;
     }
   }
 
-  public boolean insertRating(Rating r) {
-    boolean ans = false;
-    try {
-      String res =
-          "INSERT INTO ratings (itemid, rateruserid, rateduserid, stars, feedback) VALUES (?, ?, ?, ?, ?)";
-      PreparedStatement res1 = this.conn.prepareStatement(res);
-      res1.setInt(1, r.getItemId());
-      res1.setInt(2, r.getRaterUserId());
-      res1.setInt(3, r.getRatedUserId());
-      res1.setInt(4, r.getStars());
-      res1.setString(5, r.getFeedback());
-      int res2 = res1.executeUpdate();
-      ans = res2 > 0;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return ans;
-  }
-
+  @Override
   public boolean hasRated(int itemId, int userId) {
-    boolean ans = false;
-    try {
-      String res = "SELECT 1 FROM ratings WHERE itemid = ? AND rateruserid = ? LIMIT 1";
-      PreparedStatement res1 = this.conn.prepareStatement(res);
-      res1.setInt(1, itemId);
-      res1.setInt(2, userId);
-      ResultSet res2 = res1.executeQuery();
-      ans = res2.next();
+    String sql = "SELECT 1 FROM ratings WHERE itemid = ? AND rateruserid = ? LIMIT 1";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      ps.setInt(2, userId);
+      ResultSet rs = ps.executeQuery();
+      return rs.next();
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, "hasRated check failed", e);
+      return false;
     }
-    return ans;
   }
 
+  @Override
   public List<Rating> getByItemId(int itemId) {
-    List<Rating> ans = new ArrayList<>();
-    try {
-      String res =
-          "SELECT r.*, u.username AS rater_name FROM ratings r LEFT JOIN users u ON r.rateruserid = u.id WHERE r.itemid = ? ORDER BY r.createdat DESC";
-      PreparedStatement res1 = this.conn.prepareStatement(res);
-      res1.setInt(1, itemId);
-      ResultSet res2 = res1.executeQuery();
-      while (res2.next()) {
-        Rating res3 = new Rating();
-        res3.setId(res2.getInt("id"));
-        res3.setItemId(res2.getInt("itemid"));
-        res3.setRaterUserId(res2.getInt("rateruserid"));
-        res3.setRatedUserId(res2.getInt("rateduserid"));
-        res3.setStars(res2.getInt("stars"));
-        res3.setFeedback(res2.getString("feedback"));
-        res3.setCreatedAt(res2.getTimestamp("createdat").toLocalDateTime());
-        res3.setRaterUsername(res2.getString("rater_name"));
-        ans.add(res3);
-      }
+    List<Rating> ratings = new ArrayList<>();
+    String sql = "SELECT r.*, u.username AS rater_name FROM ratings r "
+        + "LEFT JOIN users u ON r.rateruserid = u.id WHERE r.itemid = ? ORDER BY r.createdat DESC";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) ratings.add(mapResultSetToRating(rs));
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, "getByItemId failed", e);
     }
-    return ans;
+    return ratings;
   }
 
+  @Override
   public void recalcUserRating(int userId) {
-    try {
-      String res = "SELECT AVG(stars) AS avg_s, COUNT(*) AS cnt FROM ratings WHERE rateduserid = ?";
-      PreparedStatement res1 = this.conn.prepareStatement(res);
-      res1.setInt(1, userId);
-      ResultSet res2 = res1.executeQuery();
-      if (res2.next()) {
-        double ans = res2.getDouble("avg_s");
-        int ans1 = res2.getInt("cnt");
-        String res3 = "UPDATE users SET avgrating = ?, totalratings = ? WHERE id = ?";
-        PreparedStatement res4 = this.conn.prepareStatement(res3);
-        res4.setDouble(1, ans);
-        res4.setInt(2, ans1);
-        res4.setInt(3, userId);
-        res4.executeUpdate();
+    try (Connection conn = getConn()) {
+      String selectSql = "SELECT AVG(stars) AS avg_s, COUNT(*) AS cnt FROM ratings WHERE rateduserid = ?";
+      try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
+        ps.setInt(1, userId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+          double avgRating = rs.getDouble("avg_s");
+          int totalRatings = rs.getInt("cnt");
+          String updateSql = "UPDATE users SET avgrating = ?, totalratings = ? WHERE id = ?";
+          try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+            updateStmt.setDouble(1, avgRating);
+            updateStmt.setInt(2, totalRatings);
+            updateStmt.setInt(3, userId);
+            updateStmt.executeUpdate();
+          }
+        }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, "recalcUserRating failed", e);
     }
+  }
+
+  private Rating mapResultSetToRating(ResultSet rs) throws SQLException {
+    Rating rating = new Rating();
+    rating.setId(rs.getInt("id"));
+    rating.setItemId(rs.getInt("itemid"));
+    rating.setRaterUserId(rs.getInt("rateruserid"));
+    rating.setRatedUserId(rs.getInt("rateduserid"));
+    rating.setStars(rs.getInt("stars"));
+    rating.setFeedback(rs.getString("feedback"));
+    rating.setCreatedAt(rs.getTimestamp("createdat").toLocalDateTime());
+    rating.setRaterUsername(rs.getString("rater_name"));
+    return rating;
   }
 }

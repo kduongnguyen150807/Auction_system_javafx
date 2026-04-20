@@ -26,42 +26,42 @@ public class RegisterController {
   }
 
   @FXML
-  public void handleRegister(ActionEvent ev) {
-    String u1 = this.u.getText();
-    String e1 = this.e.getText();
-    String a1 = this.a.getText();
-    String p1 = this.p.getText();
-    String p2 = this.cp.getText();
+  public void handleRegister(ActionEvent event) {
+    String username = this.u.getText();
+    String emailText = this.e.getText();
+    String age = this.a.getText();
+    String password = this.p.getText();
+    String confirmPassword = this.cp.getText();
 
-    if (u1.isEmpty() || e1.isEmpty() || p1.isEmpty()) {
+    if (username.isEmpty() || emailText.isEmpty() || password.isEmpty()) {
       this.ans.setText("nhập đủ thông tin vào!");
       return;
     }
 
-    if (!p1.equals(p2)) {
+    if (!password.equals(confirmPassword)) {
       this.ans.setText("mật khẩu không khớp!");
       return;
     }
 
-    Bidder res = new Bidder();
-    res.setUsername(u1);
-    res.setEmail(e1);
-    res.setAge(a1);
-    res.setPassword(p1);
-    res.setFullName(u1);
+    Bidder newUser = new Bidder();
+    newUser.setUsername(username);
+    newUser.setEmail(emailText);
+    newUser.setAge(age);
+    newUser.setPassword(password);
+    newUser.setFullName(username);
 
-    Request req = new Request(Request.SIGNUP, res);
-    Response ans_res = NetworkClient.getInstance().sendRequestAndWait(req);
+    Request request = new Request(Request.SIGNUP, newUser);
+    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
 
-    if (ans_res != null && ans_res.getStatus().equals(Response.OK)) {
+    if (response != null && response.getStatus().equals(Response.OK)) {
       try {
         SceneManager.switchScene("/fxml/login.fxml");
       } catch (Exception ex) {
         ex.printStackTrace();
       }
     } else {
-      String msg = (ans_res != null) ? ans_res.getMessage() : "timeout";
-      if ("duplicate_username_or_email".equals(msg)) {
+      String message = (response != null) ? response.getMessage() : "timeout";
+      if ("duplicate_username_or_email".equals(message)) {
         this.ans.setText("username hoặc email đã tồn tại!");
       } else {
         this.ans.setText("đăng ký thất bại!");
@@ -70,12 +70,12 @@ public class RegisterController {
   }
 
   @FXML
-  public void back(ActionEvent ev) throws Exception {
+  public void back(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/login.fxml");
   }
 
   @FXML
-  public void goWelcome(ActionEvent ev) throws Exception {
+  public void goWelcome(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/welcome.fxml");
   }
 }

@@ -26,20 +26,19 @@ public class LoginController {
     Platform.runLater(() -> rootPane.requestFocus());
   }
 
-  // Đã sửa chữ 'L' viết hoa và thêm @FXML
   @FXML
-  public void handleLogin(ActionEvent e) {
-    String user = this.u.getText();
-    String pass = this.p.getText();
-    Map<String, String> data = new HashMap<>();
-    data.put("username", user);
-    data.put("password", pass);
+  public void handleLogin(ActionEvent event) {
+    String username = this.u.getText();
+    String password = this.p.getText();
+    Map<String, String> credentials = new HashMap<>();
+    credentials.put("username", username);
+    credentials.put("password", password);
 
-    Request req = new Request(Request.LOGIN, data);
-    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+    Request request = new Request(Request.LOGIN, credentials);
+    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
 
-    if (res != null && res.getStatus().equals(Response.OK)) {
-      if (res.getPayload() instanceof User loggedInUser) {
+    if (response != null && response.getStatus().equals(Response.OK)) {
+      if (response.getPayload() instanceof User loggedInUser) {
         ClientSession.setCurrentUser(loggedInUser);
       }
       this.ans.setText("đăng nhập thành công!");
@@ -53,14 +52,13 @@ public class LoginController {
     }
   }
 
-  // Thêm @FXML cho các hàm sự kiện khác để tránh lỗi tương tự
   @FXML
-  public void back(ActionEvent e) throws Exception {
+  public void back(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/welcome.fxml");
   }
 
   @FXML
-  public void toRegister(ActionEvent e) throws Exception {
+  public void toRegister(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/register.fxml");
   }
 }

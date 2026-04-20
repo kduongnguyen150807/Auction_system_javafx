@@ -1,58 +1,61 @@
 package com.auction.client.network;
 
-import com.auction.client.ClientSession;
-import com.auction.client.ui.Main.KhungController;
-import com.auction.client.ui.Profile.ProfileController;
-import com.auction.client.ui.TrangChu.TrangChuController;
-import com.auction.client.util.NotificationCenter;
+import com.auction.shared.ChatMessage;
+import com.auction.shared.Friendship;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.auction.shared.User;
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 
 public class NetworkClient {
+  private static final Logger LOGGER = Logger.getLogger(NetworkClient.class.getName());
+
   private static NetworkClient instance;
   private Socket socket;
   private ObjectOutputStream out;
   private ObjectInputStream in;
   private final ConcurrentHashMap<String, LinkedBlockingQueue<Response>> pendingMap =
-          new ConcurrentHashMap<>();
+      new ConcurrentHashMap<>();
+  private final List<NetworkEventListener> listeners = new CopyOnWriteArrayList<>();
 
   private NetworkClient() {
     try {
-      String ans1 = "127.0.0.1";
+      String serverIp = "127.0.0.1";
       if (Platform.isFxApplicationThread()) {
-        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
-        ans.setTitle("IP Setup");
-        ans.setHeaderText("Nhập IP Server đi mày:");
-        ans1 = ans.showAndWait().orElse("127.0.0.1");
+        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("127.0.0.1");
+        dialog.setTitle("IP Setup");
+        dialog.setHeaderText("Nhập IP Server:");
+        serverIp = dialog.showAndWait().orElse("127.0.0.1");
       } else {
-        java.util.concurrent.FutureTask<String> res = new java.util.concurrent.FutureTask<>(() -> {
-          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
-          ans.setTitle("IP Setup");
-          ans.setHeaderText("Nhập IP Server đi mày:");
-          return ans.showAndWait().orElse("127.0.0.1");
+        java.util.concurrent.FutureTask<String> task = new java.util.concurrent.FutureTask<>(() -> {
+          javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("127.0.0.1");
+          dialog.setTitle("IP Setup");
+          dialog.setHeaderText("Nhập IP Server:");
+          return dialog.showAndWait().orElse("127.0.0.1");
         });
-        Platform.runLater(res);
-        ans1 = res.get();
+        Platform.runLater(task);
+        serverIp = task.get();
       }
 
-      System.out.println("Đang thử kết nối tới: " + ans1 + ":8080...");
-      this.socket = new Socket(ans1, 8080);
+      LOGGER.info("Connecting to: " + serverIp + ":8080...");
+      this.socket = new Socket(serverIp, 8080);
       this.out = new ObjectOutputStream(this.socket.getOutputStream());
       this.out.flush();
       this.in = new ObjectInputStream(this.socket.getInputStream());
-      System.out.println("Kết nối Socket THÀNH CÔNG!");
+      LOGGER.info("Socket connection established.");
       startListener();
     } catch (Exception e) {
-      System.err.println("LỖI KẾT NỐI BAN ĐẦU:");
-      e.printStackTrace();
+      LOGGER.log(Level.SEVERE, "Initial connection failed", e);
     }
   }
 
@@ -61,113 +64,196 @@ public class NetworkClient {
     return instance;
   }
 
-  private void startListener() {
-    Thread res =
-            new Thread(
-                    () -> {
-                      try {
-                        while (true) {
-                          Object ans = in.readObject();
-                          System.out.println("Client nhận được object: " + ans.getClass().getSimpleName());
-                          if (ans instanceof Response) {
-                            handleIncoming((Response) ans);
-                          }
-                        }
-                      } catch (Exception e) {
-                        System.err.println("Mất kết nối với Server (Listener dừng):");
-                        e.printStackTrace();
-                      }
-                    });
-    res.setDaemon(true);
-    res.start();
+  public void addListener(NetworkEventListener listener) {
+    this.listeners.add(listener);
   }
 
-  private void handleIncoming(Response res) {
-    System.out.println("Đang xử lý Response. ID: " + res.getRequestId() + " | Status: " + res.getStatus());
+  public void removeListener(NetworkEventListener listener) {
+    this.listeners.remove(listener);
+  }
 
-    if ("BALANCE_UPDATE".equals(res.getStatus())) {
-      User res1 = (User) res.getPayload();
+  private void startListener() {
+    Thread listenerThread = new Thread(() -> {
+      try {
+        while (true) {
+          Object obj = in.readObject();
+          if (obj instanceof Response) {
+            handleIncoming((Response) obj);
+          }
+        }
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Server connection lost", e);
+      }
+    });
+    listenerThread.setDaemon(true);
+    listenerThread.start();
+  }
+
+  private void handleIncoming(Response response) {
+    if ("BALANCE_UPDATE".equals(response.getStatus())) {
+      User user = (User) response.getPayload();
       Platform.runLater(() -> {
-        if (ProfileController.getInstance() != null) ProfileController.getInstance().updateBalanceDirectly(res1);
-        else ClientSession.setCurrentUser(res1);
+        for (NetworkEventListener listener : listeners) {
+          listener.onBalanceUpdate(user);
+        }
       });
       return;
     }
 
-    if ("OUTBID_NOTIFY".equals(res.getStatus())) {
-      Object payload = res.getPayload();
-      String res2 = payload != null ? payload.toString() : "N/A";
-      NotificationCenter.addNotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res2 + " bị đè giá rồi!");
+    if ("OUTBID_NOTIFY".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      int itemId = payload instanceof Integer ? (int) payload : -1;
+      Platform.runLater(() -> {
+        for (NetworkEventListener listener : listeners) {
+          listener.onOutbidNotify(itemId);
+        }
+      });
       return;
     }
 
-    if ("NEW_BID_UPDATE".equals(res.getStatus())
-        || ("priceupdate".equals(res.getMessage()) && res.getPayload() instanceof Item)) {
-      Object res3 = res.getPayload();
-      if (res3 instanceof Item i) {
-        KhungController.updateRealtimeUi(i);
+    if ("CHAT_GLOBAL".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      if (payload instanceof ChatMessage msg) {
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) {
+            listener.onGlobalChat(msg);
+          }
+        });
       }
       return;
     }
 
-    String res5 = res.getRequestId();
-    if (res5 != null) {
-      LinkedBlockingQueue<Response> res6 = pendingMap.get(res5);
-      if (res6 != null) {
-        res6.offer(res);
-        System.out.println("Đã đẩy Response vào queue cho RequestID: " + res5);
+    if ("CHAT_PRIVATE".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      if (payload instanceof ChatMessage msg) {
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) {
+            listener.onPrivateChat(msg);
+          }
+        });
+      }
+      return;
+    }
+
+    if ("FRIEND_REQUEST".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      if (payload instanceof Friendship f) {
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) listener.onFriendRequest(f);
+        });
+      }
+      return;
+    }
+
+    if ("FRIEND_REQUEST_SENT".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      if (payload instanceof Friendship f) {
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) listener.onFriendRequestSent(f);
+        });
+      }
+      return;
+    }
+
+    if ("FRIEND_ACCEPTED".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      if (payload instanceof Friendship f) {
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) listener.onFriendAccepted(f);
+        });
+      }
+      return;
+    }
+
+    if ("SELLER_BID_NOTIFY".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      if (payload instanceof Item item) {
+        double newPrice = item.getCurrentPrice();
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) listener.onSellerBidNotify(item, newPrice);
+        });
+      }
+      return;
+    }
+
+    if ("ITEM_CLOSED".equals(response.getStatus())) {
+      Object payload = response.getPayload();
+      if (payload instanceof Item item) {
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) {
+            listener.onItemClosed(item);
+          }
+        });
+      }
+      return;
+    }
+
+    if ("NEW_BID_UPDATE".equals(response.getStatus())
+        || ("priceupdate".equals(response.getMessage()) && response.getPayload() instanceof Item)) {
+      Object payload = response.getPayload();
+      if (payload instanceof Item item) {
+        Platform.runLater(() -> {
+          for (NetworkEventListener listener : listeners) {
+            listener.onNewBidUpdate(item);
+          }
+        });
+      }
+      return;
+    }
+
+    String requestId = response.getRequestId();
+    if (requestId != null) {
+      LinkedBlockingQueue<Response> queue = pendingMap.get(requestId);
+      if (queue != null) {
+        queue.offer(response);
       } else {
-        System.err.println("CẢNH BÁO: Nhận được Response nhưng không tìm thấy queue nào đợi ID: " + res5);
+        LOGGER.warning("Received response for unknown request ID: " + requestId);
       }
     }
   }
 
-  public Response sendRequestAndWait(Request req) {
-    Response ans = null;
-    System.out.println("Gửi Request ID: " + req.getRequestId());
+  public Response sendRequestAndWait(Request request) {
     try {
-      LinkedBlockingQueue<Response> res = new LinkedBlockingQueue<>();
-      pendingMap.put(req.getRequestId(), res);
+      LinkedBlockingQueue<Response> queue = new LinkedBlockingQueue<>();
+      pendingMap.put(request.getRequestId(), queue);
       synchronized (out) {
-        out.writeObject(req);
+        out.writeObject(request);
         out.flush();
       }
 
-      ans = res.poll(30, TimeUnit.SECONDS);
-
-      if (ans == null) {
-        System.err.println("LỖI: Server không phản hồi (Timeout 30s) ID: " + req.getRequestId());
-      } else {
-        System.out.println("Đã nhận phản hồi thành công!");
+      Response response = queue.poll(30, TimeUnit.SECONDS);
+      if (response == null) {
+        LOGGER.warning("Server timeout (30s) for request: " + request.getRequestId());
       }
-
-      pendingMap.remove(req.getRequestId());
+      pendingMap.remove(request.getRequestId());
+      return response;
     } catch (Exception e) {
-      System.err.println("LỖI SOCKET KHI GỬI/NHẬN:");
-      e.printStackTrace();
+      LOGGER.log(Level.SEVERE, "Socket send/receive error", e);
+      return null;
     }
-    return ans;
   }
 
   public static String uploadFile(String urlString, byte[] fileBytes) throws Exception {
-    String res = "boundary" + System.currentTimeMillis();
-    java.net.URL ans1 = java.net.URI.create(urlString).toURL();
-    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) ans1.openConnection();
+    String boundary = "boundary" + System.currentTimeMillis();
+    java.net.URL url = java.net.URI.create(urlString).toURL();
+    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
     conn.setDoOutput(true);
     conn.setRequestMethod("POST");
-    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + res);
-    try (OutputStream out = conn.getOutputStream()) {
-      out.write(("--" + res + "\r\n").getBytes());
-      out.write(("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n").getBytes());
-      out.write(fileBytes);
-      out.write(("\r\n--" + res + "\r\n").getBytes());
-      out.write(("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n").getBytes());
-      out.write(("upload_def\r\n").getBytes());
-      out.write(("--" + res + "--\r\n").getBytes());
+    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+    try (OutputStream outStream = conn.getOutputStream()) {
+      outStream.write(("--" + boundary + "\r\n").getBytes());
+      outStream.write(("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n").getBytes());
+      outStream.write(fileBytes);
+      outStream.write(("\r\n--" + boundary + "\r\n").getBytes());
+      outStream.write(("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n").getBytes());
+      outStream.write(("upload_def\r\n").getBytes());
+      outStream.write(("--" + boundary + "--\r\n").getBytes());
     }
-    try (java.util.Scanner s = new java.util.Scanner(conn.getInputStream())) {
-      String ans = s.useDelimiter("\\A").next();
-      return ans.split("\"secure_url\":\"")[1].split("\"")[0];
+    try (java.util.Scanner scanner = new java.util.Scanner(conn.getInputStream())) {
+      String responseBody = scanner.useDelimiter("\\A").next();
+      com.fasterxml.jackson.databind.JsonNode node =
+          new com.fasterxml.jackson.databind.ObjectMapper().readTree(responseBody);
+      return node.get("secure_url").asText();
     }
   }
 }

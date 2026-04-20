@@ -302,19 +302,59 @@ public class ItemInformationController {
 
   @FXML
   private void handleAutoBid() {
-    try {
-      double res = Double.parseDouble(autobidfield.getText());
-      int ans = ClientSession.getCurrentUser().getId();
-      BidTransaction res1 = new BidTransaction(this.id, ans, 0);
-      res1.setMaxAutoBid(res);
-      res1.setAutoBid(true);
-      Request ans1 = new Request(Request.BID, res1);
-      Response res2 = NetworkClient.getInstance().sendRequestAndWait(ans1);
-      if (res2 != null && Response.OK.equals(res2.getStatus())) {
-        autobidfield.clear();
-      }
-    } catch (Exception e) {
+    if (ClientSession.getCurrentUser() == null) return;
+    String raw = autobidfield != null ? autobidfield.getText() : "";
+    raw = raw.replace("$", "").replace(",", "").trim();
+    if (raw.isBlank()) {
+      showAutoBidAlert(javafx.scene.control.Alert.AlertType.WARNING,
+          "Invalid", "Enter your maximum auto-bid amount.");
+      return;
     }
+    try {
+      double maxBid = Double.parseDouble(raw);
+      if (maxBid <= 0) {
+        showAutoBidAlert(javafx.scene.control.Alert.AlertType.WARNING,
+            "Invalid", "Max auto-bid must be a positive number.");
+        return;
+      }
+      int userId = ClientSession.getCurrentUser().getId();
+      BidTransaction bid = new BidTransaction(this.id, userId, 0);
+      bid.setMaxAutoBid(maxBid);
+      bid.setAutoBid(true);
+
+      Thread thread = new Thread(() -> {
+        Request request = new Request(Request.BID, bid);
+        Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+        Platform.runLater(() -> {
+          if (response != null && Response.OK.equals(response.getStatus())) {
+            if (autobidfield != null) autobidfield.clear();
+            showAutoBidAlert(javafx.scene.control.Alert.AlertType.INFORMATION,
+                "Auto-Bid Active",
+                String.format("Auto-bid set! Will bid up to %,.0f$", maxBid));
+          } else {
+            String msg = response != null ? response.getMessage() : "Failed to set auto-bid.";
+            showAutoBidAlert(javafx.scene.control.Alert.AlertType.ERROR,
+                "Auto-Bid Failed", msg);
+          }
+        });
+      });
+      thread.setDaemon(true);
+      thread.start();
+    } catch (NumberFormatException e) {
+      showAutoBidAlert(javafx.scene.control.Alert.AlertType.ERROR,
+          "Invalid", "Please enter a valid number.");
+    }
+  }
+
+  private void showAutoBidAlert(javafx.scene.control.Alert.AlertType type,
+                                String title, String content) {
+    try {
+      javafx.scene.control.Alert alert = new javafx.scene.control.Alert(type);
+      alert.setTitle(title);
+      alert.setHeaderText(null);
+      alert.setContentText(content);
+      alert.showAndWait();
+    } catch (Exception ignored) {}
   }
 
   public int getId() {
@@ -378,6 +418,21 @@ public class ItemInformationController {
         };
     if (Platform.isFxApplicationThread()) res.run();
     else Platform.runLater(res);
+  }
+
+  public void markItemClosed(Item item) {
+    if (item == null || item.getId() != this.id) return;
+    Platform.runLater(() -> {
+      if (BidButton != null) {
+        BidButton.setText("CLOSED");
+        BidButton.setDisable(true);
+        BidButton.setStyle(
+            "-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
+      }
+      if (autobidbutton != null) autobidbutton.setDisable(true);
+      if (autobidfield != null) autobidfield.setDisable(true);
+      if (EndsInValue != null) EndsInValue.setText("Auction Closed");
+    });
   }
 
   public void markAsSold() {
