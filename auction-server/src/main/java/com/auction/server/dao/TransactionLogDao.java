@@ -6,18 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TransactionLogDao {
-  private Connection conn;
 
   public TransactionLogDao() {
-    this.conn = DatabaseConnection.getInstance().getConnection();
+
   }
 
   public boolean insertLog(int u, String t, double a, int i) {
     boolean ans = false;
-    try {
-      String res =
-          "INSERT INTO transaction_logs (userid, type, amount, itemid) VALUES (?, ?, ?, ?)";
-      PreparedStatement ps = this.conn.prepareStatement(res);
+    String sql =
+            "INSERT INTO transaction_logs (userid, type, amount, itemid) VALUES (?, ?, ?, ?)";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setInt(1, u);
       ps.setString(2, t);
       ps.setDouble(3, a);
@@ -32,9 +31,9 @@ public class TransactionLogDao {
 
   public List<TransactionLog> getByUserId(int u) {
     List<TransactionLog> ans = new ArrayList<>();
-    try {
-      String res = "SELECT * FROM transaction_logs WHERE userid = ? ORDER BY createdat DESC";
-      PreparedStatement ps = this.conn.prepareStatement(res);
+    String sql = "SELECT * FROM transaction_logs WHERE userid = ? ORDER BY createdat DESC";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setInt(1, u);
       ResultSet res2 = ps.executeQuery();
       while (res2.next()) {

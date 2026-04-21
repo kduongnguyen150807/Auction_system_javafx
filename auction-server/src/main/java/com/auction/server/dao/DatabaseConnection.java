@@ -4,23 +4,35 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 public class DatabaseConnection {
   private static DatabaseConnection instance;
-  private Connection connection;
+  private final HikariDataSource dataSource;
+
   private String url = "jdbc:mysql://localhost:3306/auction_db";
-  private String user = "ba_nin";
-  private String pass = "banin123";
+  private String user = "root";
+  private String pass = "Tuan792007";
 
-  private DatabaseConnection() {
-    try {
-      Class.forName("com.mysql.cj.jdbc.Driver");
-      this.connection = DriverManager.getConnection(this.url, this.user, this.pass);
-    } catch (ClassNotFoundException | SQLException e) {
-      e.printStackTrace();
-    }
+  private DatabaseConnection(){
+    HikariConfig config = new HikariConfig();
+
+    // essentials
+    config.setJdbcUrl(url);
+    config.setUsername(user);
+    config.setPassword(pass);
+
+    // pool config cho dự án
+    config.setMaximumPoolSize(50);
+    config.setMinimumIdle(10);
+    config.setConnectionTimeout(30000);
+    config.setIdleTimeout(600000);
+    config.setMaxLifetime(1800000);
+
+    this.dataSource = new HikariDataSource(config);
   }
-
-  public static DatabaseConnection getInstance() {
+  public static synchronized DatabaseConnection getInstance() {
     if (instance == null) {
       instance = new DatabaseConnection();
     }
@@ -28,8 +40,14 @@ public class DatabaseConnection {
     return ans;
   }
 
-  public Connection getConnection() {
-    Connection ans = this.connection;
+  public void closePool() {
+    if (dataSource != null && !dataSource.isClosed()) {
+      dataSource.close();
+    }
+  }
+
+  public Connection getConnection() throws SQLException{
+    Connection ans = dataSource.getConnection();
     return ans;
   }
 }
