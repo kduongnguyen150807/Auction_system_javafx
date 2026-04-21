@@ -6,24 +6,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LotDao {
-  private Connection conn;
 
   public LotDao() {
-    this.conn = DatabaseConnection.getInstance().getConnection();
   }
 
   public List<Lot> getOngoingBids(int userId) {
     List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
+    String sql =
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i "
+                    + "LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          ans.add(mapResultSet(rs));
+        }
       }
     } catch (Exception e) {
     }
@@ -32,16 +31,17 @@ public class LotDao {
 
   public List<Lot> getUpcomingBids(int userId) {
     List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "WHERE i.status = 'OPEN' AND i.starttime > NOW()";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
+    String sql =
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i "
+                    + "LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE i.status = 'OPEN' AND i.starttime > NOW() AND i.endtime > NOW()";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      try(ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          ans.add(mapResultSet(rs));
+        }
       }
     } catch (Exception e) {
     }
@@ -50,17 +50,18 @@ public class LotDao {
 
   public List<Lot> getClosedBids(int userId) {
     List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "LEFT JOIN users w ON i.winnerid = w.id "
-              + "WHERE i.status = 'CLOSED'";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
+    String sql =
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+                    + "FROM items i "
+                    + "LEFT JOIN users u ON i.sellerid = u.id "
+                    + "LEFT JOIN users w ON i.winnerid = w.id "
+                    + "WHERE i.status = 'CLOSED'";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+      PreparedStatement ps = conn.prepareStatement(sql)){
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          ans.add(mapResultSet(rs));
+        }
       }
     } catch (Exception e) {
     }
@@ -69,17 +70,18 @@ public class LotDao {
 
   public List<Lot> getPastBids(int userId) {
     List<Lot> ans = new ArrayList<>();
-    try {
-      String sql =
-          "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-              + "FROM items i "
-              + "LEFT JOIN users u ON i.sellerid = u.id "
-              + "LEFT JOIN users w ON i.winnerid = w.id "
-              + "WHERE i.status IN ('FINISHED', 'CANCELED') OR (i.status = 'OPEN' AND i.endtime <= NOW())";
-      PreparedStatement ps = this.conn.prepareStatement(sql);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ans.add(mapResultSet(rs));
+    String sql =
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+                    + "FROM items i "
+                    + "LEFT JOIN users u ON i.sellerid = u.id "
+                    + "LEFT JOIN users w ON i.winnerid = w.id "
+                    + "WHERE i.status IN ('FINISHED', 'CANCELED') OR (i.status = 'OPEN' AND i.endtime <= NOW())";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+      PreparedStatement ps = conn.prepareStatement(sql)){
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          ans.add(mapResultSet(rs));
+        }
       }
     } catch (Exception e) {
     }

@@ -4,47 +4,50 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 public class DatabaseConnection {
   private static DatabaseConnection instance;
-  private Connection connection;
+  private final HikariDataSource dataSource;
 
-  private final String url = "jdbc:mysql://localhost:3306/auction_db";
-  private final String user = "root";
-  private final String pass = "Tuan792007";
+  private String url = "jdbc:mysql://localhost:3306/auction_db";
+  private String user = "root";
+  private String pass = "Tuan792007";
 
-  private DatabaseConnection() {
-    try {
-      Class.forName("com.mysql.cj.jdbc.Driver");
+  private DatabaseConnection(){
+    HikariConfig config = new HikariConfig();
 
-      // Khởi tạo kết nối
-      this.connection = DriverManager.getConnection(this.url, this.user, this.pass);
+    // essentials
+    config.setJdbcUrl(url);
+    config.setUsername(user);
+    config.setPassword(pass);
 
-      if (this.connection != null) {
-        System.out.println("✅ Kết nối Database thành công (Cổng 3306)!");
-      }
-    } catch (ClassNotFoundException e) {
-      System.err.println("❌ Không tìm thấy Driver MySQL: " + e.getMessage());
-    } catch (SQLException e) {
-      System.err.println("❌ LỖI KẾT NỐI DATABASE: " + e.getMessage());
-      System.err.println("👉 Hãy kiểm tra: 1. Đã bật MySQL chưa? 2. User/Pass đúng chưa? 3. Đã tạo DB 'auction_db' chưa?");
-    }
+    // pool config cho dự án
+    config.setMaximumPoolSize(50);
+    config.setMinimumIdle(10);
+    config.setConnectionTimeout(30000);
+    config.setIdleTimeout(600000);
+    config.setMaxLifetime(1800000);
+
+    this.dataSource = new HikariDataSource(config);
   }
-
   public static synchronized DatabaseConnection getInstance() {
     if (instance == null) {
       instance = new DatabaseConnection();
     }
-    return instance;
+    DatabaseConnection ans = instance;
+    return ans;
   }
 
-  public Connection getConnection() {
-    try {
-      if (this.connection == null || this.connection.isClosed()) {
-        instance = new DatabaseConnection();
-      }
-    } catch (SQLException e) {
-      e.printStackTrace();
+  public void closePool() {
+    if (dataSource != null && !dataSource.isClosed()) {
+      dataSource.close();
     }
-    return this.connection;
+  }
+
+  public Connection getConnection() throws SQLException{
+    Connection ans = dataSource.getConnection();
+    return ans;
   }
 }

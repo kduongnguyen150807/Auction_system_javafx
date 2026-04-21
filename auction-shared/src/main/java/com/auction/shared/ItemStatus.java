@@ -7,5 +7,5 @@ public enum ItemStatus {
   RUNNING,
   FINISHED,
   PAID,
-  CANCELED
+  CANCELED,
 }
