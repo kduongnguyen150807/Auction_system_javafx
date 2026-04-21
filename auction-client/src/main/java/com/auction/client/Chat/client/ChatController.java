@@ -26,7 +26,7 @@ public class ChatController {
     private String currentUsername = "Unknown";
     private boolean isHistoryLoaded = false;
 
-    private final String SERVER_IP = "192.168.1.66";
+    private final String SERVER_IP = "localhost";
 
     @FXML
     public void initialize() {
