@@ -8,4 +8,5 @@ public enum ItemStatus {
   FINISHED,
   PAID,
   CANCELED,
+  EXPRIED,
 }

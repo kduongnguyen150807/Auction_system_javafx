@@ -11,9 +11,9 @@ public class DatabaseConnection {
   private static DatabaseConnection instance;
   private final HikariDataSource dataSource;
 
-  private String url = "jdbc:mysql://localhost:3306/auction_db";
+  private String url = "jdbc:mysql://shortline.proxy.rlwy.net:33705/railway";
   private String user = "root";
-  private String pass = "Tuan792007";
+  private String pass = "MHsHWDNfprXtSFlXLNHOuMcTptaMBtmG";
 
   private DatabaseConnection(){
     HikariConfig config = new HikariConfig();
