@@ -45,4 +45,12 @@ public class UserService {
     boolean ans = this.userDao.setUserRole(username, role);
     return ans;
   }
+
+  public java.util.List<User> searchUsers(String keyword) {
+    return this.userDao.searchUsers(keyword);
+  }
+
+  public User getUserById(int id) {
+    return this.userDao.getById(String.valueOf(id));
+  }
 }
