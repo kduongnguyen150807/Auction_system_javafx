@@ -1,9 +1,9 @@
 package com.auction.server.controller;
 
-import com.auction.server.Service.RequestDispatcher;
+import com.auction.server.util.RequestDispatcher;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 import java.io.EOFException;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.Item;
 
 public class ItemFactory {
   public static Item createItem(String res) {

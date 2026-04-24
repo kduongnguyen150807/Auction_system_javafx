@@ -1,4 +1,7 @@
-package com.auction.shared;
+package com.auction.shared.User;
+
+import com.auction.shared.Entity;
+import com.auction.shared.UserRole;
 
 public abstract class User extends Entity {
   protected String username;

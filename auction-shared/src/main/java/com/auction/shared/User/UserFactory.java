@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.User;
 
 public class UserFactory {
     public static User create(String role) {

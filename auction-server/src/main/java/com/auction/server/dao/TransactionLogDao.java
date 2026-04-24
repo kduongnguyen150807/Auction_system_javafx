@@ -1,9 +1,7 @@
 package com.auction.server.dao;
 
-import com.auction.server.Service.SQLService;
 import com.auction.shared.TransactionLog;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TransactionLogDao extends BaseDao{

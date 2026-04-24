@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
+import com.auction.shared.User.Bidder;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

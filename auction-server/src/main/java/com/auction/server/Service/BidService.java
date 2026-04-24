@@ -3,8 +3,8 @@ package com.auction.server.Service;
 import com.auction.server.dao.BidDao;
 import com.auction.server.dao.ItemDao;
 import com.auction.shared.BidTransaction;
-import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
+import com.auction.shared.Item.Item;
+import com.auction.shared.Item.ItemStatus;
 import com.auction.shared.Response;
 
 import java.time.LocalDateTime;

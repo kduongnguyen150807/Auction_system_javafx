@@ -1,4 +1,4 @@
-package com.auction.server.Service;
+package com.auction.server.util;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

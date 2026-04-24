@@ -3,6 +3,7 @@ package com.auction.server.command.commands;
 import com.auction.server.command.Command;
 import com.auction.server.dao.UserDao;
 import com.auction.shared.*;
+import com.auction.shared.User.User;
 
 import java.util.Map;
 

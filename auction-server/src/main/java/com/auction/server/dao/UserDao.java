@@ -1,10 +1,8 @@
 package com.auction.server.dao;
 
-import com.auction.shared.UserFactory;
-import com.auction.server.Service.SQLService;
-import com.auction.shared.User;
+import com.auction.shared.User.UserFactory;
+import com.auction.shared.User.User;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;

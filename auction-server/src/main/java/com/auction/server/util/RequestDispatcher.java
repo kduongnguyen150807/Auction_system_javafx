@@ -1,11 +1,11 @@
-package com.auction.server.Service;
+package com.auction.server.util;
 
 import com.auction.server.command.*;
 import com.auction.server.command.commands.*;
 import com.auction.server.command.queries.*;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -7,6 +7,8 @@ import com.auction.shared.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import com.auction.shared.User.User;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;

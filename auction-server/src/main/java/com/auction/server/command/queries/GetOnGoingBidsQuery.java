@@ -2,10 +2,10 @@ package com.auction.server.command.queries;
 
 import com.auction.server.command.Command;
 import com.auction.server.dao.ItemDao;
-import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
+import com.auction.shared.Item.Item;
+import com.auction.shared.Item.ItemStatus;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 import java.util.List;
 

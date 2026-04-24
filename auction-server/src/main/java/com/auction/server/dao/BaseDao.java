@@ -1,7 +1,7 @@
 package com.auction.server.dao;
 
-import com.auction.server.Service.ResultSetMapper;
-import com.auction.server.Service.SQLService;
+import com.auction.server.util.ResultSetMapper;
+import com.auction.server.util.SQLService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -25,7 +25,7 @@ public abstract class BaseDao {
 
     protected boolean executeUpdate(String sql, List<Object> params) {
         try (Connection conn = getConnection()) {
-            return com.auction.server.Service.SQLService.Update(sql, params, conn);
+            return SQLService.Update(sql, params, conn);
         } catch (SQLException e) {
             System.err.println("Lỗi Update SQL: " + sql);
             e.printStackTrace();
@@ -35,7 +35,7 @@ public abstract class BaseDao {
 
     protected boolean executeUpdate(List<String> sqls, List<List<Object>> paramsList) {
         try (Connection conn = getConnection()) {
-            return com.auction.server.Service.SQLService.MultiUpdate(sqls, paramsList, conn);
+            return SQLService.MultiUpdate(sqls, paramsList, conn);
         } catch (SQLException e) {
             System.err.println("Lỗi MultiUpdate SQL");
             e.printStackTrace();

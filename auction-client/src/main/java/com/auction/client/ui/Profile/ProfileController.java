@@ -8,6 +8,8 @@ import com.auction.shared.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.auction.shared.User.User;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;

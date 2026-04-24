@@ -1,10 +1,10 @@
 package com.auction.client.ui.Main;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.shared.Item;
+import com.auction.shared.Item.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 import java.util.List;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;

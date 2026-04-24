@@ -5,7 +5,7 @@ import com.auction.server.command.Authorizable;
 import com.auction.server.command.Command;
 import com.auction.shared.BidTransaction;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 public class BidCommand implements Command, Authorizable {
     @Override

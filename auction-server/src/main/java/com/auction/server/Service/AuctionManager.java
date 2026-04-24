@@ -5,9 +5,9 @@ import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.TransactionLogDao;
 import com.auction.server.dao.UserDao;
 import com.auction.shared.BidTransaction;
-import com.auction.shared.Item;
+import com.auction.shared.Item.Item;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

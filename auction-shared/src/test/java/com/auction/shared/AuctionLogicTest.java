@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+
+import com.auction.shared.Item.Item;
+import com.auction.shared.Item.ItemFactory;
 import org.junit.jupiter.api.Test;
 
 public class AuctionLogicTest {

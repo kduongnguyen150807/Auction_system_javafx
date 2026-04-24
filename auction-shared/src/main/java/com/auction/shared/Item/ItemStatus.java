@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.Item;
 
 public enum ItemStatus {
   PENDING,

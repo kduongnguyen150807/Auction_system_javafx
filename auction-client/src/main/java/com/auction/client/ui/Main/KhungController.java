@@ -7,16 +7,13 @@ import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.UserProfile.UserProfileController;
 import com.auction.client.ui.YourItem.YourItemController;
-import com.auction.shared.Item;
-import com.auction.shared.User;
+import com.auction.shared.Item.Item;
+import com.auction.shared.User.User;
 import com.auction.shared.UserRole;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -26,8 +23,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
-import javafx.stage.Stage;
-import java.io.IOException;
 
 public class KhungController {
   private static KhungController instance;

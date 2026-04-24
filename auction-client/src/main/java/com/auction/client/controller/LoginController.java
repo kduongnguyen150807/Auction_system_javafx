@@ -6,6 +6,8 @@ import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.auction.shared.User.User;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

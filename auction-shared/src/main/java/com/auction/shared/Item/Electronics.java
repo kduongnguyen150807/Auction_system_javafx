@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.Item;
 
 public class Electronics extends Item {
   public Electronics() {

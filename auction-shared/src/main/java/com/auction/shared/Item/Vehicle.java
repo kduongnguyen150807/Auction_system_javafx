@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.Item;
 
 public class Vehicle extends Item {
   public Vehicle() {

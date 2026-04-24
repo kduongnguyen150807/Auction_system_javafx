@@ -4,7 +4,7 @@ import com.auction.server.command.Command;
 import com.auction.server.dao.BidDao;
 import com.auction.shared.BidTransaction;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.auction.server.command;
 
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 public interface Authorizable {
     default boolean isOwner(User currentUser, int ownerId) {

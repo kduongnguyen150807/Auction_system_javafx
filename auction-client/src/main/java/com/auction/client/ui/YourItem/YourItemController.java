@@ -7,6 +7,9 @@ import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
 import com.auction.shared.*;
 import java.util.List;
+
+import com.auction.shared.Item.Item;
+import com.auction.shared.Item.ItemStatus;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

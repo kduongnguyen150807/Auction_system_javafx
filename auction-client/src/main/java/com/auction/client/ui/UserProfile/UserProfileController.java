@@ -4,6 +4,10 @@ import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.*;
 import java.util.List;
+
+import com.auction.shared.Item.Item;
+import com.auction.shared.Item.ItemStatus;
+import com.auction.shared.User.User;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

@@ -6,7 +6,7 @@ import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
 import com.auction.client.ui.Main.KhungController;
-import com.auction.shared.Item;
+import com.auction.shared.Item.Item;
 import com.auction.shared.Lot;
 import com.auction.shared.Request;
 import com.auction.shared.Response;

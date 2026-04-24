@@ -7,6 +7,9 @@ import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.*;
 import java.util.List;
+
+import com.auction.shared.Item.Item;
+import com.auction.shared.Item.ItemStatus;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -184,8 +187,8 @@ public class ItemInformationController {
   private void setupRatingUi(Item res) {
     if (res == null || RateButton == null) return;
     boolean ans = false;
-    if (res.getStatus() == com.auction.shared.ItemStatus.CLOSED
-        || res.getStatus() == com.auction.shared.ItemStatus.FINISHED) {
+    if (res.getStatus() == ItemStatus.CLOSED
+        || res.getStatus() == ItemStatus.FINISHED) {
       if (ClientSession.getCurrentUser() != null) {
         int res1 = ClientSession.getCurrentUser().getId();
         if (res1 == res.getWinnerId() || res1 == res.getSellerId()) ans = true;

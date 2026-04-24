@@ -1,9 +1,8 @@
 package com.auction.server.dao;
 
-import com.auction.server.Service.SQLService;
-import com.auction.shared.Item;
-import com.auction.shared.ItemFactory;
-import com.auction.shared.ItemStatus;
+import com.auction.shared.Item.Item;
+import com.auction.shared.Item.ItemFactory;
+import com.auction.shared.Item.ItemStatus;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -75,6 +74,11 @@ public class ItemDao extends BaseDao {
     public List<Item> getItemByStatus(ItemStatus status){
         String sql = "select i.*, u.username as seller_name, u.avatar_url as seller_avatar from items i left join users u on i.sellerid = u.id where i.status = ? order by i.id desc";
         return executeFetch(sql, List.of(String.valueOf(status)), this::mapResultSet);
+    }
+
+    public List<Item> getExpiredItems(){
+        String sql = "SELECT * FROM items WHERE endtime <= NOW() AND status = 'OPEN' ";
+        return executeFetch(sql, null, this::mapResultSet);
     }
 
     public Item getById(int Id){

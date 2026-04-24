@@ -1,6 +1,7 @@
 package com.auction.server.controller;
 
 import com.auction.server.Service.AuctionManager;
+import com.auction.server.Service.SettlementService;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -19,6 +20,9 @@ public class SocketServer {
 
   public void startServer() {
     try {
+      SettlementService ans = new SettlementService();
+      ans.start();
+
       ServerSocket ss = new ServerSocket(this.port);
       System.out.println("server is running");
       while (true) {

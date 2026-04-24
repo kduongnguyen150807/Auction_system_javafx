@@ -5,7 +5,7 @@ import com.auction.server.command.Command;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.UserDao;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.User.User;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
