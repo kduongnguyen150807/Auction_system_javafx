@@ -46,5 +46,10 @@ public class QueryBuilder {
         return parameters;
     }
 
+    public static String normalize(String value){
+        if(value == null) return "";
+        return value.trim();
+    }
+
 }
 
