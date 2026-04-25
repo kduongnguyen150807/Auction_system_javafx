@@ -42,4 +42,14 @@ public abstract class BaseDao {
             return false;
         }
     }
+
+    protected boolean executeExists(String sql, List<Object> params) {
+        try (Connection conn = getConnection()) {
+            return SQLService.Exists(sql, params, conn);
+        } catch (SQLException e) {
+            System.err.println("Lỗi Exists SQL: " + sql);
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
