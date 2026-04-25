@@ -23,6 +23,11 @@ public class RequestDispatcher {
         commands.put(Request.BID, new BidCommand());
         commands.put(Request.SIGNUP, new SignUpCommand());
         commands.put("get_bid_history", new GetBidHistoryQuery());
+        commands.put(Request.UPDATE_PROFILE, new UpdateProfileCommand());
+        commands.put(Request.UPDATE_AVATAR, new UpdateAvatarCommand());
+        commands.put(Request.LOCK_USER, new LockAndUnlockCommand());
+        commands.put(Request.UNLOCK_USER, new LockAndUnlockCommand());
+        commands.put(Request.PROMOTE_ADMIN, new PromoteAdminCommand());
     }
 
     public static Response dispatch(Request req, User u){
