@@ -14,7 +14,7 @@ public class UserDao extends BaseDao{
     public User login(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ? AND isactive = true";
         List<User> results =  executeFetch(sql, List.of(username, password), this::mapUser);
-        return results.isEmpty() ? null : results.get(0);
+        return results.isEmpty() ? null : results.getFirst();
     }
 
     public boolean signup(User u){
@@ -56,21 +56,53 @@ public class UserDao extends BaseDao{
         return executeUpdate(sql, List.of(amount, userId));
     }
 
+    public boolean updateProfile(int userId, String fullname, String email, String phone){
+        String fn = normalize(fullname);
+        String em = normalize(email);
+        String ph = normalize(phone);
+        if(em.isEmpty()){
+            return false;
+        }
+        if (isFieldTakenByOther(userId, "email", em)) {
+            return false;
+        }
+        if (!ph.isEmpty() && isFieldTakenByOther(userId, "phonenumber", ph)) {
+            return false;
+        }
+        String sql = "UPDATE users SET fullname = ?, email = ?, phonenumber = ? WHERE id = ?";
+        return executeUpdate(sql, List.of(fn, em, ph, userId));
+    }
+
+    public boolean updateAvatar(String username, String url){
+        String sql = "UPDATE users SET avatar_url = ? WHERE username = ?";
+        return executeUpdate(sql, List.of(url, username));
+    }
+
     public boolean addSellerMetrics(int userId, double amount){
         String sql = "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";
         return executeUpdate(sql, List.of(amount, userId));
     }
 
+    public boolean setUserRole(String username, String role){
+        String sql = "UPDATE users SET role = ? WHERE username = ?";
+        return executeUpdate(sql, List.of(role, username));
+    }
+
+    public boolean setUserLocked(String username, boolean lockStatus){
+        String sql = "UPDATE users SET islocked = ? WHERE username = ?";
+        return executeUpdate(sql, List.of(lockStatus, username));
+    }
+
     public User getById(String id){
         String sql = "SELECT * FROM users WHERE id = ?";
         List<User> results = executeFetch(sql, List.of(id), this::mapUser);
-        return results.isEmpty() ? null : results.get(0);
+        return results.isEmpty() ? null : results.getFirst();
     }
 
     public User getByUsername(String username){
         String sql = "SELECT * FROM users WHERE username = ?";
         List<User> results = executeFetch(sql, List.of(username), this::mapUser);
-        return results.isEmpty() ? null : results.get(0);
+        return results.isEmpty() ? null : results.getFirst();
     }
 
     public User mapUser(ResultSet resultSet) {
@@ -99,6 +131,15 @@ public class UserDao extends BaseDao{
             System.out.println("error setting attribute");
         }
         return null;
+    }
+
+    private boolean isFieldTakenByOther(int userId, String fieldName, String value) {
+        String sql = String.format(
+                "SELECT 1 FROM USERS WHERE ID <> ? AND LOWER(TRIM(COALESCE(%s, ''))) = LOWER(TRIM(?)) " +
+                        "AND TRIM(COALESCE(%s, '')) <> '' LIMIT 1",
+                fieldName, fieldName
+        );
+        return executeExists(sql, List.of(userId, value));
     }
 
     private String normalize(String value) {
