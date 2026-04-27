@@ -28,6 +28,19 @@ public class TransactionLogDao {
     }
     return ans;
   }
+  public boolean insertLog(Connection conn, int userId, String type, double amount, int itemId) {
+    String sql = "insert into transaction_logs(userid, type, amount, itemid, timestamp) values(?,?,?,?,NOW())";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, userId);
+      ps.setString(2, type);
+      ps.setDouble(3, amount);
+      ps.setInt(4, itemId);
+      return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+  }
 
   public List<TransactionLog> getByUserId(int u) {
     List<TransactionLog> ans = new ArrayList<>();

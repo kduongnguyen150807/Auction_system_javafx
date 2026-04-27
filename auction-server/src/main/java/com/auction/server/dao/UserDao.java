@@ -352,6 +352,41 @@ public class UserDao {
     }
     return ans;
   }
+  public boolean updateBalance(Connection conn, int id, double newBalance) {
+    String sql = "update users set balance = ? where id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, newBalance);
+      ps.setInt(2, id);
+      return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  public boolean addBidderMetrics(Connection conn, int id, double amount) {
+    String sql = "update users set moneyspent = moneyspent + ?, itemsbought = itemsbought + 1 where id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, amount);
+      ps.setInt(2, id);
+      return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  public boolean addSellerMetrics(Connection conn, int id, double amount) {
+    String sql = "update users set moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 where id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, amount);
+      ps.setInt(2, id);
+      return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+  }
 
   public java.util.List<User> searchUsers(String keyword) {
     java.util.List<User> ans = new java.util.ArrayList<>();

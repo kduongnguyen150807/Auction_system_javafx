@@ -76,37 +76,46 @@ public class ItemDao {
     return ans;
   }
 
-  public boolean updatePrice(int res, double ans, int res1) {
-    boolean ans1 = false;
-    String sql =
-            "update items set currentprice = ?, version = version + 1 where id = ? and version = ?";
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)){
-        ps.setDouble(1, ans);
-        ps.setInt(2, res);
-        ps.setInt(3, res1);
-        int ans2 = ps.executeUpdate();
-        ans1 = ans2 > 0;
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-    return ans1;
-  }
+    public boolean updatePrice(int id, double price, int version) {
+        String sql = "update items set currentprice = ?, version = version + 1 where id = ? and version = ?";
 
-  public boolean updateEndTime(int res, LocalDateTime ans) {
-    boolean res1 = false;
-    String sql = "update items set endtime = ? where id = ?";
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-      PreparedStatement ps = conn.prepareStatement(sql)){
-      ps.setTimestamp(1, Timestamp.valueOf(ans));
-      ps.setInt(2, res);
-      int res2 = ps.executeUpdate();
-      res1 = res2 > 0;
-    } catch (Exception e) {
-        e.printStackTrace();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDouble(1, price);
+            ps.setInt(2, id);
+            ps.setInt(3, version);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-    return res1;
-  }
+    public boolean updatePrice(Connection conn, int id, double price, int version) {
+        String sql = "update items set currentprice = ?, version = version + 1 where id = ? and version = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDouble(1, price);
+            ps.setInt(2, id);
+            ps.setInt(3, version);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateEndTime(Connection conn, int id, java.time.LocalDateTime newEndTime) {
+        String sql = "update items set endtime = ? where id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setTimestamp(1, Timestamp.valueOf(newEndTime));
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
   public boolean insertLot(
       String res,
@@ -166,6 +175,18 @@ public class ItemDao {
         e.printStackTrace();
     }
   }
+    public void closeAuction(Connection conn, int id, int winnerId, String status) {
+        String sql = "update items set winnerid = ?, status = ? where id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, winnerId);
+            ps.setString(2, status);
+            ps.setInt(3, id);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
 
   private Item mapResultSet(ResultSet res) throws SQLException {
     String ans = res.getString("category");

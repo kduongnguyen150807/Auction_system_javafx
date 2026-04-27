@@ -1,6 +1,7 @@
 package com.auction.server.service;
 
 import com.auction.server.controller.ClientHandler;
+import com.auction.server.dao.BidDao;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.TransactionLogDao;
 import com.auction.server.dao.UserDao;
@@ -10,12 +11,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AuctionManager {
   private static AuctionManager instance;
-  private List<ClientHandler> clients;
-  private BidService bidservice;
-  private ItemDao itemDao;
-  private UserDao userDao;
-  private TransactionLogDao logDao;
-  private java.util.Map<Integer, java.util.PriorityQueue<BidTransaction>> autobids;
+  private final List<ClientHandler> clients;
+  private final BidService bidservice;
+  private final ItemDao itemDao;
+  private final UserDao userDao;
+  private final TransactionLogDao logDao;
+  private final BidDao bidDao;
+  private final java.util.Map<Integer, java.util.PriorityQueue<BidTransaction>> autobids;
 
   private AuctionManager() {
     this.clients = new CopyOnWriteArrayList<>();
@@ -24,6 +26,7 @@ public class AuctionManager {
     this.userDao = new UserDao();
     this.logDao = new TransactionLogDao();
     this.autobids = new java.util.concurrent.ConcurrentHashMap<>();
+    this.bidDao = new BidDao();
   }
 
   public static synchronized AuctionManager getInstance() {
@@ -40,137 +43,260 @@ public class AuctionManager {
   }
 
   public synchronized Response processBid(BidTransaction b) {
-    Item res = itemDao.getById(b.getItemId());
-    User ans = userDao.getById(String.valueOf(b.getUserId()));
+    Item item = itemDao.getById(b.getItemId());
+    User bidder = userDao.getById(String.valueOf(b.getUserId()));
 
-    if (ans != null) {
-      String ph = ans.getPhoneNumber();
-      if (ph == null || ph.trim().isEmpty())
-        return new Response(
-            "", Response.ERROR, "Unverified account. Add a phone number to bid.", null);
+    Response error = validateBidRequest(item, bidder, b);
+    if (error != null) {
+      return error;
     }
-    if (res != null && res.getSellerId() == b.getUserId())
+
+    normalizeBidValueIfNeeded(item, b);
+
+    if (bidder.getBalance() < b.getBidValue()) {
       return new Response("", Response.ERROR, "Fail", null);
-
-    /* Auto-bid: chỉ đặt mức đấu tối thiểu (giá hiện tại + bước nhảy). Trần maxAutoBid dùng khi có người khác đấu.
-    Không add vào queue ở đây — phải sau placeBid OK, tránh queue rỗng / sai khi hết tiền hoặc bid lỗi. */
-    if (b.isAutoBid()) {
-      b.setBidValue(res.getCurrentPrice() + b.getAutoBidIncrement());
     }
 
-    if (res != null && b.getBidValue() <= res.getCurrentPrice()) {
-      b.setBidValue(res.getCurrentPrice() + b.getAutoBidIncrement());
+    if (isBuyNow(item, b)) {
+      return handleBuyNow(item, bidder, b);
     }
 
-    if (ans != null && ans.getBalance() < b.getBidValue())
-      return new Response("", Response.ERROR, "Fail", null);
-
-    if (res != null && res.getMaxPrice() > 0 && b.getBidValue() >= res.getMaxPrice()) {
-      double res1 = res.getMaxPrice();
-      userDao.updateBalance(ans.getId(), ans.getBalance() - res1);
-      userDao.addBidderMetrics(ans.getId(), res1);
-      logDao.insertLog(ans.getId(), "ITEM_BOUGHT", -res1, b.getItemId());
-      sendToUser(
-          ans.getId(),
-          new Response(
-              "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(ans.getId()))));
-
-      User ans1 = userDao.getById(String.valueOf(res.getSellerId()));
-      if (ans1 != null) {
-        userDao.updateBalance(ans1.getId(), ans1.getBalance() + res1);
-        userDao.addSellerMetrics(ans1.getId(), res1);
-        logDao.insertLog(ans1.getId(), "ITEM_SOLD", res1, b.getItemId());
-        sendToUser(
-            ans1.getId(),
-            new Response(
-                "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(ans1.getId()))));
-      }
-      itemDao.updatePrice(res.getId(), res1, res.getVersion());
-      itemDao.closeAuction(res.getId(), b.getUserId(), "CLOSED");
-      Response ans2 = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", b.getItemId());
-      broadcast(ans2);
-      int res4 = getPreviousHighestBidder(b.getItemId());
-      if (res4 > 0) {
-        sendToUser(res4, new Response("", "OUTBID_NOTIFY", "outbid", b.getItemId()));
-      }
-      Item res5 = itemDao.getById(b.getItemId());
-      if (res5 != null) {
-        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res5));
-      }
-      return ans2;
-    }
-
-    int res2 = getPreviousHighestBidder(b.getItemId());
-    double res3 = res.getCurrentPrice();
-    userDao.updateBalance(ans.getId(), ans.getBalance() - b.getBidValue());
-    logDao.insertLog(ans.getId(), "BID_HOLD", -b.getBidValue(), b.getItemId());
-    sendToUser(
-        ans.getId(),
-        new Response(
-            "", "BALANCE_UPDATE", "Success", userDao.getById(String.valueOf(ans.getId()))));
-
-    if (res2 > 0 && res3 > 0) {
-      User ans3 = userDao.getById(String.valueOf(res2));
-      if (ans3 != null) {
-        userDao.updateBalance(res2, ans3.getBalance() + res3);
-        logDao.insertLog(res2, "BID_REFUND", res3, b.getItemId());
-        sendToUser(
-            res2,
-            new Response("", "BALANCE_UPDATE", "Outbid", userDao.getById(String.valueOf(res2))));
-      }
-    }
-
-    Response ans4 = this.bidservice.placeBid(b);
-    if (ans4.getStatus().equals(Response.OK)) {
-      Item res4 = itemDao.getById(b.getItemId());
-      if (res4 != null) {
-        java.time.LocalDateTime res5 = java.time.LocalDateTime.now();
-        java.time.LocalDateTime ans5 = res4.getEndTime();
-        if (ans5 != null && java.time.Duration.between(res5, ans5).getSeconds() < 60) {
-          java.time.LocalDateTime res6 = ans5.plusSeconds(60);
-          itemDao.updateEndTime(res4.getId(), res6);
-          res4.setEndTime(res6);
-        }
-        broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", res4));
-      }
-      broadcast(ans4);
-      if (res2 > 0) {
-        sendToUser(res2, new Response("", "OUTBID_NOTIFY", "outbid", b.getItemId()));
-      }
-      if (b.isAutoBid()) {
-        registerAutoBidQueue(b);
-      }
-      tryProcessAutoCounters(b.getItemId());
-    }
-
-    return ans4;
+    return handleNormalBid(item, bidder, b);
   }
 
-  /** Ghi nhận trần auto-bid sau khi đặt giá thành công (chỉ lúc này mới có trong hàng đợi). */
+  private Response validateBidRequest(Item item, User bidder, BidTransaction b) {
+    if (item == null) {
+      return new Response("", Response.ERROR, "item_not_found", null);
+    }
+
+    if (bidder == null) {
+      return new Response("", Response.ERROR, "user_not_found", null);
+    }
+
+    String phone = bidder.getPhoneNumber();
+    if (phone == null || phone.trim().isEmpty()) {
+      return new Response(
+              "", Response.ERROR, "Unverified account. Add a phone number to bid.", null);
+    }
+
+    if (item.getSellerId() == b.getUserId()) {
+      return new Response("", Response.ERROR, "Fail", null);
+    }
+
+    return null;
+  }
+
+  private void normalizeBidValueIfNeeded(Item item, BidTransaction b) {
+    if (b.isAutoBid()) {
+      b.setBidValue(item.getCurrentPrice() + b.getAutoBidIncrement());
+    }
+
+    if (b.getBidValue() <= item.getCurrentPrice()) {
+      b.setBidValue(item.getCurrentPrice() + b.getAutoBidIncrement());
+    }
+  }
+
+  private boolean isBuyNow(Item item, BidTransaction b) {
+    return item.getMaxPrice() > 0 && b.getBidValue() >= item.getMaxPrice();
+  }
+
+  private Response handleBuyNow(Item item, User bidder, BidTransaction b) {
+    double price = item.getMaxPrice();
+
+    try (java.sql.Connection conn =
+                 com.auction.server.dao.DatabaseConnection.getInstance().getConnection()) {
+      conn.setAutoCommit(false);
+
+      try {
+        User seller = userDao.getById(String.valueOf(item.getSellerId()));
+
+        boolean okBuyerBalance =
+                userDao.updateBalance(conn, bidder.getId(), bidder.getBalance() - price);
+        if (!okBuyerBalance) {
+          conn.rollback();
+          return new Response("", Response.ERROR, "fail", null);
+        }
+
+        boolean okBuyerMetrics = userDao.addBidderMetrics(conn, bidder.getId(), price);
+        if (!okBuyerMetrics) {
+          conn.rollback();
+          return new Response("", Response.ERROR, "fail", null);
+        }
+
+        boolean okBuyerLog = logDao.insertLog(conn, bidder.getId(), "ITEM_BOUGHT", -price, b.getItemId());
+        if (!okBuyerLog) {
+          conn.rollback();
+          return new Response("", Response.ERROR, "fail", null);
+        }
+
+        if (seller != null) {
+          boolean okSellerBalance =
+                  userDao.updateBalance(conn, seller.getId(), seller.getBalance() + price);
+          if (!okSellerBalance) {
+            conn.rollback();
+            return new Response("", Response.ERROR, "fail", null);
+          }
+
+          boolean okSellerMetrics = userDao.addSellerMetrics(conn, seller.getId(), price);
+          if (!okSellerMetrics) {
+            conn.rollback();
+            return new Response("", Response.ERROR, "fail", null);
+          }
+
+          boolean okSellerLog =
+                  logDao.insertLog(conn, seller.getId(), "ITEM_SOLD", price, b.getItemId());
+          if (!okSellerLog) {
+            conn.rollback();
+            return new Response("", Response.ERROR, "fail", null);
+          }
+        }
+
+        boolean okPrice = itemDao.updatePrice(conn, item.getId(), price, item.getVersion());
+        if (!okPrice) {
+          conn.rollback();
+          return new Response("", Response.ERROR, "conflict", null);
+        }
+
+        itemDao.closeAuction(conn, item.getId(), b.getUserId(), "CLOSED");
+
+        conn.commit();
+
+      } catch (Exception e) {
+        conn.rollback();
+        e.printStackTrace();
+        return new Response("", Response.ERROR, "fail", null);
+      } finally {
+        conn.setAutoCommit(true);
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return new Response("", Response.ERROR, "fail", null);
+    }
+
+    sendUpdatedBalance(bidder.getId(), "Success");
+
+    User seller = userDao.getById(String.valueOf(item.getSellerId()));
+    if (seller != null) {
+      sendUpdatedBalance(seller.getId(), "Success");
+    }
+
+    Response result = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", b.getItemId());
+    broadcast(result);
+
+    int previousHighestBidderId = getPreviousHighestBidder(b.getItemId());
+    if (previousHighestBidderId > 0) {
+      sendToUser(
+              previousHighestBidderId,
+              new Response("", "OUTBID_NOTIFY", "outbid", b.getItemId()));
+    }
+
+    broadcastLatestItemState(b.getItemId());
+    return result;
+  }
+
+  private Response handleNormalBid(Item item, User bidder, BidTransaction b) {
+    int previousHighestBidderId = getPreviousHighestBidder(b.getItemId());
+    double previousPrice = item.getCurrentPrice();
+
+    Response result = this.bidservice.placeBid(b);
+
+    if (Response.OK.equals(result.getStatus())) {
+      holdBidderMoney(bidder, b);
+      refundPreviousHighestBidder(previousHighestBidderId, previousPrice, b.getItemId());
+      afterBidSuccess(item.getId(), previousHighestBidderId, b, result);
+    }
+
+    return result;
+  }
+
+  private void holdBidderMoney(User bidder, BidTransaction b) {
+    userDao.updateBalance(bidder.getId(), bidder.getBalance() - b.getBidValue());
+    logDao.insertLog(bidder.getId(), "BID_HOLD", -b.getBidValue(), b.getItemId());
+    sendUpdatedBalance(bidder.getId(), "Success");
+  }
+
+  private void refundPreviousHighestBidder(
+          int previousHighestBidderId, double previousPrice, int itemId) {
+    if (previousHighestBidderId <= 0 || previousPrice <= 0) return;
+
+    User oldBidder = userDao.getById(String.valueOf(previousHighestBidderId));
+    if (oldBidder == null) return;
+
+    userDao.updateBalance(previousHighestBidderId, oldBidder.getBalance() + previousPrice);
+    logDao.insertLog(previousHighestBidderId, "BID_REFUND", previousPrice, itemId);
+    sendToUser(
+            previousHighestBidderId,
+            new Response(
+                    "", "BALANCE_UPDATE", "Outbid", userDao.getById(String.valueOf(previousHighestBidderId))));
+  }
+
+  private void afterBidSuccess(
+          int itemId, int previousHighestBidderId, BidTransaction b, Response result) {
+    Item latestItem = itemDao.getById(itemId);
+    if (latestItem != null) {
+      broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", latestItem));
+    }
+
+    broadcast(result);
+
+    if (previousHighestBidderId > 0) {
+      sendToUser(
+              previousHighestBidderId,
+              new Response("", "OUTBID_NOTIFY", "outbid", itemId));
+    }
+
+    if (b.isAutoBid()) {
+      registerAutoBidQueue(b);
+    }
+
+    tryProcessAutoCounters(itemId);
+  }
+
+  private void sendUpdatedBalance(int userId, String message) {
+    sendToUser(
+            userId,
+            new Response(
+                    "", "BALANCE_UPDATE", message, userDao.getById(String.valueOf(userId))));
+  }
+
+  private void broadcastLatestItemState(int itemId) {
+    Item latestItem = itemDao.getById(itemId);
+    if (latestItem != null) {
+      broadcast(new Response("", "NEW_BID_UPDATE", "priceupdate", latestItem));
+    }
+  }
+
+  /** Ghi nhận trần auto-bid sau khi đặt giá thành công */
   private void registerAutoBidQueue(BidTransaction b) {
     java.util.PriorityQueue<BidTransaction> q =
-        this.autobids.computeIfAbsent(
-            b.getItemId(),
-            k ->
-                new java.util.PriorityQueue<>(
-                    10,
-                    (a1, a2) -> Double.compare(a2.getMaxAutoBid(), a1.getMaxAutoBid())));
+            this.autobids.computeIfAbsent(
+                    b.getItemId(),
+                    k ->
+                            new java.util.PriorityQueue<>(
+                                    10, (a1, a2) -> Double.compare(a2.getMaxAutoBid(), a1.getMaxAutoBid())));
     q.add(b);
   }
 
   /**
-   * Sau mỗi lần giá thay đổi thành công: nếu có người đăng ký auto-bid (không phải người đang dẫn) và trần
-   * cho phép, đặt giúp một bước (giá hiện tại + increment).
+   * Sau mỗi lần giá thay đổi thành công: nếu có người đăng ký auto-bid (không phải người đang dẫn)
+   * và trần cho phép, đặt giúp một bước.
    */
   private void tryProcessAutoCounters(int itemId) {
     java.util.PriorityQueue<BidTransaction> queue = this.autobids.get(itemId);
     if (queue == null || queue.isEmpty()) return;
-    double currentPrice = itemDao.getById(itemId).getCurrentPrice();
+
+    Item currentItem = itemDao.getById(itemId);
+    if (currentItem == null) return;
+
+    double currentPrice = currentItem.getCurrentPrice();
     int currentLeader = getPreviousHighestBidder(itemId);
+
     java.util.List<BidTransaction> snapshot = new java.util.ArrayList<>();
     while (!queue.isEmpty()) {
       snapshot.add(queue.poll());
     }
+
     for (BidTransaction reg : snapshot) {
       if (reg.getUserId() != currentLeader && reg.getMaxAutoBid() > currentPrice) {
         double nextBid = currentPrice + reg.getAutoBidIncrement();
@@ -183,34 +309,27 @@ public class AuctionManager {
         }
       }
     }
+
     for (BidTransaction reg : snapshot) {
       queue.add(reg);
     }
   }
 
   private int getPreviousHighestBidder(int id) {
-    int ans = -1;
-    try {
-      java.sql.Connection res =
-          com.auction.server.dao.DatabaseConnection.getInstance().getConnection();
-      String res1 =
-          "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
-      java.sql.PreparedStatement ans1 = res.prepareStatement(res1);
-      ans1.setInt(1, id);
-      java.sql.ResultSet res2 = ans1.executeQuery();
-      if (res2.next()) ans = res2.getInt("userid");
-    } catch (Exception e) {
-    }
-    return ans;
+    return bidDao.getHighestBidderId(id);
   }
 
   public void sendToUser(int id, Response r) {
-    for (ClientHandler ans : this.clients) {
-      if (ans.getCurrentUser() != null && ans.getCurrentUser().getId() == id) ans.send(r);
+    for (ClientHandler client : this.clients) {
+      if (client.getCurrentUser() != null && client.getCurrentUser().getId() == id) {
+        client.send(r);
+      }
     }
   }
 
   public void broadcast(Response r) {
-    for (ClientHandler ans : this.clients) ans.send(r);
+    for (ClientHandler client : this.clients) {
+      client.send(r);
+    }
   }
 }
