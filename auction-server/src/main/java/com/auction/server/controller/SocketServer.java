@@ -1,5 +1,6 @@
 package com.auction.server.controller;
 
+import com.auction.server.dao.DatabaseInitializer;
 import com.auction.server.service.*;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -40,6 +41,8 @@ public class SocketServer {
 
   public void startServer() {
     try {
+      DatabaseInitializer.init();
+
       SettlementService settlementService = new SettlementService();
       settlementService.start();
 

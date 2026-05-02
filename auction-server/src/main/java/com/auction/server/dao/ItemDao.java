@@ -6,40 +6,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class ItemDao {
-  public ItemDao() {
-    this.ensureColumns();
-  }
-
-  private void ensureColumns() {
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        Statement st = conn.createStatement()){
-      if (!this.columnExists("items", "image_url")) {
-        st.executeUpdate("ALTER TABLE items ADD COLUMN image_url VARCHAR(2048) NULL");
-      }
-      if (!this.columnExists("items", "maxprice")) {
-        st.executeUpdate("ALTER TABLE items ADD COLUMN maxprice DOUBLE NULL");
-      }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-  }
-
-  private boolean columnExists(String res, String ans) throws SQLException {
-    boolean ans1 = false;
-    String sql =
-        "select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ? limit 1";
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, res);
-        ps.setString(2, ans);
-        try (ResultSet res2 = ps.executeQuery()){
-          ans1 = res2.next();
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return ans1;
-  }
+  public ItemDao() {}
 
   public List<Item> getAll() {
     List<Item> ans = new ArrayList<>();

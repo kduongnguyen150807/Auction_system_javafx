@@ -13,6 +13,7 @@ public class TransactionLogDao {
 
   public boolean insertLog(int u, String t, double a, int i) {
     boolean ans = false;
+
     String sql =
             "INSERT INTO transaction_logs (userid, type, amount, itemid) VALUES (?, ?, ?, ?)";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();

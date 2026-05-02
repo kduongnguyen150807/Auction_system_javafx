@@ -6,27 +6,7 @@ import java.sql.*;
 
 public class UserDao {
 
-  public UserDao() {
-    this.ensureProfileColumns();
-    this.ensureUniqueIndexes();
-  }
-
-  private void ensureProfileColumns() {
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-          Statement st = conn.createStatement()){
-          if (!this.columnExists(conn,"users", "fullname")) {
-            st.execute("alter table users add column fullname varchar(255) null");
-            st.execute("update users set fullname = username where fullname is null or trim(fullname) = ''");
-          }
-          if (!this.columnExists(conn,"users", "avgrating")) {
-            st.execute("alter table users add column avgrating double default 0");
-          }
-          if (!this.columnExists(conn,"users", "totalratings")) {
-            st.execute("alter table users add column totalratings int default 0");
-          }
-    } catch (SQLException e) {
-    }
-  }
+  public UserDao() {}
 
   public User login(String u, String p) {
     User ans = null;
@@ -105,22 +85,6 @@ public class UserDao {
       e.printStackTrace();
     }
     return ans;
-  }
-
-  private void ensureUniqueIndexes() {
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-          Statement st = conn.createStatement()){
-      if (!this.indexExists(conn,"users", "uk_users_username")) {
-        st.execute("create unique index uk_users_username on users(username)");
-      }
-      if (!this.indexExists(conn,"users", "uk_users_email")) {
-        st.execute("create unique index uk_users_email on users(email)");
-      }
-    } catch (SQLException e) {
-    }
-    catch (Exception e){
-      e.printStackTrace();
-    }
   }
 
   private boolean indexExists(Connection conn,String tableName, String indexName) throws SQLException {
