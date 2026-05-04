@@ -4,6 +4,10 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.Item;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Objects;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -19,50 +23,110 @@ public class ItemCardController {
   @FXML private ImageView ImageHolder;
 
   private int id;
-  private String n, d, t, u, sn, sa;
-  private double p;
+  private String itemName, description, timeLabel, imageUrl, sellerName, sellerAvatarUrl;
+  private double currentPrice;
+  private LocalDateTime endTime;
 
   public void setData(
-      int iid,
-      String iname,
-      double ip,
-      String idesc,
-      String it,
-      String iurl,
-      String isn,
-      String isa) {
-    this.id = iid;
-    this.n = iname;
-    this.p = ip;
-    this.d = idesc;
-    this.t = it;
-    this.u = iurl;
-    this.sn = isn;
-    this.sa = isa;
+      int itemId,
+      String name,
+      double price,
+      String desc,
+      String timeLabel,
+      String imageUrl,
+      String sellerName,
+      String sellerAvatarUrl) {
+    this.id = itemId;
+    this.itemName = name;
+    this.currentPrice = price;
+    this.description = desc;
+    this.timeLabel = timeLabel;
+    this.imageUrl = imageUrl;
+    this.sellerName = sellerName;
+    this.sellerAvatarUrl = sellerAvatarUrl;
 
-    if (ItemName != null) ItemName.setText(this.n);
-    if (ItemDescription != null) ItemDescription.setText(this.d);
-    if (Price != null) Price.setText(String.format("%,.0f$", this.p));
-    if (TimeRemain != null) TimeRemain.setText(this.t);
+    if (ItemName != null) ItemName.setText(this.itemName);
+    if (ItemDescription != null) ItemDescription.setText(this.description);
+    if (Price != null) Price.setText(String.format("%,.0f$", this.currentPrice));
+    if (TimeRemain != null) TimeRemain.setText(this.timeLabel);
 
-    if (ImageHolder != null && this.u != null && !this.u.isBlank()) {
-      Image img = new Image(this.u, true);
-      img.progressProperty()
-          .addListener(
-              (obs, oldv, newv) -> {
-                if (newv.doubleValue() == 1.0) {
-                  Platform.runLater(() -> applyCenterCrop(ImageHolder, img));
-                }
-              });
-      ImageHolder.setImage(img);
+    loadImageIfPresent(this.imageUrl);
+  }
+
+  private void loadImageIfPresent(String url) {
+    if (ImageHolder == null || url == null || url.isBlank()) return;
+    Image img = new Image(url, true);
+    img.progressProperty()
+        .addListener(
+            (obs, oldv, newv) -> {
+              if (newv.doubleValue() == 1.0) {
+                Platform.runLater(() -> applyCenterCrop(ImageHolder, img));
+              }
+            });
+    ImageHolder.setImage(img);
+  }
+
+  /** Name, description, price, sellers, image — shared by live-countdown and static-time rows. */
+  private void patchItemCoreFields(Item item) {
+    if (item == null || item.getId() != this.id) return;
+
+    String name = item.getName() != null ? item.getName() : "";
+    String desc = item.getDescription() != null ? item.getDescription() : "";
+    String newSeller = item.getSellerUsername() != null ? item.getSellerUsername() : "";
+    String newSellerAvatar = item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "";
+    String newImageUrl = item.getImageUrl() != null ? item.getImageUrl() : "";
+
+    this.itemName = name;
+    this.description = desc;
+    this.sellerName = newSeller;
+    this.sellerAvatarUrl = newSellerAvatar;
+    if (ItemName != null) ItemName.setText(name);
+    if (ItemDescription != null) ItemDescription.setText(desc);
+
+    double price = item.getCurrentPrice();
+    if (Double.compare(this.currentPrice, price) != 0) {
+      updatePrice(price);
+    }
+
+    if (ImageHolder == null) return;
+    if (newImageUrl.isBlank()) {
+      if (this.imageUrl != null && !this.imageUrl.isBlank()) {
+        ImageHolder.setImage(null);
+      }
+      this.imageUrl = newImageUrl;
+    } else if (!Objects.equals(this.imageUrl, newImageUrl)) {
+      this.imageUrl = newImageUrl;
+      loadImageIfPresent(newImageUrl);
     }
   }
 
-  private void applyCenterCrop(ImageView iv, Image img) {
+  /**
+   * Applies server fields without reloading the image if the URL is unchanged (reduces lag on refresh).
+   */
+  public void syncFromCatalogItem(Item item) {
+    if (item == null || item.getId() != this.id) return;
+    patchItemCoreFields(item);
+    setEndTime(item.getEndTime());
+    updateTimeLabel();
+  }
+
+  /**
+   * Same as {@link #syncFromCatalogItem} but time column is a fixed caption (History / Your items), no live
+   * countdown.
+   */
+  public void syncFromCatalogItemStaticTime(Item item, String timeRemainCaption) {
+    if (item == null || item.getId() != this.id) return;
+    patchItemCoreFields(item);
+    setEndTime(null);
+    this.timeLabel = timeRemainCaption != null ? timeRemainCaption : "";
+    if (TimeRemain != null) TimeRemain.setText(this.timeLabel);
+  }
+
+  private void applyCenterCrop(ImageView imageView, Image img) {
     double w = img.getWidth();
     double h = img.getHeight();
-    double targetW = iv.getFitWidth();
-    double targetH = iv.getFitHeight();
+    double targetW = imageView.getFitWidth();
+    double targetH = imageView.getFitHeight();
 
     double imgRatio = w / h;
     double targetRatio = targetW / targetH;
@@ -80,35 +144,57 @@ public class ItemCardController {
       cropY = (h - cropH) / 2;
     }
 
-    iv.setViewport(new Rectangle2D(cropX, cropY, cropW, cropH));
+    imageView.setViewport(new Rectangle2D(cropX, cropY, cropW, cropH));
   }
 
-  public void updatePrice(double res) {
-    this.p = res;
-    if (Price != null) Price.setText(String.format("%,.0f$", res));
+  public void setEndTime(LocalDateTime endTime) {
+    this.endTime = endTime;
+  }
+
+  public void updateTimeLabel() {
+    if (TimeRemain == null || endTime == null) return;
+    Duration rem = Duration.between(LocalDateTime.now(), endTime);
+    String label;
+    if (rem.isNegative() || rem.isZero()) {
+      label = "closed";
+    } else {
+      long s = rem.getSeconds();
+      long days = s / 86400;
+      long hours = (s % 86400) / 3600;
+      long mins = (s % 3600) / 60;
+      long secs = s % 60;
+      if (days > 0) label = days + "d " + hours + "h";
+      else if (hours > 0) label = hours + "h " + mins + "m";
+      else label = mins + "m " + secs + "s";
+    }
+    TimeRemain.setText(label);
+  }
+
+  public void updatePrice(double newPrice) {
+    this.currentPrice = newPrice;
+    if (Price != null) Price.setText(String.format("%,.0f$", newPrice));
   }
 
   public int getId() {
-    int res = this.id;
-    return res;
+    return this.id;
   }
 
   public void handleItemClicked() {
     try {
-      NodeContentLoader<ScrollPane> l = new NodeContentLoader<>();
-      l.load("/fxml/iteminformation/ItemInformation.fxml");
-      ItemInformationController c = l.getController();
-      if (c != null) {
-        c.setData(id, n, p, 0, d, t, u, sn, sa);
-        c.refresh();
-        KhungController.itemDetailController = c;
+      NodeContentLoader<ScrollPane> detailLoader = new NodeContentLoader<>();
+      detailLoader.load("/fxml/iteminformation/ItemInformation.fxml");
+      ItemInformationController detailController = detailLoader.getController();
+      if (detailController != null) {
+        detailController.setData(id, itemName, currentPrice, 0, description, timeLabel, imageUrl, sellerName, sellerAvatarUrl);
+        detailController.refresh();
+        KhungController.itemDetailController = detailController;
       }
       NodeManager.switchNodewithNode(
-          l.getCurrentNode(),
+          detailLoader.getCurrentNode(),
           KhungController.getCurrentNode(),
           KhungController.getMainContentPane());
-      KhungController.setMainContentNode(l.getCurrentNode());
-    } catch (Exception e) {
+      KhungController.setMainContentNode(detailLoader.getCurrentNode());
+    } catch (Exception ignored) {
     }
   }
 }

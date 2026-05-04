@@ -18,9 +18,9 @@ import javafx.scene.layout.AnchorPane;
 public class LoginController {
 
   @FXML private AnchorPane rootPane;
-  @FXML private TextField u;
-  @FXML private PasswordField p;
-  @FXML private Label ans;
+  @FXML private TextField usernameField;
+  @FXML private PasswordField passwordField;
+  @FXML private Label messageLabel;
 
   @FXML
   private void initialize() {
@@ -29,11 +29,11 @@ public class LoginController {
 
   @FXML
   public void handleLogin(ActionEvent event) {
-    String username = this.u.getText().trim();
-    String rawPassword = this.p.getText();
+    String username = this.usernameField.getText().trim();
+    String rawPassword = this.passwordField.getText();
 
     if (username.isBlank() || rawPassword.isBlank()) {
-      this.ans.setText("Please enter username and password.");
+      this.messageLabel.setText("Please enter username and password.");
       return;
     }
 
@@ -47,7 +47,7 @@ public class LoginController {
     Response response = NetworkClient.getInstance().sendRequestAndWait(request);
 
     if (response == null) {
-      this.ans.setText("Cannot reach server — check IP and server status.");
+      this.messageLabel.setText("Cannot reach server — check IP and server status.");
       return;
     }
 
@@ -55,16 +55,16 @@ public class LoginController {
       if (response.getPayload() instanceof User loggedInUser) {
         ClientSession.setCurrentUser(loggedInUser);
       }
-      this.ans.setText("Login successful!");
+      this.messageLabel.setText("Login successful!");
       try {
         SceneManager.switchScene("/fxml/main/Khung.fxml");
       } catch (Exception ex) {
-        this.ans.setText("Logged in but failed to open main window.");
+        this.messageLabel.setText("Logged in but failed to open main window.");
       }
     } else if ("account_banned".equals(response.getMessage())) {
-      this.ans.setText("Your account has been suspended.");
+      this.messageLabel.setText("Your account has been suspended.");
     } else {
-      this.ans.setText("Incorrect username or password.");
+      this.messageLabel.setText("Incorrect username or password.");
     }
   }
 

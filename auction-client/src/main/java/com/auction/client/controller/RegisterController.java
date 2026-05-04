@@ -18,12 +18,12 @@ public class RegisterController {
   private static final Logger LOGGER = LoggerFactory.getLogger(RegisterController.class);
 
   @FXML private AnchorPane rootPane;
-  @FXML private TextField u;
-  @FXML private TextField e;
-  @FXML private TextField a;
-  @FXML private PasswordField p;
-  @FXML private PasswordField cp;
-  @FXML private Label ans;
+  @FXML private TextField usernameField;
+  @FXML private TextField emailField;
+  @FXML private TextField ageField;
+  @FXML private PasswordField passwordField;
+  @FXML private PasswordField confirmPasswordField;
+  @FXML private Label messageLabel;
 
   @FXML
   private void initialize() {
@@ -32,25 +32,25 @@ public class RegisterController {
 
   @FXML
   public void handleRegister(ActionEvent event) {
-    String username = this.u.getText();
-    String emailText = this.e.getText();
-    String age = this.a.getText();
-    String password = this.p.getText();
-    String confirmPassword = this.cp.getText();
+    String username = this.usernameField.getText();
+    String email = this.emailField.getText();
+    String age = this.ageField.getText();
+    String password = this.passwordField.getText();
+    String confirmPassword = this.confirmPasswordField.getText();
 
-    if (username.isEmpty() || emailText.isEmpty() || password.isEmpty()) {
-      this.ans.setText("nhập đủ thông tin vào!");
+    if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+      this.messageLabel.setText("nhập đủ thông tin vào!");
       return;
     }
 
     if (!password.equals(confirmPassword)) {
-      this.ans.setText("mật khẩu không khớp!");
+      this.messageLabel.setText("mật khẩu không khớp!");
       return;
     }
 
     Bidder newUser = new Bidder();
     newUser.setUsername(username);
-    newUser.setEmail(emailText);
+    newUser.setEmail(email);
     newUser.setAge(age);
     newUser.setPassword(PasswordEncoder.hash(password));
     newUser.setFullName(username);
@@ -67,9 +67,9 @@ public class RegisterController {
     } else {
       String message = (response != null) ? response.getMessage() : "timeout";
       if ("duplicate_username_or_email".equals(message)) {
-        this.ans.setText("username hoặc email đã tồn tại!");
+        this.messageLabel.setText("username hoặc email đã tồn tại!");
       } else {
-        this.ans.setText("đăng ký thất bại!");
+        this.messageLabel.setText("đăng ký thất bại!");
       }
     }
   }

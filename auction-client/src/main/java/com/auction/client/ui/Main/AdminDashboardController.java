@@ -65,6 +65,13 @@ public class AdminDashboardController {
     loadUsers(); loadPendingItems(); loadStats();
   }
 
+  /** Reload users, pending lots and charts (e.g. when opening this screen from the sidebar). */
+  public void refreshDashboard() {
+    loadUsers();
+    loadPendingItems();
+    loadStats();
+  }
+
   private void asyncRequest(Request req, Consumer<Response> callback) {
     Thread t = new Thread(() -> { Response res = NetworkClient.getInstance().sendRequestAndWait(req); if (res != null) callback.accept(res); });
     t.setDaemon(true); t.start();
@@ -187,7 +194,7 @@ public class AdminDashboardController {
     else if (val.equals("No Rating")) filtereduserlist.setPredicate(u -> u.getTotalRatings() <= 0);
   }
 
-  @FXML private void handleRefreshPending(ActionEvent event) { loadPendingItems(); loadUsers(); loadStats(); }
+  @FXML private void handleRefreshPending(ActionEvent event) { refreshDashboard(); }
 
   private void showAlert(Alert.AlertType type, String title, String content) {
     Alert a = new Alert(type); a.setTitle(title); a.setHeaderText(null); a.setContentText(content); a.showAndWait();

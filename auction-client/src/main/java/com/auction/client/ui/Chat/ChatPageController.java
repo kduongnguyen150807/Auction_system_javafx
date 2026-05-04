@@ -158,6 +158,15 @@ public class ChatPageController {
     });
   }
 
+  /** Reload friends / requests / search list when user opens Chat from the sidebar. */
+  public void refreshOnNavigate() {
+    switch (currentTab) {
+      case FRIENDS -> loadFriends();
+      case REQUESTS -> loadFriendRequests();
+      case SEARCH -> handleSearch();
+    }
+  }
+
   private void addFriend(int targetId) { async(new Request(Request.ADD_FRIEND, targetId), res -> {}); }
   private void acceptFriend(int id) { async(new Request(Request.ACCEPT_FRIEND, id), res -> {}); }
   private void declineFriend(int id) {

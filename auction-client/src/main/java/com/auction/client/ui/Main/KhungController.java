@@ -6,6 +6,7 @@ import com.auction.client.ui.Chat.ChatPageController;
 import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.TrangChu.TrangChuController;
+import com.auction.client.ui.Profile.ProfileController;
 import com.auction.client.ui.UserProfile.UserProfileController;
 import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.client.util.NotificationCenter;
@@ -43,10 +44,12 @@ public class KhungController implements NetworkEventListener {
   private static double filterMaxPrice = Double.MAX_VALUE;
   public static ItemInformationController itemDetailController;
 
-  private Node an, hn, mn, pn, adn, aln, chn;
-  private TrangChuController tc;
-  private YourItemController yc;
-  private HistoryController hc;
+  private Node auctionHomeNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
+  private TrangChuController homeController;
+  private YourItemController myItemsController;
+  private HistoryController historyController;
+  private ProfileController profileController;
+  private AdminDashboardController adminDashboardController;
   private ChatPageController chatCtrl;
 
   @FXML private HBox SearchContainer;
@@ -75,44 +78,79 @@ public class KhungController implements NetworkEventListener {
       NodeContentLoader<Pane> chat = loadFxml("/fxml/chat/ChatPage.fxml");
       if (ContentArea != null) ContentArea.getChildren().add(auction.getCurrentNode());
       if (SearchContainer != null) SearchContainer.getChildren().add(search.getCurrentNode());
-      an = auction.getCurrentNode(); hn = hist.getCurrentNode(); mn = myItem.getCurrentNode();
-      pn = profile.getCurrentNode(); adn = admin.getCurrentNode(); aln = addLot.getCurrentNode(); chn = chat.getCurrentNode();
-      tc = auction.getController(); yc = myItem.getController(); hc = hist.getController(); chatCtrl = chat.getController();
-      currentContentNode = an; setMenu(AuctionMenu); update();
+      auctionHomeNode = auction.getCurrentNode(); historyNode = hist.getCurrentNode(); myItemsNode = myItem.getCurrentNode();
+      profileNode = profile.getCurrentNode(); adminDashboardNode = admin.getCurrentNode(); addLotNode = addLot.getCurrentNode(); chatNode = chat.getCurrentNode();
+      homeController = auction.getController();
+      myItemsController = myItem.getController();
+      historyController = hist.getController();
+      profileController = profile.getController();
+      adminDashboardController = admin.getController();
+      chatCtrl = chat.getController();
+      currentContentNode = auctionHomeNode; setMenu(AuctionMenu); update();
       Platform.runLater(() -> {
         javafx.scene.Scene scene = mainContentPane.getScene();
-        if (scene != null) scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
-          if (e.getCode() == javafx.scene.input.KeyCode.F11) {
-            javafx.stage.Stage s = (javafx.stage.Stage) scene.getWindow();
-            s.setFullScreen(!s.isFullScreen()); e.consume();
+        if (scene != null) scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, event -> {
+          if (event.getCode() == javafx.scene.input.KeyCode.F11) {
+            javafx.stage.Stage stage = (javafx.stage.Stage) scene.getWindow();
+            stage.setFullScreen(!stage.isFullScreen()); event.consume();
           }
         });
       });
     } catch (Exception e) {}
   }
 
-  @FXML public void openAuction(MouseEvent e) { switchPage(an, AuctionMenu); }
-  @FXML public void openHistory(MouseEvent e) { switchPage(hn, HistoryMenu); if (hc != null) hc.refreshHistory(); }
-  @FXML public void openMyItems(MouseEvent e) { switchPage(mn, MyItemMenu); }
-  @FXML public void openProfile(MouseEvent e) { switchPage(pn, ProfileMenu); }
-  @FXML public void openChat(MouseEvent e) { switchPage(chn, ChatMenu); }
-  @FXML public void openManageUsers(MouseEvent e) { switchPage(adn, ManageUsersMenu); }
+  private void refreshAuctionHome() {
+    if (homeController == null) return;
+    homeController.setFilters(getSearchKeyword(), getCategoryFilter());
+    homeController.refreshItems();
+  }
 
-  @FXML public void handleRefresh(ActionEvent e) {
-    if (currentContentNode == an && tc != null) tc.refreshItems();
-    else if (currentContentNode == hn && hc != null) hc.refreshHistory();
-    else if (currentContentNode == mn && yc != null) yc.refreshItems();
+  @FXML public void openAuction(MouseEvent event) {
+    if (switchPage(auctionHomeNode, AuctionMenu)) refreshAuctionHome();
+  }
+  @FXML public void openHistory(MouseEvent event) {
+    if (switchPage(historyNode, HistoryMenu) && historyController != null) historyController.refreshHistory();
+  }
+  @FXML public void openMyItems(MouseEvent event) {
+    if (switchPage(myItemsNode, MyItemMenu) && myItemsController != null) myItemsController.refreshItems();
+  }
+  @FXML public void openProfile(MouseEvent event) {
+    if (switchPage(profileNode, ProfileMenu) && profileController != null) profileController.refreshFromServer();
+  }
+  @FXML public void openChat(MouseEvent event) {
+    if (switchPage(chatNode, ChatMenu) && chatCtrl != null) chatCtrl.refreshOnNavigate();
+  }
+  @FXML public void openManageUsers(MouseEvent event) {
+    if (switchPage(adminDashboardNode, ManageUsersMenu) && adminDashboardController != null)
+      adminDashboardController.refreshDashboard();
+  }
+
+  @FXML public void handleRefresh(ActionEvent event) {
+    if (currentContentNode == auctionHomeNode) refreshAuctionHome();
+    else if (currentContentNode == historyNode && historyController != null) historyController.refreshHistory();
+    else if (currentContentNode == myItemsNode && myItemsController != null) myItemsController.refreshItems();
+    else if (currentContentNode == profileNode && profileController != null) profileController.refreshFromServer();
+    else if (currentContentNode == chatNode && chatCtrl != null) chatCtrl.refreshOnNavigate();
+    else if (currentContentNode == adminDashboardNode && adminDashboardController != null)
+      adminDashboardController.refreshDashboard();
     else if (itemDetailController != null) itemDetailController.refresh();
   }
-  @FXML public void handlePrimaryAction(ActionEvent e) {
-    if (ClientSession.getActiveRole() == UserRole.SELLER) { if (currentContentNode != aln) com.auction.client.ui.AddNewLot.AddNewLotController.resetWhenOpening(); switchPage(aln, AuctionMenu); }
-    else switchPage(an, AuctionMenu);
+  @FXML public void handlePrimaryAction(ActionEvent event) {
+    if (ClientSession.getActiveRole() == UserRole.SELLER) {
+      if (currentContentNode != addLotNode) com.auction.client.ui.AddNewLot.AddNewLotController.resetWhenOpening();
+      switchPage(addLotNode, AuctionMenu);
+    } else if (switchPage(auctionHomeNode, AuctionMenu)) {
+      refreshAuctionHome();
+    }
   }
   @FXML public void handleSignout() { performForcedLogout(); }
-  private void switchPage(Node t, HBox m) {
-    if (t == null || currentContentNode == t) return;
-    if (ContentArea != null) { ContentArea.getChildren().clear(); ContentArea.getChildren().add(t); }
-    currentContentNode = t; setMenu(m);
+
+  /** @return true if the visible root actually changed (so callers can avoid redundant network refresh). */
+  private boolean switchPage(Node targetContent, HBox activeMenu) {
+    if (targetContent == null || currentContentNode == targetContent) return false;
+    if (ContentArea != null) { ContentArea.getChildren().clear(); ContentArea.getChildren().add(targetContent); }
+    currentContentNode = targetContent; setMenu(activeMenu);
+    return true;
   }
 
   private void setMenu(HBox active) {
@@ -122,17 +160,17 @@ public class KhungController implements NetworkEventListener {
   }
 
   public void update() {
-    User u = ClientSession.getCurrentUser();
-    if (u == null) return;
+    User currentUser = ClientSession.getCurrentUser();
+    if (currentUser == null) return;
     if (UserName != null) UserName.setText(ClientSession.getUsername());
     if (Rank != null) {
-      String r = ClientSession.getActiveRole().name();
-      if (u.getTotalRatings() > 0) r += " | " + String.format("%.1f\u2605 %s", u.getAvgRating(), u.getAvgRating() <= 2.0 ? "Negative" : u.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
-      Rank.setText(r);
+      String rankText = ClientSession.getActiveRole().name();
+      if (currentUser.getTotalRatings() > 0) rankText += " | " + String.format("%.1f\u2605 %s", currentUser.getAvgRating(), currentUser.getAvgRating() <= 2.0 ? "Negative" : currentUser.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
+      Rank.setText(rankText);
     }
-    boolean admin = u.getRole() == UserRole.ADMIN;
-    if (ManageUsersMenu != null) { ManageUsersMenu.setVisible(admin); ManageUsersMenu.setManaged(admin); }
-    if (sidebaravatar != null && u.getAvatarUrl() != null && !u.getAvatarUrl().isBlank()) loadSidebarAvatar(u.getAvatarUrl());
+    boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
+    if (ManageUsersMenu != null) { ManageUsersMenu.setVisible(isAdmin); ManageUsersMenu.setManaged(isAdmin); }
+    if (sidebaravatar != null && currentUser.getAvatarUrl() != null && !currentUser.getAvatarUrl().isBlank()) loadSidebarAvatar(currentUser.getAvatarUrl());
   }
 
   private void loadSidebarAvatar(String url) {
@@ -157,70 +195,78 @@ public class KhungController implements NetworkEventListener {
   public static double getMinPrice() { return filterMinPrice; }
   public static double getMaxPrice() { return filterMaxPrice; }
 
-  public static void applySearchFilter(String k, String c, double min, double max) {
-    searchKeyword = k == null ? "" : k.trim(); categoryFilter = c == null ? "All" : c.trim();
+  public static void applySearchFilter(String keyword, String category, double min, double max) {
+    searchKeyword = keyword == null ? "" : keyword.trim(); categoryFilter = category == null ? "All" : category.trim();
     filterMinPrice = min; filterMaxPrice = max;
     if (instance != null) {
-      if (instance.tc != null) instance.tc.setFilters(searchKeyword, categoryFilter);
-      if (instance.yc != null) instance.yc.refreshItems();
+      if (instance.homeController != null) instance.homeController.setFilters(searchKeyword, categoryFilter);
+      if (instance.myItemsController != null) instance.myItemsController.refreshItems();
     }
   }
 
-  public static void returnFromAddLot(boolean r) {
+  public static void returnFromAddLot(boolean refreshAfterSubmit) {
     if (instance == null) return;
-    instance.switchPage(instance.an, instance.AuctionMenu);
-    if (r && instance.tc != null) instance.tc.refreshItems();
+    instance.switchPage(instance.auctionHomeNode, instance.AuctionMenu);
+    if (refreshAfterSubmit && instance.homeController != null) {
+      instance.homeController.setFilters(getSearchKeyword(), getCategoryFilter());
+      instance.homeController.refreshItems();
+    }
   }
 
   public static void showUserProfile(User user) {
     if (instance == null || user == null) return;
     Platform.runLater(() -> { try {
-      NodeContentLoader<javafx.scene.Parent> l = instance.loadFxml("/fxml/userprofile/UserProfile.fxml");
-      l.<UserProfileController>getController().setUser(user); currentContentNode = l.getCurrentNode();
+      NodeContentLoader<javafx.scene.Parent> profileLoader = instance.loadFxml("/fxml/userprofile/UserProfile.fxml");
+      profileLoader.<UserProfileController>getController().setUser(user); currentContentNode = profileLoader.getCurrentNode();
       if (instance.ContentArea != null) { instance.ContentArea.getChildren().clear(); instance.ContentArea.getChildren().add(currentContentNode); }
       instance.setMenu(null);
-    } catch (Exception e) {} });
+    } catch (Exception ignored) {} });
   }
 
-  public static void returnToAuction() { if (instance != null) Platform.runLater(() -> instance.switchPage(instance.an, instance.AuctionMenu)); }
+  public static void returnToAuction() {
+    if (instance == null) return;
+    Platform.runLater(() -> {
+      if (instance.switchPage(instance.auctionHomeNode, instance.AuctionMenu)) instance.refreshAuctionHome();
+    });
+  }
 
   public static void updateRealtimeUi(Item item) {
     Platform.runLater(() -> {
       if (itemDetailController != null) itemDetailController.updatePriceUi(item);
-      if (instance != null && instance.tc != null) instance.tc.updatePriceUi(item);
+      if (instance != null && instance.homeController != null) instance.homeController.updatePriceUi(item);
     });
   }
 
-  @Override public void onNewBidUpdate(Item item) { if (itemDetailController != null) itemDetailController.updatePriceUi(item); if (tc != null) tc.updatePriceUi(item); }
+  @Override public void onNewBidUpdate(Item item) { if (itemDetailController != null) itemDetailController.updatePriceUi(item); if (homeController != null) homeController.updatePriceUi(item); }
 
   @Override
   public void onItemClosed(Item item) {
-    if (tc != null) tc.removeClosedItem(item);
+    if (homeController != null) homeController.removeClosedItem(item);
     if (itemDetailController != null) itemDetailController.markItemClosed(item);
     User me = ClientSession.getCurrentUser();
     if (me != null && item.getSellerId() == me.getId()) NotificationCenter.addNotification("Sản phẩm \"" + item.getName() + "\" đã được đóng đấu giá!");
   }
 
-  @Override public void onSellerBidNotify(Item item, double p) { NotificationCenter.addNotification("Sản phẩm \"" + item.getName() + "\" có bid mới: " + String.format("%,.0f", p) + " VND"); }
+  @Override public void onSellerBidNotify(Item item, double newBidPrice) { NotificationCenter.addNotification("Sản phẩm \"" + item.getName() + "\" có bid mới: " + String.format("%,.0f", newBidPrice) + " VND"); }
 
   @Override public void onOutbidNotify(int itemId) { NotificationCenter.addNotification("Bạn đã bị vượt giá ở item #" + itemId + "!"); }
-  @Override public void onGlobalChat(ChatMessage m) { if (chatCtrl != null) chatCtrl.onGlobalChat(m); }
-  @Override public void onPrivateChat(ChatMessage m) { if (chatCtrl != null) chatCtrl.onPrivateChat(m); }
+  @Override public void onGlobalChat(ChatMessage message) { if (chatCtrl != null) chatCtrl.onGlobalChat(message); }
+  @Override public void onPrivateChat(ChatMessage message) { if (chatCtrl != null) chatCtrl.onPrivateChat(message); }
 
-  @Override public void onFriendRequest(Friendship f) {
-    NotificationCenter.addNotification(f.getRequesterUsername() + " đã gửi lời mời kết bạn!");
-    if (chatCtrl != null) chatCtrl.onFriendRequest(f);
+  @Override public void onFriendRequest(Friendship friendship) {
+    NotificationCenter.addNotification(friendship.getRequesterUsername() + " đã gửi lời mời kết bạn!");
+    if (chatCtrl != null) chatCtrl.onFriendRequest(friendship);
   }
-  @Override public void onFriendRequestSent(Friendship f) {
-    NotificationCenter.addNotification("Đã gửi lời mời kết bạn đến " + f.getAddresseeUsername() + "!");
-    if (chatCtrl != null) chatCtrl.onFriendRequestSent(f);
+  @Override public void onFriendRequestSent(Friendship friendship) {
+    NotificationCenter.addNotification("Đã gửi lời mời kết bạn đến " + friendship.getAddresseeUsername() + "!");
+    if (chatCtrl != null) chatCtrl.onFriendRequestSent(friendship);
   }
-  @Override public void onFriendAccepted(Friendship f) {
-    if (chatCtrl != null) chatCtrl.onFriendAccepted(f);
+  @Override public void onFriendAccepted(Friendship friendship) {
+    if (chatCtrl != null) chatCtrl.onFriendAccepted(friendship);
     User me = ClientSession.getCurrentUser();
-    NotificationCenter.addNotification(me != null && f.getRequesterId() == me.getId()
-        ? f.getAddresseeUsername() + " đã chấp nhận lời mời kết bạn!"
-        : "Bạn và " + f.getRequesterUsername() + " đã trở thành bạn bè!");
+    NotificationCenter.addNotification(me != null && friendship.getRequesterId() == me.getId()
+        ? friendship.getAddresseeUsername() + " đã chấp nhận lời mời kết bạn!"
+        : "Bạn và " + friendship.getRequesterUsername() + " đã trở thành bạn bè!");
   }
 
   @Override public void onAccountBanned(String reason) {
@@ -235,8 +281,8 @@ public class KhungController implements NetworkEventListener {
   }
 
   private void showFxAlert(javafx.scene.control.Alert.AlertType type, String title, String header, String content) {
-    javafx.scene.control.Alert a = new javafx.scene.control.Alert(type);
-    a.setTitle(title); a.setHeaderText(header); a.setContentText(content); a.showAndWait();
+    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(type);
+    alert.setTitle(title); alert.setHeaderText(header); alert.setContentText(content); alert.showAndWait();
   }
 
   private void performForcedLogout() {
@@ -245,6 +291,6 @@ public class KhungController implements NetworkEventListener {
       javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
       javafx.stage.Stage stage = (javafx.stage.Stage) ContentArea.getScene().getWindow();
       stage.setScene(new javafx.scene.Scene(root)); stage.centerOnScreen(); stage.show();
-    } catch (Exception e) { LOGGER.error("Forced logout navigation failed", e); }
+    } catch (Exception ex) { LOGGER.error("Forced logout navigation failed", ex); }
   }
 }

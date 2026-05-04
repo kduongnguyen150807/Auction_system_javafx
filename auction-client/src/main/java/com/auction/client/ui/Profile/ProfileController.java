@@ -175,14 +175,31 @@ public class ProfileController implements NetworkEventListener {
     }
   }
 
-  public void handleRefresh(javafx.event.ActionEvent event) {
+  /** Load latest user profile from server and update UI (non-blocking). */
+  public void refreshFromServer() {
     if (ClientSession.getCurrentUser() == null) return;
-    Response res = NetworkClient.getInstance().sendRequestAndWait(
-        new Request("refresh_user", ClientSession.getCurrentUser().getId()));
-    if (res != null && Response.OK.equals(res.getStatus())) {
-      ClientSession.setCurrentUser((User) res.getPayload());
-      Platform.runLater(this::refreshData);
-    }
+    int userId = ClientSession.getCurrentUser().getId();
+    Thread t =
+        new Thread(
+            () -> {
+              try {
+                Response res =
+                    NetworkClient.getInstance()
+                        .sendRequestAndWait(new Request("refresh_user", userId));
+                if (res != null && Response.OK.equals(res.getStatus())) {
+                  ClientSession.setCurrentUser((User) res.getPayload());
+                  Platform.runLater(this::refreshData);
+                }
+              } catch (Exception e) {
+                LOGGER.warn("refresh_user failed for id={}", userId, e);
+              }
+            });
+    t.setDaemon(true);
+    t.start();
+  }
+
+  public void handleRefresh(javafx.event.ActionEvent event) {
+    refreshFromServer();
   }
 
   @FXML
