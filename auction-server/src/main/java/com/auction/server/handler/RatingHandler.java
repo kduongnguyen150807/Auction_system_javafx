@@ -26,10 +26,6 @@ public class RatingHandler implements ActionHandler {
     String requestId = request.getRequestId();
     try {
       Rating rating = (Rating) request.getPayload();
-      if (context.getCurrentUser() == null) {
-        return new Response(requestId, Response.ERROR, "not_logged_in", null);
-      }
-
       Item item = context.getItemDao().getById(rating.getItemId());
       if (item == null) {
         return new Response(requestId, Response.ERROR, "item_not_found", null);

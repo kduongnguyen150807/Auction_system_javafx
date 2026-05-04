@@ -1,6 +1,8 @@
 package com.auction.server.handler;
 
-import com.auction.shared.*;
+import com.auction.shared.Item;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
 import java.util.List;
 
 public class ItemQueryHandler implements ActionHandler {
@@ -25,17 +27,11 @@ public class ItemQueryHandler implements ActionHandler {
       }
 
       case Request.GET_PENDING_ITEMS: {
-        if (context.getCurrentUser() == null || context.getCurrentUser().getRole() != UserRole.ADMIN) {
-          return new Response(requestId, Response.ERROR, "forbidden", null);
-        }
         List<Item> items = context.getItemDao().getPendingItems();
         return new Response(requestId, Response.OK, "success", (java.io.Serializable) items);
       }
 
       case Request.APPROVE_ITEM: {
-        if (context.getCurrentUser() == null || context.getCurrentUser().getRole() != UserRole.ADMIN) {
-          return new Response(requestId, Response.ERROR, "forbidden", null);
-        }
         int itemId = (int) request.getPayload();
         boolean success = context.getItemDao().approveItem(itemId);
         return new Response(requestId,
@@ -44,9 +40,6 @@ public class ItemQueryHandler implements ActionHandler {
       }
 
       case Request.REJECT_ITEM: {
-        if (context.getCurrentUser() == null || context.getCurrentUser().getRole() != UserRole.ADMIN) {
-          return new Response(requestId, Response.ERROR, "forbidden", null);
-        }
         int itemId = (int) request.getPayload();
         boolean success = context.getItemDao().rejectItem(itemId);
         return new Response(requestId,

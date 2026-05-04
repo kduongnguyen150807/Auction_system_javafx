@@ -44,26 +44,13 @@ public class ClientHandler implements Runnable {
   private ActionRegistry buildRegistry() {
     ActionRegistry reg = new ActionRegistry();
 
-    LoginHandler loginHandler = new LoginHandler();
-    reg.register(Request.LOGIN, loginHandler);
+    // ── Public (no auth required) ─────────────────────────────────────────
+    reg.register(Request.LOGIN, new LoginHandler());
     reg.register(Request.SIGNUP, new SignupHandler());
 
     ListItemsHandler listHandler = new ListItemsHandler();
     reg.register(Request.LIST, listHandler);
     reg.register(Request.GET_ONGOING_LOTS, listHandler);
-
-    reg.register(Request.BID, new BidHandler());
-    reg.register(Request.ADD_LOT, new AddLotHandler());
-    reg.register(Request.UPDATE_PROFILE, new UpdateProfileHandler());
-    reg.register(Request.UPDATE_AVATAR, new UpdateAvatarHandler());
-
-    UserManagementHandler userMgmt = new UserManagementHandler();
-    reg.register(Request.GET_ALL_USERS, userMgmt);
-    reg.register(Request.LOCK_USER, userMgmt);
-    reg.register(Request.UNLOCK_USER, userMgmt);
-    reg.register(Request.PROMOTE_ADMIN, userMgmt);
-    reg.register(Request.SEARCH_USERS, userMgmt);
-    reg.register(Request.GET_USER_BY_ID, userMgmt);
 
     LotQueryHandler lotQuery = new LotQueryHandler();
     reg.register(Request.GET_ONGOING_BIDS, lotQuery);
@@ -74,37 +61,54 @@ public class ClientHandler implements Runnable {
     ItemQueryHandler itemQuery = new ItemQueryHandler();
     reg.register(Request.GET_MY_ITEMS, itemQuery);
     reg.register(Request.GET_ITEM_BY_ID, itemQuery);
-    reg.register(Request.GET_PENDING_ITEMS, itemQuery);
-    reg.register(Request.APPROVE_ITEM, itemQuery);
-    reg.register(Request.REJECT_ITEM, itemQuery);
 
     RatingHandler ratingHandler = new RatingHandler();
-    reg.register(Request.SUBMIT_RATING, ratingHandler);
     reg.register(Request.GET_RATINGS, ratingHandler);
-
-    reg.register(Request.DEPOSIT, new DepositHandler());
 
     MiscHandler miscHandler = new MiscHandler();
     reg.register(Request.REFRESH_USER, miscHandler);
     reg.register(Request.GET_TRANSACTIONS, miscHandler);
-    reg.register(Request.GET_STATUS_STATS, miscHandler);
-    reg.register(Request.GET_CATEGORY_STATS, miscHandler);
     reg.register(Request.GET_BID_HISTORY, miscHandler);
     reg.register(Request.PING, miscHandler);
 
     ChatHandler chatHandler = new ChatHandler();
-    reg.register(Request.SEND_CHAT, chatHandler);
     reg.register(Request.GET_GLOBAL_CHAT_HISTORY, chatHandler);
     reg.register(Request.GET_PRIVATE_CHAT_HISTORY, chatHandler);
     reg.register(Request.GET_CHAT_CONTACTS, chatHandler);
 
+    UserManagementHandler userMgmt = new UserManagementHandler();
+    reg.register(Request.GET_ALL_USERS, userMgmt);
+    reg.register(Request.SEARCH_USERS, userMgmt);
+    reg.register(Request.GET_USER_BY_ID, userMgmt);
+
     FriendHandler friendHandler = new FriendHandler();
-    reg.register(Request.ADD_FRIEND, friendHandler);
-    reg.register(Request.ACCEPT_FRIEND, friendHandler);
-    reg.register(Request.DECLINE_FRIEND, friendHandler);
-    reg.register(Request.REMOVE_FRIEND, friendHandler);
     reg.register(Request.GET_FRIENDS, friendHandler);
     reg.register(Request.GET_FRIEND_REQUESTS, friendHandler);
+
+    // ── Requires login ────────────────────────────────────────────────────
+    reg.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));
+    reg.register(Request.ADD_LOT, ActionHandler.requireAuth(new AddLotHandler()));
+    reg.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
+    reg.register(Request.UPDATE_AVATAR, ActionHandler.requireAuth(new UpdateAvatarHandler()));
+    reg.register(Request.DEPOSIT, ActionHandler.requireAuth(new DepositHandler()));
+    reg.register(Request.SUBMIT_RATING, ActionHandler.requireAuth(ratingHandler));
+    reg.register(Request.SEND_CHAT, ActionHandler.requireAuth(chatHandler));
+
+    FriendHandler authFriend = friendHandler;
+    reg.register(Request.ADD_FRIEND, ActionHandler.requireAuth(authFriend));
+    reg.register(Request.ACCEPT_FRIEND, ActionHandler.requireAuth(authFriend));
+    reg.register(Request.DECLINE_FRIEND, ActionHandler.requireAuth(authFriend));
+    reg.register(Request.REMOVE_FRIEND, ActionHandler.requireAuth(authFriend));
+
+    // ── Requires ADMIN role ───────────────────────────────────────────────
+    reg.register(Request.LOCK_USER, ActionHandler.requireAdmin(userMgmt));
+    reg.register(Request.UNLOCK_USER, ActionHandler.requireAdmin(userMgmt));
+    reg.register(Request.PROMOTE_ADMIN, ActionHandler.requireAdmin(userMgmt));
+    reg.register(Request.GET_PENDING_ITEMS, ActionHandler.requireAdmin(itemQuery));
+    reg.register(Request.APPROVE_ITEM, ActionHandler.requireAdmin(itemQuery));
+    reg.register(Request.REJECT_ITEM, ActionHandler.requireAdmin(itemQuery));
+    reg.register(Request.GET_STATUS_STATS, ActionHandler.requireAdmin(miscHandler));
+    reg.register(Request.GET_CATEGORY_STATS, ActionHandler.requireAdmin(miscHandler));
 
     return reg;
   }

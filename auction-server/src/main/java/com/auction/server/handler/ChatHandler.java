@@ -53,10 +53,6 @@ public class ChatHandler implements ActionHandler {
   private Response handleSendChat(Request request, HandlerContext context) {
     ChatMessage msg = (ChatMessage) request.getPayload();
     User sender = context.getCurrentUser();
-    if (sender == null) {
-      return new Response(request.getRequestId(), Response.ERROR, "Not logged in", null);
-    }
-
     msg.setSenderId(sender.getId());
     msg.setSenderUsername(sender.getUsername());
     msg.setSenderAvatarUrl(sender.getAvatarUrl());

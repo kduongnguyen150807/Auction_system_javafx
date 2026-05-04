@@ -2,7 +2,11 @@ package com.auction.server.handler;
 
 import com.auction.server.dao.BidDao;
 import com.auction.server.dao.UserDao;
-import com.auction.shared.*;
+import com.auction.shared.BidTransaction;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import com.auction.shared.TransactionLog;
+import com.auction.shared.User;
 import java.util.List;
 
 public class MiscHandler implements ActionHandler {
@@ -25,19 +29,11 @@ public class MiscHandler implements ActionHandler {
         return new Response(requestId, Response.OK, "success", (java.io.Serializable) logs);
       }
 
-      case Request.GET_STATUS_STATS: {
-        if (context.getCurrentUser() == null || context.getCurrentUser().getRole() != UserRole.ADMIN) {
-          return new Response(requestId, Response.ERROR, "forbidden", null);
-        }
+      case Request.GET_STATUS_STATS:
         return new Response(requestId, Response.OK, "success", context.getItemDao().getStatusStats());
-      }
 
-      case Request.GET_CATEGORY_STATS: {
-        if (context.getCurrentUser() == null || context.getCurrentUser().getRole() != UserRole.ADMIN) {
-          return new Response(requestId, Response.ERROR, "forbidden", null);
-        }
+      case Request.GET_CATEGORY_STATS:
         return new Response(requestId, Response.OK, "success", context.getItemDao().getCategoryStats());
-      }
 
       case Request.GET_BID_HISTORY: {
         int itemId = (int) payload;

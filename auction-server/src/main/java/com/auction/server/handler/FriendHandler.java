@@ -15,7 +15,6 @@ public class FriendHandler implements ActionHandler {
     String action = request.getAction();
     String rid = request.getRequestId();
     User me = context.getCurrentUser();
-    if (me == null) return new Response(rid, Response.ERROR, "Not logged in", null);
 
     switch (action) {
       case Request.ADD_FRIEND: {

@@ -2,7 +2,10 @@ package com.auction.server.handler;
 
 import com.auction.server.dao.UserDao;
 import com.auction.server.service.AuctionManager;
-import com.auction.shared.*;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+import com.auction.shared.UserRole;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +29,6 @@ public class UserManagementHandler implements ActionHandler {
         return handleLockUser(action, requestId, payload, context);
 
       case Request.PROMOTE_ADMIN: {
-        if (context.getCurrentUser() == null
-            || context.getCurrentUser().getRole() != UserRole.ADMIN) {
-          return new Response(requestId, Response.ERROR, "forbidden", null);
-        }
         String data = (String) payload;
         String[] parts = data.split(":");
         String username = parts[0];
