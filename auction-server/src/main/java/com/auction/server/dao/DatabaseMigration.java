@@ -5,16 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DatabaseMigration {
-  private static final Logger LOGGER = Logger.getLogger(DatabaseMigration.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseMigration.class);
 
   public static void runAll() {
     try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
       if (conn == null) {
-        LOGGER.severe("Cannot run migrations: no database connection");
+        LOGGER.error("Cannot run migrations: no database connection");
         return;
       }
       LOGGER.info("Running database migrations...");
@@ -25,9 +25,41 @@ public class DatabaseMigration {
       ensureTransactionLogTable(conn);
       ensureChatMessagesTable(conn);
       ensureFriendshipsTable(conn);
+      migratePasswordsToSha256(conn);
       LOGGER.info("Database migrations completed.");
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Migration failed", e);
+      LOGGER.error("Migration failed", e);
+    }
+  }
+
+  /**
+   * One-time migration: converts any password that is NOT already a 64-character
+   * lowercase hex string (SHA-256 output) into its SHA-256 hash using MySQL's
+   * built-in {@code SHA2()} function.
+   *
+   * <p>MySQL's {@code SHA2(value, 256)} produces the same lowercase 64-char hex
+   * digest as Java's {@code MessageDigest("SHA-256")}, so after this migration
+   * the client-side {@link com.auction.shared.PasswordEncoder#hash} and the
+   * stored value will always match.
+   *
+   * <p>The predicate {@code LENGTH(password) != 64} is a reliable sentinel
+   * because: (a) plain-text passwords are almost never exactly 64 chars, and
+   * (b) any previously migrated hash is always exactly 64 hex chars. The edge
+   * case of a 64-char plain-text password is accepted as a known limitation of
+   * this lightweight migration strategy.
+   */
+  private static void migratePasswordsToSha256(Connection conn) {
+    String sql = "UPDATE users SET password = LOWER(SHA2(password, 256)) "
+        + "WHERE LENGTH(password) <> 64 OR password REGEXP '[^0-9a-f]'";
+    try (Statement st = conn.createStatement()) {
+      int updated = st.executeUpdate(sql);
+      if (updated > 0) {
+        LOGGER.info("Password migration: hashed {} plain-text password(s) to SHA-256.", updated);
+      } else {
+        LOGGER.info("Password migration: all passwords already SHA-256 hashed, no changes needed.");
+      }
+    } catch (Exception e) {
+      LOGGER.error("Password migration failed — users with plain-text passwords cannot log in", e);
     }
   }
 
@@ -62,7 +94,7 @@ public class DatabaseMigration {
               + "createdat DATETIME DEFAULT CURRENT_TIMESTAMP, "
               + "UNIQUE KEY uq_rating (itemid, rateruserid))");
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to ensure ratings table", e);
+      LOGGER.warn("Failed to ensure ratings table", e);
     }
   }
 
@@ -77,7 +109,7 @@ public class DatabaseMigration {
               + "itemid INT DEFAULT 0, "
               + "createdat DATETIME DEFAULT CURRENT_TIMESTAMP)");
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to ensure transaction_logs table", e);
+      LOGGER.warn("Failed to ensure transaction_logs table", e);
     }
   }
 
@@ -94,7 +126,7 @@ public class DatabaseMigration {
               + "INDEX idx_chat_global (message_type, created_at), "
               + "INDEX idx_chat_private (sender_id, receiver_id, created_at))");
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to ensure chat_messages table", e);
+      LOGGER.warn("Failed to ensure chat_messages table", e);
     }
   }
 
@@ -110,7 +142,7 @@ public class DatabaseMigration {
               + "UNIQUE KEY uq_friendship (requester_id, addressee_id), "
               + "INDEX idx_addressee (addressee_id, status))");
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to ensure friendships table", e);
+      LOGGER.warn("Failed to ensure friendships table", e);
     }
   }
 
@@ -119,11 +151,11 @@ public class DatabaseMigration {
       if (!columnExists(conn, table, column)) {
         try (Statement st = conn.createStatement()) {
           st.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition);
-          LOGGER.info("Added column " + table + "." + column);
+          LOGGER.info("Added column {}.{}", table, column);
         }
       }
     } catch (SQLException e) {
-      LOGGER.log(Level.WARNING, "Failed to add column " + table + "." + column, e);
+      LOGGER.warn("Failed to add column {}.{}", table, column, e);
     }
   }
 
@@ -135,7 +167,7 @@ public class DatabaseMigration {
         }
       }
     } catch (SQLException e) {
-      LOGGER.log(Level.FINE, "Post-migration SQL failed", e);
+      LOGGER.debug("Post-migration SQL failed", e);
     }
   }
 
@@ -144,11 +176,11 @@ public class DatabaseMigration {
       if (!indexExists(conn, table, indexName)) {
         try (Statement st = conn.createStatement()) {
           st.execute("CREATE UNIQUE INDEX " + indexName + " ON " + table + "(" + column + ")");
-          LOGGER.info("Created index " + indexName + " on " + table);
+          LOGGER.info("Created index {} on {}", indexName, table);
         }
       }
     } catch (SQLException e) {
-      LOGGER.log(Level.WARNING, "Failed to create index " + indexName, e);
+      LOGGER.warn("Failed to create index {}", indexName, e);
     }
   }
 

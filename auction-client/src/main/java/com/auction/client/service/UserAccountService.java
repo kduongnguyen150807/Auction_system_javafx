@@ -8,11 +8,8 @@ import com.auction.shared.User;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class UserAccountService {
-  private static final Logger LOGGER = Logger.getLogger(UserAccountService.class.getName());
 
   public boolean deposit(int userId, double amount) {
     Map<String, String> data = new HashMap<>();
@@ -27,6 +24,11 @@ public class UserAccountService {
     return false;
   }
 
+  /**
+   * Sends a profile-update request to the server and, on success, syncs the
+   * cached display fields in {@link ClientSession}. Returns {@code null} on
+   * success or an error token on failure.
+   */
   public String updateProfile(int userId, String fullName, String email, String phone) {
     Map<String, String> data = new HashMap<>();
     data.put("userid", String.valueOf(userId));
@@ -36,15 +38,25 @@ public class UserAccountService {
     Request request = new Request(Request.UPDATE_PROFILE, (Serializable) data);
     Response response = NetworkClient.getInstance().sendRequestAndWait(request);
     if (response != null && Response.OK.equals(response.getStatus())) {
+      ClientSession.applyProfileUpdate(fullName, email, phone);
       return null;
     }
     return response != null ? response.getMessage() : "connection_error";
   }
 
+  /**
+   * Sends an avatar-update request and, on success, updates the local user
+   * object held in {@link ClientSession}.
+   */
   public boolean updateAvatar(String username, String avatarUrl) {
     Request request = new Request(Request.UPDATE_AVATAR, username + " " + avatarUrl);
     Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-    return response != null && Response.OK.equals(response.getStatus());
+    if (response != null && Response.OK.equals(response.getStatus())) {
+      User current = ClientSession.getCurrentUser();
+      if (current != null) current.setAvatarUrl(avatarUrl);
+      return true;
+    }
+    return false;
   }
 
   public User refreshUser(int userId) {

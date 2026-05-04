@@ -6,6 +6,8 @@ import com.auction.client.app.NodeManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -20,6 +22,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
 public class ItemInformationController {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ItemInformationController.class);
+
   @FXML private ImageView ItemImageHolder;
   @FXML private Label ItemName;
   @FXML private Label ItemDescription;
@@ -36,420 +40,211 @@ public class ItemInformationController {
   @FXML private Button autobidbutton;
   @FXML private javafx.scene.chart.LineChart<String, Number> pricechart;
 
-  private int id = -1;
-  private String n = "";
-  private double currentMaxPrice = 0;
+  private int itemId = -1;
+  private String itemName = "";
+  private double buyItNowPrice = 0;
   private int sellerId = -1;
   private int winnerId = -1;
-  private java.util.List<Rating> cachedratings = new java.util.ArrayList<>();
-  private javafx.scene.chart.XYChart.Series<String, Number> ans1 =
+  private java.util.List<Rating> cachedRatings = new java.util.ArrayList<>();
+  private javafx.scene.chart.XYChart.Series<String, Number> priceSeries =
       new javafx.scene.chart.XYChart.Series<>();
 
-  public void setData(
-      int res,
-      String ans,
-      double res1,
-      double ans2,
-      String res2,
-      String ans3,
-      String res3,
-      String ans4,
-      String res4) {
-    this.id = res;
-    this.n = (ans == null) ? "" : ans;
-    this.currentMaxPrice = ans2;
-    if (ItemName != null) ItemName.setText(this.n);
-    if (ItemDescription != null) ItemDescription.setText(res2 == null ? "" : res2);
-    if (CurrentHighestBidValue != null)
-      CurrentHighestBidValue.setText(String.format("%,.0f$", res1));
-    if (MaxPriceValue != null) {
-      if (ans2 > 0) MaxPriceValue.setText(String.format("BUY IT NOW: %,.0f$", ans2));
-      else MaxPriceValue.setText("NO BUY IT NOW");
-    }
-    if (EndsInValue != null) EndsInValue.setText(ans3 == null ? "" : ans3);
+  public void setData(int id, String name, double currentPrice, double maxPrice,
+      String description, String endsIn, String imageUrl, String sellerName, String sellerAvatar) {
+    this.itemId = id; this.itemName = name == null ? "" : name; this.buyItNowPrice = maxPrice;
+    if (ItemName != null) ItemName.setText(this.itemName);
+    if (ItemDescription != null) ItemDescription.setText(description == null ? "" : description);
+    if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", currentPrice));
+    if (MaxPriceValue != null) MaxPriceValue.setText(maxPrice > 0 ? String.format("BUY IT NOW: %,.0f$", maxPrice) : "NO BUY IT NOW");
+    if (EndsInValue != null) EndsInValue.setText(endsIn == null ? "" : endsIn);
+    if (BidButton != null) setBidButtonClosed(endsIn != null && (endsIn.toLowerCase().startsWith("winner") || endsIn.equalsIgnoreCase("closed")));
+    if (ItemImageHolder != null && imageUrl != null && !imageUrl.isBlank()) ItemImageHolder.setImage(new Image(safeUrl(imageUrl), true));
+    if (SellerName != null) SellerName.setText(sellerName == null || sellerName.isBlank() ? "Unknown Seller" : sellerName);
+    if (SellerAvatar != null && sellerAvatar != null && !sellerAvatar.isBlank()) loadCircularAvatar(SellerAvatar, safeUrl(sellerAvatar), 20);
+  }
 
-    if (BidButton != null) {
-      if (ans3 != null
-          && (ans3.toLowerCase().startsWith("winner") || ans3.equalsIgnoreCase("closed"))) {
-        BidButton.setText("CLOSED");
-        BidButton.setDisable(true);
-        BidButton.setStyle(
-            "-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
-        if (autobidbutton != null) autobidbutton.setDisable(true);
-        if (autobidfield != null) autobidfield.setDisable(true);
-      } else {
-        BidButton.setText("PLACE BID NOW");
-        BidButton.setDisable(false);
-        BidButton.setStyle("");
-        if (autobidbutton != null) autobidbutton.setDisable(false);
-        if (autobidfield != null) autobidfield.setDisable(false);
-      }
-    }
+  private String safeUrl(String url) {
+    return url.contains(".webp") ? url.replace(".webp", ".jpg") : url;
+  }
 
-    if (ItemImageHolder != null && res3 != null && !res3.isBlank()) {
-      String ans5 = res3.contains(".webp") ? res3.replace(".webp", ".jpg") : res3;
-      ItemImageHolder.setImage(new Image(ans5, true));
-    }
-    if (SellerName != null)
-      SellerName.setText(ans4 == null || ans4.isBlank() ? "Unknown Seller" : ans4);
-    if (SellerAvatar != null && res4 != null && !res4.isBlank()) {
-      String ans6 = res4.contains(".webp") ? res4.replace(".webp", ".jpg") : res4;
-      Image res5 = new Image(ans6, true);
-      res5.progressProperty()
-          .addListener(
-              (obs, oldv, newv) -> {
-                if (newv.doubleValue() == 1.0) {
-                  Platform.runLater(
-                      () -> {
-                        double ans7 = res5.getWidth();
-                        double res6 = res5.getHeight();
-                        double ans8 = Math.min(ans7, res6);
-                        double res7 = (ans7 - ans8) / 2;
-                        double ans9 = (res6 - ans8) / 2;
-                        SellerAvatar.setViewport(new Rectangle2D(res7, ans9, ans8, ans8));
-                        SellerAvatar.setImage(res5);
-                        SellerAvatar.setClip(new Circle(20, 20, 20));
-                      });
-                }
-              });
-      if (res5.isError()) SellerAvatar.setImage(null);
-      else SellerAvatar.setImage(res5);
-    }
+  private void loadCircularAvatar(ImageView view, String url, double radius) {
+    Image img = new Image(url, true);
+    img.progressProperty().addListener((obs, oldv, newv) -> {
+      if (newv.doubleValue() == 1.0) Platform.runLater(() -> {
+        double w = img.getWidth(), h = img.getHeight(), side = Math.min(w, h);
+        view.setViewport(new Rectangle2D((w - side) / 2, (h - side) / 2, side, side));
+        view.setImage(img);
+        view.setClip(new Circle(radius, radius, radius));
+      });
+    });
+    if (!img.isError()) view.setImage(img);
+  }
+
+  private void setBidButtonClosed(boolean closed) {
+    BidButton.setText(closed ? "CLOSED" : "PLACE BID NOW");
+    BidButton.setDisable(closed);
+    BidButton.setStyle(closed
+        ? "-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;" : "");
+    if (autobidbutton != null) autobidbutton.setDisable(closed);
+    if (autobidfield != null) autobidfield.setDisable(closed);
   }
 
   public void refresh() {
-    Thread ans =
-        new Thread(
-            () -> {
-              try {
-                Request res = new Request(Request.GET_ITEM_BY_ID, this.id);
-                Response ans2 = NetworkClient.getInstance().sendRequestAndWait(res);
-                if (ans2 != null && Response.OK.equals(ans2.getStatus())) {
-                  Object res1 = ans2.getPayload();
-                  if (res1 instanceof Item i) {
-                    Platform.runLater(
-                        () -> {
-                          if (CurrentHighestBidValue != null)
-                            CurrentHighestBidValue.setText(
-                                String.format("%,.0f$", i.getCurrentPrice()));
-                          this.currentMaxPrice = i.getMaxPrice();
-                          if (MaxPriceValue != null) {
-                            if (this.currentMaxPrice > 0)
-                              MaxPriceValue.setText(
-                                  String.format("BUY IT NOW: %,.0f$", this.currentMaxPrice));
-                            else MaxPriceValue.setText("NO BUY IT NOW");
-                          }
-                          this.sellerId = i.getSellerId();
-                          this.winnerId = i.getWinnerId();
-                          setupRatingUi(i);
-                        });
-                  }
-                }
-                loadRatings();
-                loadBidHistory();
-              } catch (Exception e) {
-              }
-            });
-    ans.setDaemon(true);
-    ans.start();
+    Thread t = new Thread(() -> { try {
+      Response res = NetworkClient.getInstance().sendRequestAndWait(new Request(Request.GET_ITEM_BY_ID, this.itemId));
+      if (res != null && Response.OK.equals(res.getStatus()) && res.getPayload() instanceof Item item) {
+        Platform.runLater(() -> {
+          if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", item.getCurrentPrice()));
+          this.buyItNowPrice = item.getMaxPrice();
+          if (MaxPriceValue != null) MaxPriceValue.setText(buyItNowPrice > 0 ? String.format("BUY IT NOW: %,.0f$", buyItNowPrice) : "NO BUY IT NOW");
+          this.sellerId = item.getSellerId(); this.winnerId = item.getWinnerId(); setupRatingUi(item);
+        });
+      }
+      loadRatings(); loadBidHistory();
+    } catch (Exception e) { LOGGER.warn("Item refresh failed for id={}", this.itemId, e); } });
+    t.setDaemon(true); t.start();
   }
 
   private void loadBidHistory() {
     try {
-      Request res = new Request("get_bid_history", this.id);
-      Response ans = NetworkClient.getInstance().sendRequestAndWait(res);
-      if (ans != null && Response.OK.equals(ans.getStatus())) {
-        java.util.List<BidTransaction> res1 = (java.util.List<BidTransaction>) ans.getPayload();
-        Platform.runLater(
-            () -> {
-              if (pricechart != null) {
-                pricechart.getData().clear();
-                ans1.getData().clear();
-                ans1.setName("Price Curve");
-                java.time.format.DateTimeFormatter ans2 =
-                    java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss");
-                for (BidTransaction res2 : res1) {
-                  String ans3 = res2.getTimestamp() != null ? res2.getTimestamp().format(ans2) : "";
-                  ans1.getData()
-                      .add(new javafx.scene.chart.XYChart.Data<>(ans3, res2.getBidValue()));
-                }
-                pricechart.getData().add(ans1);
-              }
-            });
+      Response res = NetworkClient.getInstance().sendRequestAndWait(new Request("get_bid_history", this.itemId));
+      if (res != null && Response.OK.equals(res.getStatus())) {
+        @SuppressWarnings("unchecked") java.util.List<BidTransaction> hist = (java.util.List<BidTransaction>) res.getPayload();
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss");
+        Platform.runLater(() -> { if (pricechart != null) {
+          pricechart.getData().clear(); priceSeries.getData().clear(); priceSeries.setName("Price Curve");
+          hist.forEach(b -> priceSeries.getData().add(new javafx.scene.chart.XYChart.Data<>(b.getTimestamp() != null ? b.getTimestamp().format(fmt) : "", b.getBidValue())));
+          pricechart.getData().add(priceSeries);
+        } });
       }
-    } catch (Exception e) {
-    }
+    } catch (Exception e) { LOGGER.warn("Failed to load bid history for item id={}", this.itemId, e); }
   }
 
-  private void setupRatingUi(Item res) {
-    if (res == null || RateButton == null) return;
-    boolean ans = false;
-    if (res.getStatus() == com.auction.shared.ItemStatus.CLOSED
-        || res.getStatus() == com.auction.shared.ItemStatus.FINISHED) {
-      if (ClientSession.getCurrentUser() != null) {
-        int res1 = ClientSession.getCurrentUser().getId();
-        if (res1 == res.getWinnerId() || res1 == res.getSellerId()) ans = true;
-      }
-    }
-    RateButton.setVisible(ans);
-    RateButton.setManaged(ans);
+  private void setupRatingUi(Item item) {
+    if (item == null || RateButton == null) return;
+    boolean canRate = (item.getStatus() == ItemStatus.CLOSED || item.getStatus() == ItemStatus.FINISHED)
+        && ClientSession.getCurrentUser() != null
+        && (ClientSession.getCurrentUser().getId() == item.getWinnerId() || ClientSession.getCurrentUser().getId() == item.getSellerId());
+    RateButton.setVisible(canRate); RateButton.setManaged(canRate);
   }
 
   private void loadRatings() {
-    if (this.id <= 0) return;
-    Request res = new Request(Request.GET_RATINGS, this.id);
-    Response ans = NetworkClient.getInstance().sendRequestAndWait(res);
-    if (ans != null && Response.OK.equals(ans.getStatus())) {
-      Object res1 = ans.getPayload();
-      if (res1 instanceof List<?> list) {
-        cachedratings.clear();
-        for (Object o : list) {
-          if (o instanceof Rating) cachedratings.add((Rating) o);
-        }
-        Platform.runLater(
-            () -> {
-              if (RatingFilterCombo != null && RatingFilterCombo.getItems().isEmpty()) {
-                RatingFilterCombo.getItems().addAll("All", "Positive", "Neutral", "Negative");
-                RatingFilterCombo.setValue("All");
-              }
-              renderRatings("All");
-            });
-      }
+    if (this.itemId <= 0) return;
+    Response res = NetworkClient.getInstance().sendRequestAndWait(new Request(Request.GET_RATINGS, this.itemId));
+    if (res != null && Response.OK.equals(res.getStatus()) && res.getPayload() instanceof List<?> list) {
+      cachedRatings.clear(); list.forEach(e -> { if (e instanceof Rating r) cachedRatings.add(r); });
+      Platform.runLater(() -> { if (RatingFilterCombo != null && RatingFilterCombo.getItems().isEmpty()) { RatingFilterCombo.getItems().addAll("All", "Positive", "Neutral", "Negative"); RatingFilterCombo.setValue("All"); } renderRatings("All"); });
     }
   }
 
-  @FXML
-  private void handleRatingFilter() {
-    if (RatingFilterCombo == null) return;
-    String res = RatingFilterCombo.getValue();
-    if (res == null) res = "All";
-    renderRatings(res);
+  @FXML private void handleRatingFilter() {
+    renderRatings(RatingFilterCombo != null && RatingFilterCombo.getValue() != null ? RatingFilterCombo.getValue() : "All");
   }
 
-  private void renderRatings(String res) {
+  private void renderRatings(String filter) {
     if (RatingsContainer == null) return;
-    RatingsContainer.getChildren().removeIf(ans -> !(ans instanceof HBox));
-    boolean ans1 = false;
-    for (Rating res1 : cachedratings) {
-      String ans2 =
-          res1.getStars() <= 2 ? "Negative" : (res1.getStars() == 3 ? "Neutral" : "Positive");
-      if (!"All".equals(res) && !ans2.equals(res)) continue;
-      ans1 = true;
-      String res2 = "\u2605".repeat(res1.getStars()) + "\u2606".repeat(5 - res1.getStars());
-      String ans3 =
-          res1.getStars() <= 2 ? "#ff4444" : (res1.getStars() == 3 ? "#ffaa00" : "#44ff44");
-      String res3 =
-          (res1.getRaterUsername() != null ? res1.getRaterUsername() : "User")
-              + ": "
-              + res2
-              + "  ["
-              + ans2
-              + "]";
-      Label ans4 = new Label(res3);
-      ans4.setStyle("-fx-text-fill: " + ans3 + "; -fx-font-size: 13;");
-      RatingsContainer.getChildren().add(ans4);
-      if (res1.getFeedback() != null && !res1.getFeedback().isBlank()) {
-        Label res4 = new Label("  \"" + res1.getFeedback() + "\"");
-        res4.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12; -fx-font-style: italic;");
-        res4.setWrapText(true);
-        RatingsContainer.getChildren().add(res4);
+    RatingsContainer.getChildren().removeIf(n -> !(n instanceof HBox));
+    boolean any = false;
+    for (Rating r : cachedRatings) {
+      String s = r.getStars() <= 2 ? "Negative" : (r.getStars() == 3 ? "Neutral" : "Positive");
+      if (!"All".equals(filter) && !s.equals(filter)) continue;
+      any = true;
+      String color = r.getStars() <= 2 ? "#ff4444" : (r.getStars() == 3 ? "#ffaa00" : "#44ff44");
+      Label hdr = new Label((r.getRaterUsername() != null ? r.getRaterUsername() : "User") + ": "
+          + "\u2605".repeat(r.getStars()) + "\u2606".repeat(5 - r.getStars()) + "  [" + s + "]");
+      hdr.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 13;");
+      RatingsContainer.getChildren().add(hdr);
+      if (r.getFeedback() != null && !r.getFeedback().isBlank()) {
+        Label fb = new Label("  \"" + r.getFeedback() + "\"");
+        fb.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12; -fx-font-style: italic;"); fb.setWrapText(true);
+        RatingsContainer.getChildren().add(fb);
       }
     }
-    if (!ans1 && !"All".equals(res)) {
-      Label ans5 = new Label("No " + res.toLowerCase() + " ratings.");
-      ans5.setStyle("-fx-text-fill: #666; -fx-font-size: 12;");
-      RatingsContainer.getChildren().add(ans5);
-    }
-    boolean res5 = !cachedratings.isEmpty();
-    RatingsContainer.setVisible(res5);
-    RatingsContainer.setManaged(res5);
+    if (!any && !"All".equals(filter)) { Label e = new Label("No " + filter.toLowerCase() + " ratings."); e.setStyle("-fx-text-fill: #666; -fx-font-size: 12;"); RatingsContainer.getChildren().add(e); }
+    RatingsContainer.setVisible(!cachedRatings.isEmpty()); RatingsContainer.setManaged(!cachedRatings.isEmpty());
   }
 
-  @FXML
-  private void showBiddingForm() {
-    try {
-      NodeContentLoader<VBox> res = new NodeContentLoader<>();
-      res.load("/fxml/biddingform/BiddingForm.fxml");
-      com.auction.client.ui.BiddingForm.BiddingFormController ans = res.getController();
-      if (ans != null) {
-        if (id > 0) ans.setData(id, n, currentMaxPrice);
-        ans.setParentController(this);
-      }
-      NodeManager.addNodeToPane(res, KhungController.getMainContentPane());
-    } catch (Exception e) {
-    }
+  @FXML private void showBiddingForm() {
+    loadOverlay("/fxml/biddingform/BiddingForm.fxml", o -> {
+      com.auction.client.ui.BiddingForm.BiddingFormController c = (com.auction.client.ui.BiddingForm.BiddingFormController) o;
+      if (c != null) { if (itemId > 0) c.setData(itemId, itemName, buyItNowPrice); c.setParentController(this); }
+    });
+  }
+  @FXML private void showRatingForm() {
+    loadOverlay("/fxml/ratingform/RatingForm.fxml", o -> {
+      com.auction.client.ui.RatingForm.RatingFormController c = (com.auction.client.ui.RatingForm.RatingFormController) o;
+      if (c != null) { c.setData(this.itemId); c.setOnComplete(() -> { RateButton.setVisible(false); RateButton.setManaged(false); new Thread(this::loadRatings).start(); }); }
+    });
+  }
+  private void loadOverlay(String fxml, java.util.function.Consumer<Object> setup) {
+    try { NodeContentLoader<VBox> l = new NodeContentLoader<>(); l.load(fxml); setup.accept(l.getController()); NodeManager.addNodeToPane(l, KhungController.getMainContentPane()); }
+    catch (Exception e) { LOGGER.warn("Failed to load overlay: {}", fxml, e); }
   }
 
-  @FXML
-  private void showRatingForm() {
-    try {
-      NodeContentLoader<VBox> res = new NodeContentLoader<>();
-      res.load("/fxml/ratingform/RatingForm.fxml");
-      com.auction.client.ui.RatingForm.RatingFormController ans = res.getController();
-      if (ans != null) {
-        ans.setData(this.id);
-        ans.setOnComplete(
-            () -> {
-              RateButton.setVisible(false);
-              RateButton.setManaged(false);
-              new Thread(() -> loadRatings()).start();
-            });
-      }
-      NodeManager.addNodeToPane(res, KhungController.getMainContentPane());
-    } catch (Exception e) {
-    }
-  }
-
-  @FXML
-  private void handleAutoBid() {
+  @FXML private void handleAutoBid() {
     if (ClientSession.getCurrentUser() == null) return;
-    String raw = autobidfield != null ? autobidfield.getText() : "";
-    raw = raw.replace("$", "").replace(",", "").trim();
-    if (raw.isBlank()) {
-      showAutoBidAlert(javafx.scene.control.Alert.AlertType.WARNING,
-          "Invalid", "Enter your maximum auto-bid amount.");
-      return;
-    }
+    String raw = (autobidfield != null ? autobidfield.getText() : "").replace("$", "").replace(",", "").trim();
+    if (raw.isBlank()) { alert(javafx.scene.control.Alert.AlertType.WARNING, "Invalid", "Enter your maximum auto-bid amount."); return; }
     try {
       double maxBid = Double.parseDouble(raw);
-      if (maxBid <= 0) {
-        showAutoBidAlert(javafx.scene.control.Alert.AlertType.WARNING,
-            "Invalid", "Max auto-bid must be a positive number.");
-        return;
-      }
-      int userId = ClientSession.getCurrentUser().getId();
-      BidTransaction bid = new BidTransaction(this.id, userId, 0);
-      bid.setMaxAutoBid(maxBid);
-      bid.setAutoBid(true);
-
-      Thread thread = new Thread(() -> {
-        Request request = new Request(Request.BID, bid);
-        Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-        Platform.runLater(() -> {
-          if (response != null && Response.OK.equals(response.getStatus())) {
-            if (autobidfield != null) autobidfield.clear();
-            showAutoBidAlert(javafx.scene.control.Alert.AlertType.INFORMATION,
-                "Auto-Bid Active",
-                String.format("Auto-bid set! Will bid up to %,.0f$", maxBid));
-          } else {
-            String msg = response != null ? response.getMessage() : "Failed to set auto-bid.";
-            showAutoBidAlert(javafx.scene.control.Alert.AlertType.ERROR,
-                "Auto-Bid Failed", msg);
-          }
-        });
-      });
-      thread.setDaemon(true);
-      thread.start();
-    } catch (NumberFormatException e) {
-      showAutoBidAlert(javafx.scene.control.Alert.AlertType.ERROR,
-          "Invalid", "Please enter a valid number.");
-    }
+      if (maxBid <= 0) { alert(javafx.scene.control.Alert.AlertType.WARNING, "Invalid", "Max auto-bid must be a positive number."); return; }
+      BidTransaction bid = new BidTransaction(this.itemId, ClientSession.getCurrentUser().getId(), 0);
+      bid.setMaxAutoBid(maxBid); bid.setAutoBid(true);
+      Thread t = new Thread(() -> { Response res = NetworkClient.getInstance().sendRequestAndWait(new Request(Request.BID, bid));
+        Platform.runLater(() -> { if (res != null && Response.OK.equals(res.getStatus())) { if (autobidfield != null) autobidfield.clear(); alert(javafx.scene.control.Alert.AlertType.INFORMATION, "Auto-Bid Active", String.format("Auto-bid set! Will bid up to %,.0f$", maxBid)); }
+          else alert(javafx.scene.control.Alert.AlertType.ERROR, "Auto-Bid Failed", res != null ? res.getMessage() : "Failed to set auto-bid."); }); });
+      t.setDaemon(true); t.start();
+    } catch (NumberFormatException e) { alert(javafx.scene.control.Alert.AlertType.ERROR, "Invalid", "Please enter a valid number."); }
   }
 
-  private void showAutoBidAlert(javafx.scene.control.Alert.AlertType type,
-                                String title, String content) {
-    try {
-      javafx.scene.control.Alert alert = new javafx.scene.control.Alert(type);
-      alert.setTitle(title);
-      alert.setHeaderText(null);
-      alert.setContentText(content);
-      alert.showAndWait();
-    } catch (Exception ignored) {}
+  private void alert(javafx.scene.control.Alert.AlertType type, String title, String content) {
+    try { javafx.scene.control.Alert a = new javafx.scene.control.Alert(type); a.setTitle(title); a.setHeaderText(null); a.setContentText(content); a.showAndWait(); }
+    catch (Exception ignored) {}
   }
 
-  public int getId() {
-    int res = this.id;
-    return res;
+  public int getId() { return this.itemId; }
+
+  public void updatePriceUi(Item item) {
+    if (item == null || item.getId() != this.itemId) return;
+    if (Platform.isFxApplicationThread()) applyPriceFromItem(item); else Platform.runLater(() -> applyPriceFromItem(item));
   }
 
-  public void updatePriceUi(Item res) {
-    if (res == null || res.getId() != this.id) return;
-    Runnable ans =
-        () -> {
-          applyPriceFromItem(res);
-        };
-    if (Platform.isFxApplicationThread()) ans.run();
-    else Platform.runLater(ans);
-  }
-
-  private void applyPriceFromItem(Item res) {
-    if (CurrentHighestBidValue != null)
-      CurrentHighestBidValue.setText(String.format("%,.0f$", res.getCurrentPrice()));
-    if (EndsInValue != null && res.getEndTime() != null) {
-      java.time.Duration ans =
-          java.time.Duration.between(java.time.LocalDateTime.now(), res.getEndTime());
-      if (!ans.isNegative() && !ans.isZero()) {
-        long res1 = ans.toHours();
-        if (res1 / 24 > 0) EndsInValue.setText((res1 / 24) + "d " + (res1 % 24) + "h");
-        else
-          EndsInValue.setText(
-              (res1 % 24)
-                  + "h "
-                  + (ans.toMinutes() % 60)
-                  + "m "
-                  + (ans.getSeconds() % 60)
-                  + "s");
+  private void applyPriceFromItem(Item item) {
+    if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", item.getCurrentPrice()));
+    if (EndsInValue != null && item.getEndTime() != null) {
+      java.time.Duration rem = java.time.Duration.between(java.time.LocalDateTime.now(), item.getEndTime());
+      if (!rem.isNegative() && !rem.isZero()) {
+        long h = rem.toHours();
+        EndsInValue.setText(h / 24 > 0 ? (h / 24) + "d " + (h % 24) + "h" : (h % 24) + "h " + (rem.toMinutes() % 60) + "m " + (rem.getSeconds() % 60) + "s");
       }
     }
-    appendPriceToChart(res.getCurrentPrice());
+    appendPriceToChart(item.getCurrentPrice());
   }
 
   private void appendPriceToChart(double price) {
-    if (pricechart == null || ans1 == null) return;
-    if (!pricechart.getData().contains(ans1)) {
-      pricechart.getData().add(ans1);
-      ans1.setName("Price Curve");
-    }
-    String res =
-        java.time.LocalTime.now()
-            .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
-    ans1.getData().add(new javafx.scene.chart.XYChart.Data<>(res, price));
-    if (ans1.getData().size() > 20) {
-      ans1.getData().remove(0);
-    }
+    if (pricechart == null || priceSeries == null) return;
+    if (!pricechart.getData().contains(priceSeries)) { pricechart.getData().add(priceSeries); priceSeries.setName("Price Curve"); }
+    priceSeries.getData().add(new javafx.scene.chart.XYChart.Data<>(
+        java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")), price));
+    if (priceSeries.getData().size() > 20) priceSeries.getData().remove(0);
   }
 
-  public void updateCurrentBid(double val) {
-    Runnable res =
-        () -> {
-          if (CurrentHighestBidValue != null)
-            CurrentHighestBidValue.setText(String.format("%,.0f$", val));
-          appendPriceToChart(val);
-        };
-    if (Platform.isFxApplicationThread()) res.run();
-    else Platform.runLater(res);
+  public void updateCurrentBid(double price) {
+    Runnable update = () -> { if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", price)); appendPriceToChart(price); };
+    if (Platform.isFxApplicationThread()) update.run(); else Platform.runLater(update);
   }
 
   public void markItemClosed(Item item) {
-    if (item == null || item.getId() != this.id) return;
-    Platform.runLater(() -> {
-      if (BidButton != null) {
-        BidButton.setText("CLOSED");
-        BidButton.setDisable(true);
-        BidButton.setStyle(
-            "-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
-      }
-      if (autobidbutton != null) autobidbutton.setDisable(true);
-      if (autobidfield != null) autobidfield.setDisable(true);
-      if (EndsInValue != null) EndsInValue.setText("Auction Closed");
-    });
+    if (item == null || item.getId() != this.itemId) return;
+    Platform.runLater(() -> { setBidButtonClosed(true); if (EndsInValue != null) EndsInValue.setText("Auction Closed"); });
   }
 
   public void markAsSold() {
-    Platform.runLater(
-        () -> {
-          if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText("ĐÃ CHỐT ĐỨT");
-          if (MaxPriceValue != null) MaxPriceValue.setText("SELLED");
-          if (BidButton != null) {
-            BidButton.setText("CLOSED");
-            BidButton.setDisable(true);
-            BidButton.setStyle(
-                "-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;");
-            if (autobidbutton != null) autobidbutton.setDisable(true);
-            if (autobidfield != null) autobidfield.setDisable(true);
-          }
-          if (EndsInValue != null)
-            EndsInValue.setText("Winner: " + com.auction.client.ClientSession.getUsername());
-        });
+    Platform.runLater(() -> {
+      if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText("ĐÃ CHỐT ĐỨT");
+      if (MaxPriceValue != null) MaxPriceValue.setText("SELLED");
+      setBidButtonClosed(true);
+      if (EndsInValue != null) EndsInValue.setText("Winner: " + com.auction.client.ClientSession.getUsername());
+    });
   }
 }

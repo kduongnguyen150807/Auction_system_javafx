@@ -1,13 +1,14 @@
 package com.auction.client;
 
-import com.auction.client.network.NetworkClient;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
-import java.util.HashMap;
-import java.util.Map;
 
+/**
+ * Holds the currently authenticated user's state for the lifetime of the
+ * session. This is a pure value-holder: it contains NO network or business
+ * logic. All mutations that require a server round-trip must go through
+ * {@link com.auction.client.service.UserAccountService}.
+ */
 public final class ClientSession {
   private static User currentUser;
   private static String fullName = "";
@@ -28,6 +29,17 @@ public final class ClientSession {
         activeRole = user.getRole() == null ? UserRole.BIDDER : user.getRole();
       }
     }
+  }
+
+  /** Syncs cached display fields after a successful profile update. */
+  public static void applyProfileUpdate(String newFullName, String newEmail, String newPhone) {
+    if (currentUser == null) return;
+    fullName = safe(newFullName);
+    email = safe(newEmail);
+    phone = safe(newPhone);
+    currentUser.setFullName(fullName);
+    currentUser.setEmail(email);
+    currentUser.setPhoneNumber(phone);
   }
 
   public static User getCurrentUser() {
@@ -52,38 +64,6 @@ public final class ClientSession {
 
   public static UserRole getActiveRole() {
     return activeRole;
-  }
-
-  public static String updateProfile(String newFullName, String newEmail, String newPhone) {
-    if (currentUser == null) return "not_logged_in";
-
-    Map<String, String> data = new HashMap<>();
-    data.put("userid", String.valueOf(currentUser.getId()));
-    data.put("fullname", newFullName);
-    data.put("email", newEmail);
-    data.put("phone", newPhone);
-
-    Request request = new Request(Request.UPDATE_PROFILE, data);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-
-    if (response != null && Response.OK.equals(response.getStatus())) {
-      fullName = safe(newFullName);
-      email = safe(newEmail);
-      phone = safe(newPhone);
-      currentUser.setFullName(fullName);
-      currentUser.setEmail(email);
-      currentUser.setPhoneNumber(phone);
-      return null;
-    }
-    return response != null ? response.getMessage() : "fail";
-  }
-
-  public static void updateAvatar(String avatarUrl) {
-    if (currentUser != null) {
-      currentUser.setAvatarUrl(avatarUrl);
-      Request request = new Request(Request.UPDATE_AVATAR, currentUser.getUsername() + " " + avatarUrl);
-      NetworkClient.getInstance().sendRequestAndWait(request);
-    }
   }
 
   public static void toggleRole() {

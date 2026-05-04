@@ -8,11 +8,11 @@ import com.auction.shared.*;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SettlementService {
-  private static final Logger LOGGER = Logger.getLogger(SettlementService.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(SettlementService.class);
 
   private final ItemDao itemDao;
   private final UserDao userDao;
@@ -36,7 +36,7 @@ public class SettlementService {
                   settle(item);
                 }
               } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Settlement cycle failed", e);
+                LOGGER.warn("Settlement cycle failed", e);
               }
             },
             5, 10, TimeUnit.SECONDS);

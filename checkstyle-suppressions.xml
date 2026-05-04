@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  Suppressions for the Auction System checkstyle policy.
+
+  We explicitly DISABLE every Javadoc-related Checkstyle module here so the
+  team is NEVER required to add Javadoc to public methods or classes. Our
+  base config already omits these modules; this file is an extra safety net
+  in case Checkstyle's defaults try to re-introduce them.
+-->
+<suppressions>
+  <suppress checks="(?i).*Javadoc.*" files=".+\.java$"/>
+  <suppress checks="MissingJavadoc.*" files=".+\.java$"/>
+  <suppress checks="SummaryJavadoc" files=".+\.java$"/>
+  <suppress checks="JavadocPackage" files=".+\.java$"/>
+
+  <!-- Generated/legacy code is exempt from style checks. -->
+  <suppress checks=".*" files="[/\\]target[/\\].*"/>
+</suppressions>

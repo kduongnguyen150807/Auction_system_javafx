@@ -1,11 +1,11 @@
 package com.auction.server.dao;
 
-import com.auction.shared.Lot;
+import com.auction.shared.Item;
 import java.util.List;
 
 public interface LotRepository {
-  List<Lot> getOngoingBids(int userId);
-  List<Lot> getUpcomingBids(int userId);
-  List<Lot> getClosedBids(int userId);
-  List<Lot> getPastBids(int userId);
+  List<Item> getOngoingBids(int userId);
+  List<Item> getUpcomingBids(int userId);
+  List<Item> getClosedBids(int userId);
+  List<Item> getPastBids(int userId);
 }

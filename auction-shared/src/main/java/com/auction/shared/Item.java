@@ -17,6 +17,7 @@ public abstract class Item extends Entity {
   protected String imageUrl;
   protected String sellerUsername;
   protected String sellerAvatarUrl;
+  protected String winnerUsername;
   protected String category;
 
   public Item() {}
@@ -143,5 +144,13 @@ public abstract class Item extends Entity {
 
   public void setSellerAvatarUrl(String sellerAvatarUrl) {
     this.sellerAvatarUrl = sellerAvatarUrl;
+  }
+
+  public String getWinnerUsername() {
+    return this.winnerUsername;
+  }
+
+  public void setWinnerUsername(String winnerUsername) {
+    this.winnerUsername = winnerUsername;
   }
 }

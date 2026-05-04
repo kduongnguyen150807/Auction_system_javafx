@@ -4,11 +4,11 @@ import com.auction.shared.Friendship;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FriendDao {
-  private static final Logger LOGGER = Logger.getLogger(FriendDao.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(FriendDao.class);
 
   private Connection getConn() {
     return DatabaseConnection.getInstance().getConnection();
@@ -21,7 +21,7 @@ public class FriendDao {
       ps.setInt(2, addresseeId);
       return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "sendRequest failed", e);
+      LOGGER.warn("sendRequest failed", e);
       return false;
     }
   }
@@ -33,7 +33,7 @@ public class FriendDao {
       ps.setInt(2, addresseeId);
       return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "acceptRequest failed", e);
+      LOGGER.warn("acceptRequest failed", e);
       return false;
     }
   }
@@ -45,7 +45,7 @@ public class FriendDao {
       ps.setInt(2, addresseeId);
       return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "declineRequest failed", e);
+      LOGGER.warn("declineRequest failed", e);
       return false;
     }
   }
@@ -61,7 +61,7 @@ public class FriendDao {
       ps.setInt(4, userId1);
       return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "removeFriend failed", e);
+      LOGGER.warn("removeFriend failed", e);
       return false;
     }
   }
@@ -82,7 +82,7 @@ public class FriendDao {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) list.add(mapRow(rs));
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getFriends failed", e);
+      LOGGER.warn("getFriends failed", e);
     }
     return list;
   }
@@ -102,7 +102,7 @@ public class FriendDao {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) list.add(mapRow(rs));
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getPendingRequests failed", e);
+      LOGGER.warn("getPendingRequests failed", e);
     }
     return list;
   }
@@ -118,7 +118,7 @@ public class FriendDao {
       ResultSet rs = ps.executeQuery();
       if (rs.next()) return rs.getString("status");
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getRelationship failed", e);
+      LOGGER.warn("getRelationship failed", e);
     }
     return null;
   }

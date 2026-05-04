@@ -7,11 +7,11 @@ import com.auction.server.service.UserService;
 import com.auction.shared.*;
 import java.io.*;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClientHandler implements Runnable {
-  private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandler.class);
 
   private final Socket socket;
   private ObjectOutputStream out;
@@ -37,7 +37,7 @@ public class ClientHandler implements Runnable {
       this.in = new ObjectInputStream(this.socket.getInputStream());
       AuctionManager.getInstance().addClient(this);
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Failed to initialize client handler streams", e);
+      LOGGER.error("Failed to initialize client handler streams", e);
     }
   }
 
@@ -128,15 +128,15 @@ public class ClientHandler implements Runnable {
         }
       }
     } catch (EOFException e) {
-      LOGGER.fine("Client disconnected");
+      LOGGER.debug("Client disconnected");
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Error in client handler loop", e);
+      LOGGER.warn("Error in client handler loop", e);
     } finally {
       AuctionManager.getInstance().removeClient(this);
       try {
         this.socket.close();
       } catch (Exception e) {
-        LOGGER.log(Level.FINE, "Error closing socket", e);
+        LOGGER.debug("Error closing socket", e);
       }
     }
   }
@@ -149,7 +149,7 @@ public class ClientHandler implements Runnable {
         this.out.flush();
       }
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to send response to client", e);
+      LOGGER.warn("Failed to send response to client", e);
     }
   }
 }

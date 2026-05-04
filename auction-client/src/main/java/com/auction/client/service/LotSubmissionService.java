@@ -5,11 +5,11 @@ import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.io.Serializable;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LotSubmissionService {
-  private static final Logger LOGGER = Logger.getLogger(LotSubmissionService.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(LotSubmissionService.class);
 
   public boolean submitLot(Map<String, String> lotData) {
     Request request = new Request(Request.ADD_LOT, (Serializable) lotData);
@@ -21,7 +21,7 @@ public class LotSubmissionService {
     try {
       return NetworkClient.uploadFile(uploadUrl, imageBytes);
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Image upload failed", e);
+      LOGGER.warn("Image upload failed", e);
       return null;
     }
   }

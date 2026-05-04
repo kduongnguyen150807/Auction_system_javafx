@@ -6,48 +6,42 @@ import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.auction.shared.User;
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import javafx.application.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NetworkClient {
-  private static final Logger LOGGER = Logger.getLogger(NetworkClient.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(NetworkClient.class);
+  private static final long DEFAULT_REQUEST_TIMEOUT_SECONDS = 30L;
+  private static volatile NetworkClient instance;
 
-  private static NetworkClient instance;
   private Socket socket;
   private ObjectOutputStream out;
   private ObjectInputStream in;
-  private final ConcurrentHashMap<String, LinkedBlockingQueue<Response>> pendingMap =
-      new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap = new ConcurrentHashMap<>();
   private final List<NetworkEventListener> listeners = new CopyOnWriteArrayList<>();
 
   private NetworkClient() {
+    String serverIp = promptForServerIp();
+    if (serverIp == null || serverIp.isBlank()) {
+      LOGGER.error("No server IP provided — all requests will fail until reconnect.");
+      return;
+    }
     try {
-      String serverIp = "127.0.0.1";
-      if (Platform.isFxApplicationThread()) {
-        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("127.0.0.1");
-        dialog.setTitle("IP Setup");
-        dialog.setHeaderText("Nhập IP Server:");
-        serverIp = dialog.showAndWait().orElse("127.0.0.1");
-      } else {
-        java.util.concurrent.FutureTask<String> task = new java.util.concurrent.FutureTask<>(() -> {
-          javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("127.0.0.1");
-          dialog.setTitle("IP Setup");
-          dialog.setHeaderText("Nhập IP Server:");
-          return dialog.showAndWait().orElse("127.0.0.1");
-        });
-        Platform.runLater(task);
-        serverIp = task.get();
-      }
-
-      LOGGER.info("Connecting to: " + serverIp + ":8080...");
+      LOGGER.info("Connecting to {}:8080 ...", serverIp);
       this.socket = new Socket(serverIp, 8080);
       this.out = new ObjectOutputStream(this.socket.getOutputStream());
       this.out.flush();
@@ -55,180 +49,168 @@ public class NetworkClient {
       LOGGER.info("Socket connection established.");
       startListener();
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Initial connection failed", e);
+      LOGGER.error("Connection to {}:8080 failed — check server is running.", serverIp, e);
+      showConnectionError(serverIp);
     }
   }
 
-  public static synchronized NetworkClient getInstance() {
-    if (instance == null) instance = new NetworkClient();
+  private void showConnectionError(String ip) {
+    Runnable alert = () -> {
+      javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+      a.setTitle("Connection Failed");
+      a.setHeaderText("Cannot reach server at " + ip + ":8080");
+      a.setContentText("Make sure the server is running and the IP address is correct,\nthen restart the application.");
+      a.showAndWait();
+    };
+    if (Platform.isFxApplicationThread()) alert.run(); else Platform.runLater(alert);
+  }
+
+  public static NetworkClient getInstance() {
+    if (instance == null) synchronized (NetworkClient.class) { if (instance == null) instance = new NetworkClient(); }
     return instance;
   }
 
-  public void addListener(NetworkEventListener listener) {
-    this.listeners.add(listener);
-  }
+  public void addListener(NetworkEventListener l) { if (!listeners.contains(l)) listeners.add(l); }
+  public void removeListener(NetworkEventListener l) { listeners.remove(l); }
 
-  public void removeListener(NetworkEventListener listener) {
-    this.listeners.remove(listener);
+  private String promptForServerIp() {
+    while (true) {
+      javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("127.0.0.1");
+      dialog.setTitle("Server IP");
+      dialog.setHeaderText("Enter Server IP address:");
+      dialog.setContentText("IP (e.g. 127.0.0.1 or 192.168.1.x):");
+      java.util.Optional<String> result = dialog.showAndWait();
+      if (result.isEmpty()) return null;
+      String ip = result.get().trim();
+      if (!ip.isBlank()) return ip;
+      new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING,
+          "IP address cannot be empty.").showAndWait();
+    }
   }
 
   private void startListener() {
-    Thread listenerThread = new Thread(() -> {
+    Thread t = new Thread(() -> {
       try {
         while (true) {
           Object obj = in.readObject();
-          if (obj instanceof Response) {
-            handleIncoming((Response) obj);
-          }
+          if (obj instanceof Response response) handleIncoming(response);
         }
       } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Server connection lost", e);
+        LOGGER.warn("Server connection lost", e);
+        failAllPending(e);
       }
-    });
-    listenerThread.setDaemon(true);
-    listenerThread.start();
+    }, "NetworkClient-Listener");
+    t.setDaemon(true);
+    t.start();
   }
 
+  private void failAllPending(Throwable cause) { pendingMap.forEach((id, f) -> f.completeExceptionally(cause)); pendingMap.clear(); }
+  private void forListeners(Consumer<NetworkEventListener> action) { Platform.runLater(() -> listeners.forEach(action)); }
+
   private void handleIncoming(Response response) {
-    if ("BALANCE_UPDATE".equals(response.getStatus())) {
-      User user = (User) response.getPayload();
-      Platform.runLater(() -> {
-        for (NetworkEventListener listener : listeners) {
-          listener.onBalanceUpdate(user);
-        }
-      });
-      return;
-    }
-
-    if ("OUTBID_NOTIFY".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      int itemId = payload instanceof Integer ? (int) payload : -1;
-      Platform.runLater(() -> {
-        for (NetworkEventListener listener : listeners) {
-          listener.onOutbidNotify(itemId);
-        }
-      });
-      return;
-    }
-
-    if ("CHAT_GLOBAL".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof ChatMessage msg) {
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) {
-            listener.onGlobalChat(msg);
-          }
-        });
+    switch (response.getStatus()) {
+      case "BALANCE_UPDATE" -> {
+        if (response.getPayload() instanceof User u) forListeners(l -> l.onBalanceUpdate(u));
+        return;
       }
-      return;
-    }
-
-    if ("CHAT_PRIVATE".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof ChatMessage msg) {
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) {
-            listener.onPrivateChat(msg);
-          }
-        });
+      case "OUTBID_NOTIFY" -> {
+        int itemId = response.getPayload() instanceof Integer i ? i : -1;
+        forListeners(l -> l.onOutbidNotify(itemId));
+        return;
       }
-      return;
-    }
-
-    if ("FRIEND_REQUEST".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof Friendship f) {
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) listener.onFriendRequest(f);
-        });
+      case "CHAT_GLOBAL" -> {
+        if (response.getPayload() instanceof ChatMessage m) forListeners(l -> l.onGlobalChat(m));
+        return;
       }
-      return;
-    }
-
-    if ("FRIEND_REQUEST_SENT".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof Friendship f) {
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) listener.onFriendRequestSent(f);
-        });
+      case "CHAT_PRIVATE" -> {
+        if (response.getPayload() instanceof ChatMessage m) forListeners(l -> l.onPrivateChat(m));
+        return;
       }
-      return;
-    }
-
-    if ("FRIEND_ACCEPTED".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof Friendship f) {
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) listener.onFriendAccepted(f);
-        });
+      case "FRIEND_REQUEST" -> {
+        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendRequest(f));
+        return;
       }
-      return;
-    }
-
-    if ("SELLER_BID_NOTIFY".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof Item item) {
-        double newPrice = item.getCurrentPrice();
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) listener.onSellerBidNotify(item, newPrice);
-        });
+      case "FRIEND_REQUEST_SENT" -> {
+        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendRequestSent(f));
+        return;
       }
-      return;
-    }
-
-    if ("ITEM_CLOSED".equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof Item item) {
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) {
-            listener.onItemClosed(item);
-          }
-        });
+      case "FRIEND_ACCEPTED" -> {
+        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendAccepted(f));
+        return;
       }
-      return;
-    }
-
-    if ("NEW_BID_UPDATE".equals(response.getStatus())
-        || ("priceupdate".equals(response.getMessage()) && response.getPayload() instanceof Item)) {
-      Object payload = response.getPayload();
-      if (payload instanceof Item item) {
-        Platform.runLater(() -> {
-          for (NetworkEventListener listener : listeners) {
-            listener.onNewBidUpdate(item);
-          }
-        });
+      case "SELLER_BID_NOTIFY" -> {
+        if (response.getPayload() instanceof Item item)
+          forListeners(l -> l.onSellerBidNotify(item, item.getCurrentPrice()));
+        return;
       }
-      return;
+      case "ITEM_CLOSED" -> {
+        if (response.getPayload() instanceof Item item) forListeners(l -> l.onItemClosed(item));
+        return;
+      }
+      case "NEW_BID_UPDATE" -> {
+        if (response.getPayload() instanceof Item item) forListeners(l -> l.onNewBidUpdate(item));
+        return;
+      }
+      case Response.ACCOUNT_BANNED -> { forListeners(l -> l.onAccountBanned(response.getMessage())); return; }
+      case Response.ACCOUNT_UNBANNED -> { forListeners(NetworkEventListener::onAccountUnbanned); return; }
+      default -> {}
     }
-
+    if ("priceupdate".equals(response.getMessage()) && response.getPayload() instanceof Item item) {
+      forListeners(l -> l.onNewBidUpdate(item)); return;
+    }
     String requestId = response.getRequestId();
-    if (requestId != null) {
-      LinkedBlockingQueue<Response> queue = pendingMap.get(requestId);
-      if (queue != null) {
-        queue.offer(response);
-      } else {
-        LOGGER.warning("Received response for unknown request ID: " + requestId);
-      }
+    if (requestId == null) return;
+    CompletableFuture<Response> future = pendingMap.get(requestId);
+    if (future != null) future.complete(response);
+    else LOGGER.warn("Received response for unknown request ID: {}", requestId);
+  }
+
+  public CompletableFuture<Response> sendRequestAsync(Request request) {
+    return sendRequestAsync(request, DEFAULT_REQUEST_TIMEOUT_SECONDS);
+  }
+
+  public CompletableFuture<Response> sendRequestAsync(Request request, long timeoutSeconds) {
+    String requestId = request.getRequestId();
+    CompletableFuture<Response> future = new CompletableFuture<>();
+    if (out == null) {
+      future.completeExceptionally(new IllegalStateException(
+          "Not connected to server — check IP address and server status."));
+      return future;
     }
+    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestId, future);
+    if (existing != null) {
+      future.completeExceptionally(new IllegalStateException("Duplicate request id: " + requestId));
+      return future;
+    }
+    try {
+      synchronized (out) { out.writeObject(request); out.flush(); }
+    } catch (IOException e) {
+      pendingMap.remove(requestId);
+      future.completeExceptionally(e);
+    }
+    return future.orTimeout(timeoutSeconds, TimeUnit.SECONDS)
+        .whenComplete((response, error) -> {
+          pendingMap.remove(requestId);
+          if (error != null) {
+            if (error instanceof java.util.concurrent.TimeoutException)
+              LOGGER.warn("Server timeout ({}s) for request {} ({})", timeoutSeconds, requestId, request.getAction());
+            else
+              LOGGER.warn("Request {} ({}) failed: {}", requestId, request.getAction(), error.getMessage());
+          }
+        });
   }
 
   public Response sendRequestAndWait(Request request) {
     try {
-      LinkedBlockingQueue<Response> queue = new LinkedBlockingQueue<>();
-      pendingMap.put(request.getRequestId(), queue);
-      synchronized (out) {
-        out.writeObject(request);
-        out.flush();
-      }
-
-      Response response = queue.poll(30, TimeUnit.SECONDS);
-      if (response == null) {
-        LOGGER.warning("Server timeout (30s) for request: " + request.getRequestId());
-      }
-      pendingMap.remove(request.getRequestId());
-      return response;
-    } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Socket send/receive error", e);
+      return sendRequestAsync(request).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOGGER.warn("Interrupted while waiting for response to {}", request.getAction());
+      return null;
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof TimeoutException) return null;
+      LOGGER.error("Socket send/receive error", cause);
       return null;
     }
   }
@@ -250,9 +232,9 @@ public class NetworkClient {
       outStream.write(("--" + boundary + "--\r\n").getBytes());
     }
     try (java.util.Scanner scanner = new java.util.Scanner(conn.getInputStream())) {
-      String responseBody = scanner.useDelimiter("\\A").next();
+      String body = scanner.useDelimiter("\\A").next();
       com.fasterxml.jackson.databind.JsonNode node =
-          new com.fasterxml.jackson.databind.ObjectMapper().readTree(responseBody);
+          new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
       return node.get("secure_url").asText();
     }
   }

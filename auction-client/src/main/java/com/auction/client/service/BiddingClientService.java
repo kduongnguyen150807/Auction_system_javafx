@@ -2,13 +2,9 @@ package com.auction.client.service;
 
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
-import java.io.Serializable;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class BiddingClientService {
-  private static final Logger LOGGER = Logger.getLogger(BiddingClientService.class.getName());
 
   public Response placeBid(BidTransaction bid) {
     Request request = new Request(Request.BID, bid);

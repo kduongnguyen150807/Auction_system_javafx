@@ -3,6 +3,9 @@ package com.auction.client.controller;
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
+import com.auction.shared.PasswordEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,6 +15,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 
 public class RegisterController {
+  private static final Logger LOGGER = LoggerFactory.getLogger(RegisterController.class);
+
   @FXML private AnchorPane rootPane;
   @FXML private TextField u;
   @FXML private TextField e;
@@ -47,7 +52,7 @@ public class RegisterController {
     newUser.setUsername(username);
     newUser.setEmail(emailText);
     newUser.setAge(age);
-    newUser.setPassword(password);
+    newUser.setPassword(PasswordEncoder.hash(password));
     newUser.setFullName(username);
 
     Request request = new Request(Request.SIGNUP, newUser);
@@ -57,7 +62,7 @@ public class RegisterController {
       try {
         SceneManager.switchScene("/fxml/login.fxml");
       } catch (Exception ex) {
-        ex.printStackTrace();
+        LOGGER.error("Navigation to login after register failed", ex);
       }
     } else {
       String message = (response != null) ? response.getMessage() : "timeout";

@@ -16,4 +16,18 @@ public interface NetworkEventListener {
   default void onFriendRequestSent(Friendship friendship) {}
   default void onFriendAccepted(Friendship friendship) {}
   default void onSellerBidNotify(Item item, double newPrice) {}
+
+  /**
+   * Called when the server notifies this client that its account has been
+   * banned. The UI should show a modal alert and then force-logout.
+   *
+   * @param reason human-readable reason string from the server
+   */
+  default void onAccountBanned(String reason) {}
+
+  /**
+   * Called when the server notifies this client that its account ban has been
+   * lifted. The UI may show an informational toast or alert.
+   */
+  default void onAccountUnbanned() {}
 }

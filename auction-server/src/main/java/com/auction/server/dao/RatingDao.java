@@ -4,11 +4,11 @@ import com.auction.shared.Rating;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RatingDao implements RatingRepository {
-  private static final Logger LOGGER = Logger.getLogger(RatingDao.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(RatingDao.class);
 
   private Connection getConn() {
     return DatabaseConnection.getInstance().getConnection();
@@ -25,7 +25,7 @@ public class RatingDao implements RatingRepository {
       ps.setString(5, rating.getFeedback());
       return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "insertRating failed", e);
+      LOGGER.warn("insertRating failed", e);
       return false;
     }
   }
@@ -39,7 +39,7 @@ public class RatingDao implements RatingRepository {
       ResultSet rs = ps.executeQuery();
       return rs.next();
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "hasRated check failed", e);
+      LOGGER.warn("hasRated check failed", e);
       return false;
     }
   }
@@ -54,7 +54,7 @@ public class RatingDao implements RatingRepository {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) ratings.add(mapResultSetToRating(rs));
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getByItemId failed", e);
+      LOGGER.warn("getByItemId failed", e);
     }
     return ratings;
   }
@@ -79,7 +79,7 @@ public class RatingDao implements RatingRepository {
         }
       }
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "recalcUserRating failed", e);
+      LOGGER.warn("recalcUserRating failed", e);
     }
   }
 

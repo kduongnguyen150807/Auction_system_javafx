@@ -3,11 +3,11 @@ package com.auction.server.dao;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BaseDao<T> {
-  private static final Logger LOGGER = Logger.getLogger(BaseDao.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(BaseDao.class);
 
   protected Connection getConn() {
     return DatabaseConnection.getInstance().getConnection();
@@ -23,7 +23,7 @@ public abstract class BaseDao<T> {
         while (rs.next()) results.add(mapRow(rs));
       }
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Query failed: " + sql, e);
+      LOGGER.warn("Query failed: {}", sql, e);
     }
     return results;
   }
@@ -35,7 +35,7 @@ public abstract class BaseDao<T> {
         if (rs.next()) return mapRow(rs);
       }
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Query failed: " + sql, e);
+      LOGGER.warn("Query failed: {}", sql, e);
     }
     return null;
   }
@@ -45,7 +45,7 @@ public abstract class BaseDao<T> {
       setParameters(ps, params);
       return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Update failed: " + sql, e);
+      LOGGER.warn("Update failed: {}", sql, e);
       return false;
     }
   }

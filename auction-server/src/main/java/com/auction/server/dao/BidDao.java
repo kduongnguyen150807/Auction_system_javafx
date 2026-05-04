@@ -4,11 +4,11 @@ import com.auction.shared.BidTransaction;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BidDao {
-  private static final Logger LOGGER = Logger.getLogger(BidDao.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(BidDao.class);
 
   private Connection getConn() {
     return DatabaseConnection.getInstance().getConnection();
@@ -41,7 +41,7 @@ public class BidDao {
         throw e;
       }
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "placeBid failed", e);
+      LOGGER.warn("placeBid failed", e);
       return false;
     }
   }
@@ -55,7 +55,7 @@ public class BidDao {
       ps.setTimestamp(4, Timestamp.valueOf(bid.getTimestamp()));
       return ps.executeUpdate() > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "addBid failed", e);
+      LOGGER.warn("addBid failed", e);
       return false;
     }
   }
@@ -68,7 +68,7 @@ public class BidDao {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) bids.add(mapResultSet(rs));
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getByItem failed", e);
+      LOGGER.warn("getByItem failed", e);
     }
     return bids;
   }
@@ -80,7 +80,7 @@ public class BidDao {
       ResultSet rs = ps.executeQuery();
       if (rs.next()) return mapResultSet(rs);
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getWinner failed", e);
+      LOGGER.warn("getWinner failed", e);
     }
     return null;
   }
@@ -99,7 +99,7 @@ public class BidDao {
         history.add(bid);
       }
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getBidHistory failed", e);
+      LOGGER.warn("getBidHistory failed", e);
     }
     return history;
   }
@@ -111,7 +111,75 @@ public class BidDao {
       ResultSet rs = ps.executeQuery();
       if (rs.next()) return rs.getInt("userid");
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getPreviousHighestBidder failed", e);
+      LOGGER.warn("getPreviousHighestBidder failed", e);
+    }
+    return -1;
+  }
+
+  // ─── Ban-handling helpers (transactional, share a Connection) ─────────────
+
+  /** Returns item ids of OPEN auctions where this user has placed at least one bid. */
+  public List<Integer> getOpenAuctionIdsForBidder(int userId) {
+    List<Integer> ids = new ArrayList<>();
+    String sql =
+        "SELECT DISTINCT b.itemid FROM bid_transactions b "
+            + "JOIN items i ON i.id = b.itemid "
+            + "WHERE b.userid = ? AND i.status = 'OPEN'";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, userId);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        ids.add(rs.getInt(1));
+      }
+    } catch (Exception e) {
+      LOGGER.warn("getOpenAuctionIdsForBidder failed", e);
+    }
+    return ids;
+  }
+
+  /** Deletes (invalidates) every bid placed by the banned user on the auction. */
+  public int deleteBidsByUserOnItemTx(int itemId, int userId, Connection conn) throws SQLException {
+    String sql = "DELETE FROM bid_transactions WHERE itemid = ? AND userid = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      ps.setInt(2, userId);
+      return ps.executeUpdate();
+    }
+  }
+
+  /**
+   * Highest still-valid bid (i.e. the new auction leader) on the supplied connection.
+   * Bids by locked / inactive users are skipped so banned bidders never become leader.
+   */
+  public BidTransaction findHighestValidBidTx(int itemId, Connection conn) throws SQLException {
+    String sql =
+        "SELECT b.* FROM bid_transactions b "
+            + "JOIN users u ON u.id = b.userid "
+            + "WHERE b.itemid = ? AND u.islocked = false AND u.isactive = true "
+            + "ORDER BY b.bidvalue DESC, b.timestamp ASC LIMIT 1";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return mapResultSet(rs);
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Current top bidder id on the supplied connection (-1 when no bids exist). */
+  public int getCurrentHighestBidderTx(int itemId, Connection conn) throws SQLException {
+    String sql =
+        "SELECT userid FROM bid_transactions WHERE itemid = ? "
+            + "ORDER BY bidvalue DESC, timestamp ASC LIMIT 1";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return rs.getInt("userid");
+        }
+      }
     }
     return -1;
   }

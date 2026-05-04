@@ -4,11 +4,11 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DatabaseConnection {
-  private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnection.class);
 
   private static final class Holder {
     static final DatabaseConnection INSTANCE = new DatabaseConnection();
@@ -25,10 +25,10 @@ public class DatabaseConnection {
       if (input != null) {
         props.load(input);
       } else {
-        LOGGER.warning("db.properties not found on classpath, using defaults");
+        LOGGER.warn("db.properties not found on classpath, using defaults");
         props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
         props.setProperty("db.user", "ba_nin");
-        props.setProperty("db.password", "banin123");
+        props.setProperty("db.password", "banin123!");
       }
 
       this.url = props.getProperty("db.url");
@@ -41,7 +41,7 @@ public class DatabaseConnection {
       test.close();
       LOGGER.info("Database connection validated successfully.");
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Failed to initialize database connection", e);
+      LOGGER.error("Failed to initialize database connection", e);
     }
   }
 
@@ -57,7 +57,7 @@ public class DatabaseConnection {
     try {
       return DriverManager.getConnection(url, user, password);
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Failed to create database connection", e);
+      LOGGER.error("Failed to create database connection", e);
       return null;
     }
   }

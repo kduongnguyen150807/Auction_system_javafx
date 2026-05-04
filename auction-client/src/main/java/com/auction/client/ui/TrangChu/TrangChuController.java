@@ -7,7 +7,6 @@ import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.Item;
-import com.auction.shared.Lot;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.time.Duration;
@@ -19,18 +18,21 @@ import java.util.Map;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.HBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TrangChuController {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TrangChuController.class);
   private static TrangChuController instance;
+
   @FXML private HBox TrendingBind;
-  private final List<Lot> cacheditems = new ArrayList<>();
-  private final Map<Integer, ItemCardController> cardmap = new HashMap<>();
-  private String kw = "";
-  private String cat = "All";
+  private final List<Item> cachedItems = new ArrayList<>();
+  private final Map<Integer, ItemCardController> cardMap = new HashMap<>();
+  private String keyword = "";
+  private String category = "All";
 
   public static TrangChuController getInstance() {
-    TrangChuController ans = instance;
-    return ans;
+    return instance;
   }
 
   @FXML
@@ -41,51 +43,37 @@ public class TrangChuController {
   }
 
   public void refreshItems() {
-    Thread ans =
-            new Thread(
-                    () -> {
-                      try {
-                        int res1 =
-                                ClientSession.getCurrentUser() != null
-                                        ? ClientSession.getCurrentUser().getId()
-                                        : 0;
-                        Request res = new Request(Request.GET_ONGOING_BIDS, res1);
-                        Response ans1 = NetworkClient.getInstance().sendRequestAndWait(res);
-                        if (ans1 == null || !Response.OK.equals(ans1.getStatus())) return;
-                        Object ans2 = ans1.getPayload();
-                        if (!(ans2 instanceof List<?> list)) return;
-                        Platform.runLater(() -> cacheAndRender(list));
-                      } catch (Exception e) {
-                      }
-                    });
-    ans.setDaemon(true);
-    ans.start();
+    Thread fetchThread = new Thread(() -> {
+      try {
+        int userId =
+            ClientSession.getCurrentUser() != null
+                ? ClientSession.getCurrentUser().getId()
+                : 0;
+        Request request = new Request(Request.GET_ONGOING_BIDS, userId);
+        Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+        if (response == null || !Response.OK.equals(response.getStatus())) return;
+        Object payload = response.getPayload();
+        if (!(payload instanceof List<?> list)) return;
+        Platform.runLater(() -> cacheAndRender(list));
+      } catch (Exception e) {
+        LOGGER.warn("Failed to refresh auction items", e);
+      }
+    });
+    fetchThread.setDaemon(true);
+    fetchThread.start();
   }
 
-  public void setFilters(String res, String ans) {
-    this.kw = (res == null) ? "" : res.trim().toLowerCase();
-    this.cat = (ans == null || ans.isBlank()) ? "All" : ans;
+  public void setFilters(String kw, String cat) {
+    this.keyword = (kw == null) ? "" : kw.trim().toLowerCase();
+    this.category = (cat == null || cat.isBlank()) ? "All" : cat;
     renderFilteredItems();
   }
 
-  private void cacheAndRender(List<?> res) {
-    cacheditems.clear();
-    for (Object ans : res) {
-      if (ans instanceof Lot) {
-        cacheditems.add((Lot) ans);
-      } else if (ans instanceof Item) {
-        Item res1 = (Item) ans;
-        Lot ans1 = new Lot();
-        ans1.setId(res1.getId());
-        ans1.setTitle(res1.getName());
-        ans1.setDescription(res1.getDescription());
-        ans1.setBidValue(res1.getCurrentPrice());
-        ans1.setStartTime(res1.getStartTime());
-        ans1.setEndTime(res1.getEndTime());
-        ans1.setImageUrl(res1.getImageUrl());
-        ans1.setSellerUsername(res1.getSellerUsername());
-        ans1.setSellerAvatarUrl(res1.getSellerAvatarUrl());
-        cacheditems.add(ans1);
+  private void cacheAndRender(List<?> rawList) {
+    cachedItems.clear();
+    for (Object entry : rawList) {
+      if (entry instanceof Item item) {
+        cachedItems.add(item);
       }
     }
     renderFilteredItems();
@@ -94,89 +82,82 @@ public class TrangChuController {
   private void renderFilteredItems() {
     if (TrendingBind == null) return;
     TrendingBind.getChildren().clear();
-    cardmap.clear();
-    for (Lot ans : cacheditems) {
-      if (!match(ans)) continue;
+    cardMap.clear();
+    for (Item item : cachedItems) {
+      if (!matchesFilter(item)) continue;
       try {
-        NodeContentLoader<HBox> res = new NodeContentLoader<>();
-        res.load("/fxml/itemcard/ItemCard.fxml");
-        ItemCardController ans1 = res.getController();
-        if (ans1 != null) {
-          ans1.setData(
-                  ans.getId(),
-                  safe(ans.getTitle()),
-                  ans.getBidValue(),
-                  safe(ans.getDescription()),
-                  formatTime(ans.getEndTime()),
-                  safe(ans.getImageUrl()),
-                  safe(ans.getSellerUsername()),
-                  safe(ans.getSellerAvatarUrl()));
-          cardmap.put(ans.getId(), ans1);
+        NodeContentLoader<HBox> cardLoader = new NodeContentLoader<>();
+        cardLoader.load("/fxml/itemcard/ItemCard.fxml");
+        ItemCardController card = cardLoader.getController();
+        if (card != null) {
+          card.setData(
+              item.getId(),
+              safe(item.getName()),
+              item.getCurrentPrice(),
+              safe(item.getDescription()),
+              formatTime(item.getEndTime()),
+              safe(item.getImageUrl()),
+              safe(item.getSellerUsername()),
+              safe(item.getSellerAvatarUrl()));
+          cardMap.put(item.getId(), card);
         }
-        NodeManager.addNodeToPane(res, TrendingBind);
+        NodeManager.addNodeToPane(cardLoader, TrendingBind);
       } catch (Exception e) {
+        LOGGER.warn("Failed to render item card for item id={}", item.getId(), e);
       }
     }
   }
 
   public void removeClosedItem(Item item) {
     if (item == null) return;
-    cacheditems.removeIf(lot -> lot.getId() == item.getId());
-    ItemCardController card = cardmap.remove(item.getId());
-    if (card != null) {
-      renderFilteredItems();
-    }
+    cachedItems.removeIf(cached -> cached.getId() == item.getId());
+    cardMap.remove(item.getId());
+    renderFilteredItems();
   }
 
-  public void updatePriceUi(Item ans) {
-    if (ans == null) return;
-    updateItemPrice(ans);
-  }
-
-  public void updateItemPrice(Item ans) {
-    for (int res = 0; res < cacheditems.size(); res++) {
-      if (cacheditems.get(res).getId() == ans.getId()) {
-        Lot res1 = cacheditems.get(res);
-        res1.setBidValue(ans.getCurrentPrice());
-        res1.setEndTime(ans.getEndTime());
+  public void updatePriceUi(Item updated) {
+    if (updated == null) return;
+    for (Item cached : cachedItems) {
+      if (cached.getId() == updated.getId()) {
+        cached.setCurrentPrice(updated.getCurrentPrice());
+        cached.setEndTime(updated.getEndTime());
         break;
       }
     }
-    ItemCardController res1 = cardmap.get(ans.getId());
-    if (res1 != null) {
-      res1.setData(
-              ans.getId(),
-              safe(ans.getName()),
-              ans.getCurrentPrice(),
-              safe(ans.getDescription()),
-              formatTime(ans.getEndTime()),
-              safe(ans.getImageUrl()),
-              safe(ans.getSellerUsername()),
-              safe(ans.getSellerAvatarUrl()));
+    ItemCardController card = cardMap.get(updated.getId());
+    if (card != null) {
+      card.setData(
+          updated.getId(),
+          safe(updated.getName()),
+          updated.getCurrentPrice(),
+          safe(updated.getDescription()),
+          formatTime(updated.getEndTime()),
+          safe(updated.getImageUrl()),
+          safe(updated.getSellerUsername()),
+          safe(updated.getSellerAvatarUrl()));
     }
   }
 
-  private boolean match(Lot ans) {
-    String res = safe(ans.getTitle()).toLowerCase();
-    if (!kw.isBlank() && !res.contains(kw)) return false;
-    double ans1 = KhungController.getMinPrice();
-    double res1 = KhungController.getMaxPrice();
-    if (res1 <= 0) res1 = Double.MAX_VALUE;
-    if (ans.getBidValue() < ans1 || ans.getBidValue() > res1) return false;
+  private boolean matchesFilter(Item item) {
+    String name = safe(item.getName()).toLowerCase();
+    if (!keyword.isBlank() && !name.contains(keyword)) return false;
+    double minPrice = KhungController.getMinPrice();
+    double maxPrice = KhungController.getMaxPrice();
+    if (maxPrice <= 0) maxPrice = Double.MAX_VALUE;
+    if (item.getCurrentPrice() < minPrice || item.getCurrentPrice() > maxPrice) return false;
     return true;
   }
 
-  private String safe(String ans) {
-    String res = (ans == null) ? "" : ans;
-    return res;
+  private String safe(String value) {
+    return (value == null) ? "" : value;
   }
 
-  private String formatTime(LocalDateTime ans) {
-    if (ans == null) return "N/A";
-    Duration res = Duration.between(LocalDateTime.now(), ans);
-    if (res.isNegative() || res.isZero()) return "closed";
-    long ans1 = res.toHours();
-    if (ans1 / 24 > 0) return (ans1 / 24) + "d " + (ans1 % 24) + "h";
-    return (ans1 % 24) + "h " + (res.toMinutes() % 60) + "m";
+  private String formatTime(LocalDateTime endTime) {
+    if (endTime == null) return "N/A";
+    Duration remaining = Duration.between(LocalDateTime.now(), endTime);
+    if (remaining.isNegative() || remaining.isZero()) return "closed";
+    long hours = remaining.toHours();
+    if (hours / 24 > 0) return (hours / 24) + "d " + (hours % 24) + "h";
+    return (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
   }
 }

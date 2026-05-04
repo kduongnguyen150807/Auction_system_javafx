@@ -16,9 +16,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.stage.Popup;
 import javafx.stage.Window;
@@ -27,273 +25,155 @@ public class ThanhTimKiemController {
   @FXML private TextField searchField;
   @FXML private ComboBox<String> categoryFilter;
   @FXML private Button bellButton;
-  @FXML private ToggleButton itemsToggle;
-  @FXML private ToggleButton usersToggle;
+  @FXML private ToggleButton itemsToggle, usersToggle;
   @FXML private ToggleGroup searchModeGroup;
-  @FXML private TextField minpricefield;
-  @FXML private TextField maxpricefield;
+  @FXML private TextField minpricefield, maxpricefield;
   @FXML private Button filterButton;
 
-  private NotificationPopup ans;
-  private Timer res;
-  private boolean ans1 = false;
-  private Popup res1;
-  private VBox ans2;
+  private NotificationPopup notifPopup;
+  private Timer debounceTimer;
+  private boolean userMode = false;
+  private Popup resultsPopup;
+  private VBox resultsBox;
 
   @FXML
   public void initialize() {
-    ans = new NotificationPopup();
+    notifPopup = new NotificationPopup();
     if (itemsToggle != null) itemsToggle.setSelected(true);
-
     if (categoryFilter != null) {
       categoryFilter.getItems().addAll("All", "Vehicle", "Electronics", "Art");
       categoryFilter.getSelectionModel().selectFirst();
     }
-
-    res1 = new Popup();
-    res1.setAutoHide(true);
-    ans2 = new VBox();
-    ans2.setStyle(
-        "-fx-background-color: #1a1a2e; -fx-background-radius: 10; -fx-border-color: #333; -fx-border-radius: 10; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 20, 0.3, 0, 4);");
-    ans2.setPrefWidth(500);
-    ans2.setMaxHeight(400);
-    res1.getContent().add(ans2);
-
-    searchField
-        .textProperty()
-        .addListener(
-            (obs, ov, nv) -> {
-              if (ans1) {
-                debounceUserSearch(nv);
-              } else {
-                hideUserResults();
-                KhungController.applySearchFilter(
-                    nv,
-                    categoryFilter.getValue() != null ? categoryFilter.getValue() : "All",
-                    0,
-                    Double.MAX_VALUE);
-              }
-            });
-
-    if (categoryFilter != null) {
-      categoryFilter
-          .valueProperty()
-          .addListener(
-              (obs, ov, nv) -> {
-                if (!ans1) {
-                  KhungController.applySearchFilter(
-                      searchField.getText(), nv != null ? nv : "All", 0, Double.MAX_VALUE);
-                }
-              });
-    }
+    resultsPopup = new Popup();
+    resultsPopup.setAutoHide(true);
+    resultsBox = new VBox();
+    resultsBox.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 10; -fx-border-color: #333; -fx-border-radius: 10; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 20, 0.3, 0, 4);");
+    resultsBox.setPrefWidth(500); resultsBox.setMaxHeight(400);
+    resultsPopup.getContent().add(resultsBox);
+    searchField.textProperty().addListener((obs, ov, nv) -> {
+      if (userMode) debounceUserSearch(nv);
+      else { hideResults(); KhungController.applySearchFilter(nv, getCat(), 0, Double.MAX_VALUE); }
+    });
+    if (categoryFilter != null)
+      categoryFilter.valueProperty().addListener((obs, ov, nv) -> {
+        if (!userMode) KhungController.applySearchFilter(searchField.getText(), nv != null ? nv : "All", 0, Double.MAX_VALUE);
+      });
   }
 
   @FXML
   public void onSearchModeChanged() {
-    ans1 = usersToggle.isSelected();
-    if (ans1) {
-      searchField.setPromptText("Search users...");
-      if (categoryFilter != null) {
-        categoryFilter.setVisible(false);
-        categoryFilter.setManaged(false);
-      }
-      if (minpricefield != null) {
-        minpricefield.setVisible(false);
-        minpricefield.setManaged(false);
-      }
-      if (maxpricefield != null) {
-        maxpricefield.setVisible(false);
-        maxpricefield.setManaged(false);
-      }
-      if (filterButton != null) {
-        filterButton.setVisible(false);
-        filterButton.setManaged(false);
-      }
-      String ans3 = searchField.getText();
-      if (ans3 != null && !ans3.trim().isEmpty()) {
-        debounceUserSearch(ans3);
-      }
+    userMode = usersToggle.isSelected();
+    searchField.setPromptText(userMode ? "Search users..." : "Search items...");
+    setFilterControlsVisible(!userMode);
+    if (userMode) {
+      String kw = searchField.getText();
+      if (kw != null && !kw.trim().isEmpty()) debounceUserSearch(kw);
     } else {
-      searchField.setPromptText("Search items...");
-      if (categoryFilter != null) {
-        categoryFilter.setVisible(true);
-        categoryFilter.setManaged(true);
-      }
-      if (minpricefield != null) {
-        minpricefield.setVisible(true);
-        minpricefield.setManaged(true);
-      }
-      if (maxpricefield != null) {
-        maxpricefield.setVisible(true);
-        maxpricefield.setManaged(true);
-      }
-      if (filterButton != null) {
-        filterButton.setVisible(true);
-        filterButton.setManaged(true);
-      }
-      hideUserResults();
-      KhungController.applySearchFilter(
-          searchField.getText(),
-          categoryFilter.getValue() != null ? categoryFilter.getValue() : "All",
-          0,
-          Double.MAX_VALUE);
+      hideResults();
+      KhungController.applySearchFilter(searchField.getText(), getCat(), 0, Double.MAX_VALUE);
     }
   }
 
-  private void debounceUserSearch(String ans3) {
-    if (res != null) res.cancel();
-    if (ans3 == null || ans3.trim().isEmpty()) {
-      hideUserResults();
-      return;
-    }
-    res = new Timer(true);
-    res.schedule(
-        new TimerTask() {
-          @Override
-          public void run() {
-            searchUsers(ans3.trim());
-          }
-        },
-        300);
+  private void setFilterControlsVisible(boolean visible) {
+    for (javafx.scene.Node n : new javafx.scene.Node[]{categoryFilter, minpricefield, maxpricefield, filterButton})
+      if (n != null) { n.setVisible(visible); n.setManaged(visible); }
   }
 
-  private void searchUsers(String ans3) {
-    Request res2 = new Request(Request.SEARCH_USERS, ans3);
-    Response ans4 = NetworkClient.getInstance().sendRequestAndWait(res2);
-    if (ans4 != null && Response.OK.equals(ans4.getStatus())) {
-      List<User> res3 = (List<User>) ans4.getPayload();
-      Platform.runLater(() -> showUserResults(res3));
-    }
+  private String getCat() {
+    return categoryFilter != null && categoryFilter.getValue() != null ? categoryFilter.getValue() : "All";
   }
 
-  private void showUserResults(List<User> ans3) {
-    ans2.getChildren().clear();
-    ScrollPane res2 = new ScrollPane();
-    res2.setFitToWidth(true);
-    res2.setMaxHeight(380);
-    res2.setPrefWidth(500);
-    res2.setStyle("-fx-background: #1a1a2e; -fx-background-color: #1a1a2e;");
-    VBox ans4 = new VBox(0);
-    ans4.setStyle("-fx-background-color: #1a1a2e;");
+  private void debounceUserSearch(String kw) {
+    if (debounceTimer != null) debounceTimer.cancel();
+    if (kw == null || kw.trim().isEmpty()) { hideResults(); return; }
+    debounceTimer = new Timer(true);
+    debounceTimer.schedule(new TimerTask() {
+      @Override public void run() { searchUsers(kw.trim()); }
+    }, 300);
+  }
 
-    if (ans3 == null || ans3.isEmpty()) {
-      Label res3 = new Label("No users found");
-      res3.setStyle("-fx-text-fill: #888; -fx-font-size: 14; -fx-padding: 16;");
-      ans4.getChildren().add(res3);
+  private void searchUsers(String kw) {
+    Response res = NetworkClient.getInstance().sendRequestAndWait(new Request(Request.SEARCH_USERS, kw));
+    if (res != null && Response.OK.equals(res.getStatus()))
+      Platform.runLater(() -> showUserResults((List<User>) res.getPayload()));
+  }
+
+  private void showUserResults(List<User> users) {
+    resultsBox.getChildren().clear();
+    ScrollPane scroll = new ScrollPane();
+    scroll.setFitToWidth(true); scroll.setMaxHeight(380); scroll.setPrefWidth(500);
+    scroll.setStyle("-fx-background: #1a1a2e; -fx-background-color: #1a1a2e;");
+    VBox content = new VBox(0);
+    content.setStyle("-fx-background-color: #1a1a2e;");
+    if (users == null || users.isEmpty()) {
+      Label empty = new Label("No users found");
+      empty.setStyle("-fx-text-fill: #888; -fx-font-size: 14; -fx-padding: 16;");
+      content.getChildren().add(empty);
     } else {
-      for (User res3 : ans3) {
-        ans4.getChildren().add(buildUserRow(res3));
-      }
+      for (User u : users) content.getChildren().add(buildUserRow(u));
     }
-    res2.setContent(ans4);
-    ans2.getChildren().add(res2);
-    Bounds res3 = searchField.localToScreen(searchField.getBoundsInLocal());
-    if (res3 != null) {
-      res1.show(searchField.getScene().getWindow(), res3.getMinX(), res3.getMaxY() + 4);
-    }
+    scroll.setContent(content);
+    resultsBox.getChildren().add(scroll);
+    Bounds b = searchField.localToScreen(searchField.getBoundsInLocal());
+    if (b != null) resultsPopup.show(searchField.getScene().getWindow(), b.getMinX(), b.getMaxY() + 4);
   }
 
-  private HBox buildUserRow(User ans3) {
-    HBox res2 = new HBox(12);
-    res2.setAlignment(Pos.CENTER_LEFT);
-    res2.setPadding(new Insets(10, 14, 10, 14));
-    res2.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
-    res2.setOnMouseEntered(e -> res2.setStyle("-fx-background-color: #252540; -fx-cursor: hand;"));
-    res2.setOnMouseExited(
-        e -> res2.setStyle("-fx-background-color: transparent; -fx-cursor: hand;"));
+  private HBox buildUserRow(User u) {
+    HBox row = new HBox(12);
+    row.setAlignment(Pos.CENTER_LEFT); row.setPadding(new Insets(10, 14, 10, 14));
+    row.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+    row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #252540; -fx-cursor: hand;"));
+    row.setOnMouseExited(e -> row.setStyle("-fx-background-color: transparent; -fx-cursor: hand;"));
 
-    ImageView ans4 = new ImageView();
-    ans4.setFitWidth(36);
-    ans4.setFitHeight(36);
-    ans4.setPreserveRatio(false);
-    ans4.setClip(new Circle(18, 18, 18));
-    String res3 = ans3.getAvatarUrl();
-    if (res3 != null && !res3.isBlank()) {
-      Image ans5 = new Image(res3, 36, 36, true, true, true);
-      ans4.setImage(ans5);
-    }
+    ImageView avatar = new ImageView();
+    avatar.setFitWidth(36); avatar.setFitHeight(36); avatar.setPreserveRatio(false); avatar.setClip(new Circle(18, 18, 18));
+    String avatarUrl = u.getAvatarUrl();
+    if (avatarUrl != null && !avatarUrl.isBlank()) avatar.setImage(new Image(avatarUrl, 36, 36, true, true, true));
 
-    VBox res4 = new VBox(2);
-    HBox.setHgrow(res4, Priority.ALWAYS);
-    Label ans5 = new Label(ans3.getUsername());
-    ans5.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
-    String res5 = ans3.getFullName();
-    Label ans6 =
-        new Label(
-            res5 != null && !res5.isBlank() && !res5.equals(ans3.getUsername())
-                ? res5
-                : (ans3.getEmail() != null ? ans3.getEmail() : ""));
-    ans6.setStyle("-fx-text-fill: #888; -fx-font-size: 12;");
-    res4.getChildren().addAll(ans5, ans6);
+    Label nameLabel = new Label(u.getUsername());
+    nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
+    String fn = u.getFullName();
+    Label subLabel = new Label(fn != null && !fn.isBlank() && !fn.equals(u.getUsername()) ? fn : (u.getEmail() != null ? u.getEmail() : ""));
+    subLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 12;");
+    VBox info = new VBox(2, nameLabel, subLabel);
+    HBox.setHgrow(info, Priority.ALWAYS);
 
-    VBox res6 = new VBox(0);
-    res6.setAlignment(Pos.CENTER_RIGHT);
-    if (ans3.getTotalRatings() > 0) {
-      int ans7 = (int) Math.round(ans3.getAvgRating());
-      ans7 = Math.max(0, Math.min(ans7, 5));
-      Label res7 = new Label("\u2605".repeat(ans7));
-      String ans8 =
-          ans3.getAvgRating() <= 2.0
-              ? "#ff4444"
-              : (ans3.getAvgRating() <= 3.0 ? "#ffaa00" : "#44cc44");
-      res7.setStyle("-fx-text-fill: " + ans8 + "; -fx-font-size: 13;");
-      Label res8 =
-          new Label(String.format("%.1f (%d)", ans3.getAvgRating(), ans3.getTotalRatings()));
-      res8.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
-      res6.getChildren().addAll(res7, res8);
+    VBox ratingBox = new VBox(0);
+    ratingBox.setAlignment(Pos.CENTER_RIGHT);
+    if (u.getTotalRatings() > 0) {
+      int stars = Math.max(0, Math.min((int) Math.round(u.getAvgRating()), 5));
+      String color = u.getAvgRating() <= 2.0 ? "#ff4444" : (u.getAvgRating() <= 3.0 ? "#ffaa00" : "#44cc44");
+      Label starsLbl = new Label("\u2605".repeat(stars));
+      starsLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 13;");
+      Label countLbl = new Label(String.format("%.1f (%d)", u.getAvgRating(), u.getTotalRatings()));
+      countLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+      ratingBox.getChildren().addAll(starsLbl, countLbl);
     } else {
-      Label ans7 = new Label("No ratings");
-      ans7.setStyle("-fx-text-fill: #666; -fx-font-size: 11;");
-      res6.getChildren().add(ans7);
+      Label noRating = new Label("No ratings"); noRating.setStyle("-fx-text-fill: #666; -fx-font-size: 11;");
+      ratingBox.getChildren().add(noRating);
     }
-    res2.getChildren().addAll(ans4, res4, res6);
-    res2.setOnMouseClicked(
-        e -> {
-          hideUserResults();
-          searchField.clear();
-          KhungController.showUserProfile(ans3);
-        });
-    return res2;
+    row.getChildren().addAll(avatar, info, ratingBox);
+    row.setOnMouseClicked(e -> { hideResults(); searchField.clear(); KhungController.showUserProfile(u); });
+    return row;
   }
 
-  private void hideUserResults() {
-    if (res1 != null && res1.isShowing()) {
-      res1.hide();
-    }
-  }
+  private void hideResults() { if (resultsPopup != null && resultsPopup.isShowing()) resultsPopup.hide(); }
 
   @FXML
   public void applyFilter() {
-    String ans3 = searchField.getText();
-    String res2 = null;
-    if (categoryFilter != null) res2 = categoryFilter.getValue();
-    double ans4 = 0;
-    double res3 = Double.MAX_VALUE;
-    try {
-      if (minpricefield != null
-          && minpricefield.getText() != null
-          && !minpricefield.getText().isBlank()) {
-        ans4 = Double.parseDouble(minpricefield.getText());
-      }
-    } catch (Exception e) {
-    }
-    try {
-      if (maxpricefield != null
-          && maxpricefield.getText() != null
-          && !maxpricefield.getText().isBlank()) {
-        res3 = Double.parseDouble(maxpricefield.getText());
-      }
-    } catch (Exception e) {
-    }
-    KhungController.applySearchFilter(ans3, res2, ans4, res3);
+    String kw = searchField.getText(), cat = getCat();
+    double min = 0, max = Double.MAX_VALUE;
+    try { if (minpricefield != null && !minpricefield.getText().isBlank()) min = Double.parseDouble(minpricefield.getText()); } catch (Exception e) {}
+    try { if (maxpricefield != null && !maxpricefield.getText().isBlank()) max = Double.parseDouble(maxpricefield.getText()); } catch (Exception e) {}
+    KhungController.applySearchFilter(kw, cat, min, max);
   }
 
   @FXML
   public void toggleNotifications() {
-    Window ans3 = bellButton.getScene().getWindow();
-    Point2D res2 = bellButton.localToScene(0.0, 0.0);
-    double ans4 = ans3.getX() + ans3.getScene().getX() + res2.getX();
-    double res3 = ans3.getY() + ans3.getScene().getY() + res2.getY() + bellButton.getHeight() + 10;
-    ans.show(ans3, ans4, res3);
+    Window win = bellButton.getScene().getWindow();
+    Point2D pos = bellButton.localToScene(0.0, 0.0);
+    double x = win.getX() + win.getScene().getX() + pos.getX();
+    double y = win.getY() + win.getScene().getY() + pos.getY() + bellButton.getHeight() + 10;
+    notifPopup.show(win, x, y);
   }
 }

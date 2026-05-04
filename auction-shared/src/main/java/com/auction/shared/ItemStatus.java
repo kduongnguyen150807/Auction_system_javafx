@@ -1,11 +1,14 @@
 package com.auction.shared;
 
 public enum ItemStatus {
+  /** Awaiting admin approval before going live. */
   PENDING,
+  /** Approved and accepting bids. */
   OPEN,
+  /** Closed via Buy-It-Now. */
   CLOSED,
-  RUNNING,
+  /** Time expired — winner determined, awaiting manual settlement confirmation. */
   FINISHED,
-  PAID,
+  /** Cancelled (e.g. seller banned, or admin rejection). */
   CANCELED
 }

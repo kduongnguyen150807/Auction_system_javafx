@@ -4,11 +4,11 @@ import com.auction.shared.ChatMessage;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ChatDao {
-  private static final Logger LOGGER = Logger.getLogger(ChatDao.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(ChatDao.class);
 
   private Connection getConn() {
     return DatabaseConnection.getInstance().getConnection();
@@ -28,7 +28,7 @@ public class ChatDao {
       }
       return rows > 0;
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "insertMessage failed", e);
+      LOGGER.warn("insertMessage failed", e);
       return false;
     }
   }
@@ -43,7 +43,7 @@ public class ChatDao {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) messages.add(0, mapRow(rs));
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getGlobalHistory failed", e);
+      LOGGER.warn("getGlobalHistory failed", e);
     }
     return messages;
   }
@@ -64,7 +64,7 @@ public class ChatDao {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) messages.add(0, mapRow(rs));
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getPrivateHistory failed", e);
+      LOGGER.warn("getPrivateHistory failed", e);
     }
     return messages;
   }
@@ -84,7 +84,7 @@ public class ChatDao {
       ResultSet rs = ps.executeQuery();
       while (rs.next()) ids.add(rs.getInt("contact_id"));
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "getContactIds failed", e);
+      LOGGER.warn("getContactIds failed", e);
     }
     return ids;
   }
