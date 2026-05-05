@@ -81,5 +81,22 @@ public class SQLService {
         }
         return results;
     }
+
+    public static boolean Exists(String sql, List<Object> args, Connection conn) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (args != null) {
+                for (int i = 0; i < args.size(); i++) {
+                    ps.setObject(i + 1, args.get(i));
+                }
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL Exist Query Error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
 
