@@ -1,4 +1,4 @@
-package com.auction.server.util;
+package com.auction.server.dao;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

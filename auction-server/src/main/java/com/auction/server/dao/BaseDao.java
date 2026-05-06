@@ -1,55 +1,65 @@
 package com.auction.server.dao;
 
-import com.auction.server.util.ResultSetMapper;
-import com.auction.server.util.SQLService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseDao {
-    protected Connection getConnection() throws SQLException {
-        return DatabaseConnection.getInstance().getConnection();
-    }
+  private static final Logger LOGGER = LoggerFactory.getLogger(BaseDao.class);
 
-    protected <T> List<T> executeFetch(String sql, List<Object> params, ResultSetMapper<T> mapper){
-        try(Connection conn = getConnection()){
-            return SQLService.Fetch(sql, params, conn, mapper);
-        } catch (SQLException e) {
-            System.err.println("Lỗi Fetch SQL: " + sql);
-            e.printStackTrace();
-            return Collections.emptyList();
-        }
-    }
+  protected Connection getConnection() {
+    return DatabaseConnection.getInstance().getConnection();
+  }
 
-    protected boolean executeUpdate(String sql, List<Object> params) {
-        try (Connection conn = getConnection()) {
-            return SQLService.Update(sql, params, conn);
-        } catch (SQLException e) {
-            System.err.println("Lỗi Update SQL: " + sql);
-            e.printStackTrace();
-            return false;
+  protected boolean update(String sql, List<Object> params) {
+    try (Connection conn = getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      if (params != null) {
+        for (int i = 0; i < params.size(); i++) {
+          ps.setObject(i + 1, params.get(i));
         }
-    }
+      }
 
-    protected boolean executeUpdate(List<String> sqls, List<List<Object>> paramsList) {
-        try (Connection conn = getConnection()) {
-            return SQLService.MultiUpdate(sqls, paramsList, conn);
-        } catch (SQLException e) {
-            System.err.println("Lỗi MultiUpdate SQL");
-            e.printStackTrace();
-            return false;
-        }
-    }
+      int affectedRows = ps.executeUpdate();
+      LOGGER.info("Execute update thành công. Số dòng bị ảnh hưởng: {}", affectedRows);
+      return affectedRows > 0;
 
-    protected boolean executeExists(String sql, List<Object> params) {
-        try (Connection conn = getConnection()) {
-            return SQLService.Exists(sql, params, conn);
-        } catch (SQLException e) {
-            System.err.println("Lỗi Exists SQL: " + sql);
-            e.printStackTrace();
-            return false;
-        }
+    } catch (SQLException e) {
+      LOGGER.error("Lỗi khi thực thi lệnh UPDATE: {}", sql, e);
+      return false;
     }
+  }
+
+  protected <T> List<T> query(String sql, List<Object> params, ResultSetMapper<T> mapper) {
+    List<T> results = new ArrayList<>();
+    try (Connection conn = getConnection()) {
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        if (params != null) {
+          for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+          }
+        }
+
+        try (ResultSet rs = ps.executeQuery()) {
+          while (rs.next()) {
+            results.add(mapper.map(rs));
+          }
+        } catch (SQLException e) {
+          LOGGER.error("Error while executing query", e);
+        }
+      }
+    } catch (SQLException e) {
+      LOGGER.error("Error while executing query", e);
+    }
+    return results;
+  }
 }
+
+
+

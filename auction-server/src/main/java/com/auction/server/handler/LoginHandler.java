@@ -1,6 +1,7 @@
 package com.auction.server.handler;
 
 import com.auction.server.context.HandlerContext;
+import com.auction.server.dao.UserDao;
 import com.auction.server.utils.RequestHandler;
 import com.auction.shared.link.Request;
 import com.auction.shared.link.Response;
@@ -32,7 +33,7 @@ public class LoginHandler implements RequestHandler {
     String username = credentials.get("username");
     String password = credentials.get("password");
 
-    User user = context.getDaoContext().getUserDao().login(username, password);
+    User user = context.getDaoContext().getDao(UserDao.class).login(username, password);
     if (user != null) {
       context.setUser(user);
       return new Response(request.getRequestId(), Response.OK, "success", user);
