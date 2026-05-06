@@ -1,21 +1,21 @@
-package com.auction.shared.User;
+package com.auction.shared.user;
 
 import com.auction.shared.UserRole;
 
-public class Admin extends User {
+public class Seller extends User {
   private static final long serialVersionUID = 1L;
 
-  public Admin() {
+  public Seller() {
     super();
   }
 
-  public Admin(String u, String p, String e, String a, String ph) {
+  public Seller(String u, String p, String e, String a, String ph) {
     super(u, p, e, a, ph);
   }
 
   @Override
   public UserRole getRole() {
-    UserRole ans = UserRole.ADMIN;
+    UserRole ans = UserRole.SELLER;
     return ans;
   }
 }

@@ -1,5 +1,7 @@
 package com.auction.shared;
 
+import com.auction.shared.item.Item;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -17,7 +19,15 @@ public class Lot implements Serializable {
   private String sellerAvatarUrl;
   private String winnerUsername;
 
+  private Item item;
+
   public Lot() {}
+
+  public void setItem(Item item) {
+    this.item = item;
+  }
+
+  public Item getItem() { return this.item; }
 
   public int getId() {
     return id;

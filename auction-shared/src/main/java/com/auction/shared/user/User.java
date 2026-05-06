@@ -1,4 +1,4 @@
-package com.auction.shared.User;
+package com.auction.shared.user;
 
 import com.auction.shared.Entity;
 import com.auction.shared.UserRole;

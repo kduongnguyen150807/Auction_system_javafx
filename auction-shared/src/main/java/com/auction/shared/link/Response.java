@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.link;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
