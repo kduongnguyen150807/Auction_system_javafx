@@ -1,8 +1,7 @@
 package com.auction.client.ui.loginview;
 
 import com.auction.client.app.NodeLoader;
-import com.auction.client.ui.PageController;
-import javafx.fxml.FXML;
+import com.auction.client.ui.base.PageController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
@@ -10,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,8 +22,12 @@ import java.util.Map;
 public class LoginView extends StackPane {
   private static final Logger LOGGER = LoggerFactory.getLogger(LoginView.class);
 
-  /** Lưu trữ các instance của Node tương ứng với từng loại màn hình */
-  private final Map<LoginViewType, Node> nodeMap = new HashMap<>();
+  private static final String BASE_FXML_PATH = "/fxml/LoginView/LoginView.fxml";
+  private static final String BASE_STYLESHEET_PATH = "/css/LoginView/LoginView.css";
+  /**
+   * Lưu trữ các instance của Node tương ứng với từng loại màn hình
+   */
+  private final Map<LoginViewType, Node> nodeMap = new EnumMap<>(LoginViewType.class);
 
   /**
    * Khởi tạo LoginView, nạp file FXML gốc và thiết lập các thành phần con.
@@ -38,11 +42,11 @@ public class LoginView extends StackPane {
    * Nạp layout gốc từ FXML và thiết lập CSS cho component.
    */
   private void initBaseLayout() {
-    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/LoginView/LoginView.fxml"));
+    FXMLLoader loader = new FXMLLoader(getClass().getResource(BASE_FXML_PATH));
     loader.setRoot(this);
     loader.setController(this);
 
-    String cssPath = getClass().getResource("/css/LoginView/LoginView.css").toExternalForm();
+    String cssPath = getClass().getResource(BASE_STYLESHEET_PATH).toExternalForm();
     getStylesheets().add(cssPath);
 
     try {
@@ -59,9 +63,8 @@ public class LoginView extends StackPane {
    */
   private void initNodes() {
     try {
-      registerSubView(LoginViewType.WELCOME, "/fxml/LoginView/Welcome.fxml");
-
-      registerSubView(LoginViewType.LOGIN, "/fxml/LoginView/Login.fxml");
+      registerSubView(LoginViewType.WELCOME, LoginViewType.WELCOME.getFxmlPath());
+      registerSubView(LoginViewType.LOGIN, LoginViewType.LOGIN.getFxmlPath());
     } catch (IOException e) {
       LOGGER.error("không thể load Node", e);
     }
@@ -70,19 +73,17 @@ public class LoginView extends StackPane {
   /**
    * Nạp một Node từ file FXML, đưa vào Map và thiết lập callback chuyển đổi view.
    *
-   * @param type Loại view cần đăng ký
+   * @param type     Loại view cần đăng ký
    * @param fxmlPath Đường dẫn tới file FXML của view đó
    * @throws IOException Nếu không thể nạp file FXML
    */
   private void registerSubView(LoginViewType type, String fxmlPath) throws IOException {
     NodeLoader loader = new NodeLoader(fxmlPath);
     Node node = loader.getCurrentNode();
-    Object controller = loader.getController();
+    PageController<LoginViewType> controller = loader.getController();
 
-    if (controller instanceof PageController subController) {
-      subController.setSwitchView(this::switchNode);
-    }
 
+    controller.setSwitchView(this::switchNode);
     nodeMap.put(type, node);
     LOGGER.debug("Registered sub-view: {}", type);
   }

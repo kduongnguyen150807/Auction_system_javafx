@@ -1,5 +1,17 @@
 package com.auction.client.ui.loginview;
 
 public enum LoginViewType {
-  LOGIN, REGISTER, WELCOME
+  WELCOME("/fxml/LoginView/Welcome.fxml"),
+  LOGIN("/fxml/LoginView/Login.fxml"),
+  ;
+
+  private final String fxmlPath;
+
+  LoginViewType(String fxmlPath) {
+    this.fxmlPath = fxmlPath;
+  }
+
+  public String getFxmlPath() {
+    return fxmlPath;
+  }
 }
