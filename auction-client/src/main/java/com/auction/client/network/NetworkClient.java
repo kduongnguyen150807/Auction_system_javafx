@@ -1,172 +1,195 @@
 package com.auction.client.network;
 
-import com.auction.client.ClientSession;
-import com.auction.client.ui.Main.KhungController;
-import com.auction.client.ui.Profile.ProfileController;
-import com.auction.client.util.NotificationCenter;
-import com.auction.shared.Item.Item;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import com.auction.shared.User.User;
-import java.io.*;
-import java.net.Socket;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import com.auction.shared.link.Request;
+import com.auction.shared.link.Response;
 import javafx.application.Platform;
+import javafx.scene.control.TextInputDialog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.Optional;
+import java.util.concurrent.*;
+
+/**
+ * Lớp điều khiển kết nối mạng phía Client (Singleton).
+ * <p>
+ * Chịu trách nhiệm thiết lập kết nối Socket tới Server, gửi các đối tượng {@link Request}
+ * và nhận phản hồi {@link Response} một cách bất đồng bộ.
+ * </p>
+ *
+ */
 public class NetworkClient {
-  private static NetworkClient instance;
+  private static final Logger LOGGER = LoggerFactory.getLogger(NetworkClient.class);
+  private static final long DEFAULT_REQUEST_TIMEOUT_SECONDS = 30L;
+  private static volatile NetworkClient instance;
+
+
   private Socket socket;
   private ObjectOutputStream out;
   private ObjectInputStream in;
-  private final ConcurrentHashMap<String, LinkedBlockingQueue<Response>> pendingMap =
-          new ConcurrentHashMap<>();
+  /**
+   * Bản đồ lưu trữ các yêu cầu đang chờ phản hồi từ Server
+   */
+  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap = new ConcurrentHashMap<>();
 
-  private NetworkClient() {
+  private NetworkClient() {}
+
+  /**
+   * Kiểm tra trạng thái kết nối
+   */
+  public boolean isConnected() {
+    return socket != null && !socket.isClosed() && socket.isConnected();
+  }
+
+  public boolean connect() {
+    if (isConnected()) return true;
+
+    String serverIp = promptForServerIp();
+    if (serverIp == null || serverIp.isBlank()) return false;
+
     try {
-      String ans1 = "127.0.0.1";
-      if (Platform.isFxApplicationThread()) {
-        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
-        ans.setTitle("IP Setup");
-        ans.setHeaderText("Nhập IP Server đi mày:");
-        ans1 = ans.showAndWait().orElse("127.0.0.1");
-      } else {
-        java.util.concurrent.FutureTask<String> res = new java.util.concurrent.FutureTask<>(() -> {
-          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
-          ans.setTitle("IP Setup");
-          ans.setHeaderText("Nhập IP Server đi mày:");
-          return ans.showAndWait().orElse("127.0.0.1");
-        });
-        Platform.runLater(res);
-        ans1 = res.get();
-      }
-
-      System.out.println("Đang thử kết nối tới: " + ans1 + ":8080...");
-      this.socket = new Socket(ans1, 8080);
+      LOGGER.info("Connecting to {}:8080 ...", serverIp);
+      this.socket = new Socket(serverIp, 8080);
       this.out = new ObjectOutputStream(this.socket.getOutputStream());
       this.out.flush();
       this.in = new ObjectInputStream(this.socket.getInputStream());
-      System.out.println("Kết nối Socket THÀNH CÔNG!");
+      LOGGER.info("Socket connection established.");
+
       startListener();
+      return true;
     } catch (Exception e) {
-      System.err.println("LỖI KẾT NỐI BAN ĐẦU:");
-      e.printStackTrace();
+      LOGGER.error("Connection to {}:8080 failed", serverIp, e);
+      return false;
     }
   }
 
-  public static synchronized NetworkClient getInstance() {
-    if (instance == null) instance = new NetworkClient();
+  private String promptForServerIp() {
+    // Nếu không phải UI Thread, chúng ta phải dùng Future để lấy kết quả từ Platform.runLater
+    if (!Platform.isFxApplicationThread()) {
+      CompletableFuture<String> resultFuture = new CompletableFuture<>();
+      Platform.runLater(() -> resultFuture.complete(showIpDialog()));
+      try {
+        return resultFuture.get(1, TimeUnit.MINUTES);
+      } catch (Exception e) {
+        return null;
+      }
+    }
+    return showIpDialog();
+  }
+
+  private String showIpDialog() {
+    TextInputDialog dialog = new TextInputDialog("127.0.0.1");
+    dialog.setTitle("Server IP");
+    dialog.setHeaderText("Enter Server IP address:");
+    Optional<String> result = dialog.showAndWait();
+    return result.orElse(null);
+  }
+
+  /**
+   * Lấy instance duy nhất của NetworkClient (Double-checked locking).
+   *
+   * @return Đối tượng NetworkClient.
+   */
+  public static NetworkClient getInstance() {
+    if (instance == null) synchronized (NetworkClient.class) {
+      if (instance == null) instance = new NetworkClient();
+    }
     return instance;
   }
 
+  /**
+   * Bắt đầu luồng lắng nghe dữ liệu từ Server liên tục.
+   */
   private void startListener() {
-    Thread res =
-            new Thread(
-                    () -> {
-                      try {
-                        while (true) {
-                          Object ans = in.readObject();
-                          System.out.println("Client nhận được object: " + ans.getClass().getSimpleName());
-                          if (ans instanceof Response) {
-                            handleIncoming((Response) ans);
-                          }
-                        }
-                      } catch (Exception e) {
-                        System.err.println("Mất kết nối với Server (Listener dừng):");
-                        e.printStackTrace();
-                      }
-                    });
-    res.setDaemon(true);
-    res.start();
+    Thread t = new Thread(() -> {
+      try {
+        while (true) {
+          Object obj = in.readObject();
+          if (obj instanceof Response response) handleIncoming(response);
+        }
+      } catch (Exception e) {
+        LOGGER.warn("Server connection lost", e);
+      }
+    }, "NetworkClient-Listener");
+    t.setDaemon(true);
+    t.start();
   }
 
-  private void handleIncoming(Response res) {
-    System.out.println("Đang xử lý Response. ID: " + res.getRequestId() + " | Status: " + res.getStatus());
-
-    if ("BALANCE_UPDATE".equals(res.getStatus())) {
-      User res1 = (User) res.getPayload();
-      Platform.runLater(() -> {
-        if (ProfileController.getInstance() != null) ProfileController.getInstance().updateBalanceDirectly(res1);
-        else ClientSession.setCurrentUser(res1);
-      });
-      return;
-    }
-
-    if ("OUTBID_NOTIFY".equals(res.getStatus())) {
-      Object payload = res.getPayload();
-      String res2 = payload != null ? payload.toString() : "N/A";
-      NotificationCenter.addNotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res2 + " bị đè giá rồi!");
-      return;
-    }
-
-    if ("NEW_BID_UPDATE".equals(res.getStatus())
-        || ("priceupdate".equals(res.getMessage()) && res.getPayload() instanceof Item)) {
-      Object res3 = res.getPayload();
-      if (res3 instanceof Item i) {
-        KhungController.updateRealtimeUi(i);
-      }
-      return;
-    }
-
-    String res5 = res.getRequestId();
-    if (res5 != null) {
-      LinkedBlockingQueue<Response> res6 = pendingMap.get(res5);
-      if (res6 != null) {
-        res6.offer(res);
-        System.out.println("Đã đẩy Response vào queue cho RequestID: " + res5);
-      } else {
-        System.err.println("CẢNH BÁO: Nhận được Response nhưng không tìm thấy queue nào đợi ID: " + res5);
-      }
-    }
+  /**
+   * Khớp phản hồi nhận được với yêu cầu đang chờ trong Map.
+   */
+  private void handleIncoming(Response response) {
+    String requestId = response.getRequestId();
+    if (requestId == null) return;
+    CompletableFuture<Response> future = pendingMap.get(requestId);
+    LOGGER.info("Received request {} from {}", requestId, response.getMessage());
+    if (future != null) future.complete(response);
+    else LOGGER.warn("Received response for unknown request ID: {}", requestId);
   }
 
-  public Response sendRequestAndWait(Request req) {
-    Response ans = null;
-    System.out.println("Gửi Request ID: " + req.getRequestId());
+  /**
+   * Gửi yêu cầu bất đồng bộ tới Server.
+   *
+   * @param request Đối tượng yêu cầu.
+   * @return Một {@link CompletableFuture} chứa phản hồi trong tương lai.
+   */
+  public CompletableFuture<Response> sendRequestAsync(Request request) {
+    String requestId = request.getRequestId();
+    CompletableFuture<Response> future = new CompletableFuture<>();
+    if (out == null) {
+      future.completeExceptionally(new IllegalStateException(
+        "Not connected to server — check IP address and server status."));
+      return future;
+    }
+    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestId, future);
+    if (existing != null) {
+      future.completeExceptionally(new IllegalStateException("Duplicate request id: " + requestId));
+      return future;
+    }
     try {
-      LinkedBlockingQueue<Response> res = new LinkedBlockingQueue<>();
-      pendingMap.put(req.getRequestId(), res);
       synchronized (out) {
-        out.writeObject(req);
+        out.writeObject(request);
         out.flush();
       }
-
-      ans = res.poll(30, TimeUnit.SECONDS);
-
-      if (ans == null) {
-        System.err.println("LỖI: Server không phản hồi (Timeout 30s) ID: " + req.getRequestId());
-      } else {
-        System.out.println("Đã nhận phản hồi thành công!");
-      }
-
-      pendingMap.remove(req.getRequestId());
-    } catch (Exception e) {
-      System.err.println("LỖI SOCKET KHI GỬI/NHẬN:");
-      e.printStackTrace();
+    } catch (IOException e) {
+      pendingMap.remove(requestId);
+      future.completeExceptionally(e);
     }
-    return ans;
+    return future.orTimeout(DEFAULT_REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+      .whenComplete((response, error) -> {
+        pendingMap.remove(requestId);
+        if (error != null) {
+          if (error instanceof java.util.concurrent.TimeoutException)
+            LOGGER.warn("Server timeout ({}s) for request {} ({})", DEFAULT_REQUEST_TIMEOUT_SECONDS, requestId, request.getAction());
+          else
+            LOGGER.warn("Request {} ({}) failed: {}", requestId, request.getAction(), error.getMessage());
+        }
+      });
   }
 
-  public static String uploadFile(String urlString, byte[] fileBytes) throws Exception {
-    String res = "boundary" + System.currentTimeMillis();
-    java.net.URL ans1 = java.net.URI.create(urlString).toURL();
-    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) ans1.openConnection();
-    conn.setDoOutput(true);
-    conn.setRequestMethod("POST");
-    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + res);
-    try (OutputStream out = conn.getOutputStream()) {
-      out.write(("--" + res + "\r\n").getBytes());
-      out.write(("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n").getBytes());
-      out.write(fileBytes);
-      out.write(("\r\n--" + res + "\r\n").getBytes());
-      out.write(("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n").getBytes());
-      out.write(("upload_def\r\n").getBytes());
-      out.write(("--" + res + "--\r\n").getBytes());
-    }
-    try (java.util.Scanner s = new java.util.Scanner(conn.getInputStream())) {
-      String ans = s.useDelimiter("\\A").next();
-      return ans.split("\"secure_url\":\"")[1].split("\"")[0];
+  /**
+   * Gửi yêu cầu và đợi phản hồi (Chặn luồng hiện tại).
+   *
+   * @param request Đối tượng yêu cầu.
+   * @return Phản hồi từ Server hoặc null nếu lỗi/timeout.
+   */
+  public Response sendRequestAndWait(Request request) {
+    try {
+      LOGGER.info("Sending request: {} with id {}", request.getAction(),  request.getRequestId());
+      return sendRequestAsync(request).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOGGER.warn("Interrupted while waiting for response to {}", request.getAction());
+      return null;
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof TimeoutException) return null;
+      LOGGER.error("Socket send/receive error", cause);
+      return null;
     }
   }
 }
