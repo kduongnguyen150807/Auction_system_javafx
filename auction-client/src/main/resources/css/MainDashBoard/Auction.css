@@ -1,0 +1,21 @@
+.TrendingScrollPane {
+    -fx-background-color: transparent;
+    -fx-background-radius: 20;
+}
+
+.TrendingScrollPane > .viewport {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-background-radius: 20;
+}
+
+.TrendingBind {
+    -fx-background-color: -color-bg;
+    -fx-background-radius: 20;
+    -fx-padding: 16 20 20 20;
+}
+
+.TopLabel {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 800;
+}

@@ -1,0 +1,40 @@
+/* Base */
+.nav-button {
+    -fx-padding: 12 15;
+        -fx-background-radius: 8;
+        -fx-cursor: hand;
+        -fx-alignment: center-left;
+        -fx-spacing: 10;
+        -fx-min-height: 44;
+        -fx-border-color: transparent;
+        -fx-border-width: 1;
+        -fx-border-radius: 8;
+        -fx-transition-duration: 0.3s;
+
+        -fx-text-fill: rgba(255, 255, 255, 0.7);
+            -fx-font-size: 15px;
+            -fx-font-weight: 600;
+            -fx-alignment: center-left;
+}
+
+/* Hover */
+.nav-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+/* Active custom */
+.nav-button-active {
+    -fx-background-color: linear-gradient(to right, rgba(255, 170, 0, 0.6), rgba(255, 170, 0, 0.1));
+    -fx-border-color: rgba(255, 255, 255, 0.4);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.6), 15, 0, 0, 0);
+}
+
+/* Optional: inactive (nếu muốn override rõ) */
+.nav-button-inactive {
+    -fx-background-color: transparent;
+    -fx-text-fill: #94a3b8;
+}

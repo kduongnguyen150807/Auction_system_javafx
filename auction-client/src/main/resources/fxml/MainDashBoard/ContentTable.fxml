@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.image.ImageView?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.maindashboard.ContentTableController"
+      prefWidth="256.0" minWidth="256.0" styleClass="sidebar" spacing="30.0">
+    <children>
+        <VBox styleClass="logo-container">
+            <children>
+                <Label text="Bidding88" styleClass="logo-text"/>
+                <Label text="Auction Online" styleClass="logo-subtext"/>
+            </children>
+        </VBox>
+        <VBox fx:id="ContentButtonTable" spacing="2"></VBox>
+        <VBox styleClass="profile-card-bo" spacing="15.0" alignment="CENTER">
+            <children>
+                <HBox spacing="12.0" alignment="CENTER_LEFT">
+                    <children>
+                        <StackPane prefWidth="48.0" prefHeight="48.0" minWidth="48.0" minHeight="48.0"
+                                   alignment="CENTER">
+                            <children>
+                                <Circle radius="24.0" styleClass="avatar-circle"/>
+                                <ImageView fx:id="sidebaravatar" fitWidth="48.0" fitHeight="48.0"
+                                           preserveRatio="false"/>
+                            </children>
+                        </StackPane>
+                        <VBox>
+                            <children>
+                                <Label fx:id="UserName" text="username" styleClass="user-name"/>
+                                <Label fx:id="Rank" text="Bidder" styleClass="user-rank"/>
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+                <VBox spacing="8.0" maxWidth="Infinity">
+                    <children>
+                        <Button fx:id="primaryactionbutton" onAction="#handlePrimaryAction" text="Place a Bid"
+                                styleClass="btn-primary" maxWidth="Infinity"/>
+                        <Button text="Sign Out" styleClass="btn-signout" maxWidth="Infinity"/>
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+    </children>
+    <padding>
+        <Insets top="30.0" bottom="30.0" left="20.0" right="20.0"/>
+    </padding>
+</VBox>

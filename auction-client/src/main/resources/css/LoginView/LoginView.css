@@ -1,7 +1,7 @@
 /* Phủ hình nền lên toàn bộ App */
 .root {
     -fx-font-family: "Consolas";
-    -fx-background-image: url("../images/bg.jpg");
+    -fx-background-image: url("../../images/bg.jpg");
     -fx-background-size: cover;
     -fx-background-position: center center;
 }
