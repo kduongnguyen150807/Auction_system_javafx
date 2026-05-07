@@ -109,7 +109,7 @@ public class LoginController extends PageController<LoginViewType> {
     } else if ("account_banned".equals(response.getMessage())) {
       this.messageLabel.setText("Your account has been suspended.");
     } else {
-      this.messageLabel.setText("Incorrect username or password.");
+      this.messageLabel.setText(response.getMessage());
     }
   }
 }
