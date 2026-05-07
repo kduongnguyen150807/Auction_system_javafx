@@ -5,6 +5,7 @@ import com.auction.shared.link.ErrorResponse;
 import com.auction.shared.link.Request;
 import com.auction.shared.link.RequestType;
 import com.auction.shared.link.Response;
+import com.auction.shared.user.UserStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,10 +62,16 @@ public class RequestDispatcher {
    * @return {@link Response} kết quả xử lý hoặc {@link ErrorResponse} nếu có lỗi
    */
   public Response dispatch(Request request, HandlerContext handlerContext) {
-    boolean error = RequestValidator.validate(request, globalRules);
-    if (!error) {
+    boolean requestError = RequestValidator.validate(request, RequestRules);
+    if (!requestError) {
       LOGGER.warn("Request không vượt qua bước validate");
       return new ErrorResponse("request không hợp lệ");
+    }
+
+    boolean clientError = RequestValidator.validate(request, RequestRules);
+    if (!clientError) {
+      LOGGER.warn("Client không vượt qua bước validate");
+      return new ErrorResponse("client không đủ tư cách");
     }
 
     RequestType command = request.getAction();
@@ -86,8 +93,12 @@ public class RequestDispatcher {
   /**
    * Danh sách các rule validate áp dụng cho mọi request.
    */
-  private final List<RequestValidator.ValidationRule> globalRules = List.of(
+  private final List<RequestValidator.ValidationRule> RequestRules = List.of(
     new RequestValidator.ValidationRule(req -> req == null, "Request rỗng"),
     new RequestValidator.ValidationRule(req -> req.getAction() == null, "Thiếu tên lệnh")
+  );
+
+  private final List<ClientValidator.ValidationRule> ClientRulse = List.of(
+    new ClientValidator.ValidationRule(user -> user.getStatus().equals(UserStatus.LOCKED), "User bị khoá")
   );
 }
