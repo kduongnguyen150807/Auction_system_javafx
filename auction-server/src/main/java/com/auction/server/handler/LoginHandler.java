@@ -6,6 +6,7 @@ import com.auction.server.utils.RequestHandler;
 import com.auction.shared.link.Request;
 import com.auction.shared.link.Response;
 import com.auction.shared.user.User;
+import com.auction.shared.user.UserStatus;
 
 import java.util.Map;
 
@@ -34,11 +35,12 @@ public class LoginHandler implements RequestHandler {
     String password = credentials.get("password");
 
     User user = context.getDaoContext().getDao(UserDao.class).login(username, password);
-    if (user != null) {
-      context.setUser(user);
-      return new Response(request.getRequestId(), Response.OK, "success", user);
-    } else {
-      return new Response(request.getRequestId(), Response.ERROR, "fail", null);
+    if (user == null) {
+      return new Response(request.getRequestId(), Response.ERROR, "your account might be ur girlfriend, who doesnt exists", null);
+    } else if (user.getStatus().equals(UserStatus.LOCKED)) {
+      return new Response(request.getRequestId(), Response.ERROR, "your acount is black pal", null);
     }
+
+    return new Response(request.getRequestId(), Response.OK, "success", user);
   }
 }

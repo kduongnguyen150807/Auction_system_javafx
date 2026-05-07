@@ -3,6 +3,7 @@ package com.auction.server.controller;
 import com.auction.server.context.DaoContext;
 import com.auction.server.handler.GetOnGoingBidHandler;
 import com.auction.server.handler.LoginHandler;
+import com.auction.server.handler.RegisterLotHandler;
 import com.auction.server.utils.RequestDispatcher;
 import com.auction.shared.link.Request;
 import com.auction.shared.link.RequestType;
@@ -69,6 +70,9 @@ public class SocketServer {
 
   private void buildRegistry() {
     requestDispatcher.register(RequestType.LOGIN, new LoginHandler());
+
+    requestDispatcher.register(RequestType.REGISTER_LOT, new RegisterLotHandler());
+
     requestDispatcher.register(RequestType.GET_ONGOING_BIDS, new GetOnGoingBidHandler());
   }
 }
