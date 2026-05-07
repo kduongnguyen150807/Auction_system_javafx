@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.user;
 
 public enum UserRole {
   BIDDER,

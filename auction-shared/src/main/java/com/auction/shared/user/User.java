@@ -1,7 +1,6 @@
 package com.auction.shared.user;
 
 import com.auction.shared.Entity;
-import com.auction.shared.UserRole;
 
 public abstract class User extends Entity {
   protected String username;
@@ -21,6 +20,9 @@ public abstract class User extends Entity {
   protected double avgRating;
   protected int totalRatings;
 
+  protected UserRole role;
+  protected UserStatus status;
+
   public User() {}
 
   public User(String u, String p, String e, String a, String ph) {
@@ -37,6 +39,14 @@ public abstract class User extends Entity {
     this.itemsSold = 0;
     this.active = true;
     this.locked = false;
+  }
+
+  public void setStatus(UserStatus status) {
+    this.status = status;
+  }
+
+  public UserStatus getStatus() {
+    return status;
   }
 
   public abstract UserRole getRole();

@@ -1,7 +1,5 @@
 package com.auction.shared.user;
 
-import com.auction.shared.UserRole;
-
 public class Seller extends User {
   private static final long serialVersionUID = 1L;
 

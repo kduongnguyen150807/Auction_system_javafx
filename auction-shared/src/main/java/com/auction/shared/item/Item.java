@@ -19,7 +19,9 @@ public abstract class Item extends Entity {
   protected String imageUrl;
   protected String sellerUsername;
   protected String sellerAvatarUrl;
-  protected String category;
+  protected ItemType category;
+
+
 
   public Item() {}
 
@@ -35,11 +37,11 @@ public abstract class Item extends Entity {
 
   public abstract double calculateTax();
 
-  public String getCategory() {
+  public ItemType getCategory() {
     return this.category;
   }
 
-  public void setCategory(String res) {
+  public void setCategory(ItemType res) {
     this.category = res;
   }
 
