@@ -70,6 +70,7 @@ public class DatabaseMigration {
       "UPDATE users SET fullname = username WHERE fullname IS NULL OR TRIM(fullname) = ''");
     addColumnIfMissing(conn, "users", "avgrating", "DOUBLE DEFAULT 0");
     addColumnIfMissing(conn, "users", "totalratings", "INT DEFAULT 0");
+    addColumnIfMissing(conn, "users", "status", "VARCHAR(50) DEFAULT 'ACTIVE'");
   }
 
   private static void ensureUserIndexes(Connection conn) {
@@ -80,6 +81,12 @@ public class DatabaseMigration {
   private static void ensureItemColumns(Connection conn) {
     addColumnIfMissing(conn, "items", "image_url", "VARCHAR(2048) NULL");
     addColumnIfMissing(conn, "items", "maxprice", "DOUBLE NULL");
+    try (Statement st = conn.createStatement()) {
+      st.execute("ALTER TABLE items MODIFY COLUMN winnerid INT NULL");
+      LOGGER.info("Updated items.winnerid to allow NULL values.");
+    } catch (SQLException e) {
+      LOGGER.warn("Could not modify winnerid column: {}", e.getMessage());
+    }
   }
 
   private static void ensureRatingsTable(Connection conn) {
