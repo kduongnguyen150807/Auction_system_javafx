@@ -2,6 +2,7 @@ package com.auction.client.ui.maindashboard;
 
 import com.auction.client.ClientSession;
 import com.auction.client.network.NetworkClient;
+import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.component.ItemCard;
 import com.auction.shared.Lot;
 import com.auction.shared.link.Request;
@@ -18,22 +19,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class AuctionController {
+public class AuctionController implements CanRefresh {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuctionController.class);
 
   private final List<Lot> cachedLot = new ArrayList<>();
+
   @FXML
   private HBox trendingBind;
 
-
   @FXML
   public void initialize() {
-    refreshItem();
+    refreshData();
     renderItemCards();
 
   }
 
-  private void refreshItem() {
+  @Override
+  public void refreshData() {
     Thread fetchThread = new Thread(() -> {
       try {
         Request request = new Request(RequestType.GET_ONGOING_BIDS, null);

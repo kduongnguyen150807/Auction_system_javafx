@@ -34,6 +34,9 @@ public class ContentTableController extends PageController<HomeViewType> {
   @FXML
   private VBox ContentButtonTable;
 
+  @FXML
+  private Button registerLotButton;
+
   /** Map lưu trữ các button theo từng loại type */
   private final Map<HomeViewType, ContentButton<HomeViewType>> contentButtonMap = new EnumMap<>(HomeViewType.class);
 
@@ -51,6 +54,10 @@ public class ContentTableController extends PageController<HomeViewType> {
   private void initNode() {
     registerButton("Auction", HomeViewType.AUCTION);
     registerButton("Profile",  HomeViewType.PROFILE);
+
+    registerLotButton.setOnAction(event -> {
+      switchView.accept(HomeViewType.REGISTER_LOT);
+    });
   }
 
   /**
@@ -92,5 +99,7 @@ public class ContentTableController extends PageController<HomeViewType> {
   }
 
   @FXML
-  private void handlePrimaryAction() {}
+  private void handlePrimaryAction() {
+
+  }
 }

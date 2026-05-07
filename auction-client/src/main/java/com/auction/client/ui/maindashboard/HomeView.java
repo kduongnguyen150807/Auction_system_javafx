@@ -1,7 +1,9 @@
 package com.auction.client.ui.maindashboard;
 
 import com.auction.client.app.NodeLoader;
+import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.PageController;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * View chính của màn hình Home (Dashboard).
@@ -39,11 +42,24 @@ public class HomeView extends HBox {
   private static final String GLOBAL_COLOR_STYLESHEET_PATH = "/css/GlobalColor.css";
   private static final String CONTENT_TABLE_FXML_PATH = "/fxml/MainDashBoard/ContentTable.fxml";
 
-  /** Lưu trữ các node tương ứng với từng type */
+  /**
+   * Lưu trữ các node tương ứng với từng type
+   */
   private final Map<HomeViewType, Node> nodeMap = new EnumMap<>(HomeViewType.class);
 
-  /** Panel hiển thị nội dung chính */
-  private StackPane contentPanel = new StackPane();
+  /**
+   * Lưu trữ controller tương ứng với từng type
+   */
+  private final Map<HomeViewType, Object> controllerMap = new EnumMap<>(HomeViewType.class);
+
+  /**
+   * Panel hiển thị nội dung chính
+   */
+  @FXML
+  private StackPane contentPanel;
+
+  @FXML
+  private StackPane contentButtonTable;
 
   /**
    * Constructor khởi tạo HomeView.
@@ -74,14 +90,12 @@ public class HomeView extends HBox {
       LOGGER.info("HomeView base layout loaded successfully.");
 
       NodeLoader contentTableLoader = new NodeLoader(CONTENT_TABLE_FXML_PATH);
-      getChildren().add(contentTableLoader.getCurrentNode());
+      contentButtonTable.getChildren().add(contentTableLoader.getCurrentNode());
       if (contentTableLoader.getController() instanceof PageController<?> pc) {
         @SuppressWarnings("unchecked")
         PageController<HomeViewType> subController = (PageController<HomeViewType>) pc;
         subController.setSwitchView(this::switchNode);
       }
-
-      getChildren().add(contentPanel);
     } catch (IOException e) {
       LOGGER.error("Failed to load LoginView.fxml", e);
       throw new RuntimeException("Critical UI load failure", e);
@@ -92,12 +106,7 @@ public class HomeView extends HBox {
    * Khởi tạo các sub-view tương ứng với từng enum.
    */
   private void initNodes() {
-    try {
-      registerSubView(HomeViewType.AUCTION, HomeViewType.AUCTION.getFxmlPath());
-      registerSubView(HomeViewType.PROFILE, HomeViewType.PROFILE.getFxmlPath());
-    } catch (IOException e) {
-      LOGGER.error("không thể load Node", e);
-    }
+    LOGGER.info("this method doesnt actually does anything right now");
   }
 
   /**
@@ -110,21 +119,36 @@ public class HomeView extends HBox {
   private void registerSubView(HomeViewType type, String fxmlPath) throws IOException {
     NodeLoader loader = new NodeLoader(fxmlPath);
     Node node = loader.getCurrentNode();
+    Object controller = loader.getController();
 
     if (loader.getController() instanceof PageController<?> pc) {
       PageController<HomeViewType> subController = (PageController<HomeViewType>) pc;
       subController.setSwitchView(this::switchNode);
     }
 
+    controllerMap.put(type, controller);
     nodeMap.put(type, node);
     LOGGER.debug("Registered sub-view: {}", type);
   }
 
   public void switchNode(HomeViewType type) {
     Node node = nodeMap.get(type);
+
+    /* Lazy loading */
     if (node == null) {
-      LOGGER.warn("Node not found: {}", type);
-      return;
+      try {
+        registerSubView(type, type.getFxmlPath());
+        node = nodeMap.get(type);
+      } catch (Exception e) {
+        LOGGER.warn("Node not found: {}", type);
+        return;
+      }
+    }
+
+    /* refresh data for {@code CanRefresh} controller type */
+    Object controller = controllerMap.get(type);
+    if (controller instanceof CanRefresh cr) {
+      CompletableFuture.runAsync(cr::refreshData);
     }
     contentPanel.getChildren().setAll(node);
   }
