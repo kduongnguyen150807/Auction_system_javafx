@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: transparent;" stylesheets="@../../css/MainDashBoard/RegisterLot.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.maindashboard.registerlot.RegisterLotController">
+    <children>
+        <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <padding>
+                <Insets top="30.0" bottom="30.0" left="40.0" right="40.0" />
+            </padding>
+            <children>
+                <VBox alignment="CENTER" maxWidth="940.0" spacing="15.0" styleClass="glass-panel-item-blue">
+                    <children>
+                        <HBox alignment="CENTER_LEFT">
+                            <children>
+                                <VBox>
+                                    <children>
+                                        <Label styleClass="form-sub-title-mac" text="BIDDING88" />
+                                        <Label styleClass="form-title-mac" text="ADD NEW ITEM" />
+                                    </children>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS" />
+                            </children>
+                        </HBox>
+
+                        <HBox alignment="TOP_CENTER" spacing="35.0" VBox.vgrow="ALWAYS">
+                            <children>
+                                <VBox alignment="TOP_CENTER" prefWidth="300.0" spacing="15.0">
+                                    <children>
+                                        <StackPane prefHeight="200.0" prefWidth="300.0" styleClass="image-frame-mac">
+                                            <children>
+                                                <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="280.0" pickOnBounds="true" preserveRatio="true" />
+                                            </children>
+                                        </StackPane>
+                                        <Button maxWidth="Infinity" onAction="#handleChoosePicture" styleClass="btn-secondary-mac" text="CHOOSE PICTURE" />
+                                        <Label fx:id="lblStatus" alignment="CENTER" maxWidth="Infinity" styleClass="status-label" wrapText="true" />
+                                    </children>
+                                </VBox>
+
+                                <VBox prefWidth="480.0" spacing="10.0">
+                                    <children>
+                                        <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="input-mac-blue" />
+                                        <HBox spacing="10.0">
+                                            <children>
+                                                <TextField fx:id="txtPrice" promptText="START PRICE ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="txtMaxPrice" promptText="BUY NOW ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
+                                            </children>
+                                        </HBox>
+                                        <TextArea fx:id="txtQuantity" prefRowCount="2" promptText="DESCRIPTION" styleClass="input-mac-blue" wrapText="true" />
+
+                                        <Label styleClass="label-sm" text="AUCTION START" />
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <DatePicker fx:id="startDatePicker" promptText="START DATE" styleClass="date-mac" HBox.hgrow="ALWAYS"/>
+                                                <ComboBox fx:id="startHourCombo" prefWidth="65.0" promptText="HH" styleClass="combo-mac" />
+                                                <ComboBox fx:id="startMinuteCombo" prefWidth="65.0" promptText="MM" styleClass="combo-mac" />
+                                                <ComboBox fx:id="startSecondCombo" prefWidth="65.0" promptText="SS" styleClass="combo-mac" />
+                                            </children>
+                                        </HBox>
+
+                                        <Label styleClass="label-sm" text="AUCTION END" />
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <DatePicker fx:id="endDatePicker" promptText="END DATE" styleClass="date-mac" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="endHourCombo" prefWidth="65.0" promptText="HH" styleClass="combo-mac" />
+                                                <ComboBox fx:id="endMinuteCombo" prefWidth="65.0" promptText="MM" styleClass="combo-mac" />
+                                                <ComboBox fx:id="endSecondCombo" prefWidth="65.0" promptText="SS" styleClass="combo-mac" />
+                                            </children>
+                                        </HBox>
+
+                                        <ComboBox fx:id="classifyComboBox" maxWidth="Infinity" promptText="SELECT CATEGORY" styleClass="combo-mac" />
+
+                                        <HBox spacing="15.0">
+                                            <children>
+                                                <Button maxWidth="Infinity" onAction="#handleCancel" styleClass="btn-cancel-mac" text="CANCEL" HBox.hgrow="ALWAYS" />
+                                                <Button maxWidth="Infinity" onAction="#handleSubmit" styleClass="btn-primary-mac" text="CONFIRM UPLOAD" HBox.hgrow="ALWAYS" />
+                                            </children>
+                                            <padding><Insets top="5.0" /></padding>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                    <padding>
+                        <Insets bottom="25.0" left="30.0" right="30.0" top="25.0" />
+                    </padding>
+                </VBox>
+            </children>
+        </StackPane>
+    </children>
+</AnchorPane>

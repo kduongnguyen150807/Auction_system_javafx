@@ -44,7 +44,7 @@
                 </HBox>
                 <VBox spacing="8.0" maxWidth="Infinity">
                     <children>
-                        <Button fx:id="primaryactionbutton" onAction="#handlePrimaryAction" text="Place a Bid"
+                        <Button fx:id="registerLotButton" onAction="#handlePrimaryAction" text="Place a Bid"
                                 styleClass="btn-primary" maxWidth="Infinity"/>
                         <Button text="Sign Out" styleClass="btn-signout" maxWidth="Infinity"/>
                     </children>

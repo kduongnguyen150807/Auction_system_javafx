@@ -1,0 +1,106 @@
+/* TỔNG THỂ TRANG PROFILE */
+.profile-root {
+    -fx-font-family: "Consolas";
+    -fx-background-color: transparent;
+}
+
+/* QUAN TRỌNG: Ép viewport của ScrollPane về trong suốt để hiện rừng tuyết */
+.scroll-pane {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Panel kính mờ MacBook */
+.glass-panel {
+    -fx-background-color: rgba(30, 30, 30, 0.75);
+    -fx-background-radius: 30;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 30;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 20, 0, 0, 10);
+}
+
+/* NÚT BẤM BO TRÒN (Radius 25) */
+.btn-mac-rounded {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-padding: 8 18;
+    -fx-cursor: hand;
+}
+
+.btn-primary-gold {
+    -fx-background-color: linear-gradient(to right, #ffaa00, #ff8c00);
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 25;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+.btn-logout-red {
+    -fx-background-color: rgba(255, 68, 68, 0.15);
+    -fx-text-fill: #ff4d4d;
+    -fx-border-color: rgba(255, 68, 68, 0.4);
+    -fx-border-radius: 25;
+    -fx-background-radius: 25;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+/* Các khối nội dung kính mờ */
+.metric-card-glass {
+    -fx-background-color: rgba(0,0,0,0.4);
+    -fx-background-radius: 15;
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-border-radius: 15;
+    -fx-padding: 20;
+}
+
+.field-box-mac {
+    -fx-text-fill: white;
+    -fx-padding: 12;
+    -fx-background-color: rgba(0,0,0,0.2);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,255,255,0.05);
+}
+
+.clean-input-mac {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-background-radius: 12;
+    -fx-padding: 10;
+}
+
+.wallet-bar-glass {
+    -fx-background-color: rgba(255, 204, 0, 0.1);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 204, 0, 0.3);
+    -fx-padding: 20;
+}
+
+.label-sm-gray { -fx-text-fill: #aaaaaa; -fx-font-weight: bold; -fx-font-size: 12px; }
+
+/* Số tiền / số lượng trong thẻ metric — khớp FXML cũ (Font size="26" = 26pt, không phải px) nên dùng pt để giữ đúng “to” như lúc mới mở */
+.metric-value-number {
+    -fx-font-size: 26pt;
+    -fx-font-weight: bold;
+}
+.metric-money-spent {
+    -fx-text-fill: #007aff;
+}
+.metric-count {
+    -fx-text-fill: white;
+}
+.metric-money-received {
+    -fx-text-fill: #34c759;
+}
+.badge-verified { -fx-background-color: #34c759; -fx-text-fill: white; -fx-padding: 4 12; -fx-background-radius: 15; -fx-font-weight: bold; }
+.stars-glow { -fx-text-fill: #ffcc00; -fx-effect: dropshadow(three-pass-box, rgba(255, 204, 0, 0.5), 5, 0, 0, 0); }

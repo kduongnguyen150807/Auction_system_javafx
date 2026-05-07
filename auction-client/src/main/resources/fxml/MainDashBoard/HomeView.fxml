@@ -7,5 +7,12 @@
 <?import javafx.scene.layout.*?>
 
 <fx:root  minHeight="768.0" minWidth="1024.0" prefHeight="768.0" prefWidth="1024.0" type="javafx.scene.layout.HBox" xmlns:fx="http://javafx.com/fxml">
+    <children>
+        <StackPane fx:id="contentButtonTable" prefWidth="256.0" minWidth="256.0" >
 
+        </StackPane>
+        <StackPane fx:id="contentPanel" HBox.hgrow="ALWAYS">
+
+        </StackPane>
+    </children>
 </fx:root>
