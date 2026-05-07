@@ -2,6 +2,9 @@ package com.auction.server.dao;
 
 import com.auction.shared.user.User;
 import com.auction.shared.user.UserFactory;
+import com.auction.shared.user.UserStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,7 +22,7 @@ import java.util.List;
  * <p>Class này kế thừa {@link BaseDao} để sử dụng các phương thức query chung.</p>
  */
 public class UserDao extends BaseDao{
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserDao.class);
   /**
    * Thực hiện đăng nhập bằng username và password.
    *
@@ -68,6 +71,15 @@ public class UserDao extends BaseDao{
       user.setItemsBought(resultSet.getInt("itemsbought"));
       user.setMoneyReceived(resultSet.getDouble("moneyreceived"));
       user.setItemsSold(resultSet.getInt("itemssold"));
+      String statusStr = resultSet.getString("status");
+      if (statusStr != null) {
+        try {
+          user.setStatus(UserStatus.valueOf(statusStr.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+          LOGGER.warn("Unknown status '{}' for user {}, defaulting to ACTIVE", statusStr, user.getFullName());
+          user.setStatus(UserStatus.ACTIVE);
+        }
+      }
       return user;
     }catch (SQLException e){
       System.out.println("error setting attribute");
