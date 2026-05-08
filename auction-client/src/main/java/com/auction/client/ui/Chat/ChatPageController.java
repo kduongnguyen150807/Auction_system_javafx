@@ -28,8 +28,7 @@ public class ChatPageController implements ChatLeftListHost {
   @FXML private Button friendsTabBtn, requestsTabBtn;
   @FXML private TextField searchField;
   @FXML private ListView<Object> leftList;
-  @FXML private Button globalChatBtn;
-  @FXML private HBox chatHeader, inputBar;
+  @FXML private HBox inputBar;
   @FXML private Label chatTitle, chatSubtitle;
   @FXML private ScrollPane messagesScroll;
   @FXML private VBox messagesContainer;
@@ -44,7 +43,6 @@ public class ChatPageController implements ChatLeftListHost {
   private ChatSidebarTab currentTab = ChatSidebarTab.FRIENDS;
   private ChatMode chatMode = ChatMode.NONE;
   private int dmPartnerId = -1;
-  private String dmPartnerName = "";
 
   @FXML
   public void initialize() {
@@ -79,7 +77,7 @@ public class ChatPageController implements ChatLeftListHost {
     currentTab = ChatSidebarTab.SEARCH;
     friendsTabBtn.getStyleClass().remove("chat-tab-active");
     requestsTabBtn.getStyleClass().remove("chat-tab-active");
-    ChatAsyncRequests.submit(
+    ChatRequestExecutor.submitAsync(
         new Request(Request.SEARCH_USERS, kw.trim()),
         res -> {
           if (res.getPayload() instanceof List<?> list) {
@@ -106,7 +104,7 @@ public class ChatPageController implements ChatLeftListHost {
     inputBar.setVisible(true);
     inputBar.setManaged(true);
     messagesContainer.getChildren().clear();
-    ChatAsyncRequests.submit(
+    ChatRequestExecutor.submitAsync(
         new Request(Request.GET_GLOBAL_CHAT_HISTORY, null),
         res -> {
           if (res.getPayload() instanceof List<?> list) {
@@ -142,7 +140,7 @@ public class ChatPageController implements ChatLeftListHost {
     } else {
       return;
     }
-    ChatAsyncRequests.submit(new Request(Request.SEND_CHAT, msg), res -> {});
+    ChatRequestExecutor.submitAsync(new Request(Request.SEND_CHAT, msg), res -> {});
   }
 
   private void handleLeftListClick() {
@@ -163,7 +161,6 @@ public class ChatPageController implements ChatLeftListHost {
   private void openPrivateChat(int partnerId, String partnerName) {
     chatMode = ChatMode.PRIVATE;
     dmPartnerId = partnerId;
-    dmPartnerName = partnerName;
     chatTitle.setText(partnerName);
     chatSubtitle.setText("Private conversation");
     inputBar.setVisible(true);
@@ -172,7 +169,7 @@ public class ChatPageController implements ChatLeftListHost {
     Map<String, Object> data = new HashMap<>();
     data.put("myId", myId());
     data.put("otherId", partnerId);
-    ChatAsyncRequests.submit(
+    ChatRequestExecutor.submitAsync(
         new Request(Request.GET_PRIVATE_CHAT_HISTORY, (Serializable) data),
         res -> {
           if (res.getPayload() instanceof List<?> list) {
@@ -190,7 +187,7 @@ public class ChatPageController implements ChatLeftListHost {
   }
 
   private void loadFriends() {
-    ChatAsyncRequests.submit(
+    ChatRequestExecutor.submitAsync(
         new Request(Request.GET_FRIENDS, myId()),
         res -> {
           if (res.getPayload() instanceof List<?> list) {
@@ -209,7 +206,7 @@ public class ChatPageController implements ChatLeftListHost {
   }
 
   private void loadFriendRequests() {
-    ChatAsyncRequests.submit(
+    ChatRequestExecutor.submitAsync(
         new Request(Request.GET_FRIEND_REQUESTS, myId()),
         res -> {
           if (res.getPayload() instanceof List<?> list) {
@@ -248,12 +245,12 @@ public class ChatPageController implements ChatLeftListHost {
 
   @Override
   public void acceptFriend(int requesterId) {
-    ChatAsyncRequests.submit(new Request(Request.ACCEPT_FRIEND, requesterId), res -> {});
+    ChatRequestExecutor.submitAsync(new Request(Request.ACCEPT_FRIEND, requesterId), res -> {});
   }
 
   @Override
   public void declineFriend(int requesterId) {
-    ChatAsyncRequests.submit(
+    ChatRequestExecutor.submitAsync(
         new Request(Request.DECLINE_FRIEND, requesterId),
         res ->
             Platform.runLater(
@@ -266,7 +263,7 @@ public class ChatPageController implements ChatLeftListHost {
 
   @Override
   public void addFriend(int userId) {
-    ChatAsyncRequests.submit(new Request(Request.ADD_FRIEND, userId), res -> {});
+    ChatRequestExecutor.submitAsync(new Request(Request.ADD_FRIEND, userId), res -> {});
   }
 
   public void onGlobalChat(ChatMessage m) {

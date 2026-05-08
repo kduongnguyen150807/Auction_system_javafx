@@ -6,7 +6,9 @@ import com.auction.client.service.BiddingClientService;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.BidTransaction;
+import com.auction.shared.Item;
 import com.auction.shared.Response;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
@@ -88,12 +90,23 @@ public class BiddingFormController {
       Response res2 = biddingClientService.placeBid(res);
 
       if (res2 != null && Response.OK.equals(res2.getStatus())) {
-        Object res3 = res2.getPayload();
-        if (res3 instanceof BidTransaction) {
-          double ans2 = ((BidTransaction) res3).getBidValue();
-          if (parent != null) {
-            parent.updateCurrentBid(ans2);
-          }
+        if (!"BUY_IT_NOW_SUCCESS".equals(res2.getMessage()) && itemId > 0) {
+          Thread refetchLatest =
+              new Thread(
+                  () -> {
+                    try {
+                      Item fresh = biddingClientService.getItemById(itemId);
+                      Platform.runLater(
+                          () -> {
+                            if (parent != null && fresh != null) {
+                              parent.updatePriceUi(fresh);
+                            }
+                          });
+                    } catch (Exception ignored) {
+                    }
+                  });
+          refetchLatest.setDaemon(true);
+          refetchLatest.start();
         }
         removeForm();
 

@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -75,7 +74,7 @@ public class ItemCardController {
       imageClip.setArcHeight(compact ? 20 : 30);
     }
     if (ImageHolder != null && ImageHolder.getImage() != null) {
-      applyCenterCrop(ImageHolder, ImageHolder.getImage());
+      ItemCardViewportCrop.apply(ImageHolder, ImageHolder.getImage());
     }
   }
 
@@ -125,7 +124,7 @@ public class ItemCardController {
         .addListener(
             (obs, oldv, newv) -> {
               if (newv.doubleValue() == 1.0) {
-                Platform.runLater(() -> applyCenterCrop(ImageHolder, img));
+                Platform.runLater(() -> ItemCardViewportCrop.apply(ImageHolder, img));
               }
             });
     ImageHolder.setImage(img);
@@ -189,31 +188,6 @@ public class ItemCardController {
     setEndTime(null);
     this.timeLabel = timeRemainCaption != null ? timeRemainCaption : "";
     if (TimeRemain != null) TimeRemain.setText(this.timeLabel);
-  }
-
-  private void applyCenterCrop(ImageView imageView, Image img) {
-    double w = img.getWidth();
-    double h = img.getHeight();
-    double targetW = imageView.getFitWidth();
-    double targetH = imageView.getFitHeight();
-
-    double imgRatio = w / h;
-    double targetRatio = targetW / targetH;
-
-    double cropW, cropH, cropX, cropY;
-    if (imgRatio > targetRatio) {
-      cropH = h;
-      cropW = h * targetRatio;
-      cropX = (w - cropW) / 2;
-      cropY = 0;
-    } else {
-      cropW = w;
-      cropH = w / targetRatio;
-      cropX = 0;
-      cropY = (h - cropH) / 2;
-    }
-
-    imageView.setViewport(new Rectangle2D(cropX, cropY, cropW, cropH));
   }
 
   public void setEndTime(LocalDateTime endTime) {

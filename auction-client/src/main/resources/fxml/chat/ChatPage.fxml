@@ -36,7 +36,7 @@
                 <ListView fx:id="leftList" VBox.vgrow="ALWAYS" styleClass="contact-list"/>
 
                 <!-- Global Chat button at bottom -->
-                <Button fx:id="globalChatBtn" text="Global Chat" onAction="#openGlobalChat"
+                <Button text="Global Chat" onAction="#openGlobalChat"
                         styleClass="global-chat-btn" maxWidth="Infinity"/>
             </children>
         </VBox>
@@ -45,7 +45,7 @@
         <VBox HBox.hgrow="ALWAYS" styleClass="chat-right-panel" spacing="0">
             <children>
                 <!-- Chat header -->
-                <HBox fx:id="chatHeader" styleClass="chat-conv-header" alignment="CENTER_LEFT" spacing="10">
+                <HBox styleClass="chat-conv-header" alignment="CENTER_LEFT" spacing="10">
                     <children>
                         <Label fx:id="chatTitle" text="Select a friend to chat" styleClass="chat-conv-title"/>
                         <Region HBox.hgrow="ALWAYS"/>

@@ -1,13 +1,9 @@
 package com.auction.client.ui.TrangChu;
 
-import com.auction.client.ClientSession;
-import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -24,8 +19,6 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * FXML controller for the auction home: orchestrates data refresh, filters, trending list, category
@@ -33,7 +26,6 @@ import org.slf4j.LoggerFactory;
  * CatalogRowSynchronizer}, and {@link CategoryCarouselSupport}.
  */
 public class TrangChuController {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TrangChuController.class);
   private static final int AUTO_REFRESH_SECONDS = 30;
 
   private static TrangChuController instance;
@@ -59,7 +51,7 @@ public class TrangChuController {
   private Button[] categoryPrevButtons;
   private Button[] categoryNextButtons;
   private final int[] categoryCarouselOffset =
-      new int[TrangChuCatalogConstants.SLOT_CATEGORIES.length];
+      new int[CategoryCarouselSupport.SLOT_CATEGORIES.length];
 
   private final List<Item> cachedItems = new ArrayList<>();
   private final Map<Integer, ItemCardController> trendingCardMap = new HashMap<>();
@@ -76,7 +68,7 @@ public class TrangChuController {
   private ToggleGroup catalogAuctionKindGroup;
 
   public TrangChuController() {
-    for (int i = 0; i < TrangChuCatalogConstants.SLOT_CATEGORIES.length; i++) {
+    for (int i = 0; i < CategoryCarouselSupport.SLOT_CATEGORIES.length; i++) {
       categoryCardMaps.add(new HashMap<>());
       categoryRootMaps.add(new HashMap<>());
     }
@@ -169,30 +161,7 @@ public class TrangChuController {
   }
 
   public void refreshItems() {
-    Thread fetchThread =
-        new Thread(
-            () -> {
-              try {
-                int userId =
-                    ClientSession.getCurrentUser() != null
-                        ? ClientSession.getCurrentUser().getId()
-                        : 0;
-                Request request = new Request(Request.GET_ONGOING_BIDS, userId);
-                Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-                if (response == null || !Response.OK.equals(response.getStatus())) {
-                  return;
-                }
-                Object payload = response.getPayload();
-                if (!(payload instanceof List<?> list)) {
-                  return;
-                }
-                Platform.runLater(() -> cacheAndRender(list));
-              } catch (Exception e) {
-                LOGGER.warn("Failed to refresh auction items", e);
-              }
-            });
-    fetchThread.setDaemon(true);
-    fetchThread.start();
+    TrangChuOngoingItemsLoader.loadAsync(this::cacheAndRender);
   }
 
   public void setFilters(String keyword, String category) {
@@ -202,13 +171,9 @@ public class TrangChuController {
     renderFilteredItems();
   }
 
-  private void cacheAndRender(List<?> rawList) {
+  private void cacheAndRender(List<Item> rawList) {
     cachedItems.clear();
-    for (Object entry : rawList) {
-      if (entry instanceof Item item) {
-        cachedItems.add(item);
-      }
-    }
+    cachedItems.addAll(rawList);
     renderFilteredItems();
   }
 
@@ -222,7 +187,7 @@ public class TrangChuController {
     rowSynchronizer.syncRow(
         TrendingBind, trendingCardMap, trendingRootByItemId, trendingVisible, false, false);
 
-    for (int i = 0; i < TrangChuCatalogConstants.SLOT_CATEGORIES.length; i++) {
+    for (int i = 0; i < CategoryCarouselSupport.SLOT_CATEGORIES.length; i++) {
       renderCategoryRow(i, filter);
     }
   }
@@ -235,9 +200,9 @@ public class TrangChuController {
     if (row == null) {
       return;
     }
-    String lane = TrangChuCatalogConstants.SLOT_CATEGORIES[index];
+    String lane = CategoryCarouselSupport.SLOT_CATEGORIES[index];
     List<Item> allForLane = filter.itemsMatchingCategoryLane(cachedItems, lane);
-    int maxSlots = TrangChuCatalogConstants.MAX_SLOTS_PER_CATEGORY;
+    int maxSlots = CategoryCarouselSupport.MAX_SLOTS_PER_CATEGORY;
     categoryCarouselOffset[index] =
         CategoryCarouselSupport.clampOffset(
             categoryCarouselOffset[index], allForLane.size(), maxSlots);
@@ -267,8 +232,8 @@ public class TrangChuController {
     AuctionFilterContext filter = AuctionFilterContext.fromHomeState(keyword, category);
     List<Item> all =
         filter.itemsMatchingCategoryLane(
-            cachedItems, TrangChuCatalogConstants.SLOT_CATEGORIES[idx]);
-    int maxSlots = TrangChuCatalogConstants.MAX_SLOTS_PER_CATEGORY;
+            cachedItems, CategoryCarouselSupport.SLOT_CATEGORIES[idx]);
+    int maxSlots = CategoryCarouselSupport.MAX_SLOTS_PER_CATEGORY;
     if (all.size() <= maxSlots) {
       return;
     }
@@ -285,8 +250,8 @@ public class TrangChuController {
     AuctionFilterContext filter = AuctionFilterContext.fromHomeState(keyword, category);
     List<Item> all =
         filter.itemsMatchingCategoryLane(
-            cachedItems, TrangChuCatalogConstants.SLOT_CATEGORIES[idx]);
-    int maxSlots = TrangChuCatalogConstants.MAX_SLOTS_PER_CATEGORY;
+            cachedItems, CategoryCarouselSupport.SLOT_CATEGORIES[idx]);
+    int maxSlots = CategoryCarouselSupport.MAX_SLOTS_PER_CATEGORY;
     if (all.size() <= maxSlots) {
       return;
     }

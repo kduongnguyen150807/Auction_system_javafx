@@ -6,10 +6,16 @@ import java.util.List;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 
-/** Carousel window math + arrow visibility for category lanes. */
+/** Carousel window math + lane constants (category slots on the home catalog). */
 public final class CategoryCarouselSupport {
 
   private CategoryCarouselSupport() {}
+
+  /** Visible cards per category shelf when using carousel arrows. */
+  public static final int MAX_SLOTS_PER_CATEGORY = 3;
+
+  /** Shelf order on the home page; must stay aligned with search category values. */
+  public static final String[] SLOT_CATEGORIES = {"Art", "Electronics", "Vehicle"};
 
   public static int clampOffset(int offset, int totalItems, int maxSlots) {
     if (totalItems <= maxSlots) {

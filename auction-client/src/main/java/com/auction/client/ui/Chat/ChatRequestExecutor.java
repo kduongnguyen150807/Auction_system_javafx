@@ -5,17 +5,19 @@ import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.util.function.Consumer;
 
-/** Runs blocking socket requests on a daemon thread and delivers responses on the caller thread (via callback). */
-final class ChatAsyncRequests {
+/** Runs {@link Request}s off the JavaFX thread. */
+final class ChatRequestExecutor {
 
-  private ChatAsyncRequests() {}
+  private ChatRequestExecutor() {}
 
-  static void submit(Request req, Consumer<Response> callback) {
+  static void submitAsync(Request req, Consumer<Response> callback) {
     Thread t =
         new Thread(
             () -> {
               Response res = NetworkClient.getInstance().sendRequestAndWait(req);
-              if (res != null) callback.accept(res);
+              if (res != null) {
+                callback.accept(res);
+              }
             });
     t.setDaemon(true);
     t.start();

@@ -12,6 +12,20 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+/** Host callbacks for sidebar list rows (implemented by {@link ChatPageController}). */
+interface ChatLeftListHost {
+
+  ChatSidebarTab currentSidebarTab();
+
+  int currentUserId();
+
+  void acceptFriend(int requesterId);
+
+  void declineFriend(int requesterId);
+
+  void addFriend(int userId);
+}
+
 /** Renders rows in the chat sidebar (friends, requests, user search). */
 final class ChatLeftListCell extends ListCell<Object> {
 
