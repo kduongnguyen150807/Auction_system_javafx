@@ -5,8 +5,7 @@ import com.auction.server.handler.GetOnGoingBidHandler;
 import com.auction.server.handler.LoginHandler;
 import com.auction.server.handler.RegisterLotHandler;
 import com.auction.server.utils.RequestDispatcher;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.RequestType;
+import com.auction.shared.linkv2.RequestType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

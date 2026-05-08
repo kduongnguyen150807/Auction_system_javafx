@@ -1,6 +1,6 @@
 package com.auction.server.utils;
 
-import com.auction.shared.link.Request;
+import com.auction.shared.linkv2.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ public class RequestValidator {
      * @param validators Danh sách các quy tắc (Rule). Mỗi quy tắc gồm một điều kiện và một lỗi trả về.
      * @return boolean trả về giá trị boolean
      */
-    public static boolean validate(Request request, List<ValidationRule> validators) {
+    public static boolean validate(Request<?> request, List<ValidationRule> validators) {
         for (ValidationRule rule : validators) {
             if (rule.condition().test(request)) {
                 LOGGER.info("Validation rule {} validated", rule.errorMessage());
@@ -33,5 +33,5 @@ public class RequestValidator {
      * Record đại diện cho một quy tắc kiểm tra.
      * condition: Trả về true nếu Request BỊ LỖI.
      */
-    public record ValidationRule(Predicate<Request> condition, String errorMessage) {}
+    public record ValidationRule(Predicate<Request<?>> condition, String errorMessage) {}
 }

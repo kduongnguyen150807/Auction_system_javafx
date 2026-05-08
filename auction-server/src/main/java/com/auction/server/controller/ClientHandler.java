@@ -2,8 +2,8 @@ package com.auction.server.controller;
 
 import com.auction.server.context.DaoContext;
 import com.auction.server.context.HandlerContext;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.Response;
+import com.auction.shared.linkv2.Request;
+import com.auction.shared.linkv2.Response;
 
 import com.auction.server.utils.RequestDispatcher;
 import org.slf4j.Logger;
@@ -90,7 +90,7 @@ public class ClientHandler implements Runnable {
    */
   private void startListener() throws IOException, ClassNotFoundException {
     while (!Thread.currentThread().isInterrupted()) {
-      Request request = (Request) in.readObject();
+      Request<?> request = (Request<?>) in.readObject();
       handleRequest(request);
     }
   }
@@ -102,7 +102,7 @@ public class ClientHandler implements Runnable {
    *
    * @param response Đối tượng phản hồi cần gửi.
    */
-  private void sendResponse(Response response) {
+  private void sendResponse(Response<?> response) {
     synchronized (out) {
       try {
         out.reset();
@@ -120,8 +120,8 @@ public class ClientHandler implements Runnable {
    *
    * @param request Đối tượng chứa thông tin yêu cầu từ Client.
    */
-  private void handleRequest(Request request) {
-    Response response = requestDispatcher.dispatch(request, handlerContext);
+  private void handleRequest(Request<?> request) {
+    Response<?> response = requestDispatcher.dispatch(request, handlerContext);
     sendResponse(response);
   }
 

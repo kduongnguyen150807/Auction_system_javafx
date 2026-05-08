@@ -3,8 +3,9 @@ package com.auction.server.handler;
 import com.auction.server.context.HandlerContext;
 import com.auction.server.dao.UserDao;
 import com.auction.server.utils.RequestHandler;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.Response;
+import com.auction.shared.dto.LoginCredentials;
+import com.auction.shared.linkv2.Request;
+import com.auction.shared.linkv2.Response;
 import com.auction.shared.user.User;
 import com.auction.shared.user.UserStatus;
 
@@ -27,20 +28,20 @@ import java.util.Map;
  *   <li>"password"</li>
  * </ul>
  */
-public class LoginHandler implements RequestHandler {
+public class LoginHandler implements RequestHandler<LoginCredentials, User> {
   @Override
-  public Response handle(Request request, HandlerContext context) {
-    Map<String, String> credentials = (Map<String, String>) request.getPayload();
-    String username = credentials.get("username");
-    String password = credentials.get("password");
+  public Response<User> handle(Request<LoginCredentials> request, HandlerContext context) {
+    LoginCredentials loginCredentials =  request.getData();
 
-    User user = context.getDaoContext().getDao(UserDao.class).login(username, password);
+    User user = context.getDaoContext().getDao(UserDao.class).login(loginCredentials.getUsername(), loginCredentials.getPassword());
+
     if (user == null) {
-      return new Response(request.getRequestId(), Response.ERROR, "your account might be ur girlfriend, who doesnt exists", null);
+      return Response.error(request.getId(), "your account might be ur girlfriend, who doesnt exists");
     } else if (user.getStatus().equals(UserStatus.LOCKED)) {
-      return new Response(request.getRequestId(), Response.ERROR, "your acount is black pal", null);
+      return Response.error(request.getId(),  "your acount is black pal");
     }
 
-    return new Response(request.getRequestId(), Response.OK, "success", user);
+    context.setUser(user);
+    return Response.success(request.getId(), "success", user);
   }
 }

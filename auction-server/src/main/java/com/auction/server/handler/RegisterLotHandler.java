@@ -4,18 +4,18 @@ import com.auction.server.context.HandlerContext;
 import com.auction.server.dao.LotDao;
 import com.auction.server.utils.RequestHandler;
 import com.auction.shared.item.Item;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.Response;
+import com.auction.shared.linkv2.Request;
+import com.auction.shared.linkv2.Response;
 
-public class RegisterLotHandler implements RequestHandler {
+public class RegisterLotHandler implements RequestHandler<Item, Object> {
   @Override
-  public Response handle(Request request, HandlerContext handlerContext) {
-    Item item = (Item) request.getPayload();
+  public Response<Object> handle(Request<Item> request, HandlerContext handlerContext) {
+    Item item = request.getData();
     boolean success = handlerContext.getDaoContext().getDao(LotDao.class).registerLot(item, handlerContext.getUser().getId());
     if  (success) {
-      return new Response(request.getRequestId(), Response.OK, "success", null);
+      return Response.success(request.getId(), "success", null);
     } else {
-      return new Response(request.getRequestId(), Response.ERROR, "error", null);
+      return Response.error(request.getId(), "error");
     }
   }
 }

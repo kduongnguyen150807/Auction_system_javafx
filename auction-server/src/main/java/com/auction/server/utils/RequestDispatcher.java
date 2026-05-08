@@ -1,10 +1,9 @@
 package com.auction.server.utils;
 
 import com.auction.server.context.HandlerContext;
-import com.auction.shared.link.ErrorResponse;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.RequestType;
-import com.auction.shared.link.Response;
+import com.auction.shared.linkv2.Request;
+import com.auction.shared.linkv2.RequestType;
+import com.auction.shared.linkv2.Response;
 import com.auction.shared.user.UserStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,7 @@ public class RequestDispatcher {
    * Map lưu trữ các handler theo command (action).
    * Key được chuẩn hóa về uppercase.
    */
-  private final Map<RequestType, RequestHandler> handlers = new ConcurrentHashMap<>();
+  private final Map<RequestType, RequestHandler<?, ?>> handlers = new ConcurrentHashMap<>();
 
   /**
    * Đăng ký một {@link RequestHandler} cho một loại request cụ thể.
@@ -38,7 +37,7 @@ public class RequestDispatcher {
    * @param type yêu cầu
    * @param handler handler xử lý request tương ứng
    */
-  public void register(RequestType type, RequestHandler handler) {
+  public void register(RequestType type, RequestHandler<?, ?> handler) {
     if (type == null || handler == null) {
       LOGGER.error("Không thể đăng ký Handler: Command hoặc Handler bị null.");
       return;
@@ -55,50 +54,61 @@ public class RequestDispatcher {
    *   <li>Validate request bằng các rule toàn cục.</li>
    *   <li>Tìm handler theo action.</li>
    *   <li>Thực thi handler và trả về response.</li>
-   *   <li>Nếu có lỗi xảy ra, trả về {@link ErrorResponse}.</li>
    * </ol>
    *
    * @param request request cần xử lý
-   * @return {@link Response} kết quả xử lý hoặc {@link ErrorResponse} nếu có lỗi
+   * @return {@link Response} kết quả xử lý hoặc
    */
-  public Response dispatch(Request request, HandlerContext handlerContext) {
-    boolean requestError = RequestValidator.validate(request, RequestRules);
+  public <REQ, RES> Response<RES> dispatch(Request<REQ> request, HandlerContext handlerContext) {
+    // ===== Validate request =====
+    boolean requestError = RequestValidator.validate(request, requestRules);
     if (!requestError) {
       LOGGER.warn("Request không vượt qua bước validate");
-      return new ErrorResponse("request không hợp lệ");
+      return Response.error(request.getId(), "INVALID REQUEST");
     }
-
-    boolean clientError = RequestValidator.validate(request, RequestRules);
-    if (!clientError) {
-      LOGGER.warn("Client không vượt qua bước validate");
-      return new ErrorResponse("client không đủ tư cách");
+    // ===== Validate current user =====
+    if (handlerContext.getUser()!=null) {
+      boolean clientError = ClientValidator.validate(handlerContext.getUser(), ClientRule);
+      if (!clientError) {
+        LOGGER.warn("Client không vượt qua bước validate");
+        return Response.error(request.getId(), "LOCKED CLIENT");
+      }
     }
-
-    RequestType command = request.getAction();
-    RequestHandler handler = handlers.get(command);
+    // ===== Find handler =====
+    RequestType type = request.getType();
+    RequestHandler<REQ, RES> handler = (RequestHandler<REQ, RES>) handlers.get(type);
 
     if (handler == null) {
-      LOGGER.warn("Không tìm thấy handler cho lệnh [{}]", command);
-      return new ErrorResponse("Lệnh không được hỗ trợ.");
+      LOGGER.warn("Không tìm thấy handler cho lệnh [{}]", type);
+      return Response.error(request.getId(),"Lệnh không được hỗ trợ.");
     }
-
+    // ===== Execute handler =====
     try {
       return handler.handle(request, handlerContext);
     } catch (Exception e) {
-      LOGGER.error("Lỗi thực thi lệnh [{}]: {}", command, e.getMessage(), e);
-      return new ErrorResponse("Lỗi nội bộ hệ thống.");
+      LOGGER.error("Lỗi thực thi lệnh [{}]: {}", type, e.getMessage(), e);
+      return Response.error(request.getId(), "Lỗi nội bộ hệ thống.");
     }
   }
 
   /**
    * Danh sách các rule validate áp dụng cho mọi request.
    */
-  private final List<RequestValidator.ValidationRule> RequestRules = List.of(
-    new RequestValidator.ValidationRule(req -> req == null, "Request rỗng"),
-    new RequestValidator.ValidationRule(req -> req.getAction() == null, "Thiếu tên lệnh")
+  private final List<RequestValidator.ValidationRule>
+    requestRules = List.of(
+
+    new RequestValidator.ValidationRule(
+      req -> req == null,
+      "Request is null"
+    ),
+
+    new RequestValidator.ValidationRule(
+      req -> req.getType() == null,
+      "Request action is null"
+    )
   );
 
-  private final List<ClientValidator.ValidationRule> ClientRulse = List.of(
+  private final List<ClientValidator.ValidationRule> ClientRule = List.of(
     new ClientValidator.ValidationRule(user -> user.getStatus().equals(UserStatus.LOCKED), "User bị khoá")
   );
 }
