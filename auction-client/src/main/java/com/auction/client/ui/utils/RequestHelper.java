@@ -1,8 +1,10 @@
 package com.auction.client.ui.utils;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.Response;
+import com.auction.shared.linkv2.Request;
+import com.auction.shared.linkv2.RequestType;
+import com.auction.shared.linkv2.Response;
+import javafx.application.Platform;
 
 import java.util.function.Consumer;
 
@@ -20,14 +22,18 @@ public final class RequestHelper {
    *
    * <p>Callback sẽ tự động được đưa về JavaFX UI Thread.
    *
-   * @param request request cần gửi
+   * @param type hành động yêu cầu
+   * @param payload gói thông tin cần gửi
    * @param responseConsumer callback khi thành công
    * @param errorConsumer callback khi thất bại
    */
-  public static void sendRequest(Request request, Consumer<Response> responseConsumer, Consumer<Throwable> errorConsumer) {
+  public static void sendRequest(RequestType type, Object payload, Consumer<Response<?>> responseConsumer, Consumer<Throwable> errorConsumer) {
+    Request<?> request = Request.of(type, payload);
     NetworkClient.getInstance().sendRequestAsync(request)
-      .thenAccept(responseConsumer).exceptionally(ex -> {
-        errorConsumer.accept(ex);
+      .thenAccept(response -> {
+        Platform.runLater(() -> {responseConsumer.accept(response);});
+      }).exceptionally(ex -> {
+        Platform.runLater(() -> {errorConsumer.accept(ex);});
         return null;
       });
   }
