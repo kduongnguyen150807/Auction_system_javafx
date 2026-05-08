@@ -2,6 +2,7 @@ package com.auction.client.controller;
 
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
+import com.auction.client.util.InputValidators;
 import com.auction.shared.*;
 import com.auction.shared.PasswordEncoder;
 import org.slf4j.Logger;
@@ -45,6 +46,11 @@ public class RegisterController {
 
     if (!password.equals(confirmPassword)) {
       this.messageLabel.setText("mật khẩu không khớp!");
+      return;
+    }
+
+    if (!InputValidators.isValidEmail(email.trim())) {
+      this.messageLabel.setText("email không hợp lệ!");
       return;
     }
 

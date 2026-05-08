@@ -2,6 +2,8 @@ package com.auction.client;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.auction.client.util.InputValidators;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -61,9 +63,9 @@ public class ClientValidationTest {
     return password != null && password.length() >= 6;
   }
 
-  /** Validates email format. */
+  /** Validates email format (same rules as {@link InputValidators#isValidEmail}). */
   private static boolean isValidEmail(String email) {
-    return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    return InputValidators.isValidEmail(email);
   }
 
   /** Validates phone number: exactly 10 digits, starts with 0. */

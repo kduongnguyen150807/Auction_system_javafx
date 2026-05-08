@@ -1,7 +1,7 @@
 package com.auction.server;
 
 import com.auction.server.controller.SocketServer;
-import com.auction.server.dao.DatabaseMigration;
+import com.auction.server.dao.platform.DatabaseMigration;
 
 public class Main {
   public static void main(String[] args) {

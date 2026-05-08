@@ -1,6 +1,7 @@
 package com.auction.client.ui.UserProfile;
 
 import com.auction.client.network.NetworkClient;
+import com.auction.client.service.UserAccountService;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.*;
 import java.util.List;
@@ -14,6 +15,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
 public class UserProfileController {
+  private final UserAccountService userAccountService = new UserAccountService();
+
   @FXML private ImageView avatarImageView;
   @FXML private Label usernameLabel, fullNameLabel, emailLabel;
   @FXML private Label ratingStarsLabel, ratingCountLabel, reputationWarning;
@@ -26,6 +29,28 @@ public class UserProfileController {
     this.targetUser = user;
     populateData();
     loadSellerItems();
+    refreshProfileFromServerAsync();
+  }
+
+  /** Fetches the latest user row from the server (ratings, metrics) without blocking the UI. */
+  private void refreshProfileFromServerAsync() {
+    if (targetUser == null) return;
+    int userId = targetUser.getId();
+    Thread t =
+        new Thread(
+            () -> {
+              User fresh = userAccountService.getUserById(userId);
+              if (fresh != null) {
+                Platform.runLater(
+                    () -> {
+                      targetUser = fresh;
+                      populateData();
+                      loadSellerItems();
+                    });
+              }
+            });
+    t.setDaemon(true);
+    t.start();
   }
 
   private void populateData() {
@@ -105,11 +130,13 @@ public class UserProfileController {
 
   private void loadSellerItems() {
     if (targetUser == null || itemsContainer == null) return;
-    new Thread(
+    Thread t =
+        new Thread(
             () -> {
               Request req = new Request("get_my_items", targetUser.getId());
               Response res = NetworkClient.getInstance().sendRequestAndWait(req);
               if (res != null && Response.OK.equals(res.getStatus())) {
+                @SuppressWarnings("unchecked")
                 List<Item> items = (List<Item>) res.getPayload();
                 Platform.runLater(
                     () -> {
@@ -125,8 +152,9 @@ public class UserProfileController {
                       }
                     });
               }
-            })
-        .start();
+            });
+    t.setDaemon(true);
+    t.start();
   }
 
   private VBox buildItemCard(Item item) {

@@ -42,10 +42,6 @@ public class TrangChuController {
   private Timeline countdownTimeline;
   private Timeline autoRefreshTimeline;
 
-  public static TrangChuController getInstance() {
-    return instance;
-  }
-
   @FXML
   void initialize() {
     if (instance != null) instance.stopTimelines();
@@ -199,6 +195,10 @@ public class TrangChuController {
   private boolean matchesFilter(Item item) {
     String name = safe(item.getName()).toLowerCase();
     if (!keyword.isBlank() && !name.contains(keyword)) return false;
+    if (category != null
+        && !category.equalsIgnoreCase("All")
+        && item.getCategory() != null
+        && !item.getCategory().equalsIgnoreCase(category)) return false;
     double minPrice = KhungController.getMinPrice();
     double maxPrice = KhungController.getMaxPrice();
     if (maxPrice <= 0) maxPrice = Double.MAX_VALUE;

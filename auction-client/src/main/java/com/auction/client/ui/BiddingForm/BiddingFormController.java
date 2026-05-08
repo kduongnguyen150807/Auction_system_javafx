@@ -2,11 +2,10 @@ package com.auction.client.ui.BiddingForm;
 
 import com.auction.client.ClientSession;
 import com.auction.client.app.NodeManager;
-import com.auction.client.network.NetworkClient;
+import com.auction.client.service.BiddingClientService;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.BidTransaction;
-import com.auction.shared.Request;
 import com.auction.shared.Response;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -22,6 +21,7 @@ public class BiddingFormController {
   @FXML private TextField BidAmount;
   private int itemId = -1;
   private ItemInformationController parent;
+  private final BiddingClientService biddingClientService = new BiddingClientService();
 
   @FXML
   private void removeForm() {
@@ -70,8 +70,7 @@ public class BiddingFormController {
       }
       double ans = Double.parseDouble(raw);
       BidTransaction res = new BidTransaction(itemId, ClientSession.getCurrentUser().getId(), ans);
-      Request req = new Request(Request.BID, res);
-      Response res2 = NetworkClient.getInstance().sendRequestAndWait(req);
+      Response res2 = biddingClientService.placeBid(res);
 
       if (res2 != null && Response.OK.equals(res2.getStatus())) {
         Object res3 = res2.getPayload();

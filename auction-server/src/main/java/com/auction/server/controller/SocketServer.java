@@ -1,6 +1,6 @@
 package com.auction.server.controller;
 
-import com.auction.server.service.SettlementService;
+import com.auction.server.service.auction.SettlementService;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;

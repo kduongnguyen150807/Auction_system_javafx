@@ -170,13 +170,9 @@ public class ItemCardController {
     TimeRemain.setText(label);
   }
 
-  public void updatePrice(double newPrice) {
+  private void updatePrice(double newPrice) {
     this.currentPrice = newPrice;
     if (Price != null) Price.setText(String.format("%,.0f$", newPrice));
-  }
-
-  public int getId() {
-    return this.id;
   }
 
   public void handleItemClicked() {

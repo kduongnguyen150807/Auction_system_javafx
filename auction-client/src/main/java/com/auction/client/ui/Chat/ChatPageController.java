@@ -1,7 +1,6 @@
 package com.auction.client.ui.Chat;
 
 import com.auction.client.ClientSession;
-import com.auction.client.network.NetworkClient;
 import com.auction.shared.*;
 import java.io.Serializable;
 import java.time.format.DateTimeFormatter;
@@ -68,7 +67,7 @@ public class ChatPageController {
     currentTab = LeftTab.SEARCH;
     friendsTabBtn.getStyleClass().remove("chat-tab-active");
     requestsTabBtn.getStyleClass().remove("chat-tab-active");
-    async(new Request(Request.SEARCH_USERS, kw.trim()), res -> {
+    ChatAsyncRequests.submit(new Request(Request.SEARCH_USERS, kw.trim()), res -> {
       if (res.getPayload() instanceof List<?> list) {
         Platform.runLater(() -> {
           ObservableList<Object> items = FXCollections.observableArrayList();
@@ -87,7 +86,7 @@ public class ChatPageController {
     chatSubtitle.setText("Everyone can see");
     inputBar.setVisible(true); inputBar.setManaged(true);
     messagesContainer.getChildren().clear();
-    async(new Request(Request.GET_GLOBAL_CHAT_HISTORY, null), res -> {
+    ChatAsyncRequests.submit(new Request(Request.GET_GLOBAL_CHAT_HISTORY, null), res -> {
       if (res.getPayload() instanceof List<?> list)
         Platform.runLater(() -> { for (Object o : list) if (o instanceof ChatMessage m) appendBubble(m); scrollBottom(); });
     });
@@ -107,7 +106,7 @@ public class ChatPageController {
       msg.setMessageType(ChatMessage.TYPE_PRIVATE);
       msg.setReceiverId(dmPartnerId);
     } else return;
-    async(new Request(Request.SEND_CHAT, msg), res -> {});
+    ChatAsyncRequests.submit(new Request(Request.SEND_CHAT, msg), res -> {});
   }
 
   private void handleLeftListClick() {
@@ -132,14 +131,14 @@ public class ChatPageController {
     messagesContainer.getChildren().clear();
     Map<String, Object> data = new HashMap<>();
     data.put("myId", myId()); data.put("otherId", partnerId);
-    async(new Request(Request.GET_PRIVATE_CHAT_HISTORY, (Serializable) data), res -> {
+    ChatAsyncRequests.submit(new Request(Request.GET_PRIVATE_CHAT_HISTORY, (Serializable) data), res -> {
       if (res.getPayload() instanceof List<?> list)
         Platform.runLater(() -> { for (Object o : list) if (o instanceof ChatMessage m) appendBubble(m); scrollBottom(); });
     });
   }
 
   private void loadFriends() {
-    async(new Request(Request.GET_FRIENDS, myId()), res -> {
+    ChatAsyncRequests.submit(new Request(Request.GET_FRIENDS, myId()), res -> {
       if (res.getPayload() instanceof List<?> list) Platform.runLater(() -> {
         ObservableList<Object> items = FXCollections.observableArrayList();
         for (Object o : list) if (o instanceof Friendship) items.add(o);
@@ -149,7 +148,7 @@ public class ChatPageController {
   }
 
   private void loadFriendRequests() {
-    async(new Request(Request.GET_FRIEND_REQUESTS, myId()), res -> {
+    ChatAsyncRequests.submit(new Request(Request.GET_FRIEND_REQUESTS, myId()), res -> {
       if (res.getPayload() instanceof List<?> list) Platform.runLater(() -> {
         ObservableList<Object> items = FXCollections.observableArrayList();
         for (Object o : list) if (o instanceof Friendship) items.add(o);
@@ -167,10 +166,16 @@ public class ChatPageController {
     }
   }
 
-  private void addFriend(int targetId) { async(new Request(Request.ADD_FRIEND, targetId), res -> {}); }
-  private void acceptFriend(int id) { async(new Request(Request.ACCEPT_FRIEND, id), res -> {}); }
+  private void addFriend(int targetId) {
+    ChatAsyncRequests.submit(new Request(Request.ADD_FRIEND, targetId), res -> {});
+  }
+
+  private void acceptFriend(int id) {
+    ChatAsyncRequests.submit(new Request(Request.ACCEPT_FRIEND, id), res -> {});
+  }
+
   private void declineFriend(int id) {
-    async(new Request(Request.DECLINE_FRIEND, id), res ->
+    ChatAsyncRequests.submit(new Request(Request.DECLINE_FRIEND, id), res ->
         Platform.runLater(() -> { if (currentTab == LeftTab.REQUESTS) loadFriendRequests(); }));
   }
 
@@ -190,27 +195,12 @@ public class ChatPageController {
 
   private void appendBubble(ChatMessage msg) {
     boolean mine = msg.getSenderId() == myId();
-    Label sender = new Label(msg.getSenderUsername() != null ? msg.getSenderUsername() : "User");
-    sender.getStyleClass().add("msg-sender");
-    Label text = new Label(msg.getContent());
-    text.getStyleClass().add("msg-text"); text.setWrapText(true); text.setMaxWidth(350);
-    Label time = new Label(msg.getCreatedAt() != null ? msg.getCreatedAt().format(TIME_FMT) : "");
-    time.getStyleClass().add("msg-time");
-    VBox bubble = new VBox(2, sender, text, time);
-    bubble.getStyleClass().add(mine ? "msg-bubble-mine" : "msg-bubble"); bubble.setMaxWidth(380);
-    HBox row = new HBox(bubble);
-    row.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT); row.setMaxWidth(Double.MAX_VALUE);
-    messagesContainer.getChildren().add(row);
+    messagesContainer.getChildren().add(ChatBubbleRowFactory.createRow(msg, mine, TIME_FMT));
   }
 
   private void scrollBottom() { Platform.runLater(() -> messagesScroll.setVvalue(1.0)); }
   private int myId() { return ClientSession.getCurrentUser() != null ? ClientSession.getCurrentUser().getId() : 0; }
   private String myName() { return ClientSession.getCurrentUser() != null ? ClientSession.getCurrentUser().getUsername() : ""; }
-
-  private void async(Request req, java.util.function.Consumer<Response> callback) {
-    Thread t = new Thread(() -> { Response res = NetworkClient.getInstance().sendRequestAndWait(req); if (res != null) callback.accept(res); });
-    t.setDaemon(true); t.start();
-  }
 
   private class LeftListCell extends ListCell<Object> {
     @Override

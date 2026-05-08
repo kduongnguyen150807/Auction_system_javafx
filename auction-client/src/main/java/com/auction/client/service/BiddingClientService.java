@@ -40,9 +40,8 @@ public class BiddingClientService {
     return List.of();
   }
 
-  public boolean submitRating(Rating rating) {
+  public Response submitRating(Rating rating) {
     Request request = new Request(Request.SUBMIT_RATING, rating);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-    return response != null && Response.OK.equals(response.getStatus());
+    return NetworkClient.getInstance().sendRequestAndWait(request);
   }
 }

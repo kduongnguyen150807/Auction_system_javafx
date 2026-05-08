@@ -7,7 +7,7 @@ import com.auction.shared.User;
 
 public interface NetworkEventListener {
   default void onBalanceUpdate(User user) {}
-  default void onOutbidNotify(int itemId) {}
+  default void onOutbidNotify(Item item) {}
   default void onNewBidUpdate(Item item) {}
   default void onItemClosed(Item item) {}
   default void onGlobalChat(ChatMessage message) {}

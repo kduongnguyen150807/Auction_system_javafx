@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
 public class LotSubmissionService {
   private static final Logger LOGGER = LoggerFactory.getLogger(LotSubmissionService.class);
 
-  public boolean submitLot(Map<String, String> lotData) {
+  /** Sends {@link Request#ADD_LOT}; caller checks status and {@link Response#getMessage()}. */
+  public Response submitLot(Map<String, String> lotData) {
     Request request = new Request(Request.ADD_LOT, (Serializable) lotData);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-    return response != null && Response.OK.equals(response.getStatus());
+    return NetworkClient.getInstance().sendRequestAndWait(request);
   }
 
   public String uploadImage(String uploadUrl, byte[] imageBytes) {

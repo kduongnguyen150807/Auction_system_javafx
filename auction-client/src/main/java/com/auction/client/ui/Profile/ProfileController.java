@@ -4,20 +4,17 @@ import com.auction.client.ClientSession;
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.network.NetworkEventListener;
+import com.auction.client.service.LotSubmissionService;
 import com.auction.client.service.UserAccountService;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.client.util.ImagePresentationUtil;
 import com.auction.shared.*;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.shape.Circle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +30,11 @@ public class ProfileController implements NetworkEventListener {
   @FXML private HBox bidderMetricsRow, sellerMetricsRow;
 
   private boolean editing = false;
-  private static ProfileController instance;
-
-  public static ProfileController getInstance() { return instance; }
+  private final UserAccountService userAccountService = new UserAccountService();
+  private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
 
   @FXML
   public void initialize() {
-    instance = this;
     NetworkClient.getInstance().addListener(this);
     refreshData();
     setEditingMode(false);
@@ -47,28 +42,19 @@ public class ProfileController implements NetworkEventListener {
 
   @Override public void onBalanceUpdate(User user) { ClientSession.setCurrentUser(user); refreshData(); }
 
-  public void updateBalanceDirectly(User u) {
-    Platform.runLater(() -> { ClientSession.setCurrentUser(u); refreshData(); });
-  }
-
   @FXML
   public void handleDeposit() {
     try {
       double amount = Double.parseDouble(DepositAmountField.getText());
-      Map<String, String> data = new HashMap<>();
-      data.put("userid", String.valueOf(ClientSession.getCurrentUser().getId()));
-      data.put("amount", String.valueOf(amount));
-      Response res = NetworkClient.getInstance().sendRequestAndWait(new Request("deposit", (java.io.Serializable) data));
-      if (res != null && Response.OK.equals(res.getStatus())) {
-        ClientSession.setCurrentUser((User) res.getPayload()); refreshData();
-      }
+      int userId = ClientSession.getCurrentUser().getId();
+      if (userAccountService.deposit(userId, amount)) refreshData();
     } catch (Exception e) {}
   }
 
   @FXML
   public void handleToggleRole() { ClientSession.toggleRole(); refreshData(); KhungController.refreshSidebarFromSession(); }
 
-  public void refreshData() {
+  private void refreshData() {
     User u = ClientSession.getCurrentUser();
     UserRole role = ClientSession.getActiveRole();
     if (u == null || role == null) return;
@@ -107,22 +93,7 @@ public class ProfileController implements NetworkEventListener {
       reputationWarning.setVisible(warn); reputationWarning.setManaged(warn);
     }
     if (u.getAvatarUrl() != null && !u.getAvatarUrl().isEmpty())
-      loadCircularAvatar(avatarimageview, u.getAvatarUrl(), 34, 68);
-  }
-
-  private void loadCircularAvatar(ImageView view, String url, double radius, double size) {
-    Image img = new Image(url, true);
-    img.progressProperty().addListener((obs, ov, nv) -> {
-      if (nv.doubleValue() == 1.0 && !img.isError()) {
-        double w = img.getWidth(), h = img.getHeight(), side = Math.min(w, h);
-        Platform.runLater(() -> {
-          view.setImage(img);
-          view.setViewport(new Rectangle2D((w - side) / 2, (h - side) / 2, side, side));
-          view.setFitWidth(size); view.setFitHeight(size); view.setPreserveRatio(false);
-          view.setClip(new Circle(radius, radius, radius));
-        });
-      }
-    });
+      ImagePresentationUtil.loadCircularAvatar(avatarimageview, u.getAvatarUrl(), 34, 68);
   }
 
   private void setEditingMode(boolean v) {
@@ -149,7 +120,7 @@ public class ProfileController implements NetworkEventListener {
     if (editing) {
       User current = ClientSession.getCurrentUser();
       if (current == null) return;
-      String err = new UserAccountService().updateProfile(
+      String err = userAccountService.updateProfile(
           current.getId(), fullNameInput.getText(), emailInput.getText(), phoneInput.getText());
       if (err == null) { refreshData(); KhungController.refreshSidebarFromSession(); }
       else new Alert(Alert.AlertType.ERROR, err).showAndWait();
@@ -169,9 +140,9 @@ public class ProfileController implements NetworkEventListener {
     java.io.File file = fc.showOpenDialog(null);
     if (file != null) {
       byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
-      String url = NetworkClient.uploadFile("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload", bytes);
-      new UserAccountService().updateAvatar(ClientSession.getUsername(), url);
-      loadCircularAvatar(avatarimageview, url, 34, 68);
+      String url = lotSubmissionService.uploadImage("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload", bytes);
+      userAccountService.updateAvatar(ClientSession.getUsername(), url);
+      ImagePresentationUtil.loadCircularAvatar(avatarimageview, url, 34, 68);
     }
   }
 
@@ -183,11 +154,9 @@ public class ProfileController implements NetworkEventListener {
         new Thread(
             () -> {
               try {
-                Response res =
-                    NetworkClient.getInstance()
-                        .sendRequestAndWait(new Request("refresh_user", userId));
-                if (res != null && Response.OK.equals(res.getStatus())) {
-                  ClientSession.setCurrentUser((User) res.getPayload());
+                User refreshed = userAccountService.refreshUser(userId);
+                if (refreshed != null) {
+                  ClientSession.setCurrentUser(refreshed);
                   Platform.runLater(this::refreshData);
                 }
               } catch (Exception e) {

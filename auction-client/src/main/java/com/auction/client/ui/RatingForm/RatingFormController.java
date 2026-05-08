@@ -1,10 +1,9 @@
 package com.auction.client.ui.RatingForm;
 
 import com.auction.client.app.NodeManager;
-import com.auction.client.network.NetworkClient;
+import com.auction.client.service.BiddingClientService;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.Rating;
-import com.auction.shared.Request;
 import com.auction.shared.Response;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -16,7 +15,6 @@ import javafx.scene.layout.VBox;
 
 public class RatingFormController {
   @FXML private VBox RootPane;
-  @FXML private Label TitleLabel;
   @FXML private HBox StarContainer;
   @FXML private TextArea FeedbackField;
 
@@ -24,6 +22,7 @@ public class RatingFormController {
   private int selectedStars = 0;
   private Label[] starLabels = new Label[5];
   private Runnable onComplete;
+  private final BiddingClientService biddingClientService = new BiddingClientService();
 
   @FXML
   public void initialize() {
@@ -71,8 +70,7 @@ public class RatingFormController {
 
     new Thread(
             () -> {
-              Request submitRequest = new Request(Request.SUBMIT_RATING, rating);
-              Response response = NetworkClient.getInstance().sendRequestAndWait(submitRequest);
+              Response response = biddingClientService.submitRating(rating);
               Platform.runLater(
                   () -> {
                     if (response != null && Response.OK.equals(response.getStatus())) {

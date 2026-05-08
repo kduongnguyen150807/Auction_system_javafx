@@ -1,9 +1,8 @@
 package com.auction.client.ui.AddNewLot;
 
 import com.auction.client.ClientSession;
-import com.auction.client.network.NetworkClient;
+import com.auction.client.service.LotSubmissionService;
 import com.auction.client.ui.Main.KhungController;
-import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.io.File;
 import java.net.URI;
@@ -42,6 +41,7 @@ public class AddNewLotController {
   private final AtomicLong uploadUiGen = new AtomicLong(0L);
   private static AddNewLotController live;
   private static final String DEFAULT_CATEGORY = "Vehicle";
+  private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
 
   public static void resetWhenOpening() { if (live != null) live.clearForm(); }
 
@@ -131,7 +131,7 @@ public class AddNewLotController {
         data.put("description", desc); data.put("starttime", finalStart); data.put("endtime", finalEnd);
         data.put("category", category); data.put("sellerusername", ClientSession.getUsername());
         data.put("imageurl", lotimageurl);
-        Response res = NetworkClient.getInstance().sendRequestAndWait(new Request(Request.ADD_LOT, data));
+        Response res = lotSubmissionService.submitLot(data);
         Platform.runLater(() -> {
           if (res != null && Response.OK.equals(res.getStatus())) {
             showAlert(Alert.AlertType.INFORMATION, "Item Submitted", "Your item has been submitted and is pending admin approval.");

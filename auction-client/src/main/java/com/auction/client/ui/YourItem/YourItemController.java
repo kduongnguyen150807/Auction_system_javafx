@@ -152,8 +152,6 @@ public class YourItemController {
     if (!sameOrder) children.setAll(orderedNodes);
   }
 
-  public void setFilters(String keyword, String category) {}
-
   private boolean match(Item item) {
     String keyword = com.auction.client.ui.Main.KhungController.getSearchKeyword();
     String category = com.auction.client.ui.Main.KhungController.getCategoryFilter();
