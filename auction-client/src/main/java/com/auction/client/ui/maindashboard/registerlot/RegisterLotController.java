@@ -1,13 +1,13 @@
 package com.auction.client.ui.maindashboard.registerlot;
 
+import com.auction.client.service.AuctionService;
 import com.auction.client.ui.utils.RequestHelper;
 import com.auction.client.ui.utils.ValidationResult;
 import com.auction.client.ui.utils.TimeUI;
 import com.auction.shared.item.ItemType;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.RequestType;
-import com.auction.shared.link.Response;
-import javafx.application.Platform;
+import com.auction.shared.linkv2.Response;
+import com.auction.shared.linkv2.RequestType;
+import com.auction.shared.linkv2.ResponseStatus;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -47,11 +47,6 @@ import org.slf4j.LoggerFactory;
  */
 public class RegisterLotController {
   private static final Logger LOGGER = LoggerFactory.getLogger(RegisterLotController.class);
-  /**
-   * Mapper chuyển đổi dữ liệu từ {@link LotForm}
-   * sang domain model.
-   */
-  private final LotMapper lotMapper = new LotMapper();
 
   /**
    * Danh sách category mặc định cho vật phẩm đấu giá.
@@ -61,14 +56,22 @@ public class RegisterLotController {
       ItemType.ART, ItemType.VEHICLE, ItemType.ELECTRONICS
     );
 
-  @FXML private ImageView productImageView;
-  @FXML private Label lblStatus;
-  @FXML private TextField txtName, txtPrice, txtMaxPrice;
-  @FXML private TextArea txtQuantity;
-  @FXML private DatePicker startDatePicker, endDatePicker;
-  @FXML private ComboBox<Integer> startHourCombo, startMinuteCombo, startSecondCombo;
-  @FXML private ComboBox<Integer> endHourCombo, endMinuteCombo, endSecondCombo;
-  @FXML private ComboBox<ItemType> classifyComboBox;
+  @FXML
+  private ImageView productImageView;
+  @FXML
+  private Label lblStatus;
+  @FXML
+  private TextField txtName, txtPrice, txtMaxPrice;
+  @FXML
+  private TextArea txtQuantity;
+  @FXML
+  private DatePicker startDatePicker, endDatePicker;
+  @FXML
+  private ComboBox<Integer> startHourCombo, startMinuteCombo, startSecondCombo;
+  @FXML
+  private ComboBox<Integer> endHourCombo, endMinuteCombo, endSecondCombo;
+  @FXML
+  private ComboBox<ItemType> classifyComboBox;
 
   private static RegisterLotController instance;
   private LotFormValidator lotFormValidator;
@@ -137,6 +140,7 @@ public class RegisterLotController {
       public String toString(ItemType object) {
         return object == null ? "" : object.name();
       }
+
       @Override
       public ItemType fromString(String string) {
         return ItemType.valueOf(string);
@@ -224,8 +228,7 @@ public class RegisterLotController {
       return;
     }
 
-    Request request = new Request(RequestType.REGISTER_LOT, lotMapper.map(lotForm));
-    RequestHelper.sendRequest(request, this::onSendSuccess, this::onSendFailure);
+    AuctionService.getInstance().registerLot(lotForm, this::onSendSuccess, this::onSendFailure);
   }
 
   /**
@@ -233,14 +236,12 @@ public class RegisterLotController {
    *
    * @param response phản hồi từ server
    */
-  private void onSendSuccess(Response response) {
-    Platform.runLater(() -> {
-      if (response.getStatus().equals(Response.OK)) {
-        showStatus("Thành công: Vật phẩm đã được đăng ký!", "#28a745");
-      } else {
-        showStatus("Thất bại: " + response.getMessage(), "#dc3545"); // Red
-      }
-    });
+  private void onSendSuccess(Response<Object> response) {
+    if (response.getStatus().equals(ResponseStatus.SUCCESS)) {
+      showStatus("Thành công: Vật phẩm đã được đăng ký!", "#28a745");
+    } else {
+      showStatus("Thất bại: " + response.getMessage(), "#dc3545"); // Red
+    }
   }
 
   /**
@@ -249,10 +250,8 @@ public class RegisterLotController {
    * @param throwable exception xảy ra
    */
   private void onSendFailure(Throwable throwable) {
-    Platform.runLater(() -> {
-      LOGGER.error("Lỗi gửi yêu cầu đăng ký", throwable);
-      showStatus("Lỗi kết nối: Không thể gửi yêu cầu đến Server.", "#dc3545");
-    });
+    LOGGER.error("Lỗi gửi yêu cầu đăng ký", throwable);
+    showStatus("Lỗi kết nối: Không thể gửi yêu cầu đến Server.", "#dc3545");
   }
 
   private void showStatus(String message, String colorHex) {

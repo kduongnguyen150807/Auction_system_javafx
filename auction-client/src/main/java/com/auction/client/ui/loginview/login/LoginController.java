@@ -1,13 +1,14 @@
-package com.auction.client.ui.loginview;
+package com.auction.client.ui.loginview.login;
 
-import com.auction.client.ClientSession;
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
-import com.auction.client.network.NetworkClient;
+import com.auction.client.service.AuthService;
 import com.auction.client.ui.base.PageController;
-import com.auction.shared.link.Request;
-import com.auction.shared.link.RequestType;
-import com.auction.shared.link.Response;
+import com.auction.client.ui.loginview.LoginViewType;
+import com.auction.client.ui.utils.ValidationResult;
+import com.auction.shared.dto.LoginCredentials;
+import com.auction.shared.linkv2.Request;
+import com.auction.shared.linkv2.Response;
 import com.auction.shared.user.User;
 import com.auction.shared.utils.PasswordEncoder;
 import javafx.fxml.FXML;
@@ -15,8 +16,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Controller xử lý logic cho màn hình đăng nhập.
@@ -37,6 +36,8 @@ import java.util.Map;
  * </p>
  */
 public class LoginController extends PageController<LoginViewType> {
+  private final LoginCredentialsValidator loginCredentialsValidator = new LoginCredentialsValidator();
+
   @FXML private TextField usernameField;
   @FXML private PasswordField passwordField;
   @FXML private Label messageLabel;
@@ -80,36 +81,33 @@ public class LoginController extends PageController<LoginViewType> {
    */
   @FXML
   private void handleLogin() {
-    String username = this.usernameField.getText().trim();
-    String rawPassword = this.passwordField.getText();
-    if (username.isBlank() || rawPassword.isBlank()) {
-      this.messageLabel.setText("Please enter username and password.");
+    LoginCredentials credentials = collectData();
+    ValidationResult validationResult = loginCredentialsValidator.validate(credentials);
+
+    if (!validationResult.isValid()) {
+      messageLabel.setText(validationResult.message());
       return;
     }
 
-    String hashedPassword = PasswordEncoder.hash(rawPassword);
-    Map<String, String> credentials = new HashMap<>();
-    credentials.put("username", username);
-    credentials.put("password", hashedPassword);
+    AuthService.getInstance().login(credentials, this::onSendSuccess, this::onSendFailure);
+  }
 
-    Request request = new Request(RequestType.LOGIN, credentials);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+  private void onSendSuccess(Response<User> response) {
+    messageLabel.setText(response.getMessage());
+    SceneManager.getInstance().switchTo(SceneType.HOME);
+  }
 
-    if (response == null) {
-      this.messageLabel.setText("Cannot reach server — check IP and server status.");
-      return;
-    }
+  private void onSendFailure(Throwable throwable) {
+    messageLabel.setText(throwable.getMessage());
+  }
 
-    if (response.getStatus().equals(Response.OK)) {
-      if (response.getPayload() instanceof User loggedInUser) {
-        ClientSession.setCurrentUser(loggedInUser);
-      }
-      this.messageLabel.setText("Login successful!");
-      SceneManager.getInstance().switchTo(SceneType.HOME);
-    } else if ("account_banned".equals(response.getMessage())) {
-      this.messageLabel.setText("Your account has been suspended.");
-    } else {
-      this.messageLabel.setText(response.getMessage());
-    }
+  private LoginCredentials collectData() {
+    String username = usernameField.getText();
+    String password = passwordField.getText();
+
+    String hashedPass = PasswordEncoder.hash(password);
+
+    LoginCredentials credentials = new LoginCredentials(username, hashedPass);
+    return credentials;
   }
 }

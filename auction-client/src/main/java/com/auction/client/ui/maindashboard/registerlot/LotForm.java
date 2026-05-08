@@ -2,6 +2,7 @@ package com.auction.client.ui.maindashboard.registerlot;
 
 import com.auction.shared.item.ItemType;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
