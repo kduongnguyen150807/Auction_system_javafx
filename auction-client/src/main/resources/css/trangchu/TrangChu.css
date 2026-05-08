@@ -1,15 +1,81 @@
-.TrendingScrollPane {
+@import url("../shared/AppScrollbar.css");
+
+/* Background comes from main shell (.main-container); stay transparent here. */
+.trangchu-page {
     -fx-background-color: transparent;
 }
 
-.TrendingScrollPane > .viewport {
+.dashboard-split {
     -fx-background-color: transparent;
+}
+
+.col-trending {
+    -fx-background-color: transparent;
+    -fx-alignment: top-left;
+}
+
+.col-categories {
+    -fx-background-color: transparent;
+    -fx-alignment: top-left;
+}
+
+.category-heading {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+}
+
+.category-row {
+    -fx-alignment: center-left;
+}
+
+.category-carousel-track-wrap {
+    -fx-background-color: transparent;
+    -fx-min-height: 0;
+}
+
+/* Nút carousel category lots */
+.carousel-nav-btn {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 50%;
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.carousel-nav-btn:hover {
+    -fx-background-color: rgba(254, 143, 0, 0.35);
+}
+
+.carousel-nav-btn:disabled {
+    -fx-opacity: 0.28;
+    -fx-cursor: default;
+}
+
+.carousel-nav-path {
+    -fx-fill: #ffffff;
+}
+
+/* Giá đỡ category: cùng nền đen với TrendingBind, kéo ngang hết cột phải */
+.category-shelf {
+    -fx-background-color: -color-bg;
+    -fx-background-radius: 20;
+    -fx-padding: 12 16 16 16;
+}
+
+/* Trending: thêm khoảng đệm nhẹ bên phải cho scrollbar */
+.trending-scroll {
+    -fx-padding: 0 2 0 0;
 }
 
 .TrendingBind {
     -fx-background-color: -color-bg;
     -fx-background-radius: 20;
     -fx-padding: 16 20 20 20;
+    -fx-alignment: top-center;
 }
 
 .TopLabel {

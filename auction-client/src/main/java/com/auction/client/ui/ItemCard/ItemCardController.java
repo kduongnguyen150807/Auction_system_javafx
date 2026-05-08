@@ -15,17 +15,63 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 public class ItemCardController {
+  private static final double FULL_IMG_W = 270;
+  private static final double FULL_IMG_H = 240;
+  /** Category row: fixed “slot” width in parent HBox (image + padding). */
+  private static final double COMPACT_IMG_W = 180;
+  private static final double COMPACT_IMG_H = 158;
+  public static final double CATEGORY_SLOT_WIDTH = 208;
+
   @FXML private VBox itemRoot;
   @FXML private Label ItemName, ItemDescription, Price, TimeRemain;
   @FXML private ImageView ImageHolder;
+  @FXML private Rectangle imageClip;
 
   private int id;
   private String itemName, description, timeLabel, imageUrl, sellerName, sellerAvatarUrl;
   private double currentPrice;
   private LocalDateTime endTime;
+
+  /** Home category rows: smaller image + fixed card width (one slot per cell, no horizontal grow). */
+  public void setCompactRowLayout(boolean compact) {
+    if (itemRoot != null) {
+      itemRoot.getStyleClass().remove("item-card-compact");
+      if (compact) itemRoot.getStyleClass().add("item-card-compact");
+      if (compact) {
+        itemRoot.setMinWidth(CATEGORY_SLOT_WIDTH);
+        itemRoot.setPrefWidth(CATEGORY_SLOT_WIDTH);
+        itemRoot.setMaxWidth(CATEGORY_SLOT_WIDTH);
+      } else {
+        itemRoot.setMinWidth(Region.USE_COMPUTED_SIZE);
+        itemRoot.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        itemRoot.setMaxWidth(Double.MAX_VALUE);
+      }
+    }
+    double w = compact ? COMPACT_IMG_W : FULL_IMG_W;
+    double h = compact ? COMPACT_IMG_H : FULL_IMG_H;
+    if (ImageHolder != null) {
+      ImageHolder.setFitWidth(w);
+      ImageHolder.setFitHeight(h);
+    }
+    if (imageClip != null) {
+      imageClip.setWidth(w);
+      imageClip.setHeight(h);
+      imageClip.setArcWidth(compact ? 20 : 30);
+      imageClip.setArcHeight(compact ? 20 : 30);
+    }
+    if (ImageHolder != null && ImageHolder.getImage() != null) {
+      applyCenterCrop(ImageHolder, ImageHolder.getImage());
+    }
+  }
+
+  public VBox getRootNode() {
+    return itemRoot;
+  }
 
   public void setData(
       int itemId,

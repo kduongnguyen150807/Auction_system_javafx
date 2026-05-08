@@ -1,90 +1,152 @@
 package com.auction.client.ui.TrangChu;
 
 import com.auction.client.ClientSession;
-import com.auction.client.app.NodeContentLoader;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * FXML controller for the auction home: orchestrates data refresh, filters, trending list, category
+ * carousels, and live timers. Domain logic lives in {@link AuctionFilterContext}, {@link
+ * CatalogRowSynchronizer}, and {@link CategoryCarouselSupport}.
+ */
 public class TrangChuController {
   private static final Logger LOGGER = LoggerFactory.getLogger(TrangChuController.class);
   private static final int AUTO_REFRESH_SECONDS = 30;
+
   private static TrangChuController instance;
 
-  @FXML private HBox TrendingBind;
+  private final CatalogRowSynchronizer rowSynchronizer =
+      new CatalogRowSynchronizer(new HomeItemCardFactory());
+
+  @FXML private VBox TrendingBind;
+  @FXML private HBox categoryArtRow;
+  @FXML private HBox categoryElectronicsRow;
+  @FXML private HBox categoryVehiclesRow;
+  @FXML private Button categoryArtPrev;
+  @FXML private Button categoryArtNext;
+  @FXML private Button categoryElectronicsPrev;
+  @FXML private Button categoryElectronicsNext;
+  @FXML private Button categoryVehiclesPrev;
+  @FXML private Button categoryVehiclesNext;
+
+  private HBox[] categoryRows;
+  private Button[] categoryPrevButtons;
+  private Button[] categoryNextButtons;
+  private final int[] categoryCarouselOffset =
+      new int[TrangChuCatalogConstants.SLOT_CATEGORIES.length];
+
   private final List<Item> cachedItems = new ArrayList<>();
-  private final Map<Integer, ItemCardController> cardMap = new HashMap<>();
-  /** Card root nodes in the home strip (VBox from ItemCard.fxml), keyed by item id. */
-  private final Map<Integer, Node> cardRootByItemId = new HashMap<>();
+  private final Map<Integer, ItemCardController> trendingCardMap = new HashMap<>();
+  private final Map<Integer, Node> trendingRootByItemId = new HashMap<>();
+
+  private final List<Map<Integer, ItemCardController>> categoryCardMaps = new ArrayList<>();
+  private final List<Map<Integer, Node>> categoryRootMaps = new ArrayList<>();
+
   private String keyword = "";
   private String category = "All";
   private Timeline countdownTimeline;
   private Timeline autoRefreshTimeline;
 
+  public TrangChuController() {
+    for (int i = 0; i < TrangChuCatalogConstants.SLOT_CATEGORIES.length; i++) {
+      categoryCardMaps.add(new HashMap<>());
+      categoryRootMaps.add(new HashMap<>());
+    }
+  }
+
   @FXML
   void initialize() {
-    if (instance != null) instance.stopTimelines();
+    if (instance != null) {
+      instance.stopTimelines();
+    }
     instance = this;
+    categoryRows = new HBox[] {categoryArtRow, categoryElectronicsRow, categoryVehiclesRow};
+    categoryPrevButtons =
+        new Button[] {categoryArtPrev, categoryElectronicsPrev, categoryVehiclesPrev};
+    categoryNextButtons =
+        new Button[] {categoryArtNext, categoryElectronicsNext, categoryVehiclesNext};
+    if (TrendingBind != null) {
+      TrendingBind.setMaxWidth(Double.MAX_VALUE);
+    }
     setFilters(KhungController.getSearchKeyword(), KhungController.getCategoryFilter());
     refreshItems();
     startTimelines();
   }
 
   private void startTimelines() {
-    countdownTimeline = new Timeline(
-        new KeyFrame(javafx.util.Duration.seconds(1), e -> cardMap.values().forEach(ItemCardController::updateTimeLabel)));
+    countdownTimeline =
+        new Timeline(
+            new KeyFrame(
+                javafx.util.Duration.seconds(1),
+                e -> {
+                  trendingCardMap.values().forEach(ItemCardController::updateTimeLabel);
+                  for (Map<Integer, ItemCardController> m : categoryCardMaps) {
+                    m.values().forEach(ItemCardController::updateTimeLabel);
+                  }
+                }));
     countdownTimeline.setCycleCount(Timeline.INDEFINITE);
     countdownTimeline.play();
 
-    autoRefreshTimeline = new Timeline(
-        new KeyFrame(javafx.util.Duration.seconds(AUTO_REFRESH_SECONDS), e -> refreshItems()));
+    autoRefreshTimeline =
+        new Timeline(
+            new KeyFrame(javafx.util.Duration.seconds(AUTO_REFRESH_SECONDS), e -> refreshItems()));
     autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
     autoRefreshTimeline.play();
   }
 
   public void stopTimelines() {
-    if (countdownTimeline != null) { countdownTimeline.stop(); countdownTimeline = null; }
-    if (autoRefreshTimeline != null) { autoRefreshTimeline.stop(); autoRefreshTimeline = null; }
+    if (countdownTimeline != null) {
+      countdownTimeline.stop();
+      countdownTimeline = null;
+    }
+    if (autoRefreshTimeline != null) {
+      autoRefreshTimeline.stop();
+      autoRefreshTimeline = null;
+    }
   }
 
   public void refreshItems() {
-    Thread fetchThread = new Thread(() -> {
-      try {
-        int userId =
-            ClientSession.getCurrentUser() != null
-                ? ClientSession.getCurrentUser().getId()
-                : 0;
-        Request request = new Request(Request.GET_ONGOING_BIDS, userId);
-        Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-        if (response == null || !Response.OK.equals(response.getStatus())) return;
-        Object payload = response.getPayload();
-        if (!(payload instanceof List<?> list)) return;
-        Platform.runLater(() -> cacheAndRender(list));
-      } catch (Exception e) {
-        LOGGER.warn("Failed to refresh auction items", e);
-      }
-    });
+    Thread fetchThread =
+        new Thread(
+            () -> {
+              try {
+                int userId =
+                    ClientSession.getCurrentUser() != null
+                        ? ClientSession.getCurrentUser().getId()
+                        : 0;
+                Request request = new Request(Request.GET_ONGOING_BIDS, userId);
+                Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+                if (response == null || !Response.OK.equals(response.getStatus())) {
+                  return;
+                }
+                Object payload = response.getPayload();
+                if (!(payload instanceof List<?> list)) {
+                  return;
+                }
+                Platform.runLater(() -> cacheAndRender(list));
+              } catch (Exception e) {
+                LOGGER.warn("Failed to refresh auction items", e);
+              }
+            });
     fetchThread.setDaemon(true);
     fetchThread.start();
   }
@@ -106,79 +168,101 @@ public class TrangChuController {
   }
 
   private void renderFilteredItems() {
-    if (TrendingBind == null) return;
+    if (TrendingBind == null) {
+      return;
+    }
+    AuctionFilterContext filter = AuctionFilterContext.fromHomeState(keyword, category);
+    List<Item> trendingVisible = filter.itemsMatchingTrending(cachedItems);
 
-    List<Item> visible = new ArrayList<>();
-    for (Item item : cachedItems) {
-      if (matchesFilter(item)) visible.add(item);
-    }
-    Set<Integer> desiredIds = new HashSet<>(visible.size() * 2);
-    for (Item item : visible) desiredIds.add(item.getId());
+    rowSynchronizer.syncRow(
+        TrendingBind, trendingCardMap, trendingRootByItemId, trendingVisible, false, false);
 
-    for (int id : new ArrayList<>(cardMap.keySet())) {
-      if (!desiredIds.contains(id)) {
-        cardMap.remove(id);
-        Node removed = cardRootByItemId.remove(id);
-        if (removed != null) TrendingBind.getChildren().remove(removed);
-      }
+    for (int i = 0; i < TrangChuCatalogConstants.SLOT_CATEGORIES.length; i++) {
+      renderCategoryRow(i, filter);
     }
+  }
 
-    for (Item item : visible) {
-      ItemCardController card = cardMap.get(item.getId());
-      if (card != null) {
-        card.syncFromCatalogItem(item);
-      } else {
-        try {
-          NodeContentLoader<VBox> cardLoader = new NodeContentLoader<>();
-          cardLoader.load("/fxml/itemcard/ItemCard.fxml");
-          ItemCardController newCard = cardLoader.getController();
-          VBox root = cardLoader.getCurrentNode();
-          if (newCard != null && root != null) {
-            newCard.setData(
-                item.getId(),
-                safe(item.getName()),
-                item.getCurrentPrice(),
-                safe(item.getDescription()),
-                formatTime(item.getEndTime()),
-                safe(item.getImageUrl()),
-                safe(item.getSellerUsername()),
-                safe(item.getSellerAvatarUrl()));
-            newCard.setEndTime(item.getEndTime());
-            cardMap.put(item.getId(), newCard);
-            cardRootByItemId.put(item.getId(), root);
-          }
-        } catch (Exception e) {
-          LOGGER.warn("Failed to render item card for item id={}", item.getId(), e);
-        }
-      }
+  private void renderCategoryRow(int index, AuctionFilterContext filter) {
+    if (categoryRows == null || index < 0 || index >= categoryRows.length) {
+      return;
     }
+    HBox row = categoryRows[index];
+    if (row == null) {
+      return;
+    }
+    String lane = TrangChuCatalogConstants.SLOT_CATEGORIES[index];
+    List<Item> allForLane = filter.itemsMatchingCategoryLane(cachedItems, lane);
+    int maxSlots = TrangChuCatalogConstants.MAX_SLOTS_PER_CATEGORY;
+    categoryCarouselOffset[index] =
+        CategoryCarouselSupport.clampOffset(
+            categoryCarouselOffset[index], allForLane.size(), maxSlots);
+    List<Item> visibleWindow =
+        CategoryCarouselSupport.sliceWindow(allForLane, categoryCarouselOffset[index], maxSlots);
 
-    List<Node> ordered = new ArrayList<>(visible.size());
-    for (Item item : visible) {
-      Node n = cardRootByItemId.get(item.getId());
-      if (n != null) ordered.add(n);
+    rowSynchronizer.syncRow(
+        row,
+        categoryCardMaps.get(index),
+        categoryRootMaps.get(index),
+        visibleWindow,
+        true,
+        true);
+
+    CategoryCarouselSupport.updateNavButtons(
+        allForLane.size(),
+        categoryCarouselOffset[index],
+        maxSlots,
+        categoryPrevButtons != null ? categoryPrevButtons[index] : null,
+        categoryNextButtons != null ? categoryNextButtons[index] : null);
+  }
+
+  @FXML
+  void categoryCarouselPrev(ActionEvent event) {
+    int idx =
+        CategoryCarouselSupport.laneIndexFromAction(event, categoryPrevButtons, categoryNextButtons);
+    AuctionFilterContext filter = AuctionFilterContext.fromHomeState(keyword, category);
+    List<Item> all =
+        filter.itemsMatchingCategoryLane(
+            cachedItems, TrangChuCatalogConstants.SLOT_CATEGORIES[idx]);
+    int maxSlots = TrangChuCatalogConstants.MAX_SLOTS_PER_CATEGORY;
+    if (all.size() <= maxSlots) {
+      return;
     }
-    ObservableList<Node> children = TrendingBind.getChildren();
-    boolean same = children.size() == ordered.size();
-    if (same) {
-      for (int i = 0; i < ordered.size(); i++) {
-        if (children.get(i) != ordered.get(i)) {
-          same = false;
-          break;
-        }
-      }
+    categoryCarouselOffset[idx] =
+        CategoryCarouselSupport.clampOffset(
+            categoryCarouselOffset[idx] - 1, all.size(), maxSlots);
+    renderCategoryRow(idx, filter);
+  }
+
+  @FXML
+  void categoryCarouselNext(ActionEvent event) {
+    int idx =
+        CategoryCarouselSupport.laneIndexFromAction(event, categoryPrevButtons, categoryNextButtons);
+    AuctionFilterContext filter = AuctionFilterContext.fromHomeState(keyword, category);
+    List<Item> all =
+        filter.itemsMatchingCategoryLane(
+            cachedItems, TrangChuCatalogConstants.SLOT_CATEGORIES[idx]);
+    int maxSlots = TrangChuCatalogConstants.MAX_SLOTS_PER_CATEGORY;
+    if (all.size() <= maxSlots) {
+      return;
     }
-    if (!same) children.setAll(ordered);
+    categoryCarouselOffset[idx] =
+        CategoryCarouselSupport.clampOffset(
+            categoryCarouselOffset[idx] + 1, all.size(), maxSlots);
+    renderCategoryRow(idx, filter);
   }
 
   public void removeClosedItem(Item item) {
-    if (item == null) return;
+    if (item == null) {
+      return;
+    }
     cachedItems.removeIf(cached -> cached.getId() == item.getId());
     renderFilteredItems();
   }
 
   public void updatePriceUi(Item updated) {
-    if (updated == null) return;
+    if (updated == null) {
+      return;
+    }
     Item cachedRef = null;
     for (Item cached : cachedItems) {
       if (cached.getId() == updated.getId()) {
@@ -188,34 +272,18 @@ public class TrangChuController {
         break;
       }
     }
-    ItemCardController card = cardMap.get(updated.getId());
-    if (card != null && cachedRef != null) card.syncFromCatalogItem(cachedRef);
-  }
-
-  private boolean matchesFilter(Item item) {
-    String name = safe(item.getName()).toLowerCase();
-    if (!keyword.isBlank() && !name.contains(keyword)) return false;
-    if (category != null
-        && !category.equalsIgnoreCase("All")
-        && item.getCategory() != null
-        && !item.getCategory().equalsIgnoreCase(category)) return false;
-    double minPrice = KhungController.getMinPrice();
-    double maxPrice = KhungController.getMaxPrice();
-    if (maxPrice <= 0) maxPrice = Double.MAX_VALUE;
-    if (item.getCurrentPrice() < minPrice || item.getCurrentPrice() > maxPrice) return false;
-    return true;
-  }
-
-  private String safe(String value) {
-    return (value == null) ? "" : value;
-  }
-
-  private String formatTime(LocalDateTime endTime) {
-    if (endTime == null) return "N/A";
-    Duration remaining = Duration.between(LocalDateTime.now(), endTime);
-    if (remaining.isNegative() || remaining.isZero()) return "closed";
-    long hours = remaining.toHours();
-    if (hours / 24 > 0) return (hours / 24) + "d " + (hours % 24) + "h";
-    return (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
+    if (cachedRef == null) {
+      return;
+    }
+    ItemCardController t = trendingCardMap.get(updated.getId());
+    if (t != null) {
+      t.syncFromCatalogItem(cachedRef);
+    }
+    for (Map<Integer, ItemCardController> m : categoryCardMaps) {
+      ItemCardController c = m.get(updated.getId());
+      if (c != null) {
+        c.syncFromCatalogItem(cachedRef);
+      }
+    }
   }
 }

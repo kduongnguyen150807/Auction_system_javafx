@@ -39,3 +39,16 @@
     -fx-font-weight: 900;
     -fx-font-size: 18px;
 }
+
+/* Fixed-slot category cards: content stays within narrow column */
+.item-card-compact {
+    -fx-min-width: 208px;
+    -fx-pref-width: 208px;
+    -fx-max-width: 208px;
+}
+
+.item-card-compact .item-name-mac { -fx-font-size: 14px; }
+.item-card-compact .item-desc-mac { -fx-font-size: 10px; -fx-wrap-text: true; }
+.item-card-compact .label-sm-gray { -fx-font-size: 9px; }
+.item-card-compact .price-val-cyan { -fx-font-size: 17px; }
+.item-card-compact .timer-val-orange { -fx-font-size: 15px; }

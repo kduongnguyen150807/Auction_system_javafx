@@ -1,11 +1,4 @@
-.scroll-pane {
-    -fx-background: transparent;
-    -fx-background-color: transparent;
-}
-
-.scroll-pane > .viewport {
-    -fx-background-color: transparent;
-}
+@import url("../shared/AppScrollbar.css");
 
 .glass-panel-item {
     -fx-background-color: rgba(30, 30, 30, 0.65);

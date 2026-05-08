@@ -48,10 +48,6 @@ public class HandlerContext {
     return this.ratingDao;
   }
 
-  public ClientHandler getSender() {
-    return this.sender;
-  }
-
   public User getCurrentUser() {
     return this.currentUser;
   }
