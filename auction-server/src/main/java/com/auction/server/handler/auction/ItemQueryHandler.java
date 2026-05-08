@@ -3,6 +3,7 @@ package com.auction.server.handler.auction;
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
 
+import com.auction.server.service.auction.DutchAuctionCatalogSync;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -24,6 +25,7 @@ public class ItemQueryHandler implements ActionHandler {
       case Request.GET_ITEM_BY_ID: {
         int itemId = (int) request.getPayload();
         Item item = context.getItemDao().getById(itemId);
+        if (item != null) DutchAuctionCatalogSync.syncItem(context.getItemDao(), item);
         return new Response(requestId,
             item != null ? Response.OK : Response.ERROR,
             item != null ? "success" : "not_found", item);

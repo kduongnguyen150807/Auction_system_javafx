@@ -24,13 +24,18 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 public class AddNewLotController {
   @FXML private ImageView productImageView;
   @FXML private Label lblStatus;
   @FXML private TextField txtName, txtPrice, txtMaxPrice;
+  @FXML private TextField txtDutchReservePrice, txtDutchDecrement, txtDutchIntervalMinutes;
   @FXML private TextArea txtQuantity;
+  @FXML private VBox dutchExtrasVBox;
+  @FXML private ToggleButton kindEnglishToggle;
+  @FXML private ToggleButton kindDutchToggle;
   @FXML private DatePicker startDatePicker, endDatePicker;
   @FXML private ComboBox<Integer> startHourCombo, startMinuteCombo, startSecondCombo;
   @FXML private ComboBox<Integer> endHourCombo, endMinuteCombo, endSecondCombo;
@@ -42,6 +47,8 @@ public class AddNewLotController {
   private static AddNewLotController live;
   private static final String DEFAULT_CATEGORY = "Vehicle";
   private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
+
+  private ToggleGroup auctionKindGroup;
 
   public static void resetWhenOpening() { if (live != null) live.clearForm(); }
 
@@ -65,6 +72,29 @@ public class AddNewLotController {
     endHourCombo.setValue(23); endMinuteCombo.setValue(59); endSecondCombo.setValue(0);
     startDatePicker.setValue(LocalDate.now());
     endDatePicker.setValue(LocalDate.now().plusDays(1));
+
+    if (kindEnglishToggle != null && kindDutchToggle != null) {
+      auctionKindGroup = new ToggleGroup();
+      kindEnglishToggle.setToggleGroup(auctionKindGroup);
+      kindDutchToggle.setToggleGroup(auctionKindGroup);
+      kindEnglishToggle.setSelected(true);
+      auctionKindGroup
+          .selectedToggleProperty()
+          .addListener((obs, oldToggle, newToggle) -> refreshAuctionKindPanels());
+      refreshAuctionKindPanels();
+    }
+  }
+
+  private void refreshAuctionKindPanels() {
+    if (kindEnglishToggle == null || dutchExtrasVBox == null || txtMaxPrice == null || txtPrice == null) {
+      return;
+    }
+    boolean english = kindEnglishToggle.isSelected();
+    txtMaxPrice.setVisible(english);
+    txtMaxPrice.setManaged(english);
+    txtPrice.setPromptText(english ? "START PRICE ($)" : "STARTING PRICE ($)");
+    dutchExtrasVBox.setVisible(!english);
+    dutchExtrasVBox.setManaged(!english);
   }
 
   @FXML
@@ -122,12 +152,54 @@ public class AddNewLotController {
     if (startDt == null || endDt == null || !endDt.isAfter(startDt)) {
       showAlert(Alert.AlertType.WARNING, "Invalid time range", "End time must be after start time."); return;
     }
+    boolean dutch = kindDutchToggle != null && kindDutchToggle.isSelected();
+    if (dutch) {
+      if (txtDutchReservePrice == null || txtDutchDecrement == null || txtDutchIntervalMinutes == null) {
+        lblStatus.setText("missing dutch controls");
+        return;
+      }
+      String r = txtDutchReservePrice.getText().trim();
+      String step = txtDutchDecrement.getText().trim();
+      String mins = txtDutchIntervalMinutes.getText().trim();
+      if (r.isEmpty() || step.isEmpty() || mins.isEmpty()) {
+        lblStatus.setText("complete Dutch reserve, step, interval");
+        return;
+      }
+      try {
+        double reserve = Double.parseDouble(r);
+        double dec = Double.parseDouble(step);
+        int iv = Integer.parseInt(mins);
+        double ceiling = Double.parseDouble(price);
+        if (reserve < 0 || dec <= 0 || iv <= 0) {
+          lblStatus.setText("invalid Dutch numeric fields"); return;
+        }
+        if (reserve >= ceiling) {
+          lblStatus.setText("reserve must be below starting price"); return;
+        }
+      } catch (NumberFormatException ex) {
+        lblStatus.setText("invalid Dutch numbers"); return;
+      }
+    }
     String finalStart = startNorm, finalEnd = endNorm;
     new Thread(() -> {
       try {
         Map<String, String> data = new HashMap<>();
-        data.put("name", name); data.put("startingprice", price);
-        data.put("maxprice", maxPriceText.isEmpty() ? "0" : maxPriceText);
+        data.put("name", name);
+        data.put("startingprice", price);
+        boolean dutchAuction = kindDutchToggle != null && kindDutchToggle.isSelected();
+        data.put("auctiontype", dutchAuction ? "DUTCH" : "ENGLISH");
+        if (dutchAuction) {
+          data.put("maxprice", "0");
+          data.put(
+              "dutchreserve",
+              txtDutchReservePrice != null ? txtDutchReservePrice.getText().trim() : "");
+          data.put("dutchdecrement", txtDutchDecrement != null ? txtDutchDecrement.getText().trim() : "");
+          data.put(
+              "dutchintervalmins",
+              txtDutchIntervalMinutes != null ? txtDutchIntervalMinutes.getText().trim() : "");
+        } else {
+          data.put("maxprice", maxPriceText.isEmpty() ? "0" : maxPriceText);
+        }
         data.put("description", desc); data.put("starttime", finalStart); data.put("endtime", finalEnd);
         data.put("category", category); data.put("sellerusername", ClientSession.getUsername());
         data.put("imageurl", lotimageurl);
@@ -155,13 +227,23 @@ public class AddNewLotController {
 
   private void clearForm() {
     uploadUiGen.incrementAndGet();
-    txtName.clear(); txtPrice.clear(); txtMaxPrice.clear(); txtQuantity.clear();
+    txtName.clear();
+    txtPrice.clear();
+    txtMaxPrice.clear();
+    if (txtDutchReservePrice != null) txtDutchReservePrice.clear();
+    if (txtDutchDecrement != null) txtDutchDecrement.clear();
+    if (txtDutchIntervalMinutes != null) txtDutchIntervalMinutes.clear();
+    txtQuantity.clear();
     startDatePicker.setValue(LocalDate.now()); startHourCombo.setValue(0);
     startMinuteCombo.setValue(0); startSecondCombo.setValue(0);
     endDatePicker.setValue(LocalDate.now().plusDays(1)); endHourCombo.setValue(23);
     endMinuteCombo.setValue(59); endSecondCombo.setValue(0);
     classifyComboBox.getSelectionModel().clearSelection(); classifyComboBox.setValue(null);
-    classifyComboBox.setPromptText("CATEGORY"); lblStatus.setText(""); lotimageurl = "";
+    classifyComboBox.setPromptText("CATEGORY");
+    lblStatus.setText("");
+    lotimageurl = "";
+    if (kindEnglishToggle != null) kindEnglishToggle.setSelected(true);
+    refreshAuctionKindPanels();
     java.net.URL hutao = getClass().getResource("/images/Hutao.png");
     productImageView.setImage(hutao != null ? new Image(hutao.toExternalForm(), false) : null);
   }

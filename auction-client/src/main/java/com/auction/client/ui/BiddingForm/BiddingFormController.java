@@ -29,12 +29,27 @@ public class BiddingFormController {
   }
 
   public void setData(int itemId, String itemname, double maxPrice) {
+    setData(itemId, itemname, maxPrice, false, 0);
+  }
+
+  /**
+   * @param dutchListedBuy when true, bidder must pay {@code dutchListedPrice} (instant purchase).
+   */
+  public void setData(
+      int itemId, String itemname, double maxPrice, boolean dutchListedBuy, double dutchListedPrice) {
     this.itemId = itemId;
     if (ItemId != null) ItemId.setText(String.valueOf(itemId));
     if (ItemName != null) ItemName.setText(itemname == null ? "" : itemname);
     if (MaxPriceInfo != null) {
-      if (maxPrice > 0) MaxPriceInfo.setText(String.format("Buy it now price: %,.0f$", maxPrice));
-      else MaxPriceInfo.setText("No instant buy option");
+      if (dutchListedBuy) {
+        MaxPriceInfo.setText(
+            String.format("Current Dutch price: %,.0f$ — enter the exact amount to buy now.", dutchListedPrice));
+        if (BidAmount != null) BidAmount.setText(String.format("%.0f", dutchListedPrice));
+      } else if (maxPrice > 0) {
+        MaxPriceInfo.setText(String.format("Buy it now price: %,.0f$", maxPrice));
+      } else {
+        MaxPriceInfo.setText("No instant buy option");
+      }
     }
   }
 

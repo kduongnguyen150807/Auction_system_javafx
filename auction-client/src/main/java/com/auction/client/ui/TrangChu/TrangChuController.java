@@ -4,6 +4,7 @@ import com.auction.client.ClientSession;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -18,6 +20,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
@@ -48,6 +52,9 @@ public class TrangChuController {
   @FXML private Button categoryVehiclesPrev;
   @FXML private Button categoryVehiclesNext;
 
+  @FXML private ToggleButton tabEnglishAuctions;
+  @FXML private ToggleButton tabDutchAuctions;
+
   private HBox[] categoryRows;
   private Button[] categoryPrevButtons;
   private Button[] categoryNextButtons;
@@ -65,6 +72,8 @@ public class TrangChuController {
   private String category = "All";
   private Timeline countdownTimeline;
   private Timeline autoRefreshTimeline;
+
+  private ToggleGroup catalogAuctionKindGroup;
 
   public TrangChuController() {
     for (int i = 0; i < TrangChuCatalogConstants.SLOT_CATEGORIES.length; i++) {
@@ -87,9 +96,44 @@ public class TrangChuController {
     if (TrendingBind != null) {
       TrendingBind.setMaxWidth(Double.MAX_VALUE);
     }
+    initCatalogAuctionTabs();
     setFilters(KhungController.getSearchKeyword(), KhungController.getCategoryFilter());
     refreshItems();
     startTimelines();
+  }
+
+  private void initCatalogAuctionTabs() {
+    if (tabEnglishAuctions == null || tabDutchAuctions == null) {
+      return;
+    }
+    catalogAuctionKindGroup = new ToggleGroup();
+    tabEnglishAuctions.setToggleGroup(catalogAuctionKindGroup);
+    tabDutchAuctions.setToggleGroup(catalogAuctionKindGroup);
+    catalogAuctionKindGroup
+        .selectedToggleProperty()
+        .addListener(
+            (obs, oldT, newT) -> {
+              if (newT == null) {
+                return;
+              }
+              AuctionType nu =
+                  newT == tabDutchAuctions ? AuctionType.DUTCH : AuctionType.ENGLISH;
+              if (KhungController.getCatalogAuctionType() != nu) {
+                KhungController.setCatalogAuctionType(nu);
+              }
+            });
+    syncCatalogTabsFromShell();
+  }
+
+  private void syncCatalogTabsFromShell() {
+    if (catalogAuctionKindGroup == null || tabEnglishAuctions == null || tabDutchAuctions == null) {
+      return;
+    }
+    AuctionType wanted = KhungController.getCatalogAuctionType();
+    ToggleButton pick = wanted == AuctionType.DUTCH ? tabDutchAuctions : tabEnglishAuctions;
+    if (!Objects.equals(catalogAuctionKindGroup.getSelectedToggle(), pick)) {
+      catalogAuctionKindGroup.selectToggle(pick);
+    }
   }
 
   private void startTimelines() {
@@ -152,6 +196,7 @@ public class TrangChuController {
   }
 
   public void setFilters(String keyword, String category) {
+    syncCatalogTabsFromShell();
     this.keyword = (keyword == null) ? "" : keyword.trim().toLowerCase();
     this.category = (category == null || category.isBlank()) ? "All" : category;
     renderFilteredItems();

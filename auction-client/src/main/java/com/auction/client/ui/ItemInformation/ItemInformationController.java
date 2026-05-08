@@ -31,6 +31,7 @@ public class ItemInformationController {
   @FXML private Label ItemName;
   @FXML private Label ItemDescription;
   @FXML private Label CurrentHighestBidValue;
+  @FXML private Label BidMetricCaption;
   @FXML private Label MaxPriceValue;
   @FXML private Label EndsInValue;
   @FXML private ImageView SellerAvatar;
@@ -38,6 +39,8 @@ public class ItemInformationController {
   @FXML private Button BidButton;
   @FXML private Button RateButton;
   @FXML private VBox RatingsContainer;
+  @FXML private VBox buyItNowVBox;
+  @FXML private HBox autoBidHBox;
   @FXML private javafx.scene.control.ComboBox<String> RatingFilterCombo;
   @FXML private TextField autobidfield;
   @FXML private Button autobidbutton;
@@ -47,6 +50,9 @@ public class ItemInformationController {
   private String itemName = "";
   private double buyItNowPrice = 0;
   private List<Rating> cachedRatings = new ArrayList<>();
+  private AuctionType listingKind = AuctionType.ENGLISH;
+  private double lastListedPrice = 0;
+  private Item listingSnapshot;
 
   private BidHistoryChartBinder chartBinder;
 
@@ -63,6 +69,9 @@ public class ItemInformationController {
     this.itemId = id;
     this.itemName = name == null ? "" : name;
     this.buyItNowPrice = maxPrice;
+    this.lastListedPrice = currentPrice;
+    this.listingKind = AuctionType.ENGLISH;
+    this.listingSnapshot = null;
     if (ItemName != null) ItemName.setText(this.itemName);
     if (ItemDescription != null) ItemDescription.setText(description == null ? "" : description);
     if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", currentPrice));
@@ -74,10 +83,44 @@ public class ItemInformationController {
     if (SellerName != null) SellerName.setText(sellerName == null || sellerName.isBlank() ? "Unknown Seller" : sellerName);
     if (SellerAvatar != null && sellerAvatar != null && !sellerAvatar.isBlank())
       ImagePresentationUtil.loadCircularAvatar(SellerAvatar, sellerAvatar, 20);
+    applyAuctionPresentation();
+  }
+
+  private void applyAuctionPresentation() {
+    if (BidMetricCaption != null)
+      BidMetricCaption.setText(listingKind == AuctionType.DUTCH ? "CURRENT PRICE" : "CURRENT BID");
+    if (buyItNowVBox != null) {
+      boolean hideBin = listingKind == AuctionType.DUTCH;
+      buyItNowVBox.setVisible(!hideBin);
+      buyItNowVBox.setManaged(!hideBin);
+    }
+    if (autoBidHBox != null) {
+      boolean hideAuto = listingKind == AuctionType.DUTCH;
+      autoBidHBox.setVisible(!hideAuto);
+      autoBidHBox.setManaged(!hideAuto);
+    }
+    if (BidButton != null && !BidButton.isDisable()) {
+      BidButton.setText(
+          listingKind == AuctionType.DUTCH ? "BUY AT CURRENT PRICE" : "PLACE BID NOW");
+    }
+  }
+
+  private void applyEndsIn(Item item) {
+    if (EndsInValue == null || item == null) {
+      return;
+    }
+    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+    java.time.LocalDateTime target =
+        item.getAuctionType() == AuctionType.DUTCH
+            ? DutchAuctionPricing.countdownTarget(item, now)
+            : item.getEndTime();
+    EndsInValue.setText(DutchAuctionPricing.formatShortCountdownToward(target, now));
   }
 
   private void setBidButtonClosed(boolean closed) {
-    BidButton.setText(closed ? "CLOSED" : "PLACE BID NOW");
+    String openCaption =
+        listingKind == AuctionType.DUTCH ? "BUY AT CURRENT PRICE" : "PLACE BID NOW";
+    BidButton.setText(closed ? "CLOSED" : openCaption);
     BidButton.setDisable(closed);
     BidButton.setStyle(closed
         ? "-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;" : "");
@@ -94,12 +137,17 @@ public class ItemInformationController {
                 if (item != null) {
                   Platform.runLater(
                       () -> {
+                        listingSnapshot = item;
+                        listingKind = item.getAuctionType();
+                        lastListedPrice = item.getCurrentPrice();
                         if (CurrentHighestBidValue != null)
                           CurrentHighestBidValue.setText(String.format("%,.0f$", item.getCurrentPrice()));
-                        this.buyItNowPrice = item.getMaxPrice();
+                        buyItNowPrice = item.getMaxPrice();
                         if (MaxPriceValue != null)
                           MaxPriceValue.setText(
                               buyItNowPrice > 0 ? String.format("BUY IT NOW: %,.0f$", buyItNowPrice) : "NO BUY IT NOW");
+                        applyAuctionPresentation();
+                        applyEndsIn(item);
                         setupRatingUi(item);
                       });
                 }
@@ -170,7 +218,8 @@ public class ItemInformationController {
           com.auction.client.ui.BiddingForm.BiddingFormController c =
               (com.auction.client.ui.BiddingForm.BiddingFormController) o;
           if (c != null) {
-            if (itemId > 0) c.setData(itemId, itemName, buyItNowPrice);
+            c.setData(itemId, itemName, buyItNowPrice,
+                listingKind == AuctionType.DUTCH, lastListedPrice);
             c.setParentController(this);
           }
         });
@@ -208,6 +257,13 @@ public class ItemInformationController {
 
   @FXML
   private void handleAutoBid() {
+    if (listingKind == AuctionType.DUTCH) {
+      alert(
+          Alert.AlertType.WARNING,
+          "Not supported",
+          "Automatic bidding is not available for Dutch auctions.");
+      return;
+    }
     if (ClientSession.getCurrentUser() == null) return;
     String raw = (autobidfield != null ? autobidfield.getText() : "").replace("$", "").replace(",", "").trim();
     if (raw.isBlank()) {
@@ -267,17 +323,17 @@ public class ItemInformationController {
   }
 
   private void applyPriceFromItem(Item item) {
+    if (item == null || item.getId() != this.itemId) return;
+    listingSnapshot = item;
+    listingKind = item.getAuctionType();
+    lastListedPrice = item.getCurrentPrice();
     if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", item.getCurrentPrice()));
-    if (EndsInValue != null && item.getEndTime() != null) {
-      java.time.Duration rem = java.time.Duration.between(java.time.LocalDateTime.now(), item.getEndTime());
-      if (!rem.isNegative() && !rem.isZero()) {
-        long h = rem.toHours();
-        EndsInValue.setText(
-            h / 24 > 0
-                ? (h / 24) + "d " + (h % 24) + "h"
-                : (h % 24) + "h " + (rem.toMinutes() % 60) + "m " + (rem.getSeconds() % 60) + "s");
-      }
-    }
+    buyItNowPrice = item.getMaxPrice();
+    if (MaxPriceValue != null)
+      MaxPriceValue.setText(
+          buyItNowPrice > 0 ? String.format("BUY IT NOW: %,.0f$", buyItNowPrice) : "NO BUY IT NOW");
+    applyAuctionPresentation();
+    applyEndsIn(item);
     appendPriceToChart(item.getCurrentPrice());
   }
 
@@ -287,6 +343,7 @@ public class ItemInformationController {
   }
 
   public void updateCurrentBid(double price) {
+    lastListedPrice = price;
     Runnable update =
         () -> {
           if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText(String.format("%,.0f$", price));

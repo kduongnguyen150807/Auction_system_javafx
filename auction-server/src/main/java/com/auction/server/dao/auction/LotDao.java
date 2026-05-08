@@ -2,6 +2,7 @@ package com.auction.server.dao.auction;
 
 import com.auction.server.dao.platform.BaseDao;
 
+import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
 import com.auction.shared.ItemFactory;
 import com.auction.shared.ItemStatus;
@@ -34,6 +35,16 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
     Timestamp end = rs.getTimestamp("endtime");
     if (end != null) item.setEndTime(end.toLocalDateTime());
     item.setStatus(ItemStatus.parse(rs.getString("status")));
+    try {
+      item.setAuctionType(AuctionType.parse(rs.getString("auction_type")));
+      double dr = rs.getDouble("dutch_reserve_price");
+      if (!rs.wasNull()) item.setDutchReservePrice(dr);
+      double da = rs.getDouble("dutch_tick_amount");
+      if (!rs.wasNull()) item.setDutchTickAmount(da);
+      int im = rs.getInt("dutch_tick_interval_mins");
+      if (!rs.wasNull()) item.setDutchTickIntervalMinutes(im);
+    } catch (Exception ignored) {
+    }
     try {
       String winnerName = rs.getString("w_name");
       if (winnerName != null) item.setWinnerUsername(winnerName);

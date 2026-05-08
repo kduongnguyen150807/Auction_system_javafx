@@ -4,6 +4,8 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.AuctionType;
+import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Item;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -29,6 +31,7 @@ public class ItemCardController {
 
   @FXML private VBox itemRoot;
   @FXML private Label ItemName, ItemDescription, Price, TimeRemain;
+  @FXML private Label priceMetricCaption;
   @FXML private ImageView ImageHolder;
   @FXML private Rectangle imageClip;
 
@@ -36,6 +39,13 @@ public class ItemCardController {
   private String itemName, description, timeLabel, imageUrl, sellerName, sellerAvatarUrl;
   private double currentPrice;
   private LocalDateTime endTime;
+  /** Live catalog snapshot for Dutch timers + labels */
+  private Item catalogItemSnapshot;
+
+  public void attachCatalogItem(Item catalogItem) {
+    this.catalogItemSnapshot = catalogItem;
+    refreshPriceMetricCaption();
+  }
 
   /** Home category rows: smaller image + fixed card width (one slot per cell, no horizontal grow). */
   public void setCompactRowLayout(boolean compact) {
@@ -97,6 +107,15 @@ public class ItemCardController {
     if (TimeRemain != null) TimeRemain.setText(this.timeLabel);
 
     loadImageIfPresent(this.imageUrl);
+    refreshPriceMetricCaption();
+  }
+
+  private void refreshPriceMetricCaption() {
+    if (priceMetricCaption == null) return;
+    boolean dutch =
+        catalogItemSnapshot != null
+            && catalogItemSnapshot.getAuctionType() == AuctionType.DUTCH;
+    priceMetricCaption.setText(dutch ? "CURRENT PRICE" : "CURRENT BID");
   }
 
   private void loadImageIfPresent(String url) {
@@ -151,6 +170,8 @@ public class ItemCardController {
    */
   public void syncFromCatalogItem(Item item) {
     if (item == null || item.getId() != this.id) return;
+    catalogItemSnapshot = item;
+    refreshPriceMetricCaption();
     patchItemCoreFields(item);
     setEndTime(item.getEndTime());
     updateTimeLabel();
@@ -162,6 +183,8 @@ public class ItemCardController {
    */
   public void syncFromCatalogItemStaticTime(Item item, String timeRemainCaption) {
     if (item == null || item.getId() != this.id) return;
+    catalogItemSnapshot = item;
+    refreshPriceMetricCaption();
     patchItemCoreFields(item);
     setEndTime(null);
     this.timeLabel = timeRemainCaption != null ? timeRemainCaption : "";
@@ -198,8 +221,22 @@ public class ItemCardController {
   }
 
   public void updateTimeLabel() {
-    if (TimeRemain == null || endTime == null) return;
-    Duration rem = Duration.between(LocalDateTime.now(), endTime);
+    if (TimeRemain == null) return;
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime target;
+    boolean dutchAuction =
+        catalogItemSnapshot != null
+            && catalogItemSnapshot.getAuctionType() == AuctionType.DUTCH
+            && catalogItemSnapshot.getEndTime() != null;
+    if (dutchAuction) {
+      target = DutchAuctionPricing.countdownTarget(catalogItemSnapshot, now);
+    } else {
+      target = endTime;
+    }
+    if (target == null) {
+      return;
+    }
+    Duration rem = Duration.between(now, target);
     String label;
     if (rem.isNegative() || rem.isZero()) {
       label = "closed";

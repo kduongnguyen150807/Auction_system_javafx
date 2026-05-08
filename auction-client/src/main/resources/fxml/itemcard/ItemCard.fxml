@@ -36,9 +36,9 @@
 
                 <HBox alignment="CENTER_LEFT" spacing="0.0">
                     <children>
-                        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                            <VBox spacing="2.0" HBox.hgrow="ALWAYS">
                             <children>
-                                <Label styleClass="label-sm-gray" text="CURRENT BID" />
+                                <Label fx:id="priceMetricCaption" styleClass="label-sm-gray" text="CURRENT BID" />
                                 <Label fx:id="Price" styleClass="price-val-cyan" text="0$" />
                             </children>
                         </VBox>

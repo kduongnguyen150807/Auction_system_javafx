@@ -1,13 +1,18 @@
 package com.auction.client.ui.TrangChu;
 
 import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Keyword / category / price filter state for catalog lists (trending + category lanes). */
+/** Keyword / category / price / auction-type filter state for catalog lists (trending + category lanes). */
 public record AuctionFilterContext(
-    String keywordLower, String categoryFilter, double minPrice, double maxPrice) {
+    String keywordLower,
+    String categoryFilter,
+    double minPrice,
+    double maxPrice,
+    AuctionType catalogAuctionType) {
 
   public static AuctionFilterContext fromHomeState(String keywordLower, String category) {
     double minPrice = KhungController.getMinPrice();
@@ -18,7 +23,9 @@ public record AuctionFilterContext(
     String kw = keywordLower == null ? "" : keywordLower;
     String cat =
         (category == null || category.isBlank()) ? "All" : category;
-    return new AuctionFilterContext(kw, cat, minPrice, maxPrice);
+    AuctionType kind = KhungController.getCatalogAuctionType();
+    return new AuctionFilterContext(kw, cat, minPrice, maxPrice,
+        kind != null ? kind : AuctionType.ENGLISH);
   }
 
   public List<Item> itemsMatchingCategoryLane(List<Item> cachedItems, String laneCategory) {
@@ -70,11 +77,17 @@ public record AuctionFilterContext(
   }
 
   private boolean matchesKeywordAndPrice(Item item) {
+    if (!matchesAuctionType(item)) return false;
     String name = nullToEmpty(item.getName()).toLowerCase();
     if (!keywordLower.isBlank() && !name.contains(keywordLower)) {
       return false;
     }
     return item.getCurrentPrice() >= minPrice && item.getCurrentPrice() <= maxPrice;
+  }
+
+  private boolean matchesAuctionType(Item item) {
+    AuctionType requested = catalogAuctionType != null ? catalogAuctionType : AuctionType.ENGLISH;
+    return item != null && item.getAuctionType() == requested;
   }
 
   private static String nullToEmpty(String value) {

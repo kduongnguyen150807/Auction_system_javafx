@@ -1,5 +1,8 @@
 package com.auction.client.ui.TrangChu;
 
+import com.auction.shared.AuctionType;
+import com.auction.shared.DutchAuctionPricing;
+import com.auction.shared.Item;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -7,6 +10,19 @@ import java.time.LocalDateTime;
 public final class CatalogTimeFormatter {
 
   private CatalogTimeFormatter() {}
+
+  /** Countdown toward auction end (English) or next drop / end (Dutch). */
+  public static String formatRemainingForItem(Item item) {
+    if (item == null) {
+      return "N/A";
+    }
+    LocalDateTime now = LocalDateTime.now();
+    if (item.getAuctionType() == AuctionType.DUTCH) {
+      LocalDateTime target = DutchAuctionPricing.countdownTarget(item, now);
+      return DutchAuctionPricing.formatShortCountdownToward(target, now);
+    }
+    return formatRemaining(item.getEndTime());
+  }
 
   public static String formatRemaining(LocalDateTime endTime) {
     if (endTime == null) {

@@ -21,16 +21,18 @@ public final class HomeItemCardFactory {
       if (newCard == null || root == null) {
         return null;
       }
+      newCard.attachCatalogItem(item);
       newCard.setData(
           item.getId(),
           safe(item.getName()),
           item.getCurrentPrice(),
           safe(item.getDescription()),
-          CatalogTimeFormatter.formatRemaining(item.getEndTime()),
+          CatalogTimeFormatter.formatRemainingForItem(item),
           safe(item.getImageUrl()),
           safe(item.getSellerUsername()),
           safe(item.getSellerAvatarUrl()));
       newCard.setEndTime(item.getEndTime());
+
       newCard.setCompactRowLayout(compact);
       return newCard;
     } catch (Exception e) {

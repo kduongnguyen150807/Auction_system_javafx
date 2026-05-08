@@ -49,15 +49,42 @@ final class AuctionBidPipeline {
 
   Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
     Item item = itemDao.getById(bid.getItemId());
+    DutchAuctionCatalogSync.syncItem(itemDao, item);
+    item = itemDao.getById(bid.getItemId());
     User bidder = userDao.getById(String.valueOf(bid.getUserId()));
     Response validation = validator.validate(bid, item, bidder);
     if (validation != null) return validation;
+    if (item != null && item.getAuctionType() == AuctionType.DUTCH) {
+      return processDutchPurchase(bid, item, bidder, after);
+    }
     if (isBuyItNow(item, bid)) return processBuyItNow(bid, item, bidder, after);
     return processRegularBid(bid, item, bidder, after, pendingPriceBroadcast);
   }
 
   private boolean isBuyItNow(Item item, BidTransaction bid) {
     return item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice();
+  }
+
+  private Response processDutchPurchase(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
+    double price = item.getCurrentPrice();
+    if (Math.abs(bid.getBidValue() - price) > 0.02) {
+      return BidAuctionValidator.error("Enter the current listed price to purchase");
+    }
+    if (!userDao.atomicDeductBalance(bidder.getId(), price)) return BidAuctionValidator.error("Insufficient balance");
+    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
+    userDao.addBidderMetrics(bidder.getId(), price);
+    if (!itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
+      userDao.atomicCreditBalance(bidder.getId(), price);
+      logDao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
+      return BidAuctionValidator.error("Auction already closed");
+    }
+    itemDao.updatePrice(item.getId(), price, item.getVersion());
+    creditSeller(item, price, after);
+    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+    after.add(() -> notifier.broadcastItemClosed(item.getId()));
+    final int closedItemId = item.getId();
+    after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
+    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
   }
 
   private Response processBuyItNow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {

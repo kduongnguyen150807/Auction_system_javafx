@@ -41,6 +41,9 @@ final class AutoBidCoordinator {
     User bidder = userDao.getById(String.valueOf(bid.getUserId()));
     Response v = validator.validate(bid, item, bidder);
     if (v != null) return v;
+    if (item.getAuctionType() == AuctionType.DUTCH) {
+      return BidAuctionValidator.error("Auto-bid is not available for Dutch auctions");
+    }
     if (bid.getMaxAutoBid() <= item.getCurrentPrice())
       return BidAuctionValidator.error("Max auto-bid must be higher than current price");
     PriorityQueue<AutoBidRegistration> regs =

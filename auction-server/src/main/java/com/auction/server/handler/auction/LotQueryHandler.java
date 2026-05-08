@@ -3,8 +3,12 @@ package com.auction.server.handler.auction;
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
 
+import com.auction.server.service.auction.DutchAuctionCatalogSync;
+import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
+import java.util.Collections;
+import java.util.List;
 
 public class LotQueryHandler implements ActionHandler {
   @Override
@@ -16,20 +20,48 @@ public class LotQueryHandler implements ActionHandler {
     java.util.List<?> results;
     switch (action) {
       case Request.GET_ONGOING_BIDS:
-        results = context.getLotDao().getOngoingBids(userId);
+        results = syncedOngoing(context, userId);
         break;
       case Request.GET_UPCOMING_BIDS:
-        results = context.getLotDao().getUpcomingBids(userId);
+        results = syncedUpcoming(context, userId);
         break;
       case Request.GET_CLOSED_BIDS:
-        results = context.getLotDao().getClosedBids(userId);
+        results = syncedClosed(context, userId);
         break;
       case Request.GET_PAST_BIDS:
-        results = context.getLotDao().getPastBids(userId);
+        results = syncedPast(context, userId);
         break;
       default:
         return new Response(requestId, Response.ERROR, "unknown_action", null);
     }
     return new Response(requestId, Response.OK, "success", (java.io.Serializable) results);
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedOngoing(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getOngoingBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedUpcoming(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getUpcomingBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedClosed(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getClosedBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedPast(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getPastBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
   }
 }

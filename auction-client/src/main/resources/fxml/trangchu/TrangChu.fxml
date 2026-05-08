@@ -5,6 +5,7 @@
 <?import javafx.scene.control.ContentDisplay?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -20,6 +21,19 @@
       styleClass="trangchu-page"
       stylesheets="/css/trangchu/TrangChu.css">
     <children>
+        <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="catalog-auction-toolbar">
+            <children>
+                <Label styleClass="category-heading" text="Browse catalog" />
+                <HBox spacing="10.0" styleClass="segment-toggle-group">
+                    <children>
+                        <ToggleButton fx:id="tabEnglishAuctions" mnemonicParsing="false" prefHeight="40.0"
+                                    styleClass="catalog-auction-tab" text="English Auctions"/>
+                        <ToggleButton fx:id="tabDutchAuctions" mnemonicParsing="false" prefHeight="40.0"
+                                    styleClass="catalog-auction-tab" text="Dutch Auctions"/>
+                    </children>
+                </HBox>
+            </children>
+        </HBox>
         <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="260.0" percentWidth="35.0"/>

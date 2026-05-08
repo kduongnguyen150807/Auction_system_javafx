@@ -11,6 +11,7 @@ import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.UserProfile.UserProfileController;
 import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.client.util.ImagePresentationUtil;
+import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
@@ -279,6 +280,22 @@ public class KhungController {
 
   public static double getMaxPrice() {
     return instance != null ? instance.searchFilters.getMaxPrice() : Double.MAX_VALUE;
+  }
+
+  public static AuctionType getCatalogAuctionType() {
+    return instance != null
+        ? instance.searchFilters.getCatalogAuctionType()
+        : AuctionType.ENGLISH;
+  }
+
+  public static void setCatalogAuctionType(AuctionType auctionType) {
+    if (instance == null) return;
+    instance.searchFilters.setCatalogAuctionType(
+        auctionType != null ? auctionType : AuctionType.ENGLISH);
+    if (instance.homeController != null) {
+      instance.homeController.setFilters(
+          instance.searchFilters.getKeyword(), instance.searchFilters.getCategory());
+    }
   }
 
   public static void applySearchFilter(String keyword, String category, double min, double max) {

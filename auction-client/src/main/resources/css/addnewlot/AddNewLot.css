@@ -1,5 +1,12 @@
+@import url("../shared/AppScrollbar.css");
+
 .root {
     -fx-font-family: "Consolas";
+}
+
+/* Nền trong suốt + lề nhẹ cho scrollbar dọc (cùng AppScrollbar như History / Trang Chủ) */
+.addnewlot-scroll {
+    -fx-padding: 0 2 0 0;
 }
 
 .glass-panel-item-blue {
@@ -128,4 +135,30 @@
 .combo-mac:focused {
     -fx-border-color: #007aff;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.3), 5, 0, 0, 0);
+}
+
+.label-sm-muted {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 11px;
+    -fx-wrap-text: true;
+}
+
+.auction-type-segments {
+    -fx-background-color: rgba(0, 0, 0, 0.25);
+    -fx-background-radius: 12;
+    -fx-padding: 8 10;
+}
+
+.segment-toggle-auction {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 10;
+    -fx-text-fill: #cccccc;
+    -fx-font-weight: bold;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+
+.segment-toggle-auction:selected {
+    -fx-background-color: linear-gradient(to right, #007aff, #00E5FF);
+    -fx-text-fill: white;
 }

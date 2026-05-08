@@ -19,6 +19,10 @@ public abstract class Item extends Entity {
   protected String sellerAvatarUrl;
   protected String winnerUsername;
   protected String category;
+  protected AuctionType auctionType = AuctionType.ENGLISH;
+  protected double dutchReservePrice;
+  protected double dutchTickAmount;
+  protected int dutchTickIntervalMinutes;
 
   public Item() {}
 
@@ -40,6 +44,38 @@ public abstract class Item extends Entity {
 
   public void setCategory(String category) {
     this.category = category;
+  }
+
+  public AuctionType getAuctionType() {
+    return auctionType != null ? auctionType : AuctionType.ENGLISH;
+  }
+
+  public void setAuctionType(AuctionType auctionType) {
+    this.auctionType = auctionType != null ? auctionType : AuctionType.ENGLISH;
+  }
+
+  public double getDutchReservePrice() {
+    return dutchReservePrice;
+  }
+
+  public void setDutchReservePrice(double dutchReservePrice) {
+    this.dutchReservePrice = dutchReservePrice;
+  }
+
+  public double getDutchTickAmount() {
+    return dutchTickAmount;
+  }
+
+  public void setDutchTickAmount(double dutchTickAmount) {
+    this.dutchTickAmount = dutchTickAmount;
+  }
+
+  public int getDutchTickIntervalMinutes() {
+    return dutchTickIntervalMinutes;
+  }
+
+  public void setDutchTickIntervalMinutes(int dutchTickIntervalMinutes) {
+    this.dutchTickIntervalMinutes = dutchTickIntervalMinutes;
   }
 
   public String getName() {

@@ -29,6 +29,17 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
     item.setStatus(ItemStatus.parse(rs.getString("status")));
     item.setImageUrl(rs.getString("image_url"));
     try {
+      item.setAuctionType(AuctionType.parse(rs.getString("auction_type")));
+      double dr = rs.getDouble("dutch_reserve_price");
+      if (!rs.wasNull()) item.setDutchReservePrice(dr);
+      double da = rs.getDouble("dutch_tick_amount");
+      if (!rs.wasNull()) item.setDutchTickAmount(da);
+      int im = rs.getInt("dutch_tick_interval_mins");
+      if (!rs.wasNull()) item.setDutchTickIntervalMinutes(im);
+    } catch (SQLException ignored) {
+      /* Pre-migration schemas: keep ENGLISH defaults */
+    }
+    try {
       String sn = rs.getString("seller_name"); if (sn != null) item.setSellerUsername(sn);
       String sa = rs.getString("seller_avatar"); if (sa != null) item.setSellerAvatarUrl(sa);
     } catch (SQLException e) {}
@@ -72,8 +83,20 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
   }
 
   @Override
-  public boolean insertLot(String name, String description, double startingPrice, double maxPrice,
-      LocalDateTime startTime, LocalDateTime endTime, String sellerUsername, String imageUrl, String category) {
+  public boolean insertLot(
+      String name,
+      String description,
+      double startingPrice,
+      double maxPrice,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      String sellerUsername,
+      String imageUrl,
+      String category,
+      AuctionType auctionType,
+      double dutchReservePrice,
+      double dutchTickAmount,
+      int dutchTickIntervalMinutes) {
     try (Connection conn = getConn()) {
       int sellerId = -1;
       try (PreparedStatement lookup = conn.prepareStatement("select id from users where username = ? limit 1")) {
@@ -82,17 +105,42 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
         if (rs.next()) sellerId = rs.getInt(1);
       }
       if (sellerId <= 0) return false;
-      String sql = "INSERT INTO items (category, name, description, startingprice, currentprice, maxprice, starttime, endtime, sellerid, winnerid, status, version, image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+      AuctionType kind = auctionType != null ? auctionType : AuctionType.ENGLISH;
+      String sql =
+          "INSERT INTO items (category, auction_type, name, description, startingprice, currentprice,"
+              + " maxprice, dutch_reserve_price, dutch_tick_amount, dutch_tick_interval_mins,"
+              + " starttime, endtime, sellerid, winnerid, status, version, image_url)"
+              + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
       try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, category == null ? "Vehicle" : category); ps.setString(2, name);
-        ps.setString(3, description); ps.setDouble(4, startingPrice); ps.setDouble(5, startingPrice);
-        ps.setDouble(6, maxPrice); ps.setTimestamp(7, Timestamp.valueOf(startTime));
-        ps.setTimestamp(8, Timestamp.valueOf(endTime)); ps.setInt(9, sellerId);
-        ps.setNull(10, Types.INTEGER); ps.setString(11, ItemStatus.PENDING.name());
-        ps.setInt(12, 0); ps.setString(13, imageUrl);
+        ps.setString(1, category == null ? "Vehicle" : category);
+        ps.setString(2, kind.dbName());
+        ps.setString(3, name);
+        ps.setString(4, description);
+        ps.setDouble(5, startingPrice);
+        ps.setDouble(6, startingPrice);
+        ps.setDouble(7, maxPrice);
+        if (kind == AuctionType.DUTCH) {
+          ps.setDouble(8, dutchReservePrice);
+          ps.setDouble(9, dutchTickAmount);
+          ps.setInt(10, dutchTickIntervalMinutes);
+        } else {
+          ps.setNull(8, Types.DOUBLE);
+          ps.setNull(9, Types.DOUBLE);
+          ps.setNull(10, Types.INTEGER);
+        }
+        ps.setTimestamp(11, Timestamp.valueOf(startTime));
+        ps.setTimestamp(12, Timestamp.valueOf(endTime));
+        ps.setInt(13, sellerId);
+        ps.setNull(14, Types.INTEGER);
+        ps.setString(15, ItemStatus.PENDING.name());
+        ps.setInt(16, 0);
+        ps.setString(17, imageUrl);
         return ps.executeUpdate() > 0;
       }
-    } catch (Exception e) { LOGGER.warn("insertLot failed", e); return false; }
+    } catch (Exception e) {
+      LOGGER.warn("insertLot failed", e);
+      return false;
+    }
   }
 
   @Override
