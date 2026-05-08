@@ -1,7 +1,7 @@
 package com.auction.client.network;
 
-import com.auction.shared.link.Request;
-import com.auction.shared.link.Response;
+import com.auction.shared.linkv2.Request;
+import com.auction.shared.linkv2.Response;
 import javafx.application.Platform;
 import javafx.scene.control.TextInputDialog;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ public class NetworkClient {
   /**
    * Bản đồ lưu trữ các yêu cầu đang chờ phản hồi từ Server
    */
-  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, CompletableFuture<Response<?>>> pendingMap = new ConcurrentHashMap<>();
 
   private NetworkClient() {}
 
@@ -109,7 +109,7 @@ public class NetworkClient {
       try {
         while (true) {
           Object obj = in.readObject();
-          if (obj instanceof Response response) handleIncoming(response);
+          if (obj instanceof Response<?> response) handleIncoming(response);
         }
       } catch (Exception e) {
         LOGGER.warn("Server connection lost", e);
@@ -122,10 +122,10 @@ public class NetworkClient {
   /**
    * Khớp phản hồi nhận được với yêu cầu đang chờ trong Map.
    */
-  private void handleIncoming(Response response) {
-    String requestId = response.getRequestId();
+  private void handleIncoming(Response<?> response) {
+    String requestId = response.getId();
     if (requestId == null) return;
-    CompletableFuture<Response> future = pendingMap.get(requestId);
+    CompletableFuture<Response<?>> future = pendingMap.get(requestId);
     LOGGER.info("Received request {} from {}", requestId, response.getMessage());
     if (future != null) future.complete(response);
     else LOGGER.warn("Received response for unknown request ID: {}", requestId);
@@ -137,15 +137,15 @@ public class NetworkClient {
    * @param request Đối tượng yêu cầu.
    * @return Một {@link CompletableFuture} chứa phản hồi trong tương lai.
    */
-  public CompletableFuture<Response> sendRequestAsync(Request request) {
-    String requestId = request.getRequestId();
-    CompletableFuture<Response> future = new CompletableFuture<>();
+  public CompletableFuture<Response<?>> sendRequestAsync(Request<?> request) {
+    String requestId = request.getId();
+    CompletableFuture<Response<?>> future = new CompletableFuture<>();
     if (out == null) {
       future.completeExceptionally(new IllegalStateException(
         "Not connected to server — check IP address and server status."));
       return future;
     }
-    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestId, future);
+    CompletableFuture<Response<?>> existing = pendingMap.putIfAbsent(requestId, future);
     if (existing != null) {
       future.completeExceptionally(new IllegalStateException("Duplicate request id: " + requestId));
       return future;
@@ -164,9 +164,9 @@ public class NetworkClient {
         pendingMap.remove(requestId);
         if (error != null) {
           if (error instanceof java.util.concurrent.TimeoutException)
-            LOGGER.warn("Server timeout ({}s) for request {} ({})", DEFAULT_REQUEST_TIMEOUT_SECONDS, requestId, request.getAction());
+            LOGGER.warn("Server timeout ({}s) for request {} ({})", DEFAULT_REQUEST_TIMEOUT_SECONDS, requestId, request.getType());
           else
-            LOGGER.warn("Request {} ({}) failed: {}", requestId, request.getAction(), error.getMessage());
+            LOGGER.warn("Request {} ({}) failed: {}", requestId, request.getType(), error.getMessage());
         }
       });
   }
@@ -177,13 +177,13 @@ public class NetworkClient {
    * @param request Đối tượng yêu cầu.
    * @return Phản hồi từ Server hoặc null nếu lỗi/timeout.
    */
-  public Response sendRequestAndWait(Request request) {
+  public Response<?> sendRequestAndWait(Request<?> request) {
     try {
-      LOGGER.info("Sending request: {} with id {}", request.getAction(),  request.getRequestId());
+      LOGGER.info("Sending request: {} with id {}", request.getType(),  request.getId());
       return sendRequestAsync(request).get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      LOGGER.warn("Interrupted while waiting for response to {}", request.getAction());
+      LOGGER.warn("Interrupted while waiting for response to {}", request.getType());
       return null;
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
