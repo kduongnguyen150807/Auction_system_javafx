@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="20"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.maindashboard.admin.AdminDashboardController"
+      style="-fx-background-color: white; -fx-background-radius: 15; -fx-border-radius: 15; -fx-padding: 20;">
+    <fx:include source="../admin/UserManagementPane.fxml" fx:id="userManagement" />
+    <fx:include source="../admin/PendingItemPane.fxml" fx:id="pendingItem" />
+    <fx:include source="../admin/AnalyticsPane.fxml" fx:id="analytics"/>
+</VBox>

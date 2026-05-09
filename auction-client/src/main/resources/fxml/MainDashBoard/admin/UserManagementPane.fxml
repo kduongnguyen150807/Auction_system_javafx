@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10"
+      xmlns="http://javafx.com/javafx/25"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.ui.maindashboard.admin.UserManagementController">
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="USER MANAGEMENT"
+               styleClass="section-title" />
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <ComboBox fx:id="ratingFilter" />
+    </HBox>
+
+    <TableView fx:id="userTable"
+               VBox.vgrow="ALWAYS">
+
+        <columns>
+            <TableColumn fx:id="usernameColumn"
+                         text="Username" />
+
+            <TableColumn fx:id="emailColumn"
+                         text="Email" />
+
+            <TableColumn fx:id="roleColumn"
+                         text="Role" />
+
+            <TableColumn fx:id="statusColumn"
+                         text="Status" />
+
+            <TableColumn fx:id="ratingColumn"
+                         text="Rating" />
+        </columns>
+
+    </TableView>
+
+    <HBox alignment="CENTER"
+          spacing="10">
+
+        <Button fx:id="banButton"
+                text="Ban"
+                onAction="#handleBan"
+                styleClass="danger-button" />
+
+        <Button fx:id="unbanButton"
+                text="Unban"
+                onAction="#handleUnban"
+                styleClass="success-button" />
+
+    </HBox>
+
+</VBox>

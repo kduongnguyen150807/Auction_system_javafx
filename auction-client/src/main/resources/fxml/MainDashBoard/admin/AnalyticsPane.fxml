@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="15"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.maindashboard.admin.AnalyticsController"
+      styleClass="dashboard-section">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT">
+
+        <Label text="SYSTEM ANALYTICS"
+               styleClass="section-title"/>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+    </HBox>
+
+    <!-- Charts -->
+    <HBox spacing="20"
+          alignment="CENTER"
+          VBox.vgrow="ALWAYS">
+
+        <!-- Pie Chart -->
+        <PieChart fx:id="itemStatusChart"
+                  title="Item Status"
+                  prefWidth="400"
+                  prefHeight="300"
+                  HBox.hgrow="ALWAYS"/>
+
+        <!-- Bar Chart -->
+        <BarChart fx:id="categoryRevenueChart"
+                  title="Revenue by Category"
+                  prefWidth="500"
+                  prefHeight="300"
+                  HBox.hgrow="ALWAYS">
+
+            <xAxis>
+                <CategoryAxis label="Category"/>
+            </xAxis>
+
+            <yAxis>
+                <NumberAxis label="Revenue ($)"/>
+            </yAxis>
+
+        </BarChart>
+
+    </HBox>
+
+    <!-- Statistics Cards -->
+    <HBox spacing="20"
+          alignment="CENTER">
+
+        <!-- Total Users -->
+        <VBox alignment="CENTER"
+              spacing="5"
+              styleClass="analytics-card">
+
+            <Label text="Total Users"
+                   styleClass="analytics-title"/>
+
+            <Label fx:id="totalUsersLabel"
+                   text="0"
+                   styleClass="analytics-value"/>
+
+        </VBox>
+
+        <!-- Total Auctions -->
+        <VBox alignment="CENTER"
+              spacing="5"
+              styleClass="analytics-card">
+
+            <Label text="Total Auctions"
+                   styleClass="analytics-title"/>
+
+            <Label fx:id="totalAuctionsLabel"
+                   text="0"
+                   styleClass="analytics-value"/>
+
+        </VBox>
+
+        <!-- Revenue -->
+        <VBox alignment="CENTER"
+              spacing="5"
+              styleClass="analytics-card">
+
+            <Label text="Revenue"
+                   styleClass="analytics-title"/>
+
+            <Label fx:id="revenueLabel"
+                   text='0$'
+                   styleClass="analytics-value"/>
+
+        </VBox>
+
+    </HBox>
+
+</VBox>
