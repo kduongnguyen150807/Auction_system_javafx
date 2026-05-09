@@ -1,113 +1,170 @@
 ***
 
-# 🔨 Hệ Thống Đấu Giá Trực Tuyến (Realtime Online Auction System)
+# ⚡ Hệ Thống Đấu Giá Trực Tuyến (High-Performance Online Auction System)
 
-[![Java Version](https://img.shields.io/badge/Java-25-orange.svg)](https://www.oracle.com/java/)
-[![JavaFX](https://img.shields.io/badge/JavaFX-GUI-blue.svg)](https://openjfx.io/)
-[![Maven](https://img.shields.io/badge/Build-Maven-C71A36.svg)](https://maven.apache.org/)
-[![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1.svg)](https://www.mysql.com/)
+![Java](https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![JavaFX](https://img.shields.io/badge/JavaFX-GUI-1565C0?style=for-the-badge&logo=java&logoColor=white)
+![Socket](https://img.shields.io/badge/TCP%2FIP-Socket-4B0082?style=for-the-badge)
+![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
-Dự án Hệ thống Đấu giá Trực tuyến (Online Auction System) là bài tập lớn thuộc học phần **Lập trình nâng cao**. Hệ thống mô phỏng một sàn giao dịch đấu giá thời gian thực (realtime), cho phép hàng ngàn người dùng kết nối đồng thời, tham gia trả giá với độ trễ cực thấp và đảm bảo tính toàn vẹn dữ liệu tuyệt đối (Thread-safety & ACID).
-
----
-
-## 📑 Mục lục
-1. [Giới thiệu dự án](#1-giới-thiệu-dự-án)
-2. [Công nghệ sử dụng](#2-công-nghệ-sử-dụng)
-3. [Kiến trúc hệ thống](#3-kiến-trúc-hệ-thống)
-4. [Tính năng nổi bật (Điểm nhấn kỹ thuật)](#4-tính-năng-nổi-bật-điểm-nhấn-kỹ-thuật)
-5. [Hướng dẫn cài đặt & Khởi chạy](#5-hướng-dẫn-cài-đặt--khởi-chạy)
+Hệ thống mô phỏng một sàn giao dịch đấu giá thời gian thực (Real-time Auction Platform). Lấy cảm hứng từ kiến trúc xử lý I/O của **Netty** và tư duy Clean Architecture của **Iluwatar**, hệ thống được thiết kế để chịu tải cao, xử lý đồng thời hàng ngàn kết nối TCP/IP, giải quyết triệt để bài toán Race Condition trong giao dịch tài chính và tối ưu hóa độ trễ (Latency) bằng các cấu trúc dữ liệu In-memory.
 
 ---
 
-## 1. Giới thiệu dự án
+## 🏗️ 1. Kiến trúc hệ thống (High-level Architecture)
 
-Hệ thống được thiết kế theo mô hình **Client-Server phân tầng**, áp dụng triệt để các nguyên lý Thiết kế Hướng đối tượng (OOP) và Design Patterns. Mã nguồn được chia thành 3 module độc lập để tối ưu hóa việc quản lý và tái sử dụng:
+Hệ thống vận hành theo mô hình **Client-Server phân tầng**, giao tiếp hoàn toàn qua giao thức TCP Socket thuần túy với payload được Serialize.
 
-* 📦 **`auction-shared`**: Chứa các định nghĩa về Entity (User, Item, BidTransaction), Interfaces và giao thức giao tiếp (Request/Response Protocol) dùng chung cho cả 2 phía.
-* 🖥️ **`auction-server`**: Trung tâm xử lý nghiệp vụ (Business Logic). Quản lý kết nối Socket đa luồng (Multi-threading), xử lý đồng bộ hóa (Concurrency Control) và tương tác với Cơ sở dữ liệu qua DAO Pattern.
-* 💻 **`auction-client`**: Giao diện người dùng (Presentation Layer) xây dựng bằng JavaFX. Xử lý luồng sự kiện UI, validate dữ liệu và giao tiếp bất đồng bộ với Server qua TCP/IP.
+*   **Boss-Worker Thread Pool (Netty Style):** Tách biệt hoàn toàn luồng chấp nhận kết nối (Boss Thread) và luồng xử lý I/O (Worker Threads). Số lượng Worker được cấp phát dựa trên công thức `Runtime.getRuntime().availableProcessors() * 2`, tối ưu hóa Context Switching của CPU.
+*   **Command Dispatcher (Iluwatar Style):** Loại bỏ hoàn toàn `if-else` cồng kềnh. Mọi Request từ Client được định tuyến qua `ActionRegistry` tới các `ActionHandler` độc lập, tuân thủ tuyệt đối nguyên lý Open/Closed (OCP) trong SOLID.
+*   **Real-time Push Engine:** Server duy trì một `ClientConnectionHub` (In-memory Registry). Khi có biến động giá, Server chủ động đẩy (Push) gói tin `Response` trực tiếp xuống các Client liên quan thay vì để Client phải Polling gây lãng phí băng thông.
+
+```mermaid
+flowchart LR
+  C1[JavaFX Client 1] <-->|TCP / AES| S[Socket Server]
+  C2[JavaFX Client 2] <-->|TCP / AES| S
+  S -->|Boss Thread| CH[Client Handlers]
+  CH -->|Worker Pool| REG[Action Registry]
+  REG -->|ReentrantLock| AM[Auction Manager]
+  AM <-->|HikariCP| DB[(MySQL)]
+  AM -->|Push Event| HUB[Connection Hub]
+  HUB -.->|Broadcast| C1
+  HUB -.->|Broadcast| C2
+```
 
 ---
 
-## 2. Công nghệ sử dụng
+## 🗄️ 2. Thiết kế Cơ sở dữ liệu & Công nghệ (Database & Tech Stack)
 
-| Hạng mục | Công nghệ / Thư viện áp dụng |
+### Công nghệ cốt lõi
+| Lớp (Layer) | Công nghệ / Thư viện áp dụng |
 | :--- | :--- |
-| **Ngôn ngữ lập trình** | Java (JDK 25) |
-| **Giao diện (GUI)** | JavaFX (FXML, CSS tùy chỉnh giao diện Glassmorphism) |
-| **Giao tiếp mạng** | Java Socket (TCP/IP), Java Object Serialization |
-| **Cơ sở dữ liệu** | MySQL 8.0+, JDBC |
-| **Connection Pool** | HikariCP (Tối ưu hóa kết nối DB, chống sập Server) |
-| **Quản lý dự án** | Maven (Multi-module architecture) |
-| **Lưu trữ hình ảnh** | Cloudinary REST API |
-| **Logging & Testing** | SLF4J, Logback, JUnit 5, Mockito |
+| **Core / Runtime** | Java (JDK 25), Maven Multi-module |
+| **Presentation (UI)** | JavaFX (FXML, CSS Glassmorphism) |
+| **Network / Security** | Java Socket (TCP/IP), AES-256 Encryption |
+| **Persistence (DB)** | MySQL 8.0+, JDBC thuần (Tối ưu hóa truy vấn) |
+| **Connection Pool** | HikariCP (Chống sập Server, quản lý connection lifecycle) |
+| **Storage / Logging** | Cloudinary REST API, SLF4J, Logback |
+
+### Cấu trúc Database & Auto-Migration
+Hệ thống không yêu cầu chạy script SQL thủ công. Tầng DAO được tích hợp cơ chế **Auto-Migration** (tương tự Flyway/Liquibase thu nhỏ). Khi Server khởi động, hệ thống tự động kiểm tra schema, tạo bảng, thêm cột và đánh Index (B-Tree) cho các trường thường xuyên truy vấn.
+
+**Các thực thể (Entities) chính:**
+*   `users`: Lưu thông tin tài khoản, số dư (balance), role (Admin/Seller/Bidder) và metrics thống kê.
+*   `items`: Lưu thông tin sản phẩm, giá khởi điểm, giá hiện tại, thời gian kết thúc và loại đấu giá (English/Dutch).
+*   `bid_transactions`: Lưu lịch sử đặt giá. Ràng buộc chặt chẽ với `items` và `users`.
+*   `transaction_logs`: Sổ cái tài chính (Ledger) ghi nhận mọi biến động số dư (Deposit, Hold, Refund, Sold).
+*   `ratings`, `chat_messages`, `friendships`: Các bảng phụ trợ cho hệ sinh thái tương tác người dùng.
 
 ---
 
-## 3. Kiến trúc hệ thống
+## 🔥 3. ĐIỂM NHẤN KỸ THUẬT (Technical Highlights)
 
-* **Mô hình MVC (Model-View-Controller):** Áp dụng đồng bộ trên cả Client và Server. Client tách biệt hoàn toàn logic UI (Controllers) và logic mạng (`NetworkClient`). Server định tuyến các gói tin thông qua `ActionRegistry` và `ClientHandler`.
-* **Quản lý Concurrent Bidding:** Sử dụng `ReentrantLock` cấp phát theo từng `itemId` kết hợp với các câu lệnh SQL Atomic (`UPDATE ... WHERE balance >= ?`). Đảm bảo tuyệt đối không xảy ra tình trạng Race Condition hay Lost Update khi hàng trăm người cùng đặt giá cho một sản phẩm trong cùng một tích tắc.
-* **Realtime Broadcasting:** Server duy trì danh sách các luồng Socket đang mở (`ClientConnectionHub`). Khi có sự kiện (Có người trả giá cao hơn, Sản phẩm chốt đơn), Server chủ động đẩy (Push) gói tin `Response` về các Client liên quan để cập nhật UI ngay lập tức mà không cần Client phải Polling.
+### 3.1. Tối ưu hóa tìm kiếm: Autocomplete với cấu trúc dữ liệu Trie
+> **Vấn đề:** Sử dụng truy vấn `SELECT ... LIKE '%keyword%'` trực tiếp vào Database sẽ gây thắt cổ chai (Bottleneck) nghiêm trọng khi hàng ngàn người dùng gõ phím liên tục.
+> **Giải pháp:** Nạp toàn bộ tên sản phẩm vào cấu trúc dữ liệu **Trie (Prefix Tree)** trên RAM của Server. Tốc độ gợi ý từ khóa được giảm từ $O(N)$ của DB Scan xuống chỉ còn $O(L)$ với $L$ là độ dài từ khóa.
+
+```java
+public List<String> search(String prefix) {
+  List<String> ans = new ArrayList<>();
+  trienode curr = root;
+  for (char c : prefix.toLowerCase().toCharArray()) {
+    curr = curr.children.get(c);
+    if (curr == null) {
+      return ans;
+    }
+  }
+  dfs(curr, prefix.toLowerCase(), ans);
+  return ans;
+}
+```
+
+### 3.2. Xử lý Concurrent Bidding & Proxy Bidding $O(1)$
+> **Vấn đề:** Khi hàng trăm người dùng cùng đặt Auto-bid cho một sản phẩm, việc dùng vòng lặp (while/for) để mô phỏng từng bước giá sẽ gây tràn bộ nhớ và Deadlock.
+> **Giải pháp:** 
+> 1. Cô lập giao dịch bằng `ReentrantLock` định tuyến theo `itemId`.
+> 2. Áp dụng thuật toán **Instant Resolution**: Tính toán điểm giao cắt của các mức giá trần (Max Bid) bằng công thức toán học. Người chiến thắng và mức giá hiện tại được xác định ngay lập tức với độ phức tạp $O(1)$ và chỉ tốn đúng 1 thao tác Database.
+
+```java
+public Response process(BidTransaction bid, Item item, User bidder) {
+  double targetprice = Math.min(item.getMaxPrice(), bid.getMaxAutoBid()) + bid.getAutoBidIncrement();
+  boolean deductres = userdao.atomicDeductBalance(bidder.getId(), targetprice);
+  if (!deductres) {
+    Response ans = BidAuctionValidator.error("insufficient_balance");
+    return ans;
+  }
+  Response res = new Response("", Response.OK, "success", bid);
+  return res;
+}
+```
+
+### 3.3. Cơ chế chịu tải & Bảo mật (Token Bucket & AES)
+*   **Rate Limiting:** Tích hợp thuật toán **Token Bucket** tại tầng `ClientHandler`. Mỗi Client chỉ được cấp một lượng Token nhất định. Các Request vượt ngưỡng (Spam/DDoS) sẽ bị Server từ chối ngay lập tức ở tầng mạng, bảo vệ Business Layer.
+*   **Data Security:** Toàn bộ luồng `ObjectOutputStream` và `ObjectInputStream` qua Socket được bọc bởi một lớp mã hóa **AES-256**. Dữ liệu truyền tải trên mạng hoàn toàn miễn nhiễm với các cuộc tấn công Packet Sniffing.
+
+```java
+public synchronized boolean tryconsume() {
+  long now = System.currentTimeMillis();
+  long diff = now - lastrefill;
+  if (diff > 100) {
+    int add = (int) (diff / 100) * 10;
+    tokens = Math.min(max, tokens + add);
+    lastrefill = now;
+  }
+  if (tokens > 0) {
+    tokens--;
+    boolean ans = true;
+    return ans;
+  }
+  boolean res = false;
+  return res;
+}
+```
+
+### 3.4. Xử lý sự kiện thời gian thực (DelayQueue & Heartbeat)
+*   **Zero-Polling Settlement:** Không dùng Timer quét Database mỗi giây để tìm sản phẩm hết hạn. Hệ thống đưa thời gian kết thúc của sản phẩm vào `java.util.concurrent.DelayQueue`. Một Worker Thread duy nhất sẽ bị block và chỉ thức dậy chính xác vào mili-giây sản phẩm đó hết hạn để chốt phiên.
+*   **Session Recovery:** Client duy trì một luồng **Heartbeat (Ping/Pong)**. Nếu rớt mạng, Client tự động khởi tạo lại Socket, gửi `SessionToken` lên Server để khôi phục trạng thái đăng nhập mà không làm gián đoạn trải nghiệm người dùng.
+
+### 3.5. Thiết kế UI/UX: Non-blocking & Toast Notification
+*   **Thread-Safety UI:** Mọi thao tác I/O (gửi Request, tải ảnh từ Cloudinary) đều bị ép chạy trên Background Threads. Kết quả trả về được đẩy ngược lên UI Thread thông qua `Platform.runLater()`, đảm bảo giao diện JavaFX luôn mượt mà ở 60 FPS.
+*   **Custom Toast:** Xây dựng hệ thống Notification Popup nổi độc lập, tự động xếp chồng và có cơ chế Debounce (chống trôi thông báo) khi Server push hàng loạt event cùng lúc.
 
 ---
 
-## 4. Tính năng nổi bật (Điểm nhấn kỹ thuật)
+## ⚙️ 4. Hướng dẫn cài đặt & Triển khai
 
-Bên cạnh các tính năng cơ bản (Đăng nhập/Đăng ký, Đăng bán, Lịch sử giao dịch), hệ thống tích hợp các thuật toán và cơ chế xử lý nâng cao:
+> **Yêu cầu hệ thống:** JDK 25, Maven 3.8+, MySQL 8.0+
 
-### 🚀 4.1. Thuật toán Proxy Bidding (Đấu giá hộ) O(1)
-Thay vì dùng vòng lặp mô phỏng từng bước giá gây tốn tài nguyên, hệ thống áp dụng thuật toán **Instant Resolution**. Khi có nhiều người cùng cài đặt Auto-bid, hệ thống sử dụng công thức toán học `Math.min(maxBidA, maxBidB) + increment` để tìm ra ngay người chiến thắng và mức giá hiện tại chỉ với **độ phức tạp O(1)** và 1 thao tác Database duy nhất.
+### Bước 1: Khởi tạo Database
+Tạo một database trống trên MySQL. Hệ thống sẽ tự động chạy Migration để tạo bảng.
+```sql
+CREATE DATABASE auction_db;
+```
 
-### 🏆 4.2. Realtime Leaderboard (Bảng xếp hạng In-memory)
-* Bảng xếp hạng "Top Đại Gia" được duy trì trực tiếp trên RAM của Server bằng cấu trúc dữ liệu `ConcurrentSkipListSet` giúp việc sắp xếp và lấy Top 10 luôn đạt hiệu suất **O(logN)**.
-* Tự động đồng bộ hóa (Sync) Avatar khi người dùng thay đổi ảnh đại diện.
-* **Bộ lọc thông minh:** Thuật toán tự động loại bỏ các tài khoản có Role là `ADMIN` khỏi bảng xếp hạng để đảm bảo tính công bằng.
+### Bước 2: Cấu hình môi trường
+Thiết lập các biến môi trường (Environment Variables) cho Server để bảo mật thông tin, tuyệt đối không hardcode:
+*   `DB_URL`: `jdbc:mysql://localhost:3306/auction_db`
+*   `DB_USER`: `<tên_đăng_nhập_mysql>`
+*   `DB_PASS`: `<mật_khẩu_mysql>`
+*   `SERVER_PORT`: `8080`
 
-### 🔍 4.3. Interactive Profile (Xem hồ sơ trực tiếp)
-Giao diện Leaderboard trên JavaFX được gắn Event Listener. Khi người dùng **Click vào một dòng bất kỳ** trên bảng xếp hạng, Client sẽ gửi `Request.GET_USER_BY_ID` lên Server và sử dụng `SceneManager` để render trực tiếp màn hình Profile của người đó (hiển thị số phiên thắng, tổng tiền đã chi, độ uy tín,...).
-
-### ⚡ 4.4. DelayQueue Settlement (Chốt phiên không nghẽn cổ chai)
-Thay vì dùng Timer quét Database liên tục gây lãng phí tài nguyên, hệ thống đưa các sự kiện "Hết hạn đấu giá" vào một `DelayQueue` (In-memory Queue). Một Worker Thread duy nhất sẽ chờ (block) và chỉ thức dậy để xử lý chính xác vào mili-giây mà sản phẩm đó hết hạn.
-
-### 🛡️ 4.5. Auto-Kill Port & Anti-Sniping
-* **Auto-Kill Port 8080:** Server được lập trình để tự động giao tiếp với OS (Windows/Linux) qua `Runtime.getRuntime().exec()`, tìm và tiêu diệt (Kill Process) các tiến trình đang chiếm dụng Port 8080 trước khi khởi động, triệt tiêu hoàn toàn lỗi `BindException`.
-* **Anti-Sniping:** Tự động cộng thêm 60 giây vào thời gian kết thúc nếu có bất kỳ lượt ra giá hợp lệ nào diễn ra trong 1 phút cuối cùng của phiên đấu giá.
-
----
-
-## 5. Hướng dẫn cài đặt & Khởi chạy
-
-### Bước 1: Chuẩn bị Cơ sở dữ liệu
-1. Mở MySQL và tạo Database:
-    ```sql
-    CREATE DATABASE auction_db;
-    ```
-2. Cấu hình kết nối tại file: `auction-server/src/main/resources/db.properties`
-    ```properties
-    db.url=jdbc:mysql://localhost:3306/auction_db
-    db.user=root
-    db.password=your_password
-    ```
-*(Lưu ý: Hệ thống có cơ chế Database Migration, sẽ tự động tạo Bảng (Tables) và Cột (Columns) trong lần chạy đầu tiên).*
-
-### Bước 2: Build toàn bộ dự án
-Mở Terminal tại thư mục gốc của project và chạy lệnh Maven:
+### Bước 3: Build toàn bộ dự án
+Tại thư mục gốc của dự án, thực thi lệnh Maven để dọn dẹp và biên dịch cả 3 module (`shared`, `server`, `client`):
 ```bash
 mvn clean verify
 ```
 
-### Bước 3: Khởi chạy Server
-Mở Terminal tại thư mục `auction-server` và chạy lệnh:
+### Bước 4: Khởi chạy Server
+Khởi động lõi xử lý trung tâm. Server sẽ tự động dọn dẹp Port (Auto-kill) nếu bị kẹt từ phiên chạy trước.
 ```bash
+cd auction-server
 mvn exec:java -Dexec.mainClass="com.auction.server.Main"
 ```
-*Server sẽ tự động dọn dẹp Port 8080, chạy Migration và thông báo `Server is running on port 8080`.*
 
-### Bước 4: Khởi chạy Client
-Mở một Terminal mới tại thư mục `auction-client` và chạy lệnh:
+### Bước 5: Khởi chạy Client
+Mở một Terminal mới và khởi động giao diện JavaFX. Có thể chạy lệnh này nhiều lần để giả lập nhiều người dùng kết nối đồng thời.
 ```bash
+cd auction-client
 mvn javafx:run
 ```
-*Để test tính năng Realtime và Concurrent Bidding, bạn có thể chạy lệnh trên ở nhiều cửa sổ Terminal khác nhau để mở nhiều Client cùng lúc.*
