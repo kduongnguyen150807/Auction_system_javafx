@@ -1,7 +1,9 @@
 package com.auction.client.ui.maindashboard;
 
+import com.auction.client.ClientSession;
 import com.auction.client.ui.base.PageController;
 import com.auction.client.ui.component.ContentButton;
+import com.auction.shared.user.UserRole;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
@@ -55,6 +57,10 @@ public class ContentTableController extends PageController<HomeViewType> {
     registerButton("Auction", HomeViewType.AUCTION);
     registerButton("Profile",  HomeViewType.PROFILE);
 
+    if (ClientSession.getCurrentUser().getRole() == UserRole.ADMIN) {
+      registerButton("AdminDashboard", HomeViewType.ADMIN_DASHBOARD);
+    }
+
     registerLotButton.setOnAction(event -> {
       switchView.accept(HomeViewType.REGISTER_LOT);
     });
@@ -81,6 +87,7 @@ public class ContentTableController extends PageController<HomeViewType> {
     });
     contentButtonMap.put(type, button);
     ContentButtonTable.getChildren().add(button);
+    LOGGER.info("Content button has been set for type {}", type);
   }
 
   /**

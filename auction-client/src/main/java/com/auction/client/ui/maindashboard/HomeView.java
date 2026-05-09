@@ -118,6 +118,7 @@ public class HomeView extends HBox {
    */
   private void registerSubView(HomeViewType type, String fxmlPath) throws IOException {
     NodeLoader loader = new NodeLoader(fxmlPath);
+    LOGGER.info("Registering subview for type {}", type);
     Node node = loader.getCurrentNode();
     Object controller = loader.getController();
 
@@ -126,9 +127,11 @@ public class HomeView extends HBox {
       subController.setSwitchView(this::switchNode);
     }
 
+    LOGGER.info("Found subview for type {}", type);
+
     controllerMap.put(type, controller);
     nodeMap.put(type, node);
-    LOGGER.debug("Registered sub-view: {}", type);
+    LOGGER.info("Registered sub-view: {}", type);
   }
 
   public void switchNode(HomeViewType type) {
@@ -149,6 +152,7 @@ public class HomeView extends HBox {
     Object controller = controllerMap.get(type);
     if (controller instanceof CanRefresh cr) {
       CompletableFuture.runAsync(cr::refreshData);
+      LOGGER.info("Refresh complete for type {}", type);
     }
     contentPanel.getChildren().setAll(node);
   }
