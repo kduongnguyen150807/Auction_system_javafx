@@ -129,7 +129,7 @@ public class ClientHandler implements Runnable {
     reg.register(Request.REJECT_ITEM, ActionHandler.requireAdmin(itemQuery));
     reg.register(Request.GET_STATUS_STATS, ActionHandler.requireAdmin(miscHandler));
     reg.register(Request.GET_CATEGORY_STATS, ActionHandler.requireAdmin(miscHandler));
-
+    reg.register(Request.GET_LEADERBOARD, new com.auction.server.handler.misc.LeaderboardHandler());
     return reg;
   }
 

@@ -43,33 +43,34 @@ public class SettlementService {
   }
 
   private void settle(Item item) {
-    int winnerId = bidDao.getPreviousHighestBidder(item.getId());
-
-    if (winnerId > 0) {
-      boolean closed = itemDao.atomicCloseAuction(item.getId(), winnerId, "CLOSED");
-      if (!closed) return;
-
-      double finalPrice = item.getCurrentPrice();
-      userDao.addBidderMetrics(winnerId, 0);
-
-      userDao.atomicCreditBalance(item.getSellerId(), finalPrice);
-      userDao.addSellerMetrics(item.getSellerId(), finalPrice);
-      logDao.insertLog(item.getSellerId(), "ITEM_SOLD", finalPrice, item.getId());
-
-      User freshSeller = userDao.getById(String.valueOf(item.getSellerId()));
-      if (freshSeller != null) {
-        AuctionManager.getInstance().sendToUser(item.getSellerId(),
-            new Response("", "BALANCE_UPDATE", "Success", freshSeller));
+    int winnerid = bidDao.getPreviousHighestBidder(item.getId());
+    if (winnerid > 0) {
+      boolean closed = itemDao.atomicCloseAuction(item.getId(), winnerid, "CLOSED");
+      if (!closed) {
+        return;
       }
+      double finalprice = item.getCurrentPrice();
+      userDao.addBidderMetrics(winnerid, finalprice);
+      User ans = userDao.getById(String.valueOf(winnerid));
+      if (ans != null) {
+        AuctionManager.getInstance().getLeaderboardservice().updatescore(winnerid, ans.getUsername(), ans.getAvatarUrl(), finalprice);
+      }
+      userDao.atomicCreditBalance(item.getSellerId(), finalprice);
+      userDao.addSellerMetrics(item.getSellerId(), finalprice);
+      logDao.insertLog(item.getSellerId(), "ITEM_SOLD", finalprice, item.getId());
+      User freshseller = userDao.getById(String.valueOf(item.getSellerId()));
+      if (freshseller != null) {
+        AuctionManager.getInstance().sendToUser(item.getSellerId(), new Response("", "BALANCE_UPDATE", "Success", freshseller));
+      }
+      AuctionManager.getInstance().broadcastleaderboard();
     } else {
       boolean closed = itemDao.atomicCloseAuction(item.getId(), 0, "EXPIRED");
-      if (!closed) return;
+      if (!closed) {
+        return;
+      }
     }
-
-    Item closedItem = itemDao.getById(item.getId());
-    if (closedItem != null) {
-      AuctionManager.getInstance().broadcast(
-          new Response("", "ITEM_CLOSED", "closed", closedItem));
+    Item closeditem = itemDao.getById(item.getId());
+    if (closeditem != null) {
+      AuctionManager.getInstance().broadcast(new Response("", "ITEM_CLOSED", "closed", closeditem));
     }
-  }
-}
+  }}

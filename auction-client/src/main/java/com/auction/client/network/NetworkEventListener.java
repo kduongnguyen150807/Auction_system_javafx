@@ -16,7 +16,7 @@ public interface NetworkEventListener {
   default void onFriendRequestSent(Friendship friendship) {}
   default void onFriendAccepted(Friendship friendship) {}
   default void onSellerBidNotify(Item item, double newPrice) {}
-
+  default void onLeaderboardUpdate(java.util.List<com.auction.shared.LeaderboardEntry> res) {}
   /**
    * Called when the server notifies this client that its account has been
    * banned. The UI should show a modal alert and then force-logout.

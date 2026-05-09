@@ -85,6 +85,8 @@ final class AuctionBidPipeline {
     after.add(() -> notifier.broadcastItemClosed(item.getId()));
     final int closedItemId = item.getId();
     after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
+    AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), price);
+    after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
     return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
   }
 
@@ -104,6 +106,8 @@ final class AuctionBidPipeline {
     after.add(() -> notifier.broadcastItemClosed(item.getId()));
     final int closedItemId = item.getId();
     after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
+    AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), p);
+    after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
     return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
   }
 

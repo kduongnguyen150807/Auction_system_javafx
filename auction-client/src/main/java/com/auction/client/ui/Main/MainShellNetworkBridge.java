@@ -38,7 +38,13 @@ final class MainShellNetworkBridge implements NetworkEventListener {
   private static ItemInformationController detail() {
     return KhungController.itemDetailController;
   }
-
+  @Override
+  public void onLeaderboardUpdate(java.util.List<com.auction.shared.LeaderboardEntry> res) {
+    TrangChuController ans = home();
+    if (ans != null) {
+      ans.updateleaderboardui(res);
+    }
+  }
   @Override
   public void onNewBidUpdate(Item item) {
     ItemInformationController d = detail();

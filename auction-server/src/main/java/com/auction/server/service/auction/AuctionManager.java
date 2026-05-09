@@ -31,6 +31,7 @@ public class AuctionManager {
   private final AuctionBidPipeline bidPipeline;
   private final AutoBidCoordinator autoBidCoordinator;
   private final BanCascadeService banCascade;
+  private final LeaderboardService leaderboardservice = new LeaderboardService();
 
   private AuctionManager() {
     itemDao = new ItemDao();
@@ -60,7 +61,15 @@ public class AuctionManager {
     if (instance == null) synchronized (AuctionManager.class) { if (instance == null) instance = new AuctionManager(); }
     return instance;
   }
+  public LeaderboardService getLeaderboardservice() {
+    return leaderboardservice;
+  }
 
+  public void broadcastleaderboard() {
+    List<LeaderboardEntry> ans = leaderboardservice.gettop(10);
+    Response res = new Response("", "LEADERBOARD_UPDATE", "update", (java.io.Serializable) ans);
+    broadcast(res);
+  }
   static void resetForTest() {
     instance = null;
   }

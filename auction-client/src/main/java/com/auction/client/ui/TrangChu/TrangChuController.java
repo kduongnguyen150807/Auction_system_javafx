@@ -19,6 +19,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.control.Label;
 
 /**
  * FXML controller for the auction home: orchestrates data refresh, filters, trending list, category
@@ -46,7 +47,33 @@ public class TrangChuController {
 
   @FXML private ToggleButton tabEnglishAuctions;
   @FXML private ToggleButton tabDutchAuctions;
+  @FXML private VBox leaderboardcontainer;
 
+  public void updateleaderboardui(List<com.auction.shared.LeaderboardEntry> res) {
+    if (leaderboardcontainer == null) {
+      return;
+    }
+    javafx.application.Platform.runLater(() -> {
+      leaderboardcontainer.getChildren().clear();
+      for (int i = 0; i < res.size(); i++) {
+        com.auction.shared.LeaderboardEntry ans = res.get(i);
+        HBox row = new HBox(10);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label rank = new Label("#" + (i + 1));
+        rank.setStyle("-fx-text-fill: #ffaa00; -fx-font-weight: bold; -fx-font-size: 16px;");
+        javafx.scene.image.ImageView avatar = new javafx.scene.image.ImageView();
+        com.auction.client.util.ImagePresentationUtil.loadCircularAvatar(avatar, ans.getAvatarurl(), 15, 30);
+        VBox info = new VBox(2);
+        Label name = new Label(ans.getUsername());
+        name.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
+        Label score = new Label(String.format("%,.0f$", ans.getScore()));
+        score.setStyle("-fx-text-fill: #00d4ff; -fx-font-size: 12px;");
+        info.getChildren().addAll(name, score);
+        row.getChildren().addAll(rank, avatar, info);
+        leaderboardcontainer.getChildren().add(row);
+      }
+    });
+  }
   private HBox[] categoryRows;
   private Button[] categoryPrevButtons;
   private Button[] categoryNextButtons;
@@ -162,6 +189,13 @@ public class TrangChuController {
 
   public void refreshItems() {
     TrangChuOngoingItemsLoader.loadAsync(this::cacheAndRender);
+    new Thread(() -> {
+      com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.GET_LEADERBOARD, null);
+      com.auction.shared.Response ans = com.auction.client.network.NetworkClient.getInstance().sendRequestAndWait(req);
+      if (ans != null && com.auction.shared.Response.OK.equals(ans.getStatus())) {
+        updateleaderboardui((List<com.auction.shared.LeaderboardEntry>) ans.getPayload());
+      }
+    }).start();
   }
 
   public void setFilters(String keyword, String category) {

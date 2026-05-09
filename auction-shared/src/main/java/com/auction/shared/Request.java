@@ -50,7 +50,7 @@ public class Request implements Serializable {
   public static final String REMOVE_FRIEND = "remove_friend";
   public static final String GET_FRIENDS = "get_friends";
   public static final String GET_FRIEND_REQUESTS = "get_friend_requests";
-
+  public static final String GET_LEADERBOARD = "GET_LEADERBOARD";
   protected String requestId;
   protected String action;
   protected Object payload;

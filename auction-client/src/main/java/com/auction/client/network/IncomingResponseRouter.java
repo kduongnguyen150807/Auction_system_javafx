@@ -89,6 +89,18 @@ final class IncomingResponseRouter {
         forListeners(NetworkEventListener::onAccountUnbanned);
         return;
       }
+      case "LEADERBOARD_UPDATE" -> {
+        if (response.getPayload() instanceof java.util.List<?> list) {
+          java.util.List<com.auction.shared.LeaderboardEntry> ans = new java.util.ArrayList<>();
+          for (Object res : list) {
+            if (res instanceof com.auction.shared.LeaderboardEntry entry) {
+              ans.add(entry);
+            }
+          }
+          forListeners(l -> l.onLeaderboardUpdate(ans));
+        }
+        return;
+      }
       default -> {}
     }
     if ("priceupdate".equals(response.getMessage()) && response.getPayload() instanceof Item item) {

@@ -60,11 +60,17 @@
                                 vbarPolicy="AS_NEEDED"
                                 VBox.vgrow="ALWAYS">
                         <content>
-                            <VBox fx:id="TrendingBind"
-                                  spacing="20.0"
-                                  styleClass="TrendingBind"
-                                  alignment="TOP_CENTER"
-                                  maxWidth="Infinity"/>
+                            <VBox spacing="20.0" alignment="TOP_CENTER" maxWidth="Infinity">
+                                <VBox fx:id="TrendingBind"
+                                      spacing="20.0"
+                                      styleClass="TrendingBind"
+                                      alignment="TOP_CENTER"
+                                      maxWidth="Infinity"/>
+                                <VBox spacing="15.0" styleClass="TrendingBind" alignment="TOP_CENTER" maxWidth="Infinity">
+                                    <Label styleClass="TopLabel" text="Top Đại Gia" />
+                                    <VBox fx:id="leaderboardcontainer" spacing="10.0" />
+                                </VBox>
+                            </VBox>
                         </content>
                     </ScrollPane>
                 </children>
