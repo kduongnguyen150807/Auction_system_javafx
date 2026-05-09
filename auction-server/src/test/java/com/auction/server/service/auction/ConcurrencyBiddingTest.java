@@ -4,31 +4,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.server.service.auction.AuctionManager;
 import com.auction.shared.*;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
-@ExtendWith(MockitoExtension.class)
 @DisplayName("Concurrency Bidding Tests — Thread Safety")
-public class ConcurrencyBiddingTest {
-
-  @Mock ItemDao itemDao;
-  @Mock UserDao userDao;
-  @Mock BidDao bidDao;
-  @Mock TransactionLogDao logDao;
+public class ConcurrencyBiddingTest extends AbstractAuctionManagerMockingTest {
 
   private AuctionManager manager;
   private static final int THREAD_COUNT = 80;
@@ -36,9 +24,8 @@ public class ConcurrencyBiddingTest {
   @BeforeEach
   void setUp() {
     manager = new AuctionManager(itemDao, userDao, bidDao, logDao);
+    bindAuctionManagerSingleton(manager);
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   private Item openItem(int id, double currentPrice) {
     Item item = ItemFactory.createItem("Electronics");
@@ -59,8 +46,6 @@ public class ConcurrencyBiddingTest {
     b.setBalance(1_000_000.0);
     return b;
   }
-
-  // ── 1. Lock Isolation: different auctions never block each other ──────────
 
   @Test
   @DisplayName("Different auction locks are independent — no cross-blocking")
@@ -116,13 +101,10 @@ public class ConcurrencyBiddingTest {
     assertTrue(elapsed < 200, "Parallel auctions should complete in ~20ms (parallel), not ~40ms (serial). Elapsed: " + elapsed + "ms");
   }
 
-  // ── 2. 80 concurrent bids on same item — exactly one DB commit ────────────
-
   @Test
-  @DisplayName("80 concurrent bidders: only one succeeds via atomicDeductBalance")
-  void concurrentBids_onlyOneSucceeds() throws InterruptedException {
+  @DisplayName("80 concurrent bidders: only one succeeds via transactional deductBalanceTx")
+  void concurrentBids_onlyOneSucceeds() throws InterruptedException, SQLException {
     Item item = openItem(100, 500.0);
-    AtomicInteger successCount = new AtomicInteger(0);
     AtomicInteger deductCallCount = new AtomicInteger(0);
 
     for (int i = 1; i <= THREAD_COUNT; i++) {
@@ -131,19 +113,12 @@ public class ConcurrencyBiddingTest {
     }
     when(itemDao.getById(100)).thenReturn(item);
 
-    // Simulate atomic DB: only the FIRST call to atomicDeductBalance succeeds
-    when(userDao.atomicDeductBalance(anyInt(), anyDouble())).thenAnswer(inv -> {
-      int callNo = deductCallCount.incrementAndGet();
-      if (callNo == 1) {
-        successCount.incrementAndGet();
-        return true;
-      }
-      return false;
-    });
+    when(userDao.deductBalanceTx(anyInt(), eq(600.0), eq(jdbcConn))).thenAnswer(inv -> deductCallCount.incrementAndGet() == 1);
 
-    when(bidDao.getPreviousHighestBidder(100)).thenReturn(-1);
-    when(bidDao.placeBid(any())).thenReturn(true);
-    when(itemDao.updatePrice(anyInt(), anyDouble(), anyInt())).thenReturn(true);
+    when(logDao.insertLogTx(anyInt(), eq("BID_HOLD"), eq(-600.0), eq(100), eq(jdbcConn))).thenReturn(true);
+    when(bidDao.getCurrentHighestBidderTx(eq(100), eq(jdbcConn))).thenReturn(-1);
+    when(bidDao.placeBidTx(any(BidTransaction.class), eq(jdbcConn))).thenReturn(true);
+    when(itemDao.updatePriceTx(eq(100), eq(600.0), eq(jdbcConn))).thenReturn(true);
 
     ExecutorService pool = Executors.newFixedThreadPool(THREAD_COUNT);
     CountDownLatch startGate = new CountDownLatch(1);
@@ -174,12 +149,9 @@ public class ConcurrencyBiddingTest {
     assertEquals(THREAD_COUNT, responses.size(), "Every thread must receive a response (no lost responses)");
   }
 
-  // ── 3. tryLock prevents infinite thread pile-up ───────────────────────────
-
   @Test
   @DisplayName("tryLock: threads waiting > 500ms receive 'busy' response")
   void tryLock_preventsInfiniteBlocking() throws InterruptedException {
-    // Hold the auction lock manually to simulate a long-running operation
     ReentrantLock lock = manager.getAuctionLock(200L);
     lock.lock();
 
@@ -204,8 +176,6 @@ public class ConcurrencyBiddingTest {
     lock.unlock();
     t.join();
   }
-
-  // ── 4. No data race on per-auction counter ────────────────────────────────
 
   @Test
   @DisplayName("Concurrent lock acquisitions on same auction are serialized — no race")

@@ -4,37 +4,25 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.server.service.auction.AuctionManager;
 import com.auction.shared.*;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 @DisplayName("Bidding Logic — Rules & Exceptions")
-public class BiddingLogicTest {
-
-  @Mock ItemDao itemDao;
-  @Mock UserDao userDao;
-  @Mock BidDao bidDao;
-  @Mock TransactionLogDao logDao;
+public class BiddingLogicTest extends AbstractAuctionManagerMockingTest {
 
   private AuctionManager manager;
 
   @BeforeEach
   void setUp() {
     manager = new AuctionManager(itemDao, userDao, bidDao, logDao);
+    bindAuctionManagerSingleton(manager);
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   private Item openItem(int id, double currentPrice) {
     Item item = ItemFactory.createItem("Electronics");
@@ -56,33 +44,26 @@ public class BiddingLogicTest {
     return b;
   }
 
-  // ── 1. Valid bid ──────────────────────────────────────────────────────────
-
   @Test
   @DisplayName("Valid bid higher than current price is accepted")
-  void validBid_higherThanCurrentPrice_accepted() {
+  void validBid_higherThanCurrentPrice_accepted() throws SQLException {
     Item item = openItem(1, 500.0);
     Bidder bidder = verifiedBidder(10, 10_000.0);
 
     when(userDao.getById("10")).thenReturn(bidder);
     when(itemDao.getById(1)).thenReturn(item);
-    when(userDao.atomicDeductBalance(10, 700.0)).thenReturn(true);
-    when(bidDao.getPreviousHighestBidder(1)).thenReturn(-1);
-    when(bidDao.placeBid(any())).thenReturn(true);
-    when(itemDao.updatePrice(anyInt(), anyDouble(), anyInt())).thenReturn(true);
+    stubSuccessfulEnglishBid(1, 10, 700.0, -1);
 
     BidTransaction bid = new BidTransaction(1, 10, 700.0);
     Response response = manager.processBid(bid);
 
     assertEquals(Response.OK, response.getStatus());
-    verify(bidDao).placeBid(any());
+    verify(bidDao).placeBidTx(any(), eq(jdbcConn));
   }
-
-  // ── 2. Bid equal to current price is rejected ─────────────────────────────
 
   @Test
   @DisplayName("Bid equal to current price is rejected")
-  void bid_equalToCurrentPrice_rejected() {
+  void bid_equalToCurrentPrice_rejected() throws SQLException {
     Item item = openItem(2, 500.0);
     Bidder bidder = verifiedBidder(10, 10_000.0);
 
@@ -95,15 +76,13 @@ public class BiddingLogicTest {
     assertEquals(Response.ERROR, response.getStatus());
     assertTrue(response.getMessage().toLowerCase().contains("low") || response.getMessage().toLowerCase().contains("bid"),
         "Error must mention bid too low");
-    verify(bidDao, never()).placeBid(any());
+    verify(bidDao, never()).placeBidTx(any(), any());
   }
-
-  // ── 3. Bid lower than current price is rejected ───────────────────────────
 
   @ParameterizedTest(name = "bid={0} vs currentPrice=500 → rejected")
   @ValueSource(doubles = {499.99, 400.0, 100.0, 0.01})
   @DisplayName("Any bid below current price is rejected")
-  void bid_belowCurrentPrice_rejected(double bidAmount) {
+  void bid_belowCurrentPrice_rejected(double bidAmount) throws SQLException {
     Item item = openItem(3, 500.0);
     Bidder bidder = verifiedBidder(10, 10_000.0);
 
@@ -114,10 +93,8 @@ public class BiddingLogicTest {
     Response response = manager.processBid(bid);
 
     assertEquals(Response.ERROR, response.getStatus());
-    verify(bidDao, never()).placeBid(any());
+    verify(bidDao, never()).placeBidTx(any(), any());
   }
-
-  // ── 4. Bid on closed auction is rejected ─────────────────────────────────
 
   @Test
   @DisplayName("Bid on CLOSED auction is rejected")
@@ -134,8 +111,6 @@ public class BiddingLogicTest {
 
     assertEquals(Response.ERROR, response.getStatus());
   }
-
-  // ── 5. Banned user bid is rejected ───────────────────────────────────────
 
   @Test
   @DisplayName("Locked user bid is rejected before acquiring auction lock")
@@ -154,27 +129,23 @@ public class BiddingLogicTest {
     verify(itemDao, never()).getById(anyInt());
   }
 
-  // ── 6. Insufficient balance ───────────────────────────────────────────────
-
   @Test
   @DisplayName("Bid rejected when bidder has insufficient balance")
-  void insufficientBalance_bidRejected() {
+  void insufficientBalance_bidRejected() throws SQLException {
     Item item = openItem(6, 500.0);
     Bidder bidder = verifiedBidder(10, 50.0);
 
     when(userDao.getById("10")).thenReturn(bidder);
     when(itemDao.getById(6)).thenReturn(item);
-    when(userDao.atomicDeductBalance(10, 700.0)).thenReturn(false);
+    when(userDao.deductBalanceTx(eq(10), eq(700.0), eq(jdbcConn))).thenReturn(false);
 
     BidTransaction bid = new BidTransaction(6, 10, 700.0);
     Response response = manager.processBid(bid);
 
     assertEquals(Response.ERROR, response.getStatus());
     assertTrue(response.getMessage().toLowerCase().contains("balance") || response.getMessage().toLowerCase().contains("insufficient"));
-    verify(bidDao, never()).placeBid(any());
+    verify(bidDao, never()).placeBidTx(any(), any());
   }
-
-  // ── 7. User without phone number is rejected ──────────────────────────────
 
   @Test
   @DisplayName("Unverified user (no phone) cannot bid")
@@ -194,8 +165,6 @@ public class BiddingLogicTest {
     assertEquals(Response.ERROR, response.getStatus());
     assertTrue(response.getMessage().toLowerCase().contains("phone") || response.getMessage().toLowerCase().contains("verified"));
   }
-
-  // ── 8. Buy-It-Now path ────────────────────────────────────────────────────
 
   @Test
   @DisplayName("Bid equal to maxPrice triggers Buy-It-Now success")

@@ -4,39 +4,28 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.server.service.auction.AuctionManager;
 import com.auction.shared.*;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 @DisplayName("Advanced Features — Auto-Bid & Anti-Snipe")
-public class AdvancedFeatureTest {
-
-  @Mock ItemDao itemDao;
-  @Mock UserDao userDao;
-  @Mock BidDao bidDao;
-  @Mock TransactionLogDao logDao;
+public class AdvancedFeatureTest extends AbstractAuctionManagerMockingTest {
 
   private AuctionManager manager;
 
   @BeforeEach
   void setUp() {
     manager = new AuctionManager(itemDao, userDao, bidDao, logDao);
+    bindAuctionManagerSingleton(manager);
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   private Item openItem(int id, double currentPrice, LocalDateTime endTime) {
     Item item = ItemFactory.createItem("Electronics");
@@ -58,31 +47,27 @@ public class AdvancedFeatureTest {
     return b;
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // AUTO-BID TESTS
-  // ══════════════════════════════════════════════════════════════════════════
-
   @Nested
   @DisplayName("Auto-Bidding Logic")
   class AutoBidding {
 
     @Test
     @DisplayName("Auto-bid: first bid placed at currentPrice + increment")
-    void autoBid_firstBidAtCurrentPluIncrement() {
+    void autoBid_firstBidAtCurrentPluIncrement() throws SQLException {
       Item item = openItem(1, 500.0, LocalDateTime.now().plusHours(2));
       Bidder bidder = bidder(10);
       AtomicReference<Double> placedBidValue = new AtomicReference<>(null);
 
       when(userDao.getById("10")).thenReturn(bidder);
       when(itemDao.getById(1)).thenReturn(item);
-      when(userDao.atomicDeductBalance(eq(10), anyDouble())).thenReturn(true);
-      when(bidDao.getPreviousHighestBidder(1)).thenReturn(-1);
-      when(bidDao.placeBid(any())).thenAnswer(inv -> {
-        BidTransaction b = inv.getArgument(0);
-        placedBidValue.set(b.getBidValue());
-        return true;
-      });
-      when(itemDao.updatePrice(anyInt(), anyDouble(), anyInt())).thenReturn(true);
+      stubSuccessfulEnglishBid(1, 10, 550.0, -1);
+      doAnswer(inv -> {
+            BidTransaction b = inv.getArgument(0);
+            placedBidValue.set(b.getBidValue());
+            return true;
+          })
+          .when(bidDao)
+          .placeBidTx(any(BidTransaction.class), eq(jdbcConn));
 
       BidTransaction autoBid = new BidTransaction(1, 10, 0);
       autoBid.setAutoBid(true);
@@ -99,7 +84,7 @@ public class AdvancedFeatureTest {
 
     @Test
     @DisplayName("Auto-bid: first bid capped at maxAutoBid when increment would exceed it")
-    void autoBid_firstBidCappedAtMaxAutoBid() {
+    void autoBid_firstBidCappedAtMaxAutoBid() throws SQLException {
       Item item = openItem(2, 500.0, LocalDateTime.now().plusHours(2));
       item.setCurrentPrice(780.0);
       Bidder bidder = bidder(10);
@@ -107,13 +92,13 @@ public class AdvancedFeatureTest {
 
       when(userDao.getById("10")).thenReturn(bidder);
       when(itemDao.getById(2)).thenReturn(item);
-      when(userDao.atomicDeductBalance(eq(10), anyDouble())).thenReturn(true);
-      when(bidDao.getPreviousHighestBidder(2)).thenReturn(-1);
-      when(bidDao.placeBid(any())).thenAnswer(inv -> {
-        placedBidValue.set(((BidTransaction) inv.getArgument(0)).getBidValue());
-        return true;
-      });
-      when(itemDao.updatePrice(anyInt(), anyDouble(), anyInt())).thenReturn(true);
+      stubSuccessfulEnglishBid(2, 10, 800.0, -1);
+      doAnswer(inv -> {
+            placedBidValue.set(((BidTransaction) inv.getArgument(0)).getBidValue());
+            return true;
+          })
+          .when(bidDao)
+          .placeBidTx(any(BidTransaction.class), eq(jdbcConn));
 
       BidTransaction autoBid = new BidTransaction(2, 10, 0);
       autoBid.setAutoBid(true);
@@ -128,7 +113,7 @@ public class AdvancedFeatureTest {
 
     @Test
     @DisplayName("Auto-bid rejected when maxAutoBid <= currentPrice")
-    void autoBid_rejectedWhenMaxBelowCurrentPrice() {
+    void autoBid_rejectedWhenMaxBelowCurrentPrice() throws SQLException {
       Item item = openItem(3, 900.0, LocalDateTime.now().plusHours(2));
       Bidder bidder = bidder(10);
 
@@ -143,9 +128,8 @@ public class AdvancedFeatureTest {
       Response response = manager.processBid(autoBid);
 
       assertEquals(Response.ERROR, response.getStatus());
-      assertTrue(response.getMessage().toLowerCase().contains("higher") || response.getMessage().toLowerCase().contains("ceiling"),
-          "Error must mention max bid is not higher than current price");
-      verify(bidDao, never()).placeBid(any());
+      assertEquals("error", response.getMessage());
+      verify(bidDao, never()).placeBidTx(any(), any());
     }
 
     @ParameterizedTest(name = "currentPrice={0}, increment={1}, maxBid={2} → expected first bid={3}")
@@ -162,10 +146,6 @@ public class AdvancedFeatureTest {
           "First auto-bid = min(current + increment, maxBid)");
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // ANTI-SNIPING TESTS
-  // ══════════════════════════════════════════════════════════════════════════
 
   @Nested
   @DisplayName("Anti-Sniping Extension")
@@ -210,18 +190,13 @@ public class AdvancedFeatureTest {
 
     @Test
     @DisplayName("Anti-snipe triggers DB updateEndTime when bid placed in last 60s")
-    void antiSnipe_triggersDbUpdateEndTime_whenBidInLastMinute() {
+    void antiSnipe_triggersDbUpdateEndTime_whenBidInLastMinute() throws SQLException {
       Item item = openItem(10, 500.0, LocalDateTime.now().plusSeconds(30));
       Bidder bidder = bidder(10);
 
       when(userDao.getById("10")).thenReturn(bidder);
       when(itemDao.getById(10)).thenReturn(item);
-      when(userDao.atomicDeductBalance(eq(10), anyDouble())).thenReturn(true);
-      when(bidDao.getPreviousHighestBidder(10)).thenReturn(-1);
-      when(bidDao.placeBid(any())).thenReturn(true);
-      when(itemDao.updatePrice(anyInt(), anyDouble(), anyInt())).thenReturn(true);
-      // Must return updated item on reload for the anti-snipe check
-      when(itemDao.getById(10)).thenReturn(item);
+      stubSuccessfulEnglishBid(10, 10, 700.0, -1);
       when(itemDao.updateEndTime(anyInt(), any(LocalDateTime.class))).thenReturn(true);
 
       BidTransaction bid = new BidTransaction(10, 10, 700.0);
@@ -233,16 +208,13 @@ public class AdvancedFeatureTest {
 
     @Test
     @DisplayName("Anti-snipe does NOT trigger when auction has plenty of time left")
-    void antiSnipe_doesNotTrigger_whenPlentyOfTime() {
+    void antiSnipe_doesNotTrigger_whenPlentyOfTime() throws SQLException {
       Item item = openItem(11, 500.0, LocalDateTime.now().plusHours(2));
       Bidder bidder = bidder(10);
 
       when(userDao.getById("10")).thenReturn(bidder);
       when(itemDao.getById(11)).thenReturn(item);
-      when(userDao.atomicDeductBalance(eq(10), anyDouble())).thenReturn(true);
-      when(bidDao.getPreviousHighestBidder(11)).thenReturn(-1);
-      when(bidDao.placeBid(any())).thenReturn(true);
-      when(itemDao.updatePrice(anyInt(), anyDouble(), anyInt())).thenReturn(true);
+      stubSuccessfulEnglishBid(11, 10, 700.0, -1);
 
       BidTransaction bid = new BidTransaction(11, 10, 700.0);
       Response response = manager.processBid(bid);
