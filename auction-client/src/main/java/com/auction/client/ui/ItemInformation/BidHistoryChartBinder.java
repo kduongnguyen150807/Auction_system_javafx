@@ -1,14 +1,13 @@
 package com.auction.client.ui.ItemInformation;
 
 import com.auction.shared.BidTransaction;
+import com.auction.shared.Item;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 
-/** Binds bid history and live ticks to a {@link LineChart}. */
 final class BidHistoryChartBinder {
-
   private final LineChart<String, Number> chart;
   private final XYChart.Series<String, Number> series = new XYChart.Series<>();
 
@@ -16,31 +15,37 @@ final class BidHistoryChartBinder {
     this.chart = chart;
   }
 
-  void loadHistory(List<BidTransaction> hist, DateTimeFormatter timeFmt) {
-    if (chart == null) return;
-    chart.getData().clear();
-    series.getData().clear();
+  void loadHistory(Item item, List<BidTransaction> hist, DateTimeFormatter timefmt) {
+    if (chart == null) {
+      return;
+    }
+    if (!chart.getData().contains(series)) {
+      chart.getData().add(series);
+    }
     series.setName("Price Curve");
-    for (BidTransaction b : hist)
-      series
-          .getData()
-          .add(
-              new XYChart.Data<>(
-                  b.getTimestamp() != null ? b.getTimestamp().format(timeFmt) : "", b.getBidValue()));
-    chart.getData().add(series);
+    series.getData().clear();
+    if (item != null) {
+      String starttime = item.getStartTime() != null ? item.getStartTime().format(timefmt) : "";
+      series.getData().add(new XYChart.Data<>(starttime, item.getStartingPrice()));
+    }
+    for (BidTransaction b : hist) {
+      String t = b.getTimestamp() != null ? b.getTimestamp().format(timefmt) : "";
+      series.getData().add(new XYChart.Data<>(t, b.getBidValue()));
+    }
   }
 
-  void appendLivePrice(double price, int maxPoints) {
-    if (chart == null) return;
+  void appendLivePrice(double price, int maxpoints) {
+    if (chart == null) {
+      return;
+    }
     if (!chart.getData().contains(series)) {
       chart.getData().add(series);
       series.setName("Price Curve");
     }
-    series
-        .getData()
-        .add(
-            new XYChart.Data<>(
-                java.time.LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), price));
-    if (series.getData().size() > maxPoints) series.getData().remove(0);
+    String now = java.time.LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+    series.getData().add(new XYChart.Data<>(now, price));
+    if (series.getData().size() > maxpoints) {
+      series.getData().remove(0);
+    }
   }
 }

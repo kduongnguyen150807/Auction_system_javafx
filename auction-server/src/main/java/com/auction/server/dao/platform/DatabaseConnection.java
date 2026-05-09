@@ -10,13 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatabaseConnection {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnection.class);
+  private static final Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
 
   private static final class Holder {
-    static final DatabaseConnection INSTANCE = new DatabaseConnection();
+    static final DatabaseConnection instance = new DatabaseConnection();
   }
 
-  private HikariDataSource dataSource;
+  private HikariDataSource datasource;
 
   private DatabaseConnection() {
     try {
@@ -24,39 +24,35 @@ public class DatabaseConnection {
       InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties");
       if (input != null) {
         props.load(input);
-      } else {
-        props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
-        props.setProperty("db.user", "ba_nin");
-        props.setProperty("db.password", "banin123");
       }
-
+      String dburl = System.getenv("DB_URL") != null ? System.getenv("DB_URL") : props.getProperty("db.url");
+      String dbuser = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : props.getProperty("db.user");
+      String dbpass = System.getenv("DB_PASS") != null ? System.getenv("DB_PASS") : props.getProperty("db.password");
       HikariConfig config = new HikariConfig();
-      config.setJdbcUrl(props.getProperty("db.url"));
-      config.setUsername(props.getProperty("db.user"));
-      config.setPassword(props.getProperty("db.password"));
+      config.setJdbcUrl(dburl);
+      config.setUsername(dbuser);
+      config.setPassword(dbpass);
       config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-
-      // Cấu hình Pool chống sập Server
       config.setMaximumPoolSize(50);
       config.setMinimumIdle(10);
       config.setConnectionTimeout(30000);
-
-      this.dataSource = new HikariDataSource(config);
-      LOGGER.info("HikariCP Database connection pool initialized.");
+      this.datasource = new HikariDataSource(config);
     } catch (Exception e) {
-      LOGGER.error("Failed to initialize database connection", e);
+      logger.error("db_init_error", e);
     }
   }
 
   public static DatabaseConnection getInstance() {
-    return Holder.INSTANCE;
+    DatabaseConnection ans = Holder.instance;
+    return ans;
   }
 
   public Connection getConnection() {
     try {
-      return dataSource.getConnection(); // Lấy từ Pool, cực nhanh và an toàn
+      Connection ans = datasource.getConnection();
+      return ans;
     } catch (SQLException e) {
-      LOGGER.error("Failed to get connection from pool", e);
+      logger.error("pool_error", e);
       return null;
     }
   }

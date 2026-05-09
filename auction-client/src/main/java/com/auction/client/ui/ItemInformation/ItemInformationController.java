@@ -24,304 +24,291 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ItemInformationController {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ItemInformationController.class);
+    @FXML private ImageView ItemImageHolder;
+    @FXML private Label ItemName;
+    @FXML private Label ItemDescription;
+    @FXML private Label CurrentHighestBidValue;
+    @FXML private Label BidMetricCaption;
+    @FXML private Label MaxPriceValue;
+    @FXML private Label EndsInValue;
+    @FXML private ImageView SellerAvatar;
+    @FXML private Label SellerName;
+    @FXML private Button BidButton;
+    @FXML private Button RateButton;
+    @FXML private VBox RatingsContainer;
+    @FXML private VBox buyItNowVBox;
+    @FXML private HBox autoBidHBox;
+    @FXML private javafx.scene.control.ComboBox<String> RatingFilterCombo;
+    @FXML private TextField autobidfield;
+    @FXML private Button autobidbutton;
+    @FXML private LineChart<String, Number> pricechart;
 
-  @FXML private ImageView ItemImageHolder;
-  @FXML private Label ItemName;
-  @FXML private Label ItemDescription;
-  @FXML private Label CurrentHighestBidValue;
-  @FXML private Label BidMetricCaption;
-  @FXML private Label MaxPriceValue;
-  @FXML private Label EndsInValue;
-  @FXML private ImageView SellerAvatar;
-  @FXML private Label SellerName;
-  @FXML private Button BidButton;
-  @FXML private Button RateButton;
-  @FXML private VBox RatingsContainer;
-  @FXML private VBox buyItNowVBox;
-  @FXML private HBox autoBidHBox;
-  @FXML private javafx.scene.control.ComboBox<String> RatingFilterCombo;
-  @FXML private TextField autobidfield;
-  @FXML private Button autobidbutton;
-  @FXML private LineChart<String, Number> pricechart;
+    private int itemid = -1;
+    private String itemname = "";
+    private double buyitnowprice = 0;
+    private List<Rating> cachedratings = new ArrayList<>();
+    private AuctionType listingkind = AuctionType.ENGLISH;
+    private double lastlistedprice = 0;
+    private Item endsinsourceitem;
+    private BidHistoryChartBinder chartbinder;
+    private Timeline endsinticker;
+    private final BiddingClientService biddingclientservice = new BiddingClientService();
 
-  private int itemId = -1;
-  private String itemName = "";
-  private double buyItNowPrice = 0;
-  private List<Rating> cachedRatings = new ArrayList<>();
-  private AuctionType listingKind = AuctionType.ENGLISH;
-  private double lastListedPrice = 0;
-  /** Server snapshot for live “ends in” refresh (English end time + Dutch price windows). */
-  private Item endsInSourceItem;
-
-  private BidHistoryChartBinder chartBinder;
-  private Timeline endsInTicker;
-
-  private final BiddingClientService biddingClientService = new BiddingClientService();
-
-  @FXML
-  void initialize() {
-    endsInTicker =
-        new Timeline(new KeyFrame(Duration.seconds(1), e -> tickEndsInDisplay()));
-    endsInTicker.setCycleCount(Timeline.INDEFINITE);
-    endsInTicker.play();
-  }
-
-  private void tickEndsInDisplay() {
-    if (EndsInValue == null || endsInSourceItem == null || itemId <= 0) {
-      return;
+    @FXML
+    void initialize() {
+        endsinticker = new Timeline(new KeyFrame(Duration.seconds(1), e -> tickendsindisplay()));
+        endsinticker.setCycleCount(Timeline.INDEFINITE);
+        endsinticker.play();
     }
-    if (BidButton != null && BidButton.isDisabled()) {
-      return;
-    }
-    String t = EndsInValue.getText();
-    if (t != null && t.startsWith("Winner:")) {
-      return;
-    }
-    ItemInformationUiHelper.applyEndsIn(EndsInValue, endsInSourceItem);
-  }
 
-  private void setEndsInSource(Item item) {
-    this.endsInSourceItem = item;
-  }
+    private void tickendsindisplay() {
+        if (EndsInValue == null || endsinsourceitem == null || itemid <= 0) {
+            return;
+        }
+        if (BidButton != null && BidButton.isDisabled()) {
+            return;
+        }
+        String t = EndsInValue.getText();
+        if (t != null && t.startsWith("Winner:")) {
+            return;
+        }
+        ItemInformationUiHelper.applyEndsIn(EndsInValue, endsinsourceitem);
+    }
 
-  private BidHistoryChartBinder chartBinder() {
-    if (pricechart == null) return null;
-    if (chartBinder == null) chartBinder = new BidHistoryChartBinder(pricechart);
-    return chartBinder;
-  }
+    private void setendsinsource(Item item) {
+        this.endsinsourceitem = item;
+    }
 
-  public void setData(int id, String name, double currentPrice, double maxPrice,
-      String description, String endsIn, String imageUrl, String sellerName, String sellerAvatar) {
-    this.itemId = id;
-    this.itemName = name == null ? "" : name;
-    this.buyItNowPrice = maxPrice;
-    this.lastListedPrice = currentPrice;
-    this.listingKind = AuctionType.ENGLISH;
-    this.endsInSourceItem = null;
-    if (ItemName != null) ItemName.setText(this.itemName);
-    if (ItemDescription != null) ItemDescription.setText(description == null ? "" : description);
-    if (CurrentHighestBidValue != null) {
-      CurrentHighestBidValue.setText(ItemInformationUiHelper.formatPriceDollars(currentPrice));
+    private BidHistoryChartBinder chartbinder() {
+        if (pricechart == null) {
+            return null;
+        }
+        if (chartbinder == null) {
+            chartbinder = new BidHistoryChartBinder(pricechart);
+        }
+        BidHistoryChartBinder ans = chartbinder;
+        return ans;
     }
-    if (MaxPriceValue != null) {
-      MaxPriceValue.setText(ItemInformationUiHelper.formatBuyItNowLine(maxPrice));
-    }
-    if (EndsInValue != null) EndsInValue.setText(endsIn == null ? "" : endsIn);
-    if (BidButton != null) {
-      ItemInformationUiHelper.setBidButtonClosed(
-          listingKind,
-          BidButton,
-          autobidfield,
-          autobidbutton,
-          endsIn != null
-              && (endsIn.toLowerCase().startsWith("winner")
-                  || endsIn.equalsIgnoreCase("closed")));
-    }
-    if (ItemImageHolder != null && imageUrl != null && !imageUrl.isBlank()) {
-      ItemImageHolder.setImage(new Image(ImagePresentationUtil.safeImageUrl(imageUrl), true));
-    }
-    if (SellerName != null) {
-      SellerName.setText(sellerName == null || sellerName.isBlank() ? "Unknown Seller" : sellerName);
-    }
-    if (SellerAvatar != null && sellerAvatar != null && !sellerAvatar.isBlank()) {
-      ImagePresentationUtil.loadCircularAvatar(SellerAvatar, sellerAvatar, 20);
-    }
-    ItemInformationUiHelper.applyAuctionPresentation(
-        listingKind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
-  }
 
-  public void refresh() {
-    Thread t =
-        new Thread(
-            () -> {
-              try {
-                Item item = biddingClientService.getItemById(this.itemId);
+    public void setData(int id, String name, double currentprice, double maxprice, String description, String endsin, String imageurl, String sellername, String selleravatar, ItemStatus status) {
+        this.itemid = id;
+        this.itemname = name == null ? "" : name;
+        this.buyitnowprice = maxprice;
+        this.lastlistedprice = currentprice;
+        this.listingkind = AuctionType.ENGLISH;
+        this.endsinsourceitem = null;
+        if (ItemName != null) {
+            ItemName.setText(this.itemname);
+        }
+        if (ItemDescription != null) {
+            ItemDescription.setText(description == null ? "" : description);
+        }
+        if (CurrentHighestBidValue != null) {
+            CurrentHighestBidValue.setText(ItemInformationUiHelper.formatPriceDollars(currentprice));
+        }
+        if (MaxPriceValue != null) {
+            MaxPriceValue.setText(ItemInformationUiHelper.formatBuyItNowLine(maxprice));
+        }
+        if (EndsInValue != null) {
+            EndsInValue.setText(endsin == null ? "" : endsin);
+        }
+        if (BidButton != null) {
+            boolean closed = status != ItemStatus.OPEN;
+            ItemInformationUiHelper.setBidButtonClosed(listingkind, BidButton, autobidfield, autobidbutton, closed);
+        }
+        if (ItemImageHolder != null && imageurl != null && !imageurl.isBlank()) {
+            ItemImageHolder.setImage(new Image(ImagePresentationUtil.safeImageUrl(imageurl), true));
+        }
+        if (SellerName != null) {
+            SellerName.setText(sellername == null || sellername.isBlank() ? "Unknown Seller" : sellername);
+        }
+        if (SellerAvatar != null && selleravatar != null && !selleravatar.isBlank()) {
+            ImagePresentationUtil.loadCircularAvatar(SellerAvatar, selleravatar, 20);
+        }
+        ItemInformationUiHelper.applyAuctionPresentation(listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
+    }
+
+    public void refresh() {
+        Thread thread = new Thread(() -> {
+            try {
+                Item item = biddingclientservice.getItemById(this.itemid);
                 if (item != null) {
-                  Platform.runLater(
-                      () -> {
-                        setEndsInSource(item);
-                        listingKind = item.getAuctionType();
-                        lastListedPrice = item.getCurrentPrice();
+                    Platform.runLater(() -> {
+                        setendsinsource(item);
+                        listingkind = item.getAuctionType();
+                        lastlistedprice = item.getCurrentPrice();
                         if (CurrentHighestBidValue != null) {
-                          CurrentHighestBidValue.setText(
-                              ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
+                            CurrentHighestBidValue.setText(ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
                         }
-                        buyItNowPrice = item.getMaxPrice();
+                        buyitnowprice = item.getMaxPrice();
                         if (MaxPriceValue != null) {
-                          MaxPriceValue.setText(
-                              ItemInformationUiHelper.formatBuyItNowLine(buyItNowPrice));
+                            MaxPriceValue.setText(ItemInformationUiHelper.formatBuyItNowLine(buyitnowprice));
                         }
-                        ItemInformationUiHelper.applyAuctionPresentation(
-                            listingKind,
-                            BidMetricCaption,
-                            buyItNowVBox,
-                            autoBidHBox,
-                            BidButton);
+                        ItemInformationUiHelper.applyAuctionPresentation(listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
                         ItemInformationUiHelper.applyEndsIn(EndsInValue, item);
-                        setupRatingUi(item);
-                      });
+                        boolean closed = item.getStatus() != ItemStatus.OPEN;
+                        ItemInformationUiHelper.setBidButtonClosed(listingkind, BidButton, autobidfield, autobidbutton, closed);
+                        setupratingui(item);
+                    });
+                    loadbidhistory(item);
                 }
-                loadRatings();
-                loadBidHistory();
-              } catch (Exception e) {
-                LOGGER.warn("Item refresh failed for id={}", this.itemId, e);
-              }
+                loadratings();
+            } catch (Exception e) {
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void loadbidhistory(Item item) {
+        try {
+            List<BidTransaction> hist = biddingclientservice.getBidHistory(this.itemid);
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm:ss");
+            Platform.runLater(() -> {
+                BidHistoryChartBinder b = chartbinder();
+                if (b != null) {
+                    b.loadHistory(item, hist, fmt);
+                }
             });
-    t.setDaemon(true);
-    t.start();
-  }
-
-  private void loadBidHistory() {
-    try {
-      List<BidTransaction> hist = biddingClientService.getBidHistory(this.itemId);
-      DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm:ss");
-      Platform.runLater(
-          () -> {
-            BidHistoryChartBinder b = chartBinder();
-            if (b != null) b.loadHistory(hist, fmt);
-          });
-    } catch (Exception e) {
-      LOGGER.warn("Failed to load bid history for item id={}", this.itemId, e);
+        } catch (Exception e) {
+        }
     }
-  }
 
-  private void setupRatingUi(Item item) {
-    if (item == null || RateButton == null) return;
-    boolean canRate =
-        (item.getStatus() == ItemStatus.CLOSED || item.getStatus() == ItemStatus.FINISHED)
-            && ClientSession.getCurrentUser() != null
-            && (ClientSession.getCurrentUser().getId() == item.getWinnerId()
-                || ClientSession.getCurrentUser().getId() == item.getSellerId());
-    RateButton.setVisible(canRate);
-    RateButton.setManaged(canRate);
-  }
+    private void setupratingui(Item item) {
+        if (item == null || RateButton == null) {
+            return;
+        }
+        boolean canrate = (item.getStatus() == ItemStatus.CLOSED || item.getStatus() == ItemStatus.FINISHED)
+                && ClientSession.getCurrentUser() != null
+                && ClientSession.getCurrentUser().getId() == item.getWinnerId();
+        RateButton.setVisible(canrate);
+        RateButton.setManaged(canrate);
+    }
 
-  private void loadRatings() {
-    if (this.itemId <= 0) return;
-    List<Rating> list = biddingClientService.getRatings(this.itemId);
-    cachedRatings.clear();
-    cachedRatings.addAll(list);
-    Platform.runLater(
-        () -> {
-          if (RatingFilterCombo != null && RatingFilterCombo.getItems().isEmpty()) {
-            RatingFilterCombo.getItems().addAll("All", "Positive", "Neutral", "Negative");
-            RatingFilterCombo.setValue("All");
-          }
-          renderRatings("All");
+    private void loadratings() {
+        if (this.itemid <= 0) {
+            return;
+        }
+        List<Rating> list = biddingclientservice.getRatings(this.itemid);
+        cachedratings.clear();
+        cachedratings.addAll(list);
+        Platform.runLater(() -> {
+            if (RatingFilterCombo != null && RatingFilterCombo.getItems().isEmpty()) {
+                RatingFilterCombo.getItems().addAll("All", "Positive", "Neutral", "Negative");
+                RatingFilterCombo.setValue("All");
+            }
+            renderratings("All");
         });
-  }
+    }
 
-  @FXML
-  private void handleRatingFilter() {
-    renderRatings(
-        RatingFilterCombo != null && RatingFilterCombo.getValue() != null
-            ? RatingFilterCombo.getValue()
-            : "All");
-  }
+    @FXML
+    private void handleRatingFilter() {
+        String filter = RatingFilterCombo != null && RatingFilterCombo.getValue() != null ? RatingFilterCombo.getValue() : "All";
+        renderratings(filter);
+    }
 
-  private void renderRatings(String filter) {
-    RatingListRenderer.render(RatingsContainer, cachedRatings, filter);
-  }
+    private void renderratings(String filter) {
+        RatingListRenderer.render(RatingsContainer, cachedratings, filter);
+    }
 
-  @FXML
-  private void showBiddingForm() {
-    ItemInformationOverlayLoader.addToMainContent(
-        "/fxml/biddingform/BiddingForm.fxml",
-        o -> {
-          com.auction.client.ui.BiddingForm.BiddingFormController c =
-              (com.auction.client.ui.BiddingForm.BiddingFormController) o;
-          if (c != null) {
-            c.setData(
-                itemId,
-                itemName,
-                buyItNowPrice,
-                listingKind == AuctionType.DUTCH,
-                lastListedPrice);
-            c.setParentController(this);
-          }
+    @FXML
+    private void showBiddingForm() {
+        ItemInformationOverlayLoader.addToMainContent("/fxml/biddingform/BiddingForm.fxml", o -> {
+            com.auction.client.ui.BiddingForm.BiddingFormController c = (com.auction.client.ui.BiddingForm.BiddingFormController) o;
+            if (c != null) {
+                c.setData(itemid, itemname, buyitnowprice, listingkind == AuctionType.DUTCH, lastlistedprice);
+                c.setParentController(this);
+            }
         });
-  }
+    }
 
-  @FXML
-  private void showRatingForm() {
-    ItemInformationOverlayLoader.addToMainContent(
-        "/fxml/ratingform/RatingForm.fxml",
-        o -> {
-          com.auction.client.ui.RatingForm.RatingFormController c =
-              (com.auction.client.ui.RatingForm.RatingFormController) o;
-          if (c != null) {
-            c.setData(this.itemId);
-            c.setOnComplete(
-                () -> {
-                  RateButton.setVisible(false);
-                  RateButton.setManaged(false);
-                  new Thread(this::loadRatings).start();
+    @FXML
+    private void showRatingForm() {
+        ItemInformationOverlayLoader.addToMainContent("/fxml/ratingform/RatingForm.fxml", o -> {
+            com.auction.client.ui.RatingForm.RatingFormController c = (com.auction.client.ui.RatingForm.RatingFormController) o;
+            if (c != null) {
+                c.setData(this.itemid);
+                c.setOnComplete(() -> {
+                    RateButton.setVisible(false);
+                    RateButton.setManaged(false);
+                    new Thread(this::loadratings).start();
                 });
-          }
+            }
         });
-  }
-
-  @FXML
-  private void handleAutoBid() {
-    ItemInformationAutoBidCoordinator.submitIfValid(
-        this.itemId, listingKind, autobidfield, biddingClientService);
-  }
-
-  public void updatePriceUi(Item item) {
-    if (item == null || item.getId() != this.itemId) return;
-    if (Platform.isFxApplicationThread()) applyPriceFromItem(item);
-    else Platform.runLater(() -> applyPriceFromItem(item));
-  }
-
-  private void applyPriceFromItem(Item item) {
-    if (item == null || item.getId() != this.itemId) return;
-    setEndsInSource(item);
-    listingKind = item.getAuctionType();
-    lastListedPrice = item.getCurrentPrice();
-    if (CurrentHighestBidValue != null) {
-      CurrentHighestBidValue.setText(
-          ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
     }
-    buyItNowPrice = item.getMaxPrice();
-    if (MaxPriceValue != null) {
-      MaxPriceValue.setText(ItemInformationUiHelper.formatBuyItNowLine(buyItNowPrice));
+
+    @FXML
+    private void handleAutoBid() {
+        ItemInformationAutoBidCoordinator.submitIfValid(this.itemid, listingkind, autobidfield, biddingclientservice);
     }
-    ItemInformationUiHelper.applyAuctionPresentation(
-        listingKind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
-    ItemInformationUiHelper.applyEndsIn(EndsInValue, item);
-    appendPriceToChart(item.getCurrentPrice());
-  }
 
-  private void appendPriceToChart(double price) {
-    BidHistoryChartBinder b = chartBinder();
-    if (b != null) b.appendLivePrice(price, 20);
-  }
+    public void updatePriceUi(Item item) {
+        if (item == null || item.getId() != this.itemid) {
+            return;
+        }
+        if (Platform.isFxApplicationThread()) {
+            applypricefromitem(item);
+        } else {
+            Platform.runLater(() -> applypricefromitem(item));
+        }
+    }
 
-  public void markItemClosed(Item item) {
-    if (item == null || item.getId() != this.itemId) return;
-    Platform.runLater(
-        () -> {
-          setEndsInSource(null);
-          ItemInformationUiHelper.setBidButtonClosed(
-              listingKind, BidButton, autobidfield, autobidbutton, true);
-          if (EndsInValue != null) EndsInValue.setText("Auction Closed");
+    private void applypricefromitem(Item item) {
+        if (item == null || item.getId() != this.itemid) {
+            return;
+        }
+        setendsinsource(item);
+        listingkind = item.getAuctionType();
+        lastlistedprice = item.getCurrentPrice();
+        if (CurrentHighestBidValue != null) {
+            CurrentHighestBidValue.setText(ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
+        }
+        buyitnowprice = item.getMaxPrice();
+        if (MaxPriceValue != null) {
+            MaxPriceValue.setText(ItemInformationUiHelper.formatBuyItNowLine(buyitnowprice));
+        }
+        ItemInformationUiHelper.applyAuctionPresentation(listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
+        ItemInformationUiHelper.applyEndsIn(EndsInValue, item);
+        boolean closed = item.getStatus() != ItemStatus.OPEN;
+        ItemInformationUiHelper.setBidButtonClosed(listingkind, BidButton, autobidfield, autobidbutton, closed);
+        appendpricetochart(item.getCurrentPrice());
+    }
+
+    private void appendpricetochart(double price) {
+        BidHistoryChartBinder b = chartbinder();
+        if (b != null) {
+            b.appendLivePrice(price, 20);
+        }
+    }
+
+    public void markItemClosed(Item item) {
+        if (item == null || item.getId() != this.itemid) {
+            return;
+        }
+        Platform.runLater(() -> {
+            setendsinsource(null);
+            ItemInformationUiHelper.setBidButtonClosed(listingkind, BidButton, autobidfield, autobidbutton, true);
+            if (EndsInValue != null) {
+                EndsInValue.setText("Auction Closed");
+            }
         });
-  }
+    }
 
-  public void markAsSold() {
-    Platform.runLater(
-        () -> {
-          endsInSourceItem = null;
-          if (CurrentHighestBidValue != null) CurrentHighestBidValue.setText("ĐÃ CHỐT ĐỨT");
-          if (MaxPriceValue != null) MaxPriceValue.setText("SELLED");
-          ItemInformationUiHelper.setBidButtonClosed(
-              listingKind, BidButton, autobidfield, autobidbutton, true);
-          if (EndsInValue != null) EndsInValue.setText("Winner: " + ClientSession.getUsername());
+    public void markAsSold() {
+        Platform.runLater(() -> {
+            endsinsourceitem = null;
+            if (CurrentHighestBidValue != null) {
+                CurrentHighestBidValue.setText("ĐÃ CHỐT ĐỨT");
+            }
+            if (MaxPriceValue != null) {
+                MaxPriceValue.setText("SELLED");
+            }
+            ItemInformationUiHelper.setBidButtonClosed(listingkind, BidButton, autobidfield, autobidbutton, true);
+            if (EndsInValue != null) {
+                EndsInValue.setText("Winner: " + ClientSession.getUsername());
+            }
         });
-  }
+    }
 }

@@ -1,7 +1,6 @@
 package com.auction.server.controller;
 
 public class TokenBucket {
-    // REFACTOR: make refill rate configurable instead of hardcoding 1 token/sec
     private final int max;
     private int tokens;
     private long lastrefill;
@@ -14,8 +13,9 @@ public class TokenBucket {
 
     public synchronized boolean tryconsume() {
         long now = System.currentTimeMillis();
-        int add = (int) ((now - lastrefill) / 1000);
-        if (add > 0) {
+        long diff = now - lastrefill;
+        if (diff > 100) {
+            int add = (int) (diff / 100) * 10;
             tokens = Math.min(max, tokens + add);
             lastrefill = now;
         }

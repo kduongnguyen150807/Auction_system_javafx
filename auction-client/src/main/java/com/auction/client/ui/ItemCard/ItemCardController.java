@@ -7,6 +7,7 @@ import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.AuctionType;
 import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -21,12 +22,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 
 public class ItemCardController {
-  private static final double FULL_IMG_W = 270;
-  private static final double FULL_IMG_H = 240;
-  /** Category row: fixed “slot” width in parent HBox (image + padding). */
-  private static final double COMPACT_IMG_W = 180;
-  private static final double COMPACT_IMG_H = 158;
-  public static final double CATEGORY_SLOT_WIDTH = 208;
+  private static final double fullimgw = 270;
+  private static final double fullimgh = 240;
+  private static final double compactimgw = 180;
+  private static final double compactimgh = 158;
+  public static final double categoryslotwidth = 208;
 
   @FXML private VBox itemRoot;
   @FXML private Label ItemName, ItemDescription, Price, TimeRemain;
@@ -35,34 +35,32 @@ public class ItemCardController {
   @FXML private Rectangle imageClip;
 
   private int id;
-  private String itemName, description, timeLabel, imageUrl, sellerName, sellerAvatarUrl;
-  private double currentPrice;
-  private LocalDateTime endTime;
-  /** Live catalog snapshot for Dutch timers + labels */
-  private Item catalogItemSnapshot;
+  private String itemname, description, timelabel, imageurl, sellername, selleravatarurl;
+  private double currentprice;
+  private LocalDateTime endtime;
+  private Item catalogitemsnapshot;
 
-  public void attachCatalogItem(Item catalogItem) {
-    this.catalogItemSnapshot = catalogItem;
-    refreshPriceMetricCaption();
+  public void attachCatalogItem(Item catalogitem) {
+    this.catalogitemsnapshot = catalogitem;
+    refreshpricemetriccaption();
   }
 
-  /** Home category rows: smaller image + fixed card width (one slot per cell, no horizontal grow). */
   public void setCompactRowLayout(boolean compact) {
     if (itemRoot != null) {
       itemRoot.getStyleClass().remove("item-card-compact");
-      if (compact) itemRoot.getStyleClass().add("item-card-compact");
       if (compact) {
-        itemRoot.setMinWidth(CATEGORY_SLOT_WIDTH);
-        itemRoot.setPrefWidth(CATEGORY_SLOT_WIDTH);
-        itemRoot.setMaxWidth(CATEGORY_SLOT_WIDTH);
+        itemRoot.getStyleClass().add("item-card-compact");
+        itemRoot.setMinWidth(categoryslotwidth);
+        itemRoot.setPrefWidth(categoryslotwidth);
+        itemRoot.setMaxWidth(categoryslotwidth);
       } else {
         itemRoot.setMinWidth(Region.USE_COMPUTED_SIZE);
         itemRoot.setPrefWidth(Region.USE_COMPUTED_SIZE);
         itemRoot.setMaxWidth(Double.MAX_VALUE);
       }
     }
-    double w = compact ? COMPACT_IMG_W : FULL_IMG_W;
-    double h = compact ? COMPACT_IMG_H : FULL_IMG_H;
+    double w = compact ? compactimgw : fullimgw;
+    double h = compact ? compactimgh : fullimgh;
     if (ImageHolder != null) {
       ImageHolder.setFitWidth(w);
       ImageHolder.setFitHeight(h);
@@ -79,133 +77,133 @@ public class ItemCardController {
   }
 
   public VBox getRootNode() {
-    return itemRoot;
+    VBox ans = itemRoot;
+    return ans;
   }
 
-  public void setData(
-      int itemId,
-      String name,
-      double price,
-      String desc,
-      String timeLabel,
-      String imageUrl,
-      String sellerName,
-      String sellerAvatarUrl) {
-    this.id = itemId;
-    this.itemName = name;
-    this.currentPrice = price;
+  public void setData(int itemid, String name, double price, String desc, String timelabel, String imageurl, String sellername, String selleravatarurl) {
+    this.id = itemid;
+    this.itemname = name;
+    this.currentprice = price;
     this.description = desc;
-    this.timeLabel = timeLabel;
-    this.imageUrl = imageUrl;
-    this.sellerName = sellerName;
-    this.sellerAvatarUrl = sellerAvatarUrl;
-
-    if (ItemName != null) ItemName.setText(this.itemName);
-    if (ItemDescription != null) ItemDescription.setText(this.description);
-    if (Price != null) Price.setText(String.format("%,.0f$", this.currentPrice));
-    if (TimeRemain != null) TimeRemain.setText(this.timeLabel);
-
-    loadImageIfPresent(this.imageUrl);
-    refreshPriceMetricCaption();
+    this.timelabel = timelabel;
+    this.imageurl = imageurl;
+    this.sellername = sellername;
+    this.selleravatarurl = selleravatarurl;
+    if (ItemName != null) {
+      ItemName.setText(this.itemname);
+    }
+    if (ItemDescription != null) {
+      ItemDescription.setText(this.description);
+    }
+    if (Price != null) {
+      Price.setText(String.format("%,.0f$", this.currentprice));
+    }
+    if (TimeRemain != null) {
+      TimeRemain.setText(this.timelabel);
+    }
+    loadimageifpresent(this.imageurl);
+    refreshpricemetriccaption();
   }
 
-  private void refreshPriceMetricCaption() {
-    if (priceMetricCaption == null) return;
-    boolean dutch =
-        catalogItemSnapshot != null
-            && catalogItemSnapshot.getAuctionType() == AuctionType.DUTCH;
+  private void refreshpricemetriccaption() {
+    if (priceMetricCaption == null) {
+      return;
+    }
+    boolean dutch = catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH;
     priceMetricCaption.setText(dutch ? "CURRENT PRICE" : "CURRENT BID");
   }
 
-  private void loadImageIfPresent(String url) {
-    if (ImageHolder == null || url == null || url.isBlank()) return;
+  private void loadimageifpresent(String url) {
+    if (ImageHolder == null || url == null || url.isBlank()) {
+      return;
+    }
     Image img = new Image(url, true);
-    img.progressProperty()
-        .addListener(
-            (obs, oldv, newv) -> {
-              if (newv.doubleValue() == 1.0) {
-                Platform.runLater(() -> ItemCardViewportCrop.apply(ImageHolder, img));
-              }
-            });
+    img.progressProperty().addListener((obs, oldv, newv) -> {
+      if (newv.doubleValue() == 1.0) {
+        Platform.runLater(() -> ItemCardViewportCrop.apply(ImageHolder, img));
+      }
+    });
     ImageHolder.setImage(img);
   }
 
-  /** Name, description, price, sellers, image — shared by live-countdown and static-time rows. */
-  private void patchItemCoreFields(Item item) {
-    if (item == null || item.getId() != this.id) return;
-
+  private void patchitemcorefields(Item item) {
+    if (item == null || item.getId() != this.id) {
+      return;
+    }
     String name = item.getName() != null ? item.getName() : "";
     String desc = item.getDescription() != null ? item.getDescription() : "";
-    String newSeller = item.getSellerUsername() != null ? item.getSellerUsername() : "";
-    String newSellerAvatar = item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "";
-    String newImageUrl = item.getImageUrl() != null ? item.getImageUrl() : "";
-
-    this.itemName = name;
+    String newseller = item.getSellerUsername() != null ? item.getSellerUsername() : "";
+    String newselleravatar = item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "";
+    String newimageurl = item.getImageUrl() != null ? item.getImageUrl() : "";
+    this.itemname = name;
     this.description = desc;
-    this.sellerName = newSeller;
-    this.sellerAvatarUrl = newSellerAvatar;
-    if (ItemName != null) ItemName.setText(name);
-    if (ItemDescription != null) ItemDescription.setText(desc);
-
-    double price = item.getCurrentPrice();
-    if (Double.compare(this.currentPrice, price) != 0) {
-      updatePrice(price);
+    this.sellername = newseller;
+    this.selleravatarurl = newselleravatar;
+    if (ItemName != null) {
+      ItemName.setText(name);
     }
-
-    if (ImageHolder == null) return;
-    if (newImageUrl.isBlank()) {
-      if (this.imageUrl != null && !this.imageUrl.isBlank()) {
+    if (ItemDescription != null) {
+      ItemDescription.setText(desc);
+    }
+    double price = item.getCurrentPrice();
+    if (Double.compare(this.currentprice, price) != 0) {
+      updateprice(price);
+    }
+    if (ImageHolder == null) {
+      return;
+    }
+    if (newimageurl.isBlank()) {
+      if (this.imageurl != null && !this.imageurl.isBlank()) {
         ImageHolder.setImage(null);
       }
-      this.imageUrl = newImageUrl;
-    } else if (!Objects.equals(this.imageUrl, newImageUrl)) {
-      this.imageUrl = newImageUrl;
-      loadImageIfPresent(newImageUrl);
+      this.imageurl = newimageurl;
+    } else if (!Objects.equals(this.imageurl, newimageurl)) {
+      this.imageurl = newimageurl;
+      loadimageifpresent(newimageurl);
     }
   }
 
-  /**
-   * Applies server fields without reloading the image if the URL is unchanged (reduces lag on refresh).
-   */
   public void syncFromCatalogItem(Item item) {
-    if (item == null || item.getId() != this.id) return;
-    catalogItemSnapshot = item;
-    refreshPriceMetricCaption();
-    patchItemCoreFields(item);
+    if (item == null || item.getId() != this.id) {
+      return;
+    }
+    catalogitemsnapshot = item;
+    refreshpricemetriccaption();
+    patchitemcorefields(item);
     setEndTime(item.getEndTime());
     updateTimeLabel();
   }
 
-  /**
-   * Same as {@link #syncFromCatalogItem} but time column is a fixed caption (History / Your items), no live
-   * countdown.
-   */
-  public void syncFromCatalogItemStaticTime(Item item, String timeRemainCaption) {
-    if (item == null || item.getId() != this.id) return;
-    catalogItemSnapshot = item;
-    refreshPriceMetricCaption();
-    patchItemCoreFields(item);
+  public void syncFromCatalogItemStaticTime(Item item, String timeremaincaption) {
+    if (item == null || item.getId() != this.id) {
+      return;
+    }
+    catalogitemsnapshot = item;
+    refreshpricemetriccaption();
+    patchitemcorefields(item);
     setEndTime(null);
-    this.timeLabel = timeRemainCaption != null ? timeRemainCaption : "";
-    if (TimeRemain != null) TimeRemain.setText(this.timeLabel);
+    this.timelabel = timeremaincaption != null ? timeremaincaption : "";
+    if (TimeRemain != null) {
+      TimeRemain.setText(this.timelabel);
+    }
   }
 
-  public void setEndTime(LocalDateTime endTime) {
-    this.endTime = endTime;
+  public void setEndTime(LocalDateTime endtime) {
+    this.endtime = endtime;
   }
 
   public void updateTimeLabel() {
-    if (TimeRemain == null) return;
+    if (TimeRemain == null) {
+      return;
+    }
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime target;
-    boolean dutchAuction =
-        catalogItemSnapshot != null
-            && catalogItemSnapshot.getAuctionType() == AuctionType.DUTCH
-            && catalogItemSnapshot.getEndTime() != null;
-    if (dutchAuction) {
-      target = DutchAuctionPricing.countdownTarget(catalogItemSnapshot, now);
+    boolean dutchauction = catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH && catalogitemsnapshot.getEndTime() != null;
+    if (dutchauction) {
+      target = DutchAuctionPricing.countdownTarget(catalogitemsnapshot, now);
     } else {
-      target = endTime;
+      target = endtime;
     }
     if (target == null) {
       return;
@@ -220,34 +218,38 @@ public class ItemCardController {
       long hours = (s % 86400) / 3600;
       long mins = (s % 3600) / 60;
       long secs = s % 60;
-      if (days > 0) label = days + "d " + hours + "h";
-      else if (hours > 0) label = hours + "h " + mins + "m";
-      else label = mins + "m " + secs + "s";
+      if (days > 0) {
+        label = days + "d " + hours + "h";
+      } else if (hours > 0) {
+        label = hours + "h " + mins + "m";
+      } else {
+        label = mins + "m " + secs + "s";
+      }
     }
     TimeRemain.setText(label);
   }
 
-  private void updatePrice(double newPrice) {
-    this.currentPrice = newPrice;
-    if (Price != null) Price.setText(String.format("%,.0f$", newPrice));
+  private void updateprice(double newprice) {
+    this.currentprice = newprice;
+    if (Price != null) {
+      Price.setText(String.format("%,.0f$", newprice));
+    }
   }
 
   public void handleItemClicked() {
     try {
-      NodeContentLoader<ScrollPane> detailLoader = new NodeContentLoader<>();
-      detailLoader.load("/fxml/iteminformation/ItemInformation.fxml");
-      ItemInformationController detailController = detailLoader.getController();
-      if (detailController != null) {
-        detailController.setData(id, itemName, currentPrice, 0, description, timeLabel, imageUrl, sellerName, sellerAvatarUrl);
-        detailController.refresh();
-        KhungController.itemDetailController = detailController;
+      NodeContentLoader<ScrollPane> detailloader = new NodeContentLoader<>();
+      detailloader.load("/fxml/iteminformation/ItemInformation.fxml");
+      ItemInformationController detailcontroller = detailloader.getController();
+      if (detailcontroller != null) {
+        ItemStatus status = catalogitemsnapshot != null ? catalogitemsnapshot.getStatus() : ItemStatus.OPEN;
+        detailcontroller.setData(id, itemname, currentprice, 0, description, timelabel, imageurl, sellername, selleravatarurl, status);
+        detailcontroller.refresh();
+        KhungController.itemDetailController = detailcontroller;
       }
-      NodeManager.switchNodewithNode(
-          detailLoader.getCurrentNode(),
-          KhungController.getCurrentNode(),
-          KhungController.getMainContentPane());
-      KhungController.setMainContentNode(detailLoader.getCurrentNode());
-    } catch (Exception ignored) {
+      NodeManager.switchNodewithNode(detailloader.getCurrentNode(), KhungController.getCurrentNode(), KhungController.getMainContentPane());
+      KhungController.setMainContentNode(detailloader.getCurrentNode());
+    } catch (Exception e) {
     }
   }
 }

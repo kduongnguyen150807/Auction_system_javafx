@@ -4,12 +4,19 @@ import com.auction.server.controller.SocketServer;
 import com.auction.server.dao.platform.DatabaseMigration;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
+  private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
   public static void main(String[] args) {
-    boolean ans = killport(8080);
+    String portstr = System.getenv("SERVER_PORT");
+    int port = (portstr != null && !portstr.trim().isEmpty()) ? Integer.parseInt(portstr) : 8080;
+
+    boolean ans = killport(port);
     DatabaseMigration.runAll();
-    SocketServer server = new SocketServer(8080);
+    SocketServer server = new SocketServer(port);
     server.startServer();
   }
 
@@ -44,7 +51,7 @@ public class Main {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("error killing port", e);
     }
 
     return ans;

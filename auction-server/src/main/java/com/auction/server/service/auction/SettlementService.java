@@ -10,8 +10,11 @@ import com.auction.shared.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.DelayQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SettlementService {
+  private static final Logger logger = LoggerFactory.getLogger(SettlementService.class);
   private static final SettlementService instance = new SettlementService();
   private final ItemDao itemdao;
   private final UserDao userdao;
@@ -28,7 +31,8 @@ public class SettlementService {
   }
 
   public static SettlementService getInstance() {
-    return instance;
+    SettlementService ans = instance;
+    return ans;
   }
 
   public void schedule(int itemid, LocalDateTime endtime) {
@@ -44,7 +48,7 @@ public class SettlementService {
         schedule(item.getId(), item.getEndTime());
       }
     }
-    new Thread(() -> {
+    Thread thread = new Thread(() -> {
       while (true) {
         try {
           AuctionEndEvent ans = queue.take();
@@ -53,9 +57,12 @@ public class SettlementService {
             settle(item);
           }
         } catch (Exception e) {
+          logger.error("settlement_queue_error", e);
         }
       }
-    }).start();
+    });
+    thread.setDaemon(true);
+    thread.start();
   }
 
   private void settle(Item item) {
@@ -72,7 +79,8 @@ public class SettlementService {
       logdao.insertLog(item.getSellerId(), "ITEM_SOLD", finalprice, item.getId());
       User freshseller = userdao.getById(String.valueOf(item.getSellerId()));
       if (freshseller != null) {
-        AuctionManager.getInstance().sendToUser(item.getSellerId(), new Response("", "BALANCE_UPDATE", "Success", freshseller));
+        Response res = new Response("", "BALANCE_UPDATE", "Success", freshseller);
+        AuctionManager.getInstance().sendToUser(item.getSellerId(), res);
       }
       User ans = userdao.getById(String.valueOf(winnerid));
       if (ans != null) {
@@ -87,7 +95,8 @@ public class SettlementService {
     }
     Item closeditem = itemdao.getById(item.getId());
     if (closeditem != null) {
-      AuctionManager.getInstance().broadcast(new Response("", "ITEM_CLOSED", "closed", closeditem));
+      Response res = new Response("", "ITEM_CLOSED", "closed", closeditem);
+      AuctionManager.getInstance().broadcast(res);
     }
   }
 }

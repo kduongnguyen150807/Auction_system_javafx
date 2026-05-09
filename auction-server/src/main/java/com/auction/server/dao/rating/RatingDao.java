@@ -7,8 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-//Chống sập do bị tràn cursor DB
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RatingDao extends BaseDao<Rating> implements RatingRepository {
+  private static final Logger logger = LoggerFactory.getLogger(RatingDao.class);
 
   @Override
   protected Rating mapRow(ResultSet rs) throws SQLException {
@@ -23,6 +26,7 @@ public class RatingDao extends BaseDao<Rating> implements RatingRepository {
     ans.setRaterUsername(rs.getString("rater_name"));
     return ans;
   }
+
   @Override
   public boolean insertRating(Rating rating) {
     boolean ans = executeUpdate(
@@ -43,9 +47,11 @@ public class RatingDao extends BaseDao<Rating> implements RatingRepository {
       ps.setInt(1, itemid);
       ps.setInt(2, userid);
       try (ResultSet ans = ps.executeQuery()) {
-        return ans.next();
+        boolean res = ans.next();
+        return res;
       }
     } catch (Exception e) {
+      logger.error("has_rated_error", e);
       return false;
     }
   }
@@ -78,6 +84,7 @@ public class RatingDao extends BaseDao<Rating> implements RatingRepository {
         }
       }
     } catch (Exception e) {
+      logger.error("recalc_user_rating_error", e);
     }
   }
 }

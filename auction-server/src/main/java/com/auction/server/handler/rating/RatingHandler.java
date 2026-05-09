@@ -2,7 +2,6 @@ package com.auction.server.handler.rating;
 
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
-
 import com.auction.shared.*;
 import java.util.List;
 
@@ -10,56 +9,56 @@ public class RatingHandler implements ActionHandler {
   @Override
   public Response handle(Request request, HandlerContext context) {
     String action = request.getAction();
-    String requestId = request.getRequestId();
-
+    String requestid = request.getRequestId();
     if (action.equals(Request.GET_RATINGS)) {
-      int itemId = (int) request.getPayload();
-      List<Rating> ratings = context.getRatingDao().getByItemId(itemId);
-      return new Response(requestId, Response.OK, "success", (java.io.Serializable) ratings);
+      int itemid = (int) request.getPayload();
+      List<Rating> ratings = context.getRatingDao().getByItemId(itemid);
+      Response ans = new Response(requestid, Response.OK, "success", (java.io.Serializable) ratings);
+      return ans;
     }
-
     if (action.equals(Request.SUBMIT_RATING)) {
-      return handleSubmitRating(request, context);
+      Response ans = handlesubmitrating(request, context);
+      return ans;
     }
-
-    return new Response(requestId, Response.ERROR, "unknown_action", null);
+    Response res = new Response(requestid, Response.ERROR, "unknown_action", null);
+    return res;
   }
 
-  private Response handleSubmitRating(Request request, HandlerContext context) {
-    String requestId = request.getRequestId();
+  private Response handlesubmitrating(Request request, HandlerContext context) {
+    String requestid = request.getRequestId();
     try {
       Rating rating = (Rating) request.getPayload();
       Item item = context.getItemDao().getById(rating.getItemId());
       if (item == null) {
-        return new Response(requestId, Response.ERROR, "item_not_found", null);
+        Response res = new Response(requestid, Response.ERROR, "item_not_found", null);
+        return res;
       }
       if (item.getStatus() != ItemStatus.CLOSED && item.getStatus() != ItemStatus.FINISHED) {
-        return new Response(requestId, Response.ERROR, "auction_not_ended", null);
+        Response res = new Response(requestid, Response.ERROR, "auction_not_ended", null);
+        return res;
       }
-
-      int currentUserId = context.getCurrentUser().getId();
-      if (currentUserId != item.getWinnerId() && currentUserId != item.getSellerId()) {
-        return new Response(requestId, Response.ERROR, "not_participant", null);
+      int currentuserid = context.getCurrentUser().getId();
+      if (currentuserid != item.getWinnerId()) {
+        Response res = new Response(requestid, Response.ERROR, "not_buyer", null);
+        return res;
       }
-      if (context.getRatingDao().hasRated(rating.getItemId(), currentUserId)) {
-        return new Response(requestId, Response.ERROR, "already_rated", null);
+      if (context.getRatingDao().hasRated(rating.getItemId(), currentuserid)) {
+        Response res = new Response(requestid, Response.ERROR, "already_rated", null);
+        return res;
       }
-
-      rating.setRaterUserId(currentUserId);
-      if (currentUserId == item.getWinnerId()) {
-        rating.setRatedUserId(item.getSellerId());
-      } else {
-        rating.setRatedUserId(item.getWinnerId());
-      }
-
+      rating.setRaterUserId(currentuserid);
+      rating.setRatedUserId(item.getSellerId());
       boolean success = context.getRatingDao().insertRating(rating);
       if (success) {
         context.getRatingDao().recalcUserRating(rating.getRatedUserId());
-        return new Response(requestId, Response.OK, "success", null);
+        Response res = new Response(requestid, Response.OK, "success", null);
+        return res;
       }
-      return new Response(requestId, Response.ERROR, "fail", null);
+      Response res = new Response(requestid, Response.ERROR, "fail", null);
+      return res;
     } catch (Exception e) {
-      return new Response(requestId, Response.ERROR, "fail", null);
+      Response res = new Response(requestid, Response.ERROR, "fail", null);
+      return res;
     }
   }
 }

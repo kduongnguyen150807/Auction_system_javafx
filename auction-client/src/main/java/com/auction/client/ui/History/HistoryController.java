@@ -10,12 +10,12 @@ import com.auction.shared.Response;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -24,22 +24,18 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class HistoryController {
-  private static final Logger LOGGER = LoggerFactory.getLogger(HistoryController.class);
-  private static final Object EMPTY_PLACEHOLDER = new Object();
-
+  private static final Object emptyplaceholder = new Object();
   @FXML private FlowPane ongoingcontainer;
   @FXML private FlowPane upcomingcontainer;
   @FXML private FlowPane closedcontainer;
   @FXML private FlowPane pastcontainer;
-
-  private final PaneCards ongoingModel = new PaneCards();
-  private final PaneCards upcomingModel = new PaneCards();
-  private final PaneCards closedModel = new PaneCards();
-  private final PaneCards pastModel = new PaneCards();
+  private final PaneCards ongoingmodel = new PaneCards();
+  private final PaneCards upcomingmodel = new PaneCards();
+  private final PaneCards closedmodel = new PaneCards();
+  private final PaneCards pastmodel = new PaneCards();
+  private final AtomicLong fetchgen = new AtomicLong(0);
 
   private static final class PaneCards {
     final Map<Integer, ItemCardController> cards = new HashMap<>();
@@ -52,161 +48,166 @@ public class HistoryController {
   }
 
   public void refreshHistory() {
-    if (ClientSession.getCurrentUser() == null) return;
-    int userId = ClientSession.getCurrentUser().getId();
-    Thread fetchThread =
-        new Thread(
-            () -> {
-              List<Item> ongoing = fetchItems(Request.GET_ONGOING_BIDS, userId);
-              List<Item> upcoming = fetchItems(Request.GET_UPCOMING_BIDS, userId);
-              List<Item> closed = fetchItems("getclosedbids", userId);
-              List<Item> past = fetchItems("getpastbids", userId);
-              Platform.runLater(
-                  () -> {
-                    if (ongoingcontainer != null) {
-                      incrementalRender(
-                          ongoingcontainer, ongoing, ongoingModel, this::timeCaptionOngoing);
-                    }
-                    if (upcomingcontainer != null) {
-                      incrementalRender(
-                          upcomingcontainer, upcoming, upcomingModel, this::timeCaptionScheduled);
-                    }
-                    if (closedcontainer != null) {
-                      incrementalRender(
-                          closedcontainer, closed, closedModel, this::timeCaptionScheduled);
-                    }
-                    if (pastcontainer != null) {
-                      incrementalRender(pastcontainer, past, pastModel, this::timeCaptionScheduled);
-                    }
-                  });
-            });
-    fetchThread.setDaemon(true);
-    fetchThread.start();
-  }
-
-  private String timeCaptionOngoing(Item item) {
-    return buildHistoryCaption(item, true);
-  }
-
-  private String timeCaptionScheduled(Item item) {
-    return buildHistoryCaption(item, false);
-  }
-
-  private String buildHistoryCaption(Item item, boolean isOngoing) {
-    String timeLabel = formatTime(isOngoing ? item.getEndTime() : item.getStartTime());
-    if (item.getWinnerUsername() != null && !item.getWinnerUsername().isEmpty()) {
-      timeLabel = "Winner: " + item.getWinnerUsername();
+    if (ClientSession.getCurrentUser() == null) {
+      return;
     }
-    return timeLabel;
+    int userid = ClientSession.getCurrentUser().getId();
+    long currentgen = fetchgen.incrementAndGet();
+    Thread thread = new Thread(() -> {
+      List<Item> ongoing = fetchitems(Request.GET_ONGOING_BIDS, userid);
+      List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
+      List<Item> closed = fetchitems("getclosedbids", userid);
+      List<Item> past = fetchitems("getpastbids", userid);
+      Platform.runLater(() -> {
+        if (currentgen != fetchgen.get()) {
+          return;
+        }
+        if (ongoingcontainer != null && ongoing != null) {
+          incrementalrender(ongoingcontainer, ongoing, ongoingmodel, this::timecaptionongoing);
+        }
+        if (upcomingcontainer != null && upcoming != null) {
+          incrementalrender(upcomingcontainer, upcoming, upcomingmodel, this::timecaptionscheduled);
+        }
+        if (closedcontainer != null && closed != null) {
+          incrementalrender(closedcontainer, closed, closedmodel, this::timecaptionscheduled);
+        }
+        if (pastcontainer != null && past != null) {
+          incrementalrender(pastcontainer, past, pastmodel, this::timecaptionscheduled);
+        }
+      });
+    });
+    thread.setDaemon(true);
+    thread.start();
+  }
+
+  private String timecaptionongoing(Item item) {
+    String ans = buildhistorycaption(item, true);
+    return ans;
+  }
+
+  private String timecaptionscheduled(Item item) {
+    String ans = buildhistorycaption(item, false);
+    return ans;
+  }
+
+  private String buildhistorycaption(Item item, boolean isongoing) {
+    String timelabel = formattime(isongoing ? item.getEndTime() : item.getStartTime());
+    if (item.getWinnerUsername() != null && !item.getWinnerUsername().isEmpty()) {
+      timelabel = "Winner: " + item.getWinnerUsername();
+    }
+    return timelabel;
   }
 
   @SuppressWarnings("unchecked")
-  private List<Item> fetchItems(String action, int userId) {
-    Request request = new Request(action, userId);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-    if (response != null && Response.OK.equals(response.getStatus())) {
-      Object payload = response.getPayload();
-      if (payload instanceof List) return (List<Item>) payload;
+  private List<Item> fetchitems(String action, int userid) {
+    Request req = new Request(action, userid);
+    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+    if (res != null && Response.OK.equals(res.getStatus())) {
+      Object payload = res.getPayload();
+      if (payload instanceof List) {
+        List<Item> ans = (List<Item>) payload;
+        return ans;
+      }
     }
-    return Collections.emptyList();
+    return null;
   }
 
-  private void incrementalRender(
-      FlowPane pane,
-      List<Item> items,
-      PaneCards model,
-      Function<Item, String> captionFn) {
-    if (pane == null) return;
-    Map<Integer, ItemCardController> cardMap = model.cards;
-    Map<Integer, Node> rootByItemId = model.roots;
-
-    if (items == null || items.isEmpty()) {
-      for (Node n : new ArrayList<>(rootByItemId.values())) {
+  private void incrementalrender(FlowPane pane, List<Item> items, PaneCards model, Function<Item, String> captionfn) {
+    if (pane == null) {
+      return;
+    }
+    Map<Integer, ItemCardController> cardmap = model.cards;
+    Map<Integer, Node> rootbyitemid = model.roots;
+    if (items.isEmpty()) {
+      for (Node n : new ArrayList<>(rootbyitemid.values())) {
         pane.getChildren().remove(n);
       }
-      cardMap.clear();
-      rootByItemId.clear();
+      cardmap.clear();
+      rootbyitemid.clear();
       pane.getChildren().clear();
       Label empty = new Label("Empty");
       empty.getStyleClass().add("card-text");
-      empty.setUserData(EMPTY_PLACEHOLDER);
+      empty.setUserData(emptyplaceholder);
       pane.getChildren().add(empty);
       return;
     }
-
-    pane.getChildren().removeIf(n -> EMPTY_PLACEHOLDER.equals(n.getUserData()));
-
+    pane.getChildren().removeIf(n -> emptyplaceholder.equals(n.getUserData()));
     List<Item> ordered = new ArrayList<>(items);
-    Set<Integer> desiredIds = new HashSet<>(ordered.size() * 2);
-    for (Item it : ordered) desiredIds.add(it.getId());
-
-    for (int id : new ArrayList<>(cardMap.keySet())) {
-      if (!desiredIds.contains(id)) {
-        cardMap.remove(id);
-        Node removed = rootByItemId.remove(id);
-        if (removed != null) pane.getChildren().remove(removed);
+    Set<Integer> desiredids = new HashSet<>(ordered.size() * 2);
+    for (Item it : ordered) {
+      desiredids.add(it.getId());
+    }
+    for (int id : new ArrayList<>(cardmap.keySet())) {
+      if (!desiredids.contains(id)) {
+        cardmap.remove(id);
+        Node removed = rootbyitemid.remove(id);
+        if (removed != null) {
+          pane.getChildren().remove(removed);
+        }
       }
     }
-
     for (Item item : ordered) {
-      ItemCardController card = cardMap.get(item.getId());
-      String caption = captionFn.apply(item);
+      ItemCardController card = cardmap.get(item.getId());
+      String caption = captionfn.apply(item);
       if (card != null) {
         card.syncFromCatalogItemStaticTime(item, caption);
       } else {
         try {
-          NodeContentLoader<VBox> cardLoader = new NodeContentLoader<>();
-          cardLoader.load("/fxml/itemcard/ItemCard.fxml");
-          ItemCardController newCard = cardLoader.getController();
-          VBox root = cardLoader.getCurrentNode();
-          if (newCard != null && root != null) {
-            newCard.setData(
-                item.getId(),
-                safe(item.getName()),
-                item.getCurrentPrice(),
-                safe(item.getDescription()),
-                caption,
-                safe(item.getImageUrl()),
-                safe(item.getSellerUsername()),
-                safe(item.getSellerAvatarUrl()));
-            newCard.setEndTime(null);
-            cardMap.put(item.getId(), newCard);
-            rootByItemId.put(item.getId(), root);
+          NodeContentLoader<VBox> cardloader = new NodeContentLoader<>();
+          cardloader.load("/fxml/itemcard/ItemCard.fxml");
+          ItemCardController newcard = cardloader.getController();
+          VBox root = cardloader.getCurrentNode();
+          if (newcard != null && root != null) {
+            newcard.setData(item.getId(), safe(item.getName()), item.getCurrentPrice(), safe(item.getDescription()), caption, safe(item.getImageUrl()), safe(item.getSellerUsername()), safe(item.getSellerAvatarUrl()));
+            newcard.setEndTime(null);
+            cardmap.put(item.getId(), newcard);
+            rootbyitemid.put(item.getId(), root);
           }
         } catch (Exception e) {
-          LOGGER.warn("Failed to render history card for item id={}", item.getId(), e);
         }
       }
     }
-
-    List<Node> orderedNodes = new ArrayList<>(ordered.size());
+    List<Node> orderednodes = new ArrayList<>(ordered.size());
     for (Item item : ordered) {
-      Node n = rootByItemId.get(item.getId());
-      if (n != null) orderedNodes.add(n);
+      Node n = rootbyitemid.get(item.getId());
+      if (n != null) {
+        orderednodes.add(n);
+      }
     }
     ObservableList<Node> children = pane.getChildren();
-    boolean sameOrder = children.size() == orderedNodes.size();
-    if (sameOrder) {
-      for (int i = 0; i < orderedNodes.size(); i++) {
-        if (children.get(i) != orderedNodes.get(i)) {
-          sameOrder = false;
+    boolean sameorder = children.size() == orderednodes.size();
+    if (sameorder) {
+      for (int i = 0; i < orderednodes.size(); i++) {
+        if (children.get(i) != orderednodes.get(i)) {
+          sameorder = false;
           break;
         }
       }
     }
-    if (!sameOrder) children.setAll(orderedNodes);
+    if (!sameorder) {
+      children.setAll(orderednodes);
+    }
   }
 
   private String safe(String value) {
-    return (value == null) ? "" : value;
+    String ans = value == null ? "" : value;
+    return ans;
   }
 
-  private String formatTime(LocalDateTime time) {
-    if (time == null) return "N/A";
+  private String formattime(LocalDateTime time) {
+    if (time == null) {
+      return "N/A";
+    }
     Duration remaining = Duration.between(LocalDateTime.now(), time);
-    if (remaining.isNegative() || remaining.isZero()) return "closed";
+    if (remaining.isNegative() || remaining.isZero()) {
+      return "closed";
+    }
     long hours = remaining.toHours();
-    if (hours / 24 > 0) return (hours / 24) + "d " + (hours % 24) + "h";
-    return (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
+    if (hours / 24 > 0) {
+      String ans = (hours / 24) + "d " + (hours % 24) + "h";
+      return ans;
+    }
+    String ans = (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
+    return ans;
   }
 }
