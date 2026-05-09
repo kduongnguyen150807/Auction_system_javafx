@@ -142,7 +142,16 @@ public class UserDao extends BaseDao<User> implements UserRepository {
   public User getByUsername(String username) {
     return querySingle("SELECT * FROM users WHERE username = ? LIMIT 1", username);
   }
-
+  //Xử lí lỗi nếu đang bid chưa kịp trừ tiền thì server sập
+  public boolean deductBalanceTx(int userId, double amount, Connection conn) throws SQLException {
+    String sql = "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, amount);
+      ps.setInt(2, userId);
+      ps.setDouble(3, amount);
+      return ps.executeUpdate() > 0;
+    }
+  }
   public boolean creditBalanceTx(int userId, double amount, Connection conn) throws SQLException {
     String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {

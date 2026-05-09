@@ -1,8 +1,10 @@
 package com.auction.server.dao.platform;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +16,7 @@ public class DatabaseConnection {
     static final DatabaseConnection INSTANCE = new DatabaseConnection();
   }
 
-  private String url;
-  private String user;
-  private String password;
+  private HikariDataSource dataSource;
 
   private DatabaseConnection() {
     try {
@@ -25,21 +25,24 @@ public class DatabaseConnection {
       if (input != null) {
         props.load(input);
       } else {
-        LOGGER.warn("db.properties not found on classpath, using defaults");
         props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
         props.setProperty("db.user", "ba_nin");
         props.setProperty("db.password", "banin123");
       }
 
-      this.url = props.getProperty("db.url");
-      this.user = props.getProperty("db.user");
-      this.password = props.getProperty("db.password");
+      HikariConfig config = new HikariConfig();
+      config.setJdbcUrl(props.getProperty("db.url"));
+      config.setUsername(props.getProperty("db.user"));
+      config.setPassword(props.getProperty("db.password"));
+      config.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
-      Class.forName("com.mysql.cj.jdbc.Driver");
-      // Validate by opening a test connection
-      Connection test = DriverManager.getConnection(url, user, password);
-      test.close();
-      LOGGER.info("Database connection validated successfully.");
+      // Cấu hình Pool chống sập Server
+      config.setMaximumPoolSize(50);
+      config.setMinimumIdle(10);
+      config.setConnectionTimeout(30000);
+
+      this.dataSource = new HikariDataSource(config);
+      LOGGER.info("HikariCP Database connection pool initialized.");
     } catch (Exception e) {
       LOGGER.error("Failed to initialize database connection", e);
     }
@@ -49,15 +52,11 @@ public class DatabaseConnection {
     return Holder.INSTANCE;
   }
 
-  /**
-   * Returns a NEW connection each call. Callers are responsible for closing it,
-   * or using try-with-resources. This avoids sharing a single Connection across threads.
-   */
   public Connection getConnection() {
     try {
-      return DriverManager.getConnection(url, user, password);
-    } catch (Exception e) {
-      LOGGER.error("Failed to create database connection", e);
+      return dataSource.getConnection(); // Lấy từ Pool, cực nhanh và an toàn
+    } catch (SQLException e) {
+      LOGGER.error("Failed to get connection from pool", e);
       return null;
     }
   }

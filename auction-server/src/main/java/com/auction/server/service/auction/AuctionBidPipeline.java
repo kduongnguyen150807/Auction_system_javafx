@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.function.IntConsumer;
-
+import java.sql.Connection;
+import java.sql.SQLException;
 /**
  * Applies manual bids (buy-it-now vs incremental), escrow/refunds, and schedules realtime side-effects.
  */
@@ -107,29 +108,55 @@ final class AuctionBidPipeline {
   }
 
   private Response processRegularBid(
-      BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
+          BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
+
     if (bid.getBidValue() <= item.getCurrentPrice()) return BidAuctionValidator.error("Bid too low");
-    if (!userDao.atomicDeductBalance(bidder.getId(), bid.getBidValue()))
-      return BidAuctionValidator.error("Insufficient balance");
-    logDao.insertLog(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId());
-    int prevId = bidDao.getPreviousHighestBidder(bid.getItemId());
-    double prevPrice = item.getCurrentPrice();
-    if (!bidDao.placeBid(bid)) {
-      userDao.atomicCreditBalance(bidder.getId(), bid.getBidValue());
-      logDao.insertLog(bidder.getId(), "BID_REFUND", bid.getBidValue(), bid.getItemId());
-      return BidAuctionValidator.error("conflict");
+
+    try (java.sql.Connection conn = com.auction.server.dao.platform.DatabaseConnection.getInstance().getConnection()) {
+      conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
+      try {
+        // 1. Trừ tiền
+        if (!userDao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn)) {
+          conn.rollback();
+          return BidAuctionValidator.error("Insufficient balance");
+        }
+        logDao.insertLogTx(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId(), conn);
+
+        // 2. Lấy thông tin người cũ
+        int prevId = bidDao.getCurrentHighestBidderTx(bid.getItemId(), conn);
+        double prevPrice = item.getCurrentPrice();
+
+        // 3. Đặt bid mới & Cập nhật giá
+        if (!bidDao.placeBidTx(bid, conn)) {
+          conn.rollback();
+          return BidAuctionValidator.error("conflict");
+        }
+        itemDao.updatePriceTx(item.getId(), bid.getBidValue(), conn);
+
+        // 4. Hoàn tiền người cũ
+        if (prevId > 0 && prevPrice > 0) {
+          userDao.creditBalanceTx(prevId, prevPrice, conn);
+          logDao.insertLogTx(prevId, "BID_REFUND", prevPrice, bid.getItemId(), conn);
+          after.add(() -> notifier.sendBalanceUpdateToUser(prevId));
+          final int outbidItemId = bid.getItemId();
+          after.add(() -> notifier.notifyOutbidUser(prevId, outbidItemId));
+        }
+
+        conn.commit(); // THÀNH CÔNG THÌ COMMIT TOÀN BỘ
+
+        after.add(() -> applyAntiSnipeExtension(bid.getItemId()));
+        after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+        pendingPriceBroadcast.add(bid.getItemId());
+
+        return new Response("", Response.OK, "success", bid);
+
+      } catch (Exception e) {
+        conn.rollback(); // LỖI BẤT KỲ ĐÂU -> ROLLBACK, KHÔNG AI MẤT TIỀN
+        return BidAuctionValidator.error("System error during bid");
+      }
+    } catch (SQLException e) {
+      return BidAuctionValidator.error("Database connection error");
     }
-    itemDao.updatePrice(item.getId(), bid.getBidValue(), item.getVersion());
-    refundPreviousBidder(prevId, prevPrice, bid.getItemId(), after);
-    after.add(() -> applyAntiSnipeExtension(bid.getItemId()));
-    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-    pendingPriceBroadcast.add(bid.getItemId());
-    if (prevId > 0) {
-      final int outbidItemId = bid.getItemId();
-      final int outbidUserId = prevId;
-      after.add(() -> notifier.notifyOutbidUser(outbidUserId, outbidItemId));
-    }
-    return new Response("", Response.OK, "success", bid);
   }
 
   private void creditSeller(Item item, double amount, List<Runnable> after) {

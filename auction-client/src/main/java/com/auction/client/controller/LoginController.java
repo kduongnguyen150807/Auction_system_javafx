@@ -26,7 +26,7 @@ public class LoginController {
   private void initialize() {
     Platform.runLater(() -> rootPane.requestFocus());
   }
-
+  //Hàm xử lí login bên giao diện
   @FXML
   public void handleLogin(ActionEvent event) {
     String username = this.usernameField.getText().trim();
@@ -37,35 +37,52 @@ public class LoginController {
       return;
     }
 
-    // Hash before sending — plain-text never leaves this process.
+    this.messageLabel.setText("Đang kết nối...");
+    this.rootPane.setDisable(true);
+
     String hashedPassword = PasswordEncoder.hash(rawPassword);
     Map<String, String> credentials = new HashMap<>();
     credentials.put("username", username);
     credentials.put("password", hashedPassword);
-
     Request request = new Request(Request.LOGIN, credentials);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
 
-    if (response == null) {
-      this.messageLabel.setText("Cannot reach server — check IP and server status.");
+    NetworkClient client;
+    try {
+      client = NetworkClient.getInstance();
+    } catch (Exception e) {
+      this.rootPane.setDisable(false);
+      this.messageLabel.setText("Cannot initialize network client.");
       return;
     }
 
-    if (response.getStatus().equals(Response.OK)) {
-      if (response.getPayload() instanceof User loggedInUser) {
-        ClientSession.setCurrentUser(loggedInUser);
-      }
-      this.messageLabel.setText("Login successful!");
-      try {
-        SceneManager.switchScene("/fxml/main/Khung.fxml");
-      } catch (Exception ex) {
-        this.messageLabel.setText("Logged in but failed to open main window.");
-      }
-    } else if ("account_banned".equals(response.getMessage())) {
-      this.messageLabel.setText("Your account has been suspended.");
-    } else {
-      this.messageLabel.setText("Incorrect username or password.");
-    }
+    new Thread(() -> {
+      Response res = client.sendRequestAndWait(request);
+
+      Platform.runLater(() -> {
+        this.rootPane.setDisable(false);
+
+        if (res == null) {
+          this.messageLabel.setText("Cannot reach server — check IP and server status.");
+          return;
+        }
+
+        if (res.getStatus().equals(Response.OK)) {
+          if (res.getPayload() instanceof User loggedInUser) {
+            ClientSession.setCurrentUser(loggedInUser);
+          }
+          this.messageLabel.setText("Login successful!");
+          try {
+            SceneManager.switchScene("/fxml/main/Khung.fxml");
+          } catch (Exception ex) {
+            this.messageLabel.setText("Logged in but failed to open main window.");
+          }
+        } else if ("account_banned".equals(res.getMessage())) {
+          this.messageLabel.setText("Your account has been suspended.");
+        } else {
+          this.messageLabel.setText("Incorrect username or password.");
+        }
+      });
+    }).start();
   }
 
   @FXML

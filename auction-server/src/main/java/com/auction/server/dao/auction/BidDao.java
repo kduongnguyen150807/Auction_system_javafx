@@ -75,7 +75,17 @@ public class BidDao extends BaseDao<BidTransaction> {
     }
     return history;
   }
-
+  //Xử lí cho lỗi đang bid thì server mất điện
+  public boolean placeBidTx(BidTransaction bid, Connection conn) throws SQLException {
+    String insertSql = "insert into bid_transactions(itemid,userid,bidvalue,timestamp) values(?,?,?,?)";
+    try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+      insertStmt.setInt(1, bid.getItemId());
+      insertStmt.setInt(2, bid.getUserId());
+      insertStmt.setDouble(3, bid.getBidValue());
+      insertStmt.setTimestamp(4, Timestamp.valueOf(bid.getTimestamp()));
+      return insertStmt.executeUpdate() > 0;
+    }
+  }
   public int getPreviousHighestBidder(int itemId) {
     String sql = "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
     try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
