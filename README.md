@@ -16,7 +16,7 @@ Dự án Hệ thống Đấu giá Trực tuyến (Online Auction System) là bà
 2. [Công nghệ sử dụng](#2-công-nghệ-sử-dụng)
 3. [Kiến trúc hệ thống](#3-kiến-trúc-hệ-thống)
 4. [Tính năng nổi bật (Điểm nhấn kỹ thuật)](#4-tính-năng-nổi-bật-điểm-nhấn-kỹ-thuật)
-5.[Hướng dẫn cài đặt & Khởi chạy](#5-hướng-dẫn-cài-đặt--khởi-chạy)
+5. [Hướng dẫn cài đặt & Khởi chạy](#5-hướng-dẫn-cài-đặt--khởi-chạy)
 
 ---
 
