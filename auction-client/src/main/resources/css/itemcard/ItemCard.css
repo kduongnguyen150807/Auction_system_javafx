@@ -28,10 +28,10 @@
 .label-sm-gray { -fx-text-fill: #888888; -fx-font-size: 10px; -fx-font-weight: bold; }
 
 .price-val-cyan {
-    -fx-text-fill: #00d4ff;
+    -fx-text-fill: #00E5FF;
     -fx-font-weight: 900;
     -fx-font-size: 20px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 212, 255, 0.3), 5, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 229, 255, 0.35), 5, 0, 0, 0);
 }
 
 .timer-val-orange {
@@ -39,3 +39,16 @@
     -fx-font-weight: 900;
     -fx-font-size: 18px;
 }
+
+/* Fixed-slot category cards: content stays within narrow column */
+.item-card-compact {
+    -fx-min-width: 208px;
+    -fx-pref-width: 208px;
+    -fx-max-width: 208px;
+}
+
+.item-card-compact .item-name-mac { -fx-font-size: 14px; }
+.item-card-compact .item-desc-mac { -fx-font-size: 10px; -fx-wrap-text: true; }
+.item-card-compact .label-sm-gray { -fx-font-size: 9px; }
+.item-card-compact .price-val-cyan { -fx-font-size: 17px; }
+.item-card-compact .timer-val-orange { -fx-font-size: 15px; }

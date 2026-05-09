@@ -7,13 +7,12 @@ public class Bidder extends User {
     super();
   }
 
-  public Bidder(String u, String p, String e, String a, String ph) {
-    super(u, p, e, a, ph);
+  public Bidder(String username, String password, String email, String age, String phoneNumber) {
+    super(username, password, email, age, phoneNumber);
   }
 
   @Override
   public UserRole getRole() {
-    UserRole ans = UserRole.BIDDER;
-    return ans;
+    return UserRole.BIDDER;
   }
 }

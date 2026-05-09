@@ -65,11 +65,11 @@
                                     <children>
                                         <VBox spacing="5.0">
                                             <children>
-                                                <Label styleClass="label-sm-gray" text="CURRENT BID" />
+                                                <Label fx:id="BidMetricCaption" styleClass="label-sm-gray" text="CURRENT BID" />
                                                 <Label fx:id="CurrentHighestBidValue" styleClass="price-val-blue" text="7,000,000$" />
                                             </children>
                                         </VBox>
-                                        <VBox spacing="5.0">
+                                        <VBox fx:id="buyItNowVBox" spacing="5.0">
                                             <children>
                                                 <Label styleClass="label-sm-gray" text="BUY IT NOW" />
                                                 <Label fx:id="MaxPriceValue" styleClass="price-val-white" text="NO BUY IT NOW" />
@@ -87,7 +87,7 @@
 
                                 <Button fx:id="BidButton" maxWidth="Infinity" onAction="#showBiddingForm" prefHeight="60.0" styleClass="btn-bid-main" text="PLACE BID NOW" />
 
-                                <HBox spacing="10" alignment="CENTER">
+                                <HBox fx:id="autoBidHBox" spacing="10" alignment="CENTER">
                                     <children>
                                         <TextField fx:id="autobidfield" promptText="Max Auto-Bid $" styleClass="input-mac-blue" prefHeight="45.0" HBox.hgrow="ALWAYS" />
                                         <Button fx:id="autobidbutton" onAction="#handleAutoBid" prefHeight="45.0" prefWidth="120.0" text="AUTO BID" styleClass="btn-rounded-gold-sm" />

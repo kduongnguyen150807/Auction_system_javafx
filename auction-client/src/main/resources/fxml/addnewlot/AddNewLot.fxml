@@ -5,8 +5,10 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
@@ -16,7 +18,18 @@
 
 <AnchorPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: transparent;" stylesheets="/css/addnewlot/AddNewLot.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.AddNewLot.AddNewLotController">
     <children>
-        <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <ScrollPane
+                    fitToWidth="true"
+                    fitToHeight="false"
+                    hbarPolicy="AS_NEEDED"
+                    vbarPolicy="AS_NEEDED"
+                    styleClass="scroll-pane addnewlot-scroll"
+                    AnchorPane.bottomAnchor="0.0"
+                    AnchorPane.leftAnchor="0.0"
+                    AnchorPane.rightAnchor="0.0"
+                    AnchorPane.topAnchor="0.0">
+            <content>
+        <StackPane>
             <padding>
                 <Insets top="30.0" bottom="30.0" left="40.0" right="40.0" />
             </padding>
@@ -52,12 +65,36 @@
                                 <VBox prefWidth="480.0" spacing="10.0">
                                     <children>
                                         <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="input-mac-blue" />
+
+                                        <Label styleClass="label-sm" text="AUCTION FORMAT" />
+                                        <HBox spacing="10.0" styleClass="auction-type-segments">
+                                            <children>
+                                                <ToggleButton fx:id="kindEnglishToggle" mnemonicParsing="false" prefWidth="228.0" styleClass="segment-toggle-auction" text="English auction" />
+                                                <ToggleButton fx:id="kindDutchToggle" mnemonicParsing="false" prefWidth="228.0" styleClass="segment-toggle-auction" text="Dutch auction" />
+                                            </children>
+                                        </HBox>
+
                                         <HBox spacing="10.0">
                                             <children>
                                                 <TextField fx:id="txtPrice" promptText="START PRICE ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
                                                 <TextField fx:id="txtMaxPrice" promptText="BUY NOW ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
                                             </children>
                                         </HBox>
+
+                                        <VBox fx:id="dutchExtrasVBox" spacing="10.0" managed="false" visible="false">
+                                            <children>
+                                                <TextField fx:id="txtDutchReservePrice" promptText="RESERVE / MIN PRICE ($)" styleClass="input-mac-blue" />
+                                                <HBox spacing="10.0">
+                                                    <children>
+                                                        <TextField fx:id="txtDutchDecrement" promptText="PRICE STEP DOWN ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
+                                                        <TextField fx:id="txtDutchIntervalMinutes" promptText="INTERVAL (MINUTES)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
+                                                    </children>
+                                                </HBox>
+                                                <Label styleClass="label-sm-muted" maxWidth="440.0"
+                                                       text="Dutch auctions lower the listing by the step amount each interval until someone buys at the current price or the reserve/end is reached." wrapText="true" />
+                                            </children>
+                                        </VBox>
+
                                         <TextArea fx:id="txtQuantity" prefRowCount="2" promptText="DESCRIPTION" styleClass="input-mac-blue" wrapText="true" />
 
                                         <Label styleClass="label-sm" text="AUCTION START" />
@@ -100,5 +137,7 @@
                 </VBox>
             </children>
         </StackPane>
+            </content>
+        </ScrollPane>
     </children>
 </AnchorPane>

@@ -4,110 +4,251 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.AuctionType;
+import com.auction.shared.DutchAuctionPricing;
+import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Objects;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 public class ItemCardController {
+  private static final double fullimgw = 270;
+  private static final double fullimgh = 240;
+  private static final double compactimgw = 180;
+  private static final double compactimgh = 158;
+  public static final double categoryslotwidth = 208;
+
   @FXML private VBox itemRoot;
   @FXML private Label ItemName, ItemDescription, Price, TimeRemain;
+  @FXML private Label priceMetricCaption;
   @FXML private ImageView ImageHolder;
+  @FXML private Rectangle imageClip;
 
   private int id;
-  private String n, d, t, u, sn, sa;
-  private double p;
+  private String itemname, description, timelabel, imageurl, sellername, selleravatarurl;
+  private double currentprice;
+  private LocalDateTime endtime;
+  private Item catalogitemsnapshot;
 
-  public void setData(
-      int iid,
-      String iname,
-      double ip,
-      String idesc,
-      String it,
-      String iurl,
-      String isn,
-      String isa) {
-    this.id = iid;
-    this.n = iname;
-    this.p = ip;
-    this.d = idesc;
-    this.t = it;
-    this.u = iurl;
-    this.sn = isn;
-    this.sa = isa;
+  public void attachCatalogItem(Item catalogitem) {
+    this.catalogitemsnapshot = catalogitem;
+    refreshpricemetriccaption();
+  }
 
-    if (ItemName != null) ItemName.setText(this.n);
-    if (ItemDescription != null) ItemDescription.setText(this.d);
-    if (Price != null) Price.setText(String.format("%,.0f$", this.p));
-    if (TimeRemain != null) TimeRemain.setText(this.t);
-
-    if (ImageHolder != null && this.u != null && !this.u.isBlank()) {
-      Image img = new Image(this.u, true);
-      img.progressProperty()
-          .addListener(
-              (obs, oldv, newv) -> {
-                if (newv.doubleValue() == 1.0) {
-                  Platform.runLater(() -> applyCenterCrop(ImageHolder, img));
-                }
-              });
-      ImageHolder.setImage(img);
+  public void setCompactRowLayout(boolean compact) {
+    if (itemRoot != null) {
+      itemRoot.getStyleClass().remove("item-card-compact");
+      if (compact) {
+        itemRoot.getStyleClass().add("item-card-compact");
+        itemRoot.setMinWidth(categoryslotwidth);
+        itemRoot.setPrefWidth(categoryslotwidth);
+        itemRoot.setMaxWidth(categoryslotwidth);
+      } else {
+        itemRoot.setMinWidth(Region.USE_COMPUTED_SIZE);
+        itemRoot.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        itemRoot.setMaxWidth(Double.MAX_VALUE);
+      }
+    }
+    double w = compact ? compactimgw : fullimgw;
+    double h = compact ? compactimgh : fullimgh;
+    if (ImageHolder != null) {
+      ImageHolder.setFitWidth(w);
+      ImageHolder.setFitHeight(h);
+    }
+    if (imageClip != null) {
+      imageClip.setWidth(w);
+      imageClip.setHeight(h);
+      imageClip.setArcWidth(compact ? 20 : 30);
+      imageClip.setArcHeight(compact ? 20 : 30);
+    }
+    if (ImageHolder != null && ImageHolder.getImage() != null) {
+      ItemCardViewportCrop.apply(ImageHolder, ImageHolder.getImage());
     }
   }
 
-  private void applyCenterCrop(ImageView iv, Image img) {
-    double w = img.getWidth();
-    double h = img.getHeight();
-    double targetW = iv.getFitWidth();
-    double targetH = iv.getFitHeight();
+  public VBox getRootNode() {
+    VBox ans = itemRoot;
+    return ans;
+  }
 
-    double imgRatio = w / h;
-    double targetRatio = targetW / targetH;
+  public void setData(int itemid, String name, double price, String desc, String timelabel, String imageurl, String sellername, String selleravatarurl) {
+    this.id = itemid;
+    this.itemname = name;
+    this.currentprice = price;
+    this.description = desc;
+    this.timelabel = timelabel;
+    this.imageurl = imageurl;
+    this.sellername = sellername;
+    this.selleravatarurl = selleravatarurl;
+    if (ItemName != null) {
+      ItemName.setText(this.itemname);
+    }
+    if (ItemDescription != null) {
+      ItemDescription.setText(this.description);
+    }
+    if (Price != null) {
+      Price.setText(String.format("%,.0f$", this.currentprice));
+    }
+    if (TimeRemain != null) {
+      TimeRemain.setText(this.timelabel);
+    }
+    loadimageifpresent(this.imageurl);
+    refreshpricemetriccaption();
+  }
 
-    double cropW, cropH, cropX, cropY;
-    if (imgRatio > targetRatio) {
-      cropH = h;
-      cropW = h * targetRatio;
-      cropX = (w - cropW) / 2;
-      cropY = 0;
+  private void refreshpricemetriccaption() {
+    if (priceMetricCaption == null) {
+      return;
+    }
+    boolean dutch = catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH;
+    priceMetricCaption.setText(dutch ? "CURRENT PRICE" : "CURRENT BID");
+  }
+
+  private void loadimageifpresent(String url) {
+    if (ImageHolder == null || url == null || url.isBlank()) {
+      return;
+    }
+    Image img = new Image(url, true);
+    img.progressProperty().addListener((obs, oldv, newv) -> {
+      if (newv.doubleValue() == 1.0) {
+        Platform.runLater(() -> ItemCardViewportCrop.apply(ImageHolder, img));
+      }
+    });
+    ImageHolder.setImage(img);
+  }
+
+  private void patchitemcorefields(Item item) {
+    if (item == null || item.getId() != this.id) {
+      return;
+    }
+    String name = item.getName() != null ? item.getName() : "";
+    String desc = item.getDescription() != null ? item.getDescription() : "";
+    String newseller = item.getSellerUsername() != null ? item.getSellerUsername() : "";
+    String newselleravatar = item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "";
+    String newimageurl = item.getImageUrl() != null ? item.getImageUrl() : "";
+    this.itemname = name;
+    this.description = desc;
+    this.sellername = newseller;
+    this.selleravatarurl = newselleravatar;
+    if (ItemName != null) {
+      ItemName.setText(name);
+    }
+    if (ItemDescription != null) {
+      ItemDescription.setText(desc);
+    }
+    double price = item.getCurrentPrice();
+    if (Double.compare(this.currentprice, price) != 0) {
+      updateprice(price);
+    }
+    if (ImageHolder == null) {
+      return;
+    }
+    if (newimageurl.isBlank()) {
+      if (this.imageurl != null && !this.imageurl.isBlank()) {
+        ImageHolder.setImage(null);
+      }
+      this.imageurl = newimageurl;
+    } else if (!Objects.equals(this.imageurl, newimageurl)) {
+      this.imageurl = newimageurl;
+      loadimageifpresent(newimageurl);
+    }
+  }
+
+  public void syncFromCatalogItem(Item item) {
+    if (item == null || item.getId() != this.id) {
+      return;
+    }
+    catalogitemsnapshot = item;
+    refreshpricemetriccaption();
+    patchitemcorefields(item);
+    setEndTime(item.getEndTime());
+    updateTimeLabel();
+  }
+
+  public void syncFromCatalogItemStaticTime(Item item, String timeremaincaption) {
+    if (item == null || item.getId() != this.id) {
+      return;
+    }
+    catalogitemsnapshot = item;
+    refreshpricemetriccaption();
+    patchitemcorefields(item);
+    setEndTime(null);
+    this.timelabel = timeremaincaption != null ? timeremaincaption : "";
+    if (TimeRemain != null) {
+      TimeRemain.setText(this.timelabel);
+    }
+  }
+
+  public void setEndTime(LocalDateTime endtime) {
+    this.endtime = endtime;
+  }
+
+  public void updateTimeLabel() {
+    if (TimeRemain == null) {
+      return;
+    }
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime target;
+    boolean dutchauction = catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH && catalogitemsnapshot.getEndTime() != null;
+    if (dutchauction) {
+      target = DutchAuctionPricing.countdownTarget(catalogitemsnapshot, now);
     } else {
-      cropW = w;
-      cropH = w / targetRatio;
-      cropX = 0;
-      cropY = (h - cropH) / 2;
+      target = endtime;
     }
-
-    iv.setViewport(new Rectangle2D(cropX, cropY, cropW, cropH));
+    if (target == null) {
+      return;
+    }
+    Duration rem = Duration.between(now, target);
+    String label;
+    if (rem.isNegative() || rem.isZero()) {
+      label = "closed";
+    } else {
+      long s = rem.getSeconds();
+      long days = s / 86400;
+      long hours = (s % 86400) / 3600;
+      long mins = (s % 3600) / 60;
+      long secs = s % 60;
+      if (days > 0) {
+        label = days + "d " + hours + "h";
+      } else if (hours > 0) {
+        label = hours + "h " + mins + "m";
+      } else {
+        label = mins + "m " + secs + "s";
+      }
+    }
+    TimeRemain.setText(label);
   }
 
-  public void updatePrice(double res) {
-    this.p = res;
-    if (Price != null) Price.setText(String.format("%,.0f$", res));
-  }
-
-  public int getId() {
-    int res = this.id;
-    return res;
+  private void updateprice(double newprice) {
+    this.currentprice = newprice;
+    if (Price != null) {
+      Price.setText(String.format("%,.0f$", newprice));
+    }
   }
 
   public void handleItemClicked() {
     try {
-      NodeContentLoader<ScrollPane> l = new NodeContentLoader<>();
-      l.load("/fxml/iteminformation/ItemInformation.fxml");
-      ItemInformationController c = l.getController();
-      if (c != null) {
-        c.setData(id, n, p, 0, d, t, u, sn, sa);
-        c.refresh();
-        KhungController.itemDetailController = c;
+      NodeContentLoader<ScrollPane> detailloader = new NodeContentLoader<>();
+      detailloader.load("/fxml/iteminformation/ItemInformation.fxml");
+      ItemInformationController detailcontroller = detailloader.getController();
+      if (detailcontroller != null) {
+        ItemStatus status = catalogitemsnapshot != null ? catalogitemsnapshot.getStatus() : ItemStatus.OPEN;
+        detailcontroller.setData(id, itemname, currentprice, 0, description, timelabel, imageurl, sellername, selleravatarurl, status);
+        detailcontroller.refresh();
+        KhungController.itemDetailController = detailcontroller;
       }
-      NodeManager.switchNodewithNode(
-          l.getCurrentNode(),
-          KhungController.getCurrentNode(),
-          KhungController.getMainContentPane());
-      KhungController.setMainContentNode(l.getCurrentNode());
+      NodeManager.switchNodewithNode(detailloader.getCurrentNode(), KhungController.getCurrentNode(), KhungController.getMainContentPane());
+      KhungController.setMainContentNode(detailloader.getCurrentNode());
     } catch (Exception e) {
     }
   }

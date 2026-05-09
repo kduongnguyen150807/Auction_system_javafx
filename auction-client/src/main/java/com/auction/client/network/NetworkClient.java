@@ -1,173 +1,201 @@
 package com.auction.client.network;
 
-import com.auction.client.ClientSession;
-import com.auction.client.ui.Main.KhungController;
-import com.auction.client.ui.Profile.ProfileController;
-import com.auction.client.ui.TrangChu.TrangChuController;
-import com.auction.client.util.NotificationCenter;
-import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import com.auction.shared.User;
-import java.io.*;
-import java.net.Socket;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import javafx.application.Platform;
 
 public class NetworkClient {
-  private static NetworkClient instance;
-  private Socket socket;
+  private static final long defaultrequesttimeoutseconds = 30L;
+  private static volatile NetworkClient instance;
+
   private ObjectOutputStream out;
-  private ObjectInputStream in;
-  private final ConcurrentHashMap<String, LinkedBlockingQueue<Response>> pendingMap =
-          new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingmap = new ConcurrentHashMap<>();
+  private final List<NetworkEventListener> listeners = new CopyOnWriteArrayList<>();
+  private String serverip;
 
   private NetworkClient() {
+    NetworkConnectionUi ui = new NetworkConnectionUi();
+    Optional<String> ipopt = ui.promptForServerIp();
+    if (ipopt.isEmpty()) {
+      return;
+    }
+    serverip = ipopt.get();
     try {
-      String ans1 = "127.0.0.1";
-      if (Platform.isFxApplicationThread()) {
-        javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
-        ans.setTitle("IP Setup");
-        ans.setHeaderText("Nhập IP Server đi mày:");
-        ans1 = ans.showAndWait().orElse("127.0.0.1");
-      } else {
-        java.util.concurrent.FutureTask<String> res = new java.util.concurrent.FutureTask<>(() -> {
-          javafx.scene.control.TextInputDialog ans = new javafx.scene.control.TextInputDialog("127.0.0.1");
-          ans.setTitle("IP Setup");
-          ans.setHeaderText("Nhập IP Server đi mày:");
-          return ans.showAndWait().orElse("127.0.0.1");
-        });
-        Platform.runLater(res);
-        ans1 = res.get();
-      }
-
-      System.out.println("Đang thử kết nối tới: " + ans1 + ":8080...");
-      this.socket = new Socket(ans1, 8080);
-      this.out = new ObjectOutputStream(this.socket.getOutputStream());
-      this.out.flush();
-      this.in = new ObjectInputStream(this.socket.getInputStream());
-      System.out.println("Kết nối Socket THÀNH CÔNG!");
-      startListener();
+      ObjectSocketConnection conn = ObjectSocketConnection.connect(serverip, 8080);
+      this.out = conn.getOut();
+      IncomingResponseRouter router = new IncomingResponseRouter(pendingmap, listeners);
+      conn.startReadLoop(
+              router::dispatch,
+              e -> {
+                this.out = null;
+                failallpending(e);
+              });
+      startheartbeat();
     } catch (Exception e) {
-      System.err.println("LỖI KẾT NỐI BAN ĐẦU:");
-      e.printStackTrace();
+      ui.showConnectionError(serverip);
     }
   }
 
-  public static synchronized NetworkClient getInstance() {
-    if (instance == null) instance = new NetworkClient();
-    return instance;
-  }
-
-  private void startListener() {
-    Thread res =
-            new Thread(
-                    () -> {
-                      try {
-                        while (true) {
-                          Object ans = in.readObject();
-                          System.out.println("Client nhận được object: " + ans.getClass().getSimpleName());
-                          if (ans instanceof Response) {
-                            handleIncoming((Response) ans);
-                          }
-                        }
-                      } catch (Exception e) {
-                        System.err.println("Mất kết nối với Server (Listener dừng):");
-                        e.printStackTrace();
-                      }
-                    });
-    res.setDaemon(true);
-    res.start();
-  }
-
-  private void handleIncoming(Response res) {
-    System.out.println("Đang xử lý Response. ID: " + res.getRequestId() + " | Status: " + res.getStatus());
-
-    if ("BALANCE_UPDATE".equals(res.getStatus())) {
-      User res1 = (User) res.getPayload();
-      Platform.runLater(() -> {
-        if (ProfileController.getInstance() != null) ProfileController.getInstance().updateBalanceDirectly(res1);
-        else ClientSession.setCurrentUser(res1);
-      });
-      return;
-    }
-
-    if ("OUTBID_NOTIFY".equals(res.getStatus())) {
-      Object payload = res.getPayload();
-      String res2 = payload != null ? payload.toString() : "N/A";
-      NotificationCenter.addNotification("🔥 BÁO ĐỘNG: Sản phẩm mã " + res2 + " bị đè giá rồi!");
-      return;
-    }
-
-    if ("NEW_BID_UPDATE".equals(res.getStatus())
-        || ("priceupdate".equals(res.getMessage()) && res.getPayload() instanceof Item)) {
-      Object res3 = res.getPayload();
-      if (res3 instanceof Item i) {
-        KhungController.updateRealtimeUi(i);
-      }
-      return;
-    }
-
-    String res5 = res.getRequestId();
-    if (res5 != null) {
-      LinkedBlockingQueue<Response> res6 = pendingMap.get(res5);
-      if (res6 != null) {
-        res6.offer(res);
-        System.out.println("Đã đẩy Response vào queue cho RequestID: " + res5);
-      } else {
-        System.err.println("CẢNH BÁO: Nhận được Response nhưng không tìm thấy queue nào đợi ID: " + res5);
+  public static NetworkClient getInstance() {
+    if (instance == null) {
+      synchronized (NetworkClient.class) {
+        if (instance == null) {
+          instance = new NetworkClient();
+        }
       }
     }
-  }
-
-  public Response sendRequestAndWait(Request req) {
-    Response ans = null;
-    System.out.println("Gửi Request ID: " + req.getRequestId());
-    try {
-      LinkedBlockingQueue<Response> res = new LinkedBlockingQueue<>();
-      pendingMap.put(req.getRequestId(), res);
-      synchronized (out) {
-        out.writeObject(req);
-        out.flush();
-      }
-
-      ans = res.poll(30, TimeUnit.SECONDS);
-
-      if (ans == null) {
-        System.err.println("LỖI: Server không phản hồi (Timeout 30s) ID: " + req.getRequestId());
-      } else {
-        System.out.println("Đã nhận phản hồi thành công!");
-      }
-
-      pendingMap.remove(req.getRequestId());
-    } catch (Exception e) {
-      System.err.println("LỖI SOCKET KHI GỬI/NHẬN:");
-      e.printStackTrace();
-    }
+    NetworkClient ans = instance;
     return ans;
   }
 
-  public static String uploadFile(String urlString, byte[] fileBytes) throws Exception {
-    String res = "boundary" + System.currentTimeMillis();
-    java.net.URL ans1 = java.net.URI.create(urlString).toURL();
-    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) ans1.openConnection();
-    conn.setDoOutput(true);
-    conn.setRequestMethod("POST");
-    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + res);
-    try (OutputStream out = conn.getOutputStream()) {
-      out.write(("--" + res + "\r\n").getBytes());
-      out.write(("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n").getBytes());
-      out.write(fileBytes);
-      out.write(("\r\n--" + res + "\r\n").getBytes());
-      out.write(("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n").getBytes());
-      out.write(("upload_def\r\n").getBytes());
-      out.write(("--" + res + "--\r\n").getBytes());
+  public void addListener(NetworkEventListener l) {
+    if (!listeners.contains(l)) {
+      listeners.add(l);
     }
-    try (java.util.Scanner s = new java.util.Scanner(conn.getInputStream())) {
-      String ans = s.useDelimiter("\\A").next();
-      return ans.split("\"secure_url\":\"")[1].split("\"")[0];
+  }
+
+  public void removeListener(NetworkEventListener l) {
+    listeners.remove(l);
+  }
+
+  private void failallpending(Throwable cause) {
+    pendingmap.forEach((id, f) -> f.completeExceptionally(cause));
+    pendingmap.clear();
+  }
+
+  private CompletableFuture<Response> sendrequestasync(Request request, long timeoutseconds) {
+    String requestid = request.getRequestId();
+    CompletableFuture<Response> ans = new CompletableFuture<>();
+    if (out == null) {
+      ans.completeExceptionally(new IllegalStateException("not connected"));
+      return ans;
+    }
+    CompletableFuture<Response> existing = pendingmap.putIfAbsent(requestid, ans);
+    if (existing != null) {
+      ans.completeExceptionally(new IllegalStateException("duplicate"));
+      return ans;
+    }
+    try {
+      synchronized (out) {
+        out.reset();
+        out.writeObject(request);
+        out.flush();
+      }
+    } catch (IOException e) {
+      pendingmap.remove(requestid);
+      ans.completeExceptionally(e);
+    }
+    CompletableFuture<Response> res =
+            ans.orTimeout(timeoutseconds, TimeUnit.SECONDS)
+                    .whenComplete(
+                            (r, error) -> {
+                              pendingmap.remove(requestid);
+                            });
+    return res;
+  }
+
+  public Response sendRequestAndWait(Request request) {
+    try {
+      Response ans = sendrequestasync(request, defaultrequesttimeoutseconds).get();
+      return ans;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return null;
+    } catch (ExecutionException e) {
+      return null;
+    }
+  }
+
+  public static String uploadFile(String urlstring, byte[] filebytes) throws Exception {
+    String boundary = "boundary123";
+    byte[] head =
+            ("--"
+                    + boundary
+                    + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"item.png\"\r\n\r\n")
+                    .getBytes();
+    byte[] tail =
+            ("\r\n--"
+                    + boundary
+                    + "\r\nContent-Disposition: form-data; name=\"upload_preset\"\r\n\r\nupload_def\r\n--"
+                    + boundary
+                    + "--\r\n")
+                    .getBytes();
+    byte[] body = new byte[head.length + filebytes.length + tail.length];
+    System.arraycopy(head, 0, body, 0, head.length);
+    System.arraycopy(filebytes, 0, body, head.length, filebytes.length);
+    System.arraycopy(tail, 0, body, head.length + filebytes.length, tail.length);
+    HttpRequest req =
+            HttpRequest.newBuilder()
+                    .uri(URI.create(urlstring))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+                    .build();
+    HttpResponse<String> res =
+            HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
+    String responsebody = res.body();
+    if (!responsebody.contains("\"secure_url\"")) {
+      return null;
+    }
+    String ans = responsebody.split("\"secure_url\":\"")[1].split("\"")[0];
+    return ans;
+  }
+
+  private void startheartbeat() {
+    Thread thread =
+            new Thread(
+                    () -> {
+                      while (true) {
+                        try {
+                          Thread.sleep(5000);
+                          if (out != null) {
+                            Request req = new Request(Request.PING, null);
+                            sendrequestasync(req, 2);
+                          } else {
+                            reconnect();
+                          }
+                        } catch (InterruptedException e) {
+                          Thread.currentThread().interrupt();
+                          break;
+                        }
+                      }
+                    });
+    thread.setDaemon(true);
+    thread.start();
+  }
+
+  private synchronized void reconnect() {
+    try {
+      ObjectSocketConnection conn = ObjectSocketConnection.connect(serverip, 8080);
+      this.out = conn.getOut();
+      IncomingResponseRouter router = new IncomingResponseRouter(pendingmap, listeners);
+      conn.startReadLoop(
+              router::dispatch,
+              e -> {
+                this.out = null;
+                failallpending(e);
+              });
+      com.auction.shared.User user = com.auction.client.ClientSession.getCurrentUser();
+      if (user != null && user.getSessiontoken() != null) {
+        Request req = new Request(Request.RECONNECT, user.getSessiontoken());
+        Response res = sendRequestAndWait(req);
+        if (res == null || !Response.OK.equals(res.getStatus())) {
+          com.auction.client.ui.Main.KhungController.performForcedLogoutFromServer();
+        }
+      }
+    } catch (Exception e) {
+      this.out = null;
     }
   }
 }

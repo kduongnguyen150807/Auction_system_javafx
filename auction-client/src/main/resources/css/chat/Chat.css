@@ -1,0 +1,252 @@
+/* ═══ Left panel ═══ */
+.chat-left-panel {
+    -fx-background-color: rgba(12, 12, 18, 0.88);
+    -fx-border-color: transparent rgba(255,255,255,0.08) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-font-family: "Consolas";
+}
+
+.chat-right-panel {
+    -fx-background-color: rgba(18, 18, 24, 0.82);
+    -fx-font-family: "Consolas";
+}
+
+/* ═══ Tab bar ═══ */
+.chat-header {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+    -fx-min-height: 42;
+}
+
+.chat-tab {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255,255,255,0.45);
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+    -fx-padding: 11 0;
+    -fx-background-radius: 0;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.chat-tab:hover {
+    -fx-text-fill: rgba(255,255,255,0.75);
+    -fx-background-color: rgba(255,255,255,0.04);
+}
+
+.chat-tab-active {
+    -fx-text-fill: #ffaa00;
+    -fx-border-color: transparent transparent #ffaa00 transparent;
+}
+
+/* ═══ Search ═══ */
+.search-row {
+    -fx-background-color: rgba(0,0,0,0.2);
+}
+
+.chat-search {
+    -fx-background-color: rgba(255,255,255,0.07);
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: rgba(255,255,255,0.3);
+    -fx-background-radius: 14;
+    -fx-padding: 7 14;
+    -fx-font-size: 12px;
+    -fx-border-width: 0;
+}
+
+.chat-search:focused {
+    -fx-background-color: rgba(255,255,255,0.12);
+}
+
+/* ═══ Contact / Friend list ═══ */
+.contact-list {
+    -fx-background-color: transparent;
+    -fx-padding: 4;
+}
+
+.contact-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255,255,255,0.85);
+    -fx-font-size: 13px;
+    -fx-padding: 10 14;
+    -fx-cursor: hand;
+}
+
+.contact-list .list-cell:hover {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-background-radius: 8;
+}
+
+.contact-list .list-cell:selected {
+    -fx-background-color: rgba(255,170,0,0.2);
+    -fx-background-radius: 8;
+}
+
+.contact-list .list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+/* ═══ Global chat button ═══ */
+.global-chat-btn {
+    -fx-background-color: linear-gradient(to right, rgba(255,170,0,0.25), rgba(255,140,0,0.15));
+    -fx-text-fill: #ffcc44;
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+    -fx-padding: 14 0;
+    -fx-cursor: hand;
+    -fx-border-color: rgba(255,170,0,0.2) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.global-chat-btn:hover {
+    -fx-background-color: linear-gradient(to right, rgba(255,170,0,0.4), rgba(255,140,0,0.25));
+    -fx-text-fill: white;
+}
+
+/* ═══ Conversation header ═══ */
+.chat-conv-header {
+    -fx-background-color: rgba(0,0,0,0.35);
+    -fx-border-color: transparent transparent rgba(255,255,255,0.06) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 50;
+}
+
+.chat-conv-title {
+    -fx-text-fill: #ffaa00;
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+}
+
+.chat-conv-sub {
+    -fx-text-fill: rgba(255,255,255,0.35);
+    -fx-font-size: 11px;
+}
+
+/* ═══ Messages ═══ */
+.chat-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.chat-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.chat-scroll .scroll-bar:vertical { -fx-pref-width: 5; }
+.chat-scroll .scroll-bar:vertical .track { -fx-background-color: transparent; }
+.chat-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-background-radius: 3;
+}
+
+.messages-container {
+    -fx-background-color: transparent;
+}
+
+.msg-bubble {
+    -fx-background-color: rgba(255,255,255,0.07);
+    -fx-background-radius: 14 14 14 4;
+    -fx-padding: 8 13;
+    -fx-max-width: 380;
+}
+
+.msg-bubble-mine {
+    -fx-background-color: rgba(255,170,0,0.18);
+    -fx-background-radius: 14 14 4 14;
+    -fx-padding: 8 13;
+    -fx-max-width: 380;
+}
+
+.msg-sender {
+    -fx-text-fill: #ffaa00;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.msg-bubble-mine .msg-sender {
+    -fx-text-fill: #ffcc55;
+}
+
+.msg-text {
+    -fx-text-fill: rgba(255,255,255,0.9);
+    -fx-font-size: 13px;
+    -fx-wrap-text: true;
+}
+
+.msg-time {
+    -fx-text-fill: rgba(255,255,255,0.25);
+    -fx-font-size: 10px;
+}
+
+/* ═══ Input bar ═══ */
+.chat-input-bar {
+    -fx-background-color: rgba(0,0,0,0.35);
+    -fx-border-color: rgba(255,255,255,0.06) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.chat-input {
+    -fx-background-color: rgba(255,255,255,0.07);
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: rgba(255,255,255,0.3);
+    -fx-background-radius: 18;
+    -fx-padding: 10 16;
+    -fx-font-size: 13px;
+    -fx-border-width: 0;
+}
+
+.chat-input:focused {
+    -fx-background-color: rgba(255,255,255,0.12);
+}
+
+.chat-send-btn {
+    -fx-background-color: linear-gradient(to right, #ffaa00, #ff8c00);
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-background-radius: 18;
+    -fx-padding: 9 18;
+    -fx-cursor: hand;
+}
+
+.chat-send-btn:hover {
+    -fx-background-color: linear-gradient(to right, #ffbb33, #ffaa00);
+    -fx-effect: dropshadow(three-pass-box, rgba(255,170,0,0.5), 8, 0, 0, 0);
+}
+
+/* ═══ Friend request card buttons ═══ */
+.accept-btn {
+    -fx-background-color: #2ecc71;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-font-size: 11px;
+    -fx-background-radius: 12;
+    -fx-padding: 4 12;
+    -fx-cursor: hand;
+}
+
+.accept-btn:hover { -fx-background-color: #27ae60; }
+
+.decline-btn {
+    -fx-background-color: rgba(255,68,68,0.7);
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-font-size: 11px;
+    -fx-background-radius: 12;
+    -fx-padding: 4 12;
+    -fx-cursor: hand;
+}
+
+.decline-btn:hover { -fx-background-color: #e74c3c; }
+
+.add-friend-btn {
+    -fx-background-color: rgba(255,170,0,0.3);
+    -fx-text-fill: #ffcc44;
+    -fx-font-weight: 700;
+    -fx-font-size: 11px;
+    -fx-background-radius: 12;
+    -fx-padding: 4 12;
+    -fx-cursor: hand;
+}
+
+.add-friend-btn:hover { -fx-background-color: rgba(255,170,0,0.5); }

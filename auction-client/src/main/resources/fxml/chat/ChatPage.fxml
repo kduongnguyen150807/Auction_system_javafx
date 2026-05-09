@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+
+<HBox prefHeight="700" prefWidth="900" spacing="0"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.ui.Chat.ChatPageController"
+      stylesheets="/css/chat/Chat.css">
+    <children>
+        <!-- ═══════ LEFT: Friends + Requests + Search ═══════ -->
+        <VBox prefWidth="280" minWidth="260" maxWidth="300" styleClass="chat-left-panel" spacing="0">
+            <children>
+                <!-- Tab bar: Friends / Requests -->
+                <HBox styleClass="chat-header" alignment="CENTER">
+                    <children>
+                        <Button fx:id="friendsTabBtn" text="Friends" onAction="#switchToFriends"
+                                styleClass="chat-tab, chat-tab-active" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button fx:id="requestsTabBtn" text="Requests" onAction="#switchToRequests"
+                                styleClass="chat-tab" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    </children>
+                </HBox>
+
+                <!-- Search bar to find + add friends -->
+                <HBox spacing="5" alignment="CENTER_LEFT" styleClass="search-row">
+                    <children>
+                        <TextField fx:id="searchField" promptText="Search users to add..."
+                                   styleClass="chat-search" HBox.hgrow="ALWAYS"/>
+                        <Button text="Find" onAction="#handleSearch" styleClass="chat-send-btn"/>
+                    </children>
+                    <padding><Insets left="10" right="10" top="8" bottom="8"/></padding>
+                </HBox>
+
+                <!-- Friend / Request list -->
+                <ListView fx:id="leftList" VBox.vgrow="ALWAYS" styleClass="contact-list"/>
+
+                <!-- Global Chat button at bottom -->
+                <Button text="Global Chat" onAction="#openGlobalChat"
+                        styleClass="global-chat-btn" maxWidth="Infinity"/>
+            </children>
+        </VBox>
+
+        <!-- ═══════ RIGHT: Chat area ═══════ -->
+        <VBox HBox.hgrow="ALWAYS" styleClass="chat-right-panel" spacing="0">
+            <children>
+                <!-- Chat header -->
+                <HBox styleClass="chat-conv-header" alignment="CENTER_LEFT" spacing="10">
+                    <children>
+                        <Label fx:id="chatTitle" text="Select a friend to chat" styleClass="chat-conv-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="chatSubtitle" text="" styleClass="chat-conv-sub"/>
+                    </children>
+                    <padding><Insets left="16" right="16" top="10" bottom="10"/></padding>
+                </HBox>
+
+                <!-- Messages scroll -->
+                <ScrollPane fx:id="messagesScroll" fitToWidth="true" VBox.vgrow="ALWAYS"
+                            styleClass="chat-scroll" hbarPolicy="NEVER">
+                    <content>
+                        <VBox fx:id="messagesContainer" spacing="6" styleClass="messages-container">
+                            <padding><Insets top="10" bottom="10" left="12" right="12"/></padding>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+
+                <!-- Input -->
+                <HBox fx:id="inputBar" styleClass="chat-input-bar" spacing="8" alignment="CENTER"
+                      visible="false" managed="false">
+                    <children>
+                        <TextField fx:id="messageInput" promptText="Type a message..."
+                                   onAction="#handleSend" styleClass="chat-input" HBox.hgrow="ALWAYS"/>
+                        <Button text="Send" onAction="#handleSend" styleClass="chat-send-btn"/>
+                    </children>
+                    <padding><Insets left="12" right="12" top="8" bottom="10"/></padding>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</HBox>

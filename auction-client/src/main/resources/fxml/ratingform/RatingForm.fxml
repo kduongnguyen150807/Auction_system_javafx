@@ -17,7 +17,7 @@
               style="-fx-background-color: #1a1a2e; -fx-background-radius: 15; -fx-border-radius: 15; -fx-border-color: #e2b44d; -fx-border-width: 2;">
             <padding><Insets left="30" right="30" top="25" bottom="25"/></padding>
             <children>
-                <Label fx:id="TitleLabel" text="RATE THIS TRANSACTION"
+                <Label text="RATE THIS TRANSACTION"
                        style="-fx-text-fill: #e2b44d; -fx-font-size: 18; -fx-font-weight: bold;" />
 
                 <Label text="Your Rating:" style="-fx-text-fill: white; -fx-font-size: 14;" />

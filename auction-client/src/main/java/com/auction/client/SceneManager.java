@@ -16,10 +16,6 @@ public class SceneManager {
     rootStage = stage;
   }
 
-  public static Stage getStage() {
-    return rootStage;
-  }
-
   public static void switchScene(String fxmlPath) throws IOException {
     Parent res = FXMLLoader.load(Objects.requireNonNull(SceneManager.class.getResource(fxmlPath)));
     Scene currentScene = rootStage.getScene();

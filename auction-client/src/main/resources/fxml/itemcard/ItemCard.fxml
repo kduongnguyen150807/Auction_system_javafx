@@ -18,7 +18,7 @@
             <children>
                 <ImageView fx:id="ImageHolder" fitHeight="240.0" fitWidth="270.0" pickOnBounds="true" preserveRatio="true">
                     <clip>
-                        <Rectangle arcHeight="30.0" arcWidth="30.0" height="240.0" width="270.0" />
+                        <Rectangle fx:id="imageClip" arcHeight="30.0" arcWidth="30.0" height="240.0" width="270.0" />
                     </clip>
                 </ImageView>
             </children>
@@ -36,9 +36,9 @@
 
                 <HBox alignment="CENTER_LEFT" spacing="0.0">
                     <children>
-                        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                            <VBox spacing="2.0" HBox.hgrow="ALWAYS">
                             <children>
-                                <Label styleClass="label-sm-gray" text="CURRENT BID" />
+                                <Label fx:id="priceMetricCaption" styleClass="label-sm-gray" text="CURRENT BID" />
                                 <Label fx:id="Price" styleClass="price-val-cyan" text="0$" />
                             </children>
                         </VBox>

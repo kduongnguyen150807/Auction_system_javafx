@@ -9,14 +9,14 @@ public class NodeManager {
     backGroundFrame.getChildren().add(contentNode);
   }
 
-  public static void switchNodewithNode(Node node1, Node node2, Pane backGroundFrame) {
-    int index1 = backGroundFrame.getChildren().indexOf(node2);
-    if (index1 >= 0) {
-      backGroundFrame.getChildren().set(index1, node1);
+  public static void switchNodewithNode(Node replacement, Node existing, Pane backGroundFrame) {
+    int index = backGroundFrame.getChildren().indexOf(existing);
+    if (index >= 0) {
+      backGroundFrame.getChildren().set(index, replacement);
     }
   }
 
-  public static void removeNodeFromPane(Node node1, Pane backGroundFrame) {
-    backGroundFrame.getChildren().remove(node1);
+  public static void removeNodeFromPane(Node nodeToRemove, Pane backGroundFrame) {
+    backGroundFrame.getChildren().remove(nodeToRemove);
   }
 }

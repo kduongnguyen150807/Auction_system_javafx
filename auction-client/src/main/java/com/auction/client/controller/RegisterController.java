@@ -2,7 +2,11 @@ package com.auction.client.controller;
 
 import com.auction.client.SceneManager;
 import com.auction.client.network.NetworkClient;
+import com.auction.client.util.InputValidators;
 import com.auction.shared.*;
+import com.auction.shared.PasswordEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,13 +16,15 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 
 public class RegisterController {
+  private static final Logger LOGGER = LoggerFactory.getLogger(RegisterController.class);
+
   @FXML private AnchorPane rootPane;
-  @FXML private TextField u;
-  @FXML private TextField e;
-  @FXML private TextField a;
-  @FXML private PasswordField p;
-  @FXML private PasswordField cp;
-  @FXML private Label ans;
+  @FXML private TextField usernameField;
+  @FXML private TextField emailField;
+  @FXML private TextField ageField;
+  @FXML private PasswordField passwordField;
+  @FXML private PasswordField confirmPasswordField;
+  @FXML private Label messageLabel;
 
   @FXML
   private void initialize() {
@@ -26,56 +32,61 @@ public class RegisterController {
   }
 
   @FXML
-  public void handleRegister(ActionEvent ev) {
-    String u1 = this.u.getText();
-    String e1 = this.e.getText();
-    String a1 = this.a.getText();
-    String p1 = this.p.getText();
-    String p2 = this.cp.getText();
+  public void handleRegister(ActionEvent event) {
+    String username = this.usernameField.getText();
+    String email = this.emailField.getText();
+    String age = this.ageField.getText();
+    String password = this.passwordField.getText();
+    String confirmPassword = this.confirmPasswordField.getText();
 
-    if (u1.isEmpty() || e1.isEmpty() || p1.isEmpty()) {
-      this.ans.setText("nhập đủ thông tin vào!");
+    if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+      this.messageLabel.setText("nhập đủ thông tin vào!");
       return;
     }
 
-    if (!p1.equals(p2)) {
-      this.ans.setText("mật khẩu không khớp!");
+    if (!password.equals(confirmPassword)) {
+      this.messageLabel.setText("mật khẩu không khớp!");
       return;
     }
 
-    Bidder res = new Bidder();
-    res.setUsername(u1);
-    res.setEmail(e1);
-    res.setAge(a1);
-    res.setPassword(p1);
-    res.setFullName(u1);
+    if (!InputValidators.isValidEmail(email.trim())) {
+      this.messageLabel.setText("email không hợp lệ!");
+      return;
+    }
 
-    Request req = new Request(Request.SIGNUP, res);
-    Response ans_res = NetworkClient.getInstance().sendRequestAndWait(req);
+    Bidder newUser = new Bidder();
+    newUser.setUsername(username);
+    newUser.setEmail(email);
+    newUser.setAge(age);
+    newUser.setPassword(PasswordEncoder.hash(password));
+    newUser.setFullName(username);
 
-    if (ans_res != null && ans_res.getStatus().equals(Response.OK)) {
+    Request request = new Request(Request.SIGNUP, newUser);
+    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+
+    if (response != null && response.getStatus().equals(Response.OK)) {
       try {
         SceneManager.switchScene("/fxml/login.fxml");
       } catch (Exception ex) {
-        ex.printStackTrace();
+        LOGGER.error("Navigation to login after register failed", ex);
       }
     } else {
-      String msg = (ans_res != null) ? ans_res.getMessage() : "timeout";
-      if ("duplicate_username_or_email".equals(msg)) {
-        this.ans.setText("username hoặc email đã tồn tại!");
+      String message = (response != null) ? response.getMessage() : "timeout";
+      if ("duplicate_username_or_email".equals(message)) {
+        this.messageLabel.setText("username hoặc email đã tồn tại!");
       } else {
-        this.ans.setText("đăng ký thất bại!");
+        this.messageLabel.setText("đăng ký thất bại!");
       }
     }
   }
 
   @FXML
-  public void back(ActionEvent ev) throws Exception {
+  public void back(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/login.fxml");
   }
 
   @FXML
-  public void goWelcome(ActionEvent ev) throws Exception {
+  public void goWelcome(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/welcome.fxml");
   }
 }

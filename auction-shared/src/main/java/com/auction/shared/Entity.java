@@ -8,8 +8,7 @@ public abstract class Entity implements Serializable {
   protected int version;
 
   public int getId() {
-    int ans = this.id;
-    return ans;
+    return this.id;
   }
 
   public void setId(int id) {
@@ -17,11 +16,10 @@ public abstract class Entity implements Serializable {
   }
 
   public int getVersion() {
-    int ans = this.version;
-    return ans;
+    return this.version;
   }
 
-  public void setVersion(int v) {
-    this.version = v;
+  public void setVersion(int version) {
+    this.version = version;
   }
 }

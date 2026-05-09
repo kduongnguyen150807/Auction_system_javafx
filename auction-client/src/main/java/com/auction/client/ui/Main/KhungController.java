@@ -2,11 +2,16 @@ package com.auction.client.ui.Main;
 
 import com.auction.client.ClientSession;
 import com.auction.client.app.NodeContentLoader;
+import com.auction.client.network.NetworkClient;
+import com.auction.client.ui.Chat.ChatPageController;
 import com.auction.client.ui.History.HistoryController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
+import com.auction.client.ui.Profile.ProfileController;
 import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.ui.UserProfile.UserProfileController;
 import com.auction.client.ui.YourItem.YourItemController;
+import com.auction.client.util.ImagePresentationUtil;
+import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
@@ -14,26 +19,34 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+<<<<<<< HEAD
 import javafx.scene.control.Button;
+=======
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+<<<<<<< HEAD
 import javafx.scene.shape.Circle;
+=======
+import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
 
 public class KhungController {
+  private static final Logger LOGGER = LoggerFactory.getLogger(KhungController.class);
   private static KhungController instance;
   private static Pane mainContentPane;
-  private static Node currentContentNode;
-  private static String searchKeyword = "";
-  private static String categoryFilter = "All";
-  private static double filterMinPrice = 0;
-  private static double filterMaxPrice = Double.MAX_VALUE;
+
   public static ItemInformationController itemDetailController;
 
+<<<<<<< HEAD
   private Node chatNode;
   private com.auction.client.Chat.client.ChatController chatController;
 
@@ -41,25 +54,40 @@ public class KhungController {
   private TrangChuController tc;
   private YourItemController yc;
   private HistoryController hc;
+=======
+  private final AuctionSearchFilterState searchFilters = new AuctionSearchFilterState();
+
+  private MainShellNavigator navigator;
+  private MainShellNetworkBridge networkBridge;
+
+  private Node auctionHomeNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
+  private TrangChuController homeController;
+  private YourItemController myItemsController;
+  private HistoryController historyController;
+  private ProfileController profileController;
+  private AdminDashboardController adminDashboardController;
+  private ChatPageController chatCtrl;
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
 
   @FXML private HBox MessageMenu;
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
-  @FXML private HBox AuctionMenu;
-  @FXML private HBox HistoryMenu;
-  @FXML private HBox MyItemMenu;
-  @FXML private HBox ProfileMenu;
-  @FXML private HBox ManageUsersMenu;
-  @FXML private Label UserName;
-  @FXML private Label Rank;
-  @FXML private Button primaryactionbutton;
+  @FXML private HBox AuctionMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
+  @FXML private Label UserName, Rank;
   @FXML private ImageView sidebaravatar;
+
+  private <T extends Node> NodeContentLoader<T> loadFxml(String path) throws Exception {
+    NodeContentLoader<T> loader = new NodeContentLoader<>();
+    loader.load(path);
+    return loader;
+  }
 
   @FXML
   public void initialize() {
     instance = this;
     mainContentPane = ContentArea;
     try {
+<<<<<<< HEAD
       NodeContentLoader<Pane> chatLoader = new NodeContentLoader<>();
       chatLoader.load("/fxml/GlobalChat/chat-view.fxml");
       chatNode = chatLoader.getCurrentNode();
@@ -114,40 +142,85 @@ public class KhungController {
 
       currentContentNode = an;
       setMenu(AuctionMenu);
+=======
+      NodeContentLoader<HBox> search = loadFxml("/fxml/searchbar/ThanhTimKiem.fxml");
+      NodeContentLoader<Pane> auction = loadFxml("/fxml/trangchu/TrangChu.fxml");
+      NodeContentLoader<Pane> hist = loadFxml("/fxml/history/History.fxml");
+      NodeContentLoader<Pane> myItem = loadFxml("/fxml/youritem/YourItem.fxml");
+      NodeContentLoader<Pane> profile = loadFxml("/fxml/profile/Profile.fxml");
+      NodeContentLoader<Pane> admin = loadFxml("/fxml/main/AdminDashboard.fxml");
+      NodeContentLoader<Pane> addLot = loadFxml("/fxml/addnewlot/AddNewLot.fxml");
+      NodeContentLoader<Pane> chat = loadFxml("/fxml/chat/ChatPage.fxml");
+      if (ContentArea != null) ContentArea.getChildren().add(auction.getCurrentNode());
+      if (SearchContainer != null) SearchContainer.getChildren().add(search.getCurrentNode());
+      auctionHomeNode = auction.getCurrentNode();
+      historyNode = hist.getCurrentNode();
+      myItemsNode = myItem.getCurrentNode();
+      profileNode = profile.getCurrentNode();
+      adminDashboardNode = admin.getCurrentNode();
+      addLotNode = addLot.getCurrentNode();
+      chatNode = chat.getCurrentNode();
+      homeController = auction.getController();
+      myItemsController = myItem.getController();
+      historyController = hist.getController();
+      profileController = profile.getController();
+      adminDashboardController = admin.getController();
+      chatCtrl = chat.getController();
+      navigator =
+          new MainShellNavigator(
+              ContentArea,
+              AuctionMenu,
+              HistoryMenu,
+              MyItemMenu,
+              ProfileMenu,
+              ChatMenu,
+              ManageUsersMenu,
+              auctionHomeNode);
+      navigator.setMenu(AuctionMenu);
+      networkBridge = new MainShellNetworkBridge(() -> homeController, () -> chatCtrl);
+      NetworkClient.getInstance().addListener(networkBridge);
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
       update();
-
       Platform.runLater(
-              () -> {
-                javafx.scene.Scene ans3 = mainContentPane.getScene();
-                if (ans3 != null) {
-                  ans3.addEventFilter(
-                          javafx.scene.input.KeyEvent.KEY_PRESSED,
-                          res4 -> {
-                            if (res4.getCode() == javafx.scene.input.KeyCode.F11) {
-                              javafx.stage.Stage ans4 = (javafx.stage.Stage) ans3.getWindow();
-                              ans4.setFullScreen(!ans4.isFullScreen());
-                              res4.consume();
-                            }
-                          });
-                }
-              });
+          () -> {
+            Scene scene = mainContentPane.getScene();
+            if (scene != null)
+              scene.addEventFilter(
+                  javafx.scene.input.KeyEvent.KEY_PRESSED,
+                  event -> {
+                    if (event.getCode() == javafx.scene.input.KeyCode.F11) {
+                      Stage stage = (Stage) scene.getWindow();
+                      stage.setFullScreen(!stage.isFullScreen());
+                      event.consume();
+                    }
+                  });
+          });
     } catch (Exception e) {
+<<<<<<< HEAD
       System.out.println("⚠️ Lỗi khi load các màn hình chính (Do Server tắt hoặc mạng): " + e.getMessage());
+=======
+      LOGGER.warn("Main shell initialize failed", e);
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
     }
   }
 
-  @FXML
-  public void openAuction(MouseEvent e) {
-    switchPage(an, AuctionMenu);
+  private void refreshAuctionHome() {
+    if (homeController == null) return;
+    homeController.setFilters(searchFilters.getKeyword(), searchFilters.getCategory());
+    homeController.refreshItems();
+  }
+
+  private boolean switchPage(Node targetContent, HBox activeMenu) {
+    return navigator != null && navigator.switchPage(targetContent, activeMenu);
   }
 
   @FXML
-  public void openHistory(MouseEvent e) {
-    switchPage(hn, HistoryMenu);
-    if (hc != null) hc.refreshHistory();
+  public void openAuction(MouseEvent event) {
+    if (switchPage(auctionHomeNode, AuctionMenu)) refreshAuctionHome();
   }
 
   @FXML
+<<<<<<< HEAD
   public void openMessage(MouseEvent e) {
     System.out.println("Đã bấm nút Message! chatNode hiện tại là: " + chatNode);
     switchPage(chatNode, MessageMenu);
@@ -160,41 +233,60 @@ public class KhungController {
   @FXML
   public void openMyItems(MouseEvent e) {
     switchPage(mn, MyItemMenu);
+=======
+  public void openHistory(MouseEvent event) {
+    if (switchPage(historyNode, HistoryMenu) && historyController != null) historyController.refreshHistory();
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
   }
 
   @FXML
-  public void openProfile(MouseEvent e) {
-    switchPage(pn, ProfileMenu);
+  public void openMyItems(MouseEvent event) {
+    if (switchPage(myItemsNode, MyItemMenu) && myItemsController != null) myItemsController.refreshItems();
   }
 
   @FXML
-  public void openManageUsers(MouseEvent e) {
-    switchPage(adn, ManageUsersMenu);
+  public void openProfile(MouseEvent event) {
+    if (switchPage(profileNode, ProfileMenu) && profileController != null) profileController.refreshFromServer();
   }
 
   @FXML
-  public void handleRefresh(ActionEvent e) {
-    if (currentContentNode == an && tc != null) tc.refreshItems();
-    else if (currentContentNode == hn && hc != null) hc.refreshHistory();
-    else if (currentContentNode == mn && yc != null) yc.refreshItems();
+  public void openChat(MouseEvent event) {
+    if (switchPage(chatNode, ChatMenu) && chatCtrl != null) chatCtrl.refreshOnNavigate();
+  }
+
+  @FXML
+  public void openManageUsers(MouseEvent event) {
+    if (switchPage(adminDashboardNode, ManageUsersMenu) && adminDashboardController != null)
+      adminDashboardController.refreshDashboard();
+  }
+
+  @FXML
+  public void handleRefresh(ActionEvent event) {
+    Node current = navigator != null ? navigator.getCurrentContentNode() : null;
+    if (current == auctionHomeNode) refreshAuctionHome();
+    else if (current == historyNode && historyController != null) historyController.refreshHistory();
+    else if (current == myItemsNode && myItemsController != null) myItemsController.refreshItems();
+    else if (current == profileNode && profileController != null) profileController.refreshFromServer();
+    else if (current == chatNode && chatCtrl != null) chatCtrl.refreshOnNavigate();
+    else if (current == adminDashboardNode && adminDashboardController != null)
+      adminDashboardController.refreshDashboard();
     else if (itemDetailController != null) itemDetailController.refresh();
   }
 
   @FXML
-  public void handlePrimaryAction(ActionEvent e) {
-    UserRole ans = ClientSession.getActiveRole();
-    if (ans == UserRole.SELLER) {
-      if (currentContentNode != aln) {
-        com.auction.client.ui.AddNewLot.AddNewLotController.resetWhenOpening();
-      }
-      switchPage(aln, AuctionMenu);
-    } else {
-      switchPage(an, AuctionMenu);
+  public void handlePrimaryAction(ActionEvent event) {
+    if (ClientSession.getActiveRole() == UserRole.SELLER) {
+      Node current = navigator != null ? navigator.getCurrentContentNode() : null;
+      if (current != addLotNode) com.auction.client.ui.AddNewLot.AddNewLotController.resetWhenOpening();
+      switchPage(addLotNode, AuctionMenu);
+    } else if (switchPage(auctionHomeNode, AuctionMenu)) {
+      refreshAuctionHome();
     }
   }
 
   @FXML
   public void handleSignout() {
+<<<<<<< HEAD
     ClientSession.clear();
     try {
       javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
@@ -227,53 +319,63 @@ public class KhungController {
     if (MessageMenu != null) MessageMenu.getStyleClass().remove("active");
 
     if (a != null && !a.getStyleClass().contains("active")) a.getStyleClass().add("active");
+=======
+    performUserSignOut();
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
   }
 
   public void update() {
-    if (ClientSession.getCurrentUser() == null) return;
+    User currentUser = ClientSession.getCurrentUser();
+    if (currentUser == null) return;
     if (UserName != null) UserName.setText(ClientSession.getUsername());
     if (Rank != null) {
-      String ans = ClientSession.getActiveRole().name();
-      User res = ClientSession.getCurrentUser();
-      if (res.getTotalRatings() > 0) {
-        String ans1 =
-                res.getAvgRating() <= 2.0
+      String rankText = ClientSession.getActiveRole().name();
+      if (currentUser.getTotalRatings() > 0)
+        rankText +=
+            " | "
+                + String.format(
+                    "%.1f\u2605 %s",
+                    currentUser.getAvgRating(),
+                    currentUser.getAvgRating() <= 2.0
                         ? "Negative"
-                        : (res.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
-        ans = ans + " | " + String.format("%.1f\u2605 %s", res.getAvgRating(), ans1);
-      }
-      Rank.setText(ans);
+                        : currentUser.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
+      Rank.setText(rankText);
     }
-    boolean ans1 = ClientSession.getCurrentUser().getRole() == UserRole.ADMIN;
+    boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
     if (ManageUsersMenu != null) {
-      ManageUsersMenu.setVisible(ans1);
-      ManageUsersMenu.setManaged(ans1);
+      ManageUsersMenu.setVisible(isAdmin);
+      ManageUsersMenu.setManaged(isAdmin);
     }
-    String res1 = ClientSession.getCurrentUser().getAvatarUrl();
-    if (sidebaravatar != null && res1 != null && !res1.isBlank()) {
-      Image ans2 = new Image(res1, true);
-      ans2.progressProperty()
-              .addListener(
-                      (obs, oldv, newv) -> {
-                        if (newv.doubleValue() == 1.0 && !ans2.isError()) {
-                          double res2 = ans2.getWidth();
-                          double ans3 = ans2.getHeight();
-                          double res3 = Math.min(res2, ans3);
-                          double ans4 = (res2 - res3) / 2;
-                          double res4 = (ans3 - res3) / 2;
-                          Platform.runLater(
-                                  () -> {
-                                    sidebaravatar.setImage(ans2);
-                                    sidebaravatar.setViewport(
-                                            new javafx.geometry.Rectangle2D(ans4, res4, res3, res3));
-                                    sidebaravatar.setFitWidth(48);
-                                    sidebaravatar.setFitHeight(48);
-                                    sidebaravatar.setPreserveRatio(false);
-                                    double ans5 = 24.0;
-                                    sidebaravatar.setClip(new Circle(ans5, ans5, ans5));
-                                  });
-                        }
-                      });
+    if (sidebaravatar != null
+        && currentUser.getAvatarUrl() != null
+        && !currentUser.getAvatarUrl().isBlank())
+      ImagePresentationUtil.loadCircularAvatar(sidebaravatar, currentUser.getAvatarUrl(), 24, 48);
+  }
+
+  static void notifyHomePriceUpdate(Item item) {
+    if (instance != null && instance.homeController != null) instance.homeController.updatePriceUi(item);
+  }
+
+  /** Called from {@link MainShellNetworkBridge} after account-ban alert. */
+  public static void performForcedLogoutFromServer() {
+    if (instance != null) instance.performUserSignOut();
+  }
+
+  private void performUserSignOut() {
+    ClientSession.clear();
+    if (networkBridge != null) NetworkClient.getInstance().removeListener(networkBridge);
+    navigateToLogin();
+  }
+
+  private void navigateToLogin() {
+    try {
+      Parent root = FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
+      Stage stage = (Stage) ContentArea.getScene().getWindow();
+      stage.setScene(new Scene(root));
+      stage.centerOnScreen();
+      stage.show();
+    } catch (Exception ex) {
+      LOGGER.error("Forced logout navigation failed", ex);
     }
   }
 
@@ -282,85 +384,127 @@ public class KhungController {
   }
 
   public static Node getCurrentNode() {
-    return currentContentNode;
+    return instance != null && instance.navigator != null ? instance.navigator.getCurrentContentNode() : null;
   }
 
   public static void setMainContentNode(Node n) {
-    if (n != null) currentContentNode = n;
+    if (n != null && instance != null && instance.navigator != null) instance.navigator.setCurrentContentNode(n);
   }
 
   public static void refreshSidebarFromSession() {
     if (instance != null) instance.update();
   }
 
-  public static void applySearchFilter(String k, String c, double min, double max) {
-    searchKeyword = k == null ? "" : k.trim();
-    categoryFilter = c == null ? "All" : c.trim();
-    filterMinPrice = min;
-    filterMaxPrice = max;
-    if (instance != null) {
-      if (instance.tc != null) instance.tc.setFilters(searchKeyword, categoryFilter);
-      if (instance.yc != null) instance.yc.refreshItems();
-    }
-  }
-
-  public static void updateRealtimeUi(Item ans) {
-    Platform.runLater(
-            () -> {
-              if (itemDetailController != null) {
-                itemDetailController.updatePriceUi(ans);
-              }
-              if (instance != null && instance.tc != null) {
-                instance.tc.updatePriceUi(ans);
-              }
-            });
-  }
-
   public static String getSearchKeyword() {
-    return searchKeyword;
+    return instance != null ? instance.searchFilters.getKeyword() : "";
   }
 
   public static String getCategoryFilter() {
-    return categoryFilter;
+    return instance != null ? instance.searchFilters.getCategory() : "All";
   }
 
   public static double getMinPrice() {
-    return filterMinPrice;
+    return instance != null ? instance.searchFilters.getMinPrice() : 0;
   }
 
   public static double getMaxPrice() {
-    return filterMaxPrice;
+    return instance != null ? instance.searchFilters.getMaxPrice() : Double.MAX_VALUE;
   }
 
-  public static void returnFromAddLot(boolean r) {
+  public static AuctionType getCatalogAuctionType() {
+    return instance != null
+        ? instance.searchFilters.getCatalogAuctionType()
+        : AuctionType.ENGLISH;
+  }
+
+  public static void setCatalogAuctionType(AuctionType auctionType) {
     if (instance == null) return;
-    instance.switchPage(instance.an, instance.AuctionMenu);
-    if (r && instance.tc != null) instance.tc.refreshItems();
+    instance.searchFilters.setCatalogAuctionType(
+        auctionType != null ? auctionType : AuctionType.ENGLISH);
+    if (instance.homeController != null) {
+      instance.homeController.setFilters(
+          instance.searchFilters.getKeyword(), instance.searchFilters.getCategory());
+    }
+  }
+
+  public static void applySearchFilter(String keyword, String category, double min, double max) {
+    if (instance == null) return;
+    instance.searchFilters.apply(keyword, category, min, max);
+    if (instance.homeController != null)
+      instance.homeController.setFilters(instance.searchFilters.getKeyword(), instance.searchFilters.getCategory());
+    if (instance.myItemsController != null) instance.myItemsController.refreshItems();
+  }
+
+  public static void returnFromAddLot(boolean refreshAfterSubmit) {
+    if (instance == null || instance.navigator == null) return;
+    instance.navigator.switchPage(instance.auctionHomeNode, instance.AuctionMenu);
+    if (refreshAfterSubmit && instance.homeController != null) {
+      instance.homeController.setFilters(getSearchKeyword(), getCategoryFilter());
+      instance.homeController.refreshItems();
+    }
   }
 
   public static void showUserProfile(User user) {
-    if (instance == null || user == null) return;
+    if (instance == null || user == null || instance.navigator == null) return;
     Platform.runLater(
-            () -> {
-              try {
-                NodeContentLoader<javafx.scene.Parent> ans = new NodeContentLoader<>();
-                ans.load("/fxml/userprofile/UserProfile.fxml");
-                UserProfileController res = ans.getController();
-                res.setUser(user);
-                javafx.scene.Node ans1 = ans.getCurrentNode();
-                if (instance.ContentArea != null) {
-                  instance.ContentArea.getChildren().clear();
-                  instance.ContentArea.getChildren().add(ans1);
-                }
-                currentContentNode = ans1;
-                instance.setMenu(null);
-              } catch (Exception e) {
-              }
-            });
+        () -> {
+          try {
+            NodeContentLoader<Parent> profileLoader =
+                instance.loadFxml("/fxml/userprofile/UserProfile.fxml");
+            profileLoader.<UserProfileController>getController().setUser(user);
+            instance.navigator.replaceContent(profileLoader.getCurrentNode(), null);
+          } catch (Exception ignored) {
+          }
+        });
   }
 
   public static void returnToAuction() {
-    if (instance == null) return;
-    Platform.runLater(() -> instance.switchPage(instance.an, instance.AuctionMenu));
+    if (instance == null || instance.navigator == null) return;
+    Platform.runLater(
+        () -> {
+          if (instance.navigator.switchPage(instance.auctionHomeNode, instance.AuctionMenu))
+            instance.refreshAuctionHome();
+        });
+  }
+
+  /** Holds auction home / my-items filter criteria for the main shell (no UI). */
+  private static final class AuctionSearchFilterState {
+
+    private String keyword = "";
+    private String category = "All";
+    private double minPrice = 0;
+    private double maxPrice = Double.MAX_VALUE;
+    private AuctionType catalogAuctionType = AuctionType.ENGLISH;
+
+    String getKeyword() {
+      return keyword;
+    }
+
+    String getCategory() {
+      return category;
+    }
+
+    double getMinPrice() {
+      return minPrice;
+    }
+
+    double getMaxPrice() {
+      return maxPrice;
+    }
+
+    AuctionType getCatalogAuctionType() {
+      return catalogAuctionType != null ? catalogAuctionType : AuctionType.ENGLISH;
+    }
+
+    void setCatalogAuctionType(AuctionType auctionType) {
+      this.catalogAuctionType = auctionType != null ? auctionType : AuctionType.ENGLISH;
+    }
+
+    void apply(String keyword, String category, double min, double max) {
+      this.keyword = keyword == null ? "" : keyword.trim();
+      this.category = category == null ? "All" : category.trim();
+      this.minPrice = min;
+      this.maxPrice = max;
+    }
   }
 }

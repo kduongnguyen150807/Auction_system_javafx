@@ -1,0 +1,23 @@
+/*
+ * ScrollPane viewport + scrollbar — đồng bộ History (History.css).
+ * Import vào auction / profile / my items / history để tái sử dụng.
+ */
+
+.scroll-pane {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical,
+.scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 10;
+}

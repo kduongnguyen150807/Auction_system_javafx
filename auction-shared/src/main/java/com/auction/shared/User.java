@@ -17,16 +17,17 @@ public abstract class User extends Entity {
   protected int itemsSold;
   protected double avgRating;
   protected int totalRatings;
+  protected String sessiontoken;
 
   public User() {}
 
-  public User(String u, String p, String e, String a, String ph) {
-    this.username = u;
-    this.fullName = u;
-    this.password = p;
-    this.email = e;
-    this.age = a;
-    this.phoneNumber = ph;
+  public User(String username, String password, String email, String age, String phoneNumber) {
+    this.username = username;
+    this.fullName = username;
+    this.password = password;
+    this.email = email;
+    this.age = age;
+    this.phoneNumber = phoneNumber;
     this.balance = 0.0;
     this.moneySpent = 0.0;
     this.itemsBought = 0;
@@ -42,127 +43,135 @@ public abstract class User extends Entity {
     return this.username;
   }
 
-  public void setUsername(String u) {
-    this.username = u;
+  public void setUsername(String username) {
+    this.username = username;
   }
 
   public String getFullName() {
     return this.fullName;
   }
 
-  public void setFullName(String ans) {
-    this.fullName = ans;
+  public void setFullName(String fullName) {
+    this.fullName = fullName;
   }
 
   public String getPassword() {
     return this.password;
   }
 
-  public void setPassword(String p) {
-    this.password = p;
+  public void setPassword(String password) {
+    this.password = password;
   }
 
   public String getEmail() {
     return this.email;
   }
 
-  public void setEmail(String e) {
-    this.email = e;
+  public void setEmail(String email) {
+    this.email = email;
   }
 
   public String getAge() {
     return this.age;
   }
 
-  public void setAge(String a) {
-    this.age = a;
+  public void setAge(String age) {
+    this.age = age;
   }
 
   public String getPhoneNumber() {
     return this.phoneNumber;
   }
 
-  public void setPhoneNumber(String ph) {
-    this.phoneNumber = ph;
+  public void setPhoneNumber(String phoneNumber) {
+    this.phoneNumber = phoneNumber;
   }
 
   public double getBalance() {
     return this.balance;
   }
 
-  public void setBalance(double b) {
-    this.balance = b;
+  public void setBalance(double balance) {
+    this.balance = balance;
   }
 
   public boolean isActive() {
     return this.active;
   }
 
-  public void setActive(boolean a) {
-    this.active = a;
+  public void setActive(boolean active) {
+    this.active = active;
   }
 
   public boolean isLocked() {
     return this.locked;
   }
 
-  public void setLocked(boolean l) {
-    this.locked = l;
+  public void setLocked(boolean locked) {
+    this.locked = locked;
   }
 
   public String getAvatarUrl() {
-    return avatarUrl;
+    return this.avatarUrl;
   }
 
-  public void setAvatarUrl(String ans) {
-    this.avatarUrl = ans;
+  public void setAvatarUrl(String avatarUrl) {
+    this.avatarUrl = avatarUrl;
   }
 
   public double getMoneySpent() {
     return this.moneySpent;
   }
 
-  public void setMoneySpent(double m) {
-    this.moneySpent = m;
+  public void setMoneySpent(double moneySpent) {
+    this.moneySpent = moneySpent;
   }
 
   public int getItemsBought() {
     return this.itemsBought;
   }
 
-  public void setItemsBought(int i) {
-    this.itemsBought = i;
+  public void setItemsBought(int itemsBought) {
+    this.itemsBought = itemsBought;
   }
 
   public double getMoneyReceived() {
     return this.moneyReceived;
   }
 
-  public void setMoneyReceived(double m) {
-    this.moneyReceived = m;
+  public void setMoneyReceived(double moneyReceived) {
+    this.moneyReceived = moneyReceived;
   }
 
   public int getItemsSold() {
     return this.itemsSold;
   }
 
-  public void setItemsSold(int i) {
-    this.itemsSold = i;
+  public void setItemsSold(int itemsSold) {
+    this.itemsSold = itemsSold;
   }
 
   public double getAvgRating() {
     return this.avgRating;
   }
 
-  public void setAvgRating(double r) {
-    this.avgRating = r;
+  public void setAvgRating(double avgRating) {
+    this.avgRating = avgRating;
   }
 
   public int getTotalRatings() {
     return this.totalRatings;
   }
 
-  public void setTotalRatings(int r) {
-    this.totalRatings = r;
+  public void setTotalRatings(int totalRatings) {
+    this.totalRatings = totalRatings;
+  }
+
+  public String getSessiontoken() {
+    return this.sessiontoken;
+  }
+
+  public void setSessiontoken(String sessiontoken) {
+    this.sessiontoken = sessiontoken;
   }
 }

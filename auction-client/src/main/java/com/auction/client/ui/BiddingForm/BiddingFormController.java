@@ -2,12 +2,13 @@ package com.auction.client.ui.BiddingForm;
 
 import com.auction.client.ClientSession;
 import com.auction.client.app.NodeManager;
-import com.auction.client.network.NetworkClient;
+import com.auction.client.service.BiddingClientService;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.Main.KhungController;
 import com.auction.shared.BidTransaction;
-import com.auction.shared.Request;
+import com.auction.shared.Item;
 import com.auction.shared.Response;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
@@ -22,6 +23,7 @@ public class BiddingFormController {
   @FXML private TextField BidAmount;
   private int itemId = -1;
   private ItemInformationController parent;
+  private final BiddingClientService biddingClientService = new BiddingClientService();
 
   @FXML
   private void removeForm() {
@@ -29,12 +31,27 @@ public class BiddingFormController {
   }
 
   public void setData(int itemId, String itemname, double maxPrice) {
+    setData(itemId, itemname, maxPrice, false, 0);
+  }
+
+  /**
+   * @param dutchListedBuy when true, bidder must pay {@code dutchListedPrice} (instant purchase).
+   */
+  public void setData(
+      int itemId, String itemname, double maxPrice, boolean dutchListedBuy, double dutchListedPrice) {
     this.itemId = itemId;
     if (ItemId != null) ItemId.setText(String.valueOf(itemId));
     if (ItemName != null) ItemName.setText(itemname == null ? "" : itemname);
     if (MaxPriceInfo != null) {
-      if (maxPrice > 0) MaxPriceInfo.setText(String.format("Buy it now price: %,.0f$", maxPrice));
-      else MaxPriceInfo.setText("No instant buy option");
+      if (dutchListedBuy) {
+        MaxPriceInfo.setText(
+            String.format("Current Dutch price: %,.0f$ — enter the exact amount to buy now.", dutchListedPrice));
+        if (BidAmount != null) BidAmount.setText(String.format("%.0f", dutchListedPrice));
+      } else if (maxPrice > 0) {
+        MaxPriceInfo.setText(String.format("Buy it now price: %,.0f$", maxPrice));
+      } else {
+        MaxPriceInfo.setText("No instant buy option");
+      }
     }
   }
 
@@ -70,16 +87,26 @@ public class BiddingFormController {
       }
       double ans = Double.parseDouble(raw);
       BidTransaction res = new BidTransaction(itemId, ClientSession.getCurrentUser().getId(), ans);
-      Request req = new Request(Request.BID, res);
-      Response res2 = NetworkClient.getInstance().sendRequestAndWait(req);
+      Response res2 = biddingClientService.placeBid(res);
 
       if (res2 != null && Response.OK.equals(res2.getStatus())) {
-        Object res3 = res2.getPayload();
-        if (res3 instanceof BidTransaction) {
-          double ans2 = ((BidTransaction) res3).getBidValue();
-          if (parent != null) {
-            parent.updateCurrentBid(ans2);
-          }
+        if (!"BUY_IT_NOW_SUCCESS".equals(res2.getMessage()) && itemId > 0) {
+          Thread refetchLatest =
+              new Thread(
+                  () -> {
+                    try {
+                      Item fresh = biddingClientService.getItemById(itemId);
+                      Platform.runLater(
+                          () -> {
+                            if (parent != null && fresh != null) {
+                              parent.updatePriceUi(fresh);
+                            }
+                          });
+                    } catch (Exception ignored) {
+                    }
+                  });
+          refetchLatest.setDaemon(true);
+          refetchLatest.start();
         }
         removeForm();
 

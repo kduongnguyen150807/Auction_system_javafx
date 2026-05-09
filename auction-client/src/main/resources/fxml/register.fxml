@@ -30,7 +30,7 @@
                                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                                             <image><Image url="@../images/user_icon.png" /></image>
                                         </ImageView>
-                                        <TextField fx:id="u" promptText="Tên người dùng" styleClass="clean-input" HBox.hgrow="ALWAYS" />
+                                        <TextField fx:id="usernameField" promptText="Tên người dùng" styleClass="clean-input" HBox.hgrow="ALWAYS" />
                                     </children>
                                 </HBox>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -38,7 +38,7 @@
                                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                                             <image><Image url="@../images/email_icon.png" /></image>
                                         </ImageView>
-                                        <TextField fx:id="e" promptText="Email" styleClass="clean-input" HBox.hgrow="ALWAYS" />
+                                        <TextField fx:id="emailField" promptText="Email" styleClass="clean-input" HBox.hgrow="ALWAYS" />
                                     </children>
                                 </HBox>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -46,7 +46,7 @@
                                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                                             <image><Image url="@../images/age_icon.png" /></image>
                                         </ImageView>
-                                        <TextField fx:id="a" promptText="Tuổi" styleClass="clean-input" HBox.hgrow="ALWAYS" />
+                                        <TextField fx:id="ageField" promptText="Tuổi" styleClass="clean-input" HBox.hgrow="ALWAYS" />
                                     </children>
                                 </HBox>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -54,7 +54,7 @@
                                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                                             <image><Image url="@../images/key_icon.png" /></image>
                                         </ImageView>
-                                        <PasswordField fx:id="p" promptText="Mật khẩu" styleClass="clean-input" HBox.hgrow="ALWAYS" />
+                                        <PasswordField fx:id="passwordField" promptText="Mật khẩu" styleClass="clean-input" HBox.hgrow="ALWAYS" />
                                     </children>
                                 </HBox>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -62,12 +62,12 @@
                                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                                             <image><Image url="@../images/key_icon.png" /></image>
                                         </ImageView>
-                                        <PasswordField fx:id="cp" promptText="Xác nhận mật khẩu" styleClass="clean-input" HBox.hgrow="ALWAYS" />
+                                        <PasswordField fx:id="confirmPasswordField" promptText="Xác nhận mật khẩu" styleClass="clean-input" HBox.hgrow="ALWAYS" />
                                     </children>
                                 </HBox>
                             </children>
                         </VBox>
-                        <Label fx:id="ans" textFill="#ff4d4d">
+                        <Label fx:id="messageLabel" textFill="#ff4d4d">
                             <font><Font size="13.0" /></font>
                         </Label>
                         <Button maxWidth="1.1754943508222875E38" minHeight="40.0" onAction="#handleRegister" styleClass="btn-primary" text="Xác nhận">

@@ -5,8 +5,8 @@ public class Electronics extends Item {
     super();
   }
 
-  public Electronics(String res, String ans, double res1, double ans1, int res2) {
-    super(res, ans, res1, ans1, res2);
+  public Electronics(String name, String description, double startingPrice, double currentPrice, int sellerId) {
+    super(name, description, startingPrice, currentPrice, sellerId);
   }
 
   @Override

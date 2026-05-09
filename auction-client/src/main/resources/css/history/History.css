@@ -1,17 +1,9 @@
+@import url("../shared/AppScrollbar.css");
+
 /* Tổng thể trong suốt để thấy background rừng tuyết */
 .history-main-container {
     -fx-background-color: transparent;
     -fx-font-family: "Consolas";
-}
-
-/* Ép Viewport của ScrollPane về trong suốt */
-.scroll-pane {
-    -fx-background: transparent;
-    -fx-background-color: transparent;
-}
-
-.scroll-pane > .viewport {
-    -fx-background-color: transparent;
 }
 
 /* Từng khối section kiểu kính mờ */
@@ -34,14 +26,4 @@
 
 .flow-pane-clean {
     -fx-background-color: transparent;
-}
-
-/* Đồng bộ thanh cuộn cho sang */
-.scroll-bar:vertical, .scroll-bar:horizontal {
-    -fx-background-color: transparent;
-}
-
-.scroll-bar .thumb {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
-    -fx-background-radius: 10;
 }

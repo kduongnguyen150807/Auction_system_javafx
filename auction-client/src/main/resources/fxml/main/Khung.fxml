@@ -62,7 +62,21 @@
                                 <Label minWidth="120.0" styleClass="menu-text" text="My Profile" />
                             </children>
                         </HBox>
+<<<<<<< HEAD
                         <HBox fx:id="ManageUsersMenu" managed="false" maxWidth="Infinity" onMouseClicked="#openManageUsers" styleClass="menu-item" visible="false">
+=======
+                        <HBox fx:id="ChatMenu" styleClass="menu-item" onMouseClicked="#openChat" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.2L4 17.2V4H20V16ZM7 9H9V11H7V9ZM11 9H13V11H11V9ZM15 9H17V11H15V9Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="Chat" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+                        <HBox fx:id="ManageUsersMenu" styleClass="menu-item" onMouseClicked="#openManageUsers" maxWidth="Infinity" visible="false" managed="false">
+>>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
                             <children>
                                 <StackPane alignment="CENTER" maxWidth="24.0" minWidth="24.0" prefWidth="24.0" styleClass="menu-icon-slot">
                                     <children>

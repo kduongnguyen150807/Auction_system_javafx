@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public class Request implements Serializable {
   private static final long serialVersionUID = 1L;
+
   public static final String LOGIN = "LOGIN";
   public static final String SIGNUP = "SIGNUP";
   public static final String BID = "BID";
@@ -29,35 +30,55 @@ public class Request implements Serializable {
   public static final String SEARCH_USERS = "SEARCH_USERS";
   public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
   public static final String GET_ONGOING_LOTS = "GET_ONGOING_LOTS";
+  public static final String GET_MY_ITEMS = "get_my_items";
+  public static final String GET_CLOSED_BIDS = "getclosedbids";
+  public static final String GET_PAST_BIDS = "getpastbids";
+  public static final String DEPOSIT = "deposit";
+  public static final String REFRESH_USER = "refresh_user";
+  public static final String GET_TRANSACTIONS = "get_transactions";
+  public static final String GET_STATUS_STATS = "get_status_stats";
+  public static final String GET_CATEGORY_STATS = "get_category_stats";
+  public static final String GET_BID_HISTORY = "get_bid_history";
+  public static final String PING = "ping";
+  public static final String SEND_CHAT = "send_chat";
+  public static final String GET_GLOBAL_CHAT_HISTORY = "get_global_chat_history";
+  public static final String GET_PRIVATE_CHAT_HISTORY = "get_private_chat_history";
+  public static final String GET_CHAT_CONTACTS = "get_chat_contacts";
+  public static final String ADD_FRIEND = "add_friend";
+  public static final String ACCEPT_FRIEND = "accept_friend";
+  public static final String DECLINE_FRIEND = "decline_friend";
+  public static final String REMOVE_FRIEND = "remove_friend";
+  public static final String GET_FRIENDS = "get_friends";
+  public static final String GET_FRIEND_REQUESTS = "get_friend_requests";
+  public static final String GET_LEADERBOARD = "GET_LEADERBOARD";
+  public static final String AUTOCOMPLETE = "AUTOCOMPLETE";
+  public static final String RECONNECT = "RECONNECT";
+
   protected String requestId;
   protected String action;
   protected Object payload;
   protected LocalDateTime timestamp;
 
-  public Request(String act, Object obj) {
+  public Request(String action, Object payload) {
     this.requestId = UUID.randomUUID().toString();
-    this.action = act;
-    this.payload = obj;
+    this.action = action;
+    this.payload = payload;
     this.timestamp = LocalDateTime.now();
   }
 
   public String getRequestId() {
-    String ans = this.requestId;
-    return ans;
+    return this.requestId;
   }
 
   public String getAction() {
-    String ans = this.action;
-    return ans;
+    return this.action;
   }
 
   public Object getPayload() {
-    Object ans = this.payload;
-    return ans;
+    return this.payload;
   }
 
   public LocalDateTime getTimestamp() {
-    LocalDateTime ans = this.timestamp;
-    return ans;
+    return this.timestamp;
   }
 }

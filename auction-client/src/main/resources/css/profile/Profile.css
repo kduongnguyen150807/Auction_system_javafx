@@ -1,16 +1,8 @@
+@import url("../shared/AppScrollbar.css");
+
 /* TỔNG THỂ TRANG PROFILE */
 .profile-root {
     -fx-font-family: "Consolas";
-    -fx-background-color: transparent;
-}
-
-/* QUAN TRỌNG: Ép viewport của ScrollPane về trong suốt để hiện rừng tuyết */
-.scroll-pane {
-    -fx-background: transparent;
-    -fx-background-color: transparent;
-}
-
-.scroll-pane > .viewport {
     -fx-background-color: transparent;
 }
 

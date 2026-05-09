@@ -10,7 +10,7 @@ public class BidTransaction extends Entity {
   protected LocalDateTime timestamp;
   protected double maxAutoBid;
   protected boolean autoBid;
-  protected double autoBidIncrement; // mặc định autobid tăng bước nhảy là 10$
+  protected double autoBidIncrement;
 
   public BidTransaction() {
     super();
@@ -18,11 +18,11 @@ public class BidTransaction extends Entity {
     this.autoBidIncrement = 10.0;
   }
 
-  public BidTransaction(int res, int ans, double res1) {
+  public BidTransaction(int itemId, int userId, double bidValue) {
     super();
-    this.itemId = res;
-    this.userId = ans;
-    this.bidValue = res1;
+    this.itemId = itemId;
+    this.userId = userId;
+    this.bidValue = bidValue;
     this.timestamp = LocalDateTime.now();
     this.maxAutoBid = 0.0;
     this.autoBid = false;
@@ -30,58 +30,58 @@ public class BidTransaction extends Entity {
   }
 
   public int getItemId() {
-    return itemId;
+    return this.itemId;
   }
 
-  public void setItemId(int res) {
-    this.itemId = res;
+  public void setItemId(int itemId) {
+    this.itemId = itemId;
   }
 
   public int getUserId() {
-    return userId;
+    return this.userId;
   }
 
-  public void setUserId(int ans) {
-    this.userId = ans;
+  public void setUserId(int userId) {
+    this.userId = userId;
   }
 
   public double getBidValue() {
-    return bidValue;
+    return this.bidValue;
   }
 
-  public void setBidValue(double res) {
-    this.bidValue = res;
+  public void setBidValue(double bidValue) {
+    this.bidValue = bidValue;
   }
 
   public LocalDateTime getTimestamp() {
-    return timestamp;
+    return this.timestamp;
   }
 
-  public void setTimestamp(LocalDateTime ans) {
-    this.timestamp = ans;
+  public void setTimestamp(LocalDateTime timestamp) {
+    this.timestamp = timestamp;
   }
 
   public double getMaxAutoBid() {
-    return maxAutoBid;
+    return this.maxAutoBid;
   }
 
-  public void setMaxAutoBid(double res) {
-    this.maxAutoBid = res;
+  public void setMaxAutoBid(double maxAutoBid) {
+    this.maxAutoBid = maxAutoBid;
   }
 
   public boolean isAutoBid() {
     return this.autoBid;
   }
 
-  public void setAutoBid(boolean ans) {
-    this.autoBid = ans;
+  public void setAutoBid(boolean autoBid) {
+    this.autoBid = autoBid;
   }
 
   public double getAutoBidIncrement() {
-    return autoBidIncrement;
+    return this.autoBidIncrement;
   }
 
-  public void setAutoBidIncrement(double res) {
-    this.autoBidIncrement = res;
+  public void setAutoBidIncrement(double autoBidIncrement) {
+    this.autoBidIncrement = autoBidIncrement;
   }
 }
