@@ -1,114 +1,83 @@
-# Hệ Thống Đấu Giá Trực Tuyến (Online Auction System)
+# 🔨 Hệ Thống Đấu Giá Trực Tuyến (Realtime Online Auction System)
 
-[![CI/CD Pipeline](https://github.com/kduongnguyen150807/Auction_system_javafx/actions/workflows/build.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
+[![Java Version](https://img.shields.io/badge/Java-25-orange.svg)](https://www.oracle.com/java/)
+[![JavaFX](https://img.shields.io/badge/JavaFX-GUI-blue.svg)](https://openjfx.io/)
+[![Maven](https://img.shields.io/badge/Build-Maven-C71A36.svg)](https://maven.apache.org/)
+[![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1.svg)](https://www.mysql.com/)
 
-Dự án phát triển hệ thống đấu giá trực tuyến thuộc bài tập lớn môn Lập trình nâng cao. Hệ thống mô phỏng môi trường đấu giá thời gian thực, cho phép nhiều người dùng (concurrent users) tham gia cạnh tranh giá sản phẩm với độ trễ thấp và đảm bảo tính toàn vẹn dữ liệu.
+Dự án Hệ thống Đấu giá Trực tuyến (Online Auction System) là bài tập lớn thuộc học phần **Lập trình nâng cao**. Hệ thống mô phỏng một sàn giao dịch đấu giá thời gian thực (realtime), cho phép hàng ngàn người dùng kết nối đồng thời, tham gia trả giá với độ trễ cực thấp và đảm bảo tính toàn vẹn dữ liệu tuyệt đối (Thread-safety & ACID).
 
-Dự án áp dụng chặt chẽ kiến trúc Client-Server phân tầng, thiết kế hướng đối tượng (OOP) và các Design Pattern chuẩn mực trong công nghiệp phần mềm.
+---
 
-## 1. Kiến Trúc Hệ Thống (Architecture)
+## 📑 Mục lục
+1.[Giới thiệu dự án](#1-giới-thiệu-dự-án)
+2. [Công nghệ sử dụng](#2-công-nghệ-sử-dụng)
+3. [Kiến trúc hệ thống](#3-kiến-trúc-hệ-thống)
+4.[Tính năng nổi bật (Điểm nhấn kỹ thuật)](#4-tính-năng-nổi-bật-điểm-nhấn-kỹ-thuật)
+5. [Hướng dẫn cài đặt & Khởi chạy](#5-hướng-dẫn-cài-đặt--khởi-chạy)
 
-Hệ thống được thiết kế theo mô hình 3 modules độc lập nhằm tối ưu hóa việc quản lý mã nguồn và tái sử dụng:
+---
 
-* **auction-shared:** Chứa các định nghĩa về Entity (User, Item, BidTransaction), Interfaces và các gói dữ liệu giao tiếp chung.
-* **auction-server:** Đóng vai trò là trung tâm xử lý nghiệp vụ (Business Logic). Áp dụng mô hình MVC, quản lý kết nối Socket đa luồng (Multi-threading) và trực tiếp thao tác với cơ sở dữ liệu qua các lớp DAO. (host phải có inbound rule cho port 8080 hoặc port host)
-* **auction-client:** Đóng vai trò giao diện người dùng (Presentation Layer). Áp dụng mô hình MVC với JavaFX, xử lý luồng sự kiện UI và giao tiếp với Server qua giao thức TCP/IP.
+## 1. Giới thiệu dự án
 
-## 2. Công Nghệ Sử Dụng (Tech Stack)
+Hệ thống được thiết kế theo mô hình **Client-Server phân tầng**, áp dụng triệt để các nguyên lý Thiết kế Hướng đối tượng (OOP) và Design Patterns. Mã nguồn được chia thành 3 module độc lập để tối ưu hóa việc quản lý và tái sử dụng:
 
-* **Nền tảng & Ngôn ngữ:** Java (JDK 25)
-* **Giao diện (GUI):** JavaFX, FXML, CSS
-* **Cơ sở dữ liệu:** MySQL (JDBC)
-* **Mạng & Giao tiếp:** Java Socket (TCP), Cloudinary REST API (Image Hosting)
-* **Build Tool & CI/CD:** Maven, GitHub Actions
-* **Testing:** JUnit 5 (Unit Testing)
+* 📦 **`auction-shared`**: Chứa các định nghĩa về Entity (User, Item, BidTransaction), Interfaces và giao thức giao tiếp (Request/Response Protocol) dùng chung cho cả 2 phía.
+* 🖥️ **`auction-server`**: Trung tâm xử lý nghiệp vụ (Business Logic). Quản lý kết nối Socket đa luồng (Multi-threading), xử lý đồng bộ hóa (Concurrency Control) và tương tác với Cơ sở dữ liệu qua DAO Pattern.
+* 💻 **`auction-client`**: Giao diện người dùng (Presentation Layer) xây dựng bằng JavaFX. Xử lý luồng sự kiện UI, validate dữ liệu và giao tiếp bất đồng bộ với Server qua TCP/IP.
 
-## 3. Thiết Kế Hệ Thống & Cấu Trúc Dữ Liệu
+---
 
-Dự án triển khai nghiêm ngặt các nguyên lý OOP và Design Patterns để giải quyết các bài toán phức tạp:
+## 2. Công nghệ sử dụng
 
-* **Design Patterns:**
-  * *Factory Method:* Được áp dụng trong `ItemFactory` để khởi tạo linh hoạt các loại tài sản đấu giá (Vehicle, Electronics, Art).
-  * *Singleton:* Quản lý các tài nguyên duy nhất như `DatabaseConnection`, `AuctionManager`, và `ClientSession`.
-  * *Observer (Biến thể qua Socket):* Cập nhật trạng thái và giá đấu theo thời gian thực (Realtime Broadcasting) tới toàn bộ Clients kết nối.
-* **Tính Đa hình (Polymorphism):** Lớp trừu tượng `Item` định nghĩa phương thức `calculatetax()`, cho phép các lớp con (Vehicle, Art, Electronics) tự triển khai logic tính thuế khác biệt.
-* **Cấu trúc dữ liệu & Thuật toán:**
-  * Sử dụng `PriorityQueue` kết hợp với thuật toán so sánh `maxBid` để vận hành hệ thống Auto-Bidding, đảm bảo thứ tự ưu tiên trúng thầu chính xác.
-  * Cấu trúc luồng an toàn (Thread-safe) với `ConcurrentHashMap` và `CopyOnWriteArrayList` trong môi trường đa luồng.
+| Hạng mục | Công nghệ / Thư viện áp dụng |
+| :--- | :--- |
+| **Ngôn ngữ lập trình** | Java (JDK 25) |
+| **Giao diện (GUI)** | JavaFX (FXML, CSS tùy chỉnh giao diện Glassmorphism) |
+| **Giao tiếp mạng** | Java Socket (TCP/IP), Java Object Serialization |
+| **Cơ sở dữ liệu** | MySQL 8.0+, JDBC |
+| **Connection Pool** | HikariCP (Tối ưu hóa kết nối DB, chống sập Server) |
+| **Quản lý dự án** | Maven (Multi-module architecture) |
+| **Lưu trữ hình ảnh** | Cloudinary REST API |
+| **Logging & Testing** | SLF4J, Logback, JUnit 5, Mockito |
 
-## 4. Chức Năng Kỹ Thuật Cốt Lõi
+---
 
-* **Concurrent Bidding & Thread Safety:** Xử lý đấu giá đồng thời an toàn với từ khóa `synchronized`, ngăn chặn triệt để tình trạng Race Condition, Lost Update hoặc tranh chấp dữ liệu khi nhiều người cùng đặt giá.
-* **Auto-Bidding:** Cho phép người dùng thiết lập giá trần (`maxBid`) và bước giá (`increment`). Hệ thống tự động proxy đấm giá thay mặt người dùng dựa trên hàng đợi ưu tiên.
-* **Anti-Sniping:** Tự động bù giờ (cộng thêm 60 giây) nếu có giao dịch đặt giá hợp lệ trong những giây cuối cùng của phiên đấu giá.
-* **Realtime Analytics:** Vẽ biểu đồ đường (Line Chart) mô tả lịch sử biến động giá của sản phẩm theo thời gian thực.
-* **System Integration:** Tích hợp `java.awt.SystemTray` để đẩy thông báo (Push Notifications) trực tiếp ra màn hình hệ điều hành của người dùng khi bị vượt giá.
+## 3. Kiến trúc hệ thống
 
-## 5. Hướng Dẫn Cài Đặt (Setup Instructions)
+* **Mô hình MVC (Model-View-Controller):** Áp dụng đồng bộ trên cả Client và Server. Client tách biệt hoàn toàn logic UI (Controllers) và logic mạng (`NetworkClient`). Server định tuyến các gói tin thông qua `ActionRegistry` và `ClientHandler`.
+* **Quản lý Concurrent Bidding:** Sử dụng `ReentrantLock` cấp phát theo từng `itemId` kết hợp với các câu lệnh SQL Atomic (`UPDATE ... WHERE balance >= ?`). Đảm bảo tuyệt đối không xảy ra tình trạng Race Condition hay Lost Update khi hàng trăm người cùng đặt giá cho một sản phẩm trong cùng một tích tắc.
+* **Realtime Broadcasting:** Server duy trì danh sách các luồng Socket đang mở (`ClientConnectionHub`). Khi có sự kiện (Có người trả giá cao hơn, Sản phẩm chốt đơn), Server chủ động đẩy (Push) gói tin `Response` về các Client liên quan để cập nhật UI ngay lập tức mà không cần Client phải Polling.
 
-**Yêu cầu hệ thống:**
+---
 
-* JDK 25 trở lên.
-* Maven 3.8+
-* MySQL Server 8.0+
+## 4. Tính năng nổi bật (Điểm nhấn kỹ thuật)
 
-**Bước 1: Khởi tạo Cơ sở dữ liệu**
+Bên cạnh các tính năng cơ bản (Đăng nhập/Đăng ký, Đăng bán, Lịch sử giao dịch), hệ thống tích hợp các thuật toán và cơ chế xử lý nâng cao:
 
-1. Mở hệ quản trị MySQL.
-2. Tạo database mới: `CREATE DATABASE auction_db;`
-3. Import file dữ liệu mẫu (nếu có) hoặc để hệ thống DAO tự động tạo bảng (Alter Table) khi chạy lần đầu.
-4. Cập nhật thông tin cấu hình (URL, Username, Password) tại lớp `DatabaseConnection` trong module `auction-server`.
+### 🚀 4.1. Thuật toán Proxy Bidding (Đấu giá hộ) O(1)
+Thay vì dùng vòng lặp mô phỏng từng bước giá gây tốn tài nguyên, hệ thống áp dụng thuật toán **Instant Resolution**. Khi có nhiều người cùng cài đặt Auto-bid, hệ thống sử dụng công thức toán học `Math.min(maxBidA, maxBidB) + increment` để tìm ra ngay người chiến thắng và mức giá hiện tại chỉ với **độ phức tạp O(1)** và 1 thao tác Database duy nhất.
 
-**Bước 2: Build dự án**
-Mở Terminal tại thư mục gốc của project và chạy lệnh:
+### 🏆 4.2. Realtime Leaderboard (Bảng xếp hạng In-memory)
+* Bảng xếp hạng "Top Đại Gia" được duy trì trực tiếp trên RAM của Server bằng cấu trúc dữ liệu `ConcurrentSkipListSet` giúp việc sắp xếp và lấy Top 10 luôn đạt hiệu suất **O(logN)**.
+* Tự động đồng bộ hóa (Sync) Avatar khi người dùng thay đổi ảnh đại diện.
+* **Bộ lọc thông minh:** Thuật toán tự động loại bỏ các tài khoản có Role là `ADMIN` khỏi bảng xếp hạng để đảm bảo tính công bằng.
 
-```bash
-mvn clean verify
-```
+### 🔍 4.3. Interactive Profile (Xem hồ sơ trực tiếp)
+Giao diện Leaderboard trên JavaFX được gắn Event Listener. Khi người dùng **Click vào một dòng bất kỳ** trên bảng xếp hạng, Client sẽ gửi `Request.GET_USER_BY_ID` lên Server và sử dụng `SceneManager` để render trực tiếp màn hình Profile của người đó (hiển thị số phiên thắng, tổng tiền đã chi, độ uy tín,...).
 
-**Bước 3: Khởi chạy Server**
-Mở Terminal tại thư mục `auction-server` và thực thi:
+### ⚡ 4.4. DelayQueue Settlement (Chốt phiên không nghẽn cổ chai)
+Thay vì dùng Timer quét Database liên tục gây lãng phí tài nguyên, hệ thống đưa các sự kiện "Hết hạn đấu giá" vào một `DelayQueue` (In-memory Queue). Một Worker Thread duy nhất sẽ chờ (block) và chỉ thức dậy để xử lý chính xác vào mili-giây mà sản phẩm đó hết hạn.
 
-```bash
-mvn exec:java -Dexec.mainClass="com.auction.server.Main"
-```
+### 🛡️ 4.5. Auto-Kill Port & Anti-Sniping
+* **Auto-Kill Port 8080:** Server được lập trình để tự động giao tiếp với OS (Windows/Linux) qua `Runtime.getRuntime().exec()`, tìm và tiêu diệt (Kill Process) các tiến trình đang chiếm dụng Port 8080 trước khi khởi động, triệt tiêu hoàn toàn lỗi `BindException`.
+* **Anti-Sniping:** Tự động cộng thêm 60 giây vào thời gian kết thúc nếu có bất kỳ lượt ra giá hợp lệ nào diễn ra trong 1 phút cuối cùng của phiên đấu giá.
 
-*(Đảm bảo Server báo khởi tạo thành công và đang lắng nghe ở cổng mặc định).*
+---
 
-**Bước 4: Khởi chạy Client**
-Mở Terminal mới tại thư mục `auction-client` và thực thi:
+## 5. Hướng dẫn cài đặt & Khởi chạy
 
-```bash
-mvn clean javafx:run
-```
-
-*(Để test concurrent bidding, có thể chạy lệnh này trên nhiều cửa sổ Terminal khác nhau để mở nhiều Client song song).*
-
-## 6. Quy Định Phát Triển (Dành cho thành viên)
-
-1. **Branching:** Không push trực tiếp lên nhánh `main`. Phân nhánh theo tính năng (VD: `feat/realtime-chart`, `fix/login-bug`) và merge qua Pull Request.
-2. **Commit Message:** Sử dụng chuẩn Conventional Commits (`feat:`, `fix:`, `refactor:`).
-3. **CI/CD Quality Gate:** Mọi nhánh trước khi merge phải vượt qua toàn bộ Unit Tests trên GitHub Actions pipeline.
-   
-   ## 7. Phân công công việc (Team Contributions)
-
-Dự án được phân chia công việc rõ ràng dựa trên thế mạnh của từng thành viên, đảm bảo tiến độ và chất lượng mã nguồn từ Front-end đến Back-end:
-
-* **Khánh (Fullstack Developer & System Architect):**
-  
-  * Thiết kế kiến trúc tổng thể 3 module (`auction-shared`, `auction-server`, `auction-client`).
-  * Phát triển các logic cốt lõi (Core Business Logic): Giao tiếp Socket TCP, Kiểm soát đồng thời (Concurrency Control / Optimistic Locking), thuật toán Auto-Bidding và Anti-Sniping.
-  * Tích hợp hệ thống xuyên suốt từ tầng Database lên giao diện người dùng.
-  * Thiết kế cơ sở dữ liệu và kiểm soát các thông tin thiết yếu của hệ thống.
-
-* **Nhân (UI/UX Designer & Client Controller):**
-  
-  * Thiết kế trải nghiệm và giao diện người dùng (GUI) hiện đại bằng JavaFX (FXML & CSS).
-  * Xử lý luồng sự kiện phía Client (Event Handling), kiểm duyệt dữ liệu đầu vào (Input Validation).
-  * Liên kết giao diện với tầng logic mạng, đóng gói và xử lý các gói tin Request/Response.
-
-* **Nin & Tuấn (Backend Server & UI Components):**
-  
-  * Phát triển module `auction-server`: Xây dựng các lớp DAO (Data Access Object) và truy vấn CSDL MySQL an toàn.
-  * Xử lý đa luồng (Thread Pool), quản lý vòng đời của các phiên kết nối Socket (ClientHandler) và các dịch vụ chạy ngầm (Scheduled Services).
-  * Hỗ trợ xây dựng, lắp ráp và tinh chỉnh các Component giao diện phía Client.
+### Bước 1: Chuẩn bị Cơ sở dữ liệu
+1. Mở MySQL và tạo Database:
+   ```sql
+   CREATE DATABASE auction_db;
