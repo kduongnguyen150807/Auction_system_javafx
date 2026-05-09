@@ -63,7 +63,8 @@ public class AuctionManager {
   private void initleaderboard() {
     List<User> res = userdao.getAllUsers();
     for (User ans : res) {
-      if (ans.getMoneySpent() > 0) {
+      //Lọc role admin ra khỏi hiển thị
+      if (ans.getMoneySpent() > 0 && ans.getRole() != com.auction.shared.UserRole.ADMIN) {
         leaderboardservice.updatescore(ans.getId(), ans.getUsername(), ans.getAvatarUrl(), ans.getMoneySpent());
       }
     }

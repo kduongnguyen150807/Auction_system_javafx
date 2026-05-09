@@ -59,6 +59,22 @@ public class TrangChuController {
         com.auction.shared.LeaderboardEntry ans = res.get(i);
         HBox row = new HBox(10);
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        row.setPadding(new javafx.geometry.Insets(5));
+        row.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: rgba(255,255,255,0.1); -fx-cursor: hand; -fx-background-radius: 8;"));
+        row.setOnMouseExited(e -> row.setStyle("-fx-background-color: transparent; -fx-cursor: hand;"));
+        row.setOnMouseClicked(e -> {
+          new Thread(() -> {
+            com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.GET_USER_BY_ID, ans.getUserid());
+            com.auction.shared.Response response = com.auction.client.network.NetworkClient.getInstance().sendRequestAndWait(req);
+            if (response != null && com.auction.shared.Response.OK.equals(response.getStatus())) {
+              com.auction.shared.User u = (com.auction.shared.User) response.getPayload();
+              javafx.application.Platform.runLater(() -> {
+                com.auction.client.ui.Main.KhungController.showUserProfile(u);
+              });
+            }
+          }).start();
+        });
         Label rank = new Label("#" + (i + 1));
         rank.setStyle("-fx-text-fill: #ffaa00; -fx-font-weight: bold; -fx-font-size: 16px;");
         javafx.scene.image.ImageView avatar = new javafx.scene.image.ImageView();
