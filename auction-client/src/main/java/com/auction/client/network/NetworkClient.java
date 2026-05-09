@@ -63,36 +63,34 @@ public class NetworkClient {
     pendingMap.forEach((id, f) -> f.completeExceptionally(cause));
     pendingMap.clear();
   }
-
-  private CompletableFuture<Response> sendRequestAsync(Request request, long timeoutSeconds) {
-    String requestId = request.getRequestId();
-    CompletableFuture<Response> future = new CompletableFuture<>();
+  //Sửa lại do tính năng Java làm tràn cache
+  private CompletableFuture<Response> sendRequestAsync(Request request, long timeoutseconds) {
+    String requestid = request.getRequestId();
+    CompletableFuture<Response> ans = new CompletableFuture<>();
     if (out == null) {
-      future.completeExceptionally(new IllegalStateException(
-          "Not connected to server — check IP address and server status."));
-      return future;
+      ans.completeExceptionally(new IllegalStateException("not connected"));
+      return ans;
     }
-    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestId, future);
+    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestid, ans);
     if (existing != null) {
-      future.completeExceptionally(new IllegalStateException("Duplicate request id: " + requestId));
-      return future;
+      ans.completeExceptionally(new IllegalStateException("duplicate"));
+      return ans;
     }
     try {
-      synchronized (out) { out.writeObject(request); out.flush(); }
+      synchronized (out) {
+        out.reset();
+        out.writeObject(request);
+        out.flush();
+      }
     } catch (IOException e) {
-      pendingMap.remove(requestId);
-      future.completeExceptionally(e);
+      pendingMap.remove(requestid);
+      ans.completeExceptionally(e);
     }
-    return future.orTimeout(timeoutSeconds, TimeUnit.SECONDS)
-        .whenComplete((response, error) -> {
-          pendingMap.remove(requestId);
-          if (error != null) {
-            if (error instanceof java.util.concurrent.TimeoutException)
-              LOGGER.warn("Server timeout ({}s) for request {} ({})", timeoutSeconds, requestId, request.getAction());
-            else
-              LOGGER.warn("Request {} ({}) failed: {}", requestId, request.getAction(), error.getMessage());
-          }
-        });
+    return ans.orTimeout(timeoutseconds, TimeUnit.SECONDS)
+            .whenComplete(
+                    (res, error) -> {
+                      pendingMap.remove(requestid);
+                    });
   }
 
   public Response sendRequestAndWait(Request request) {

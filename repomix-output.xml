@@ -3851,167 +3851,6 @@ class InputValidatorsTest {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/dao/auction/BidDao.java">
-package com.auction.server.dao.auction;
-
-import com.auction.server.dao.platform.BaseDao;
-
-import com.auction.shared.BidTransaction;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class BidDao extends BaseDao<BidTransaction> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(BidDao.class);
-
-  @Override
-  protected BidTransaction mapRow(ResultSet rs) throws SQLException {
-    BidTransaction bid = new BidTransaction(rs.getInt("itemid"), rs.getInt("userid"), rs.getDouble("bidvalue"));
-    bid.setId(rs.getInt("id"));
-    bid.setVersion(rs.getInt("version"));
-    bid.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
-    return bid;
-  }
-
-  public boolean placeBid(BidTransaction bid) {
-    try (Connection conn = getConn()) {
-      conn.setAutoCommit(false);
-      try {
-        String insertSql = "insert into bid_transactions(itemid,userid,bidvalue,timestamp) values(?,?,?,?)";
-        try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
-          insertStmt.setInt(1, bid.getItemId());
-          insertStmt.setInt(2, bid.getUserId());
-          insertStmt.setDouble(3, bid.getBidValue());
-          insertStmt.setTimestamp(4, Timestamp.valueOf(bid.getTimestamp()));
-          int inserted = insertStmt.executeUpdate();
-          if (inserted > 0) {
-            String updateSql = "update items set currentprice = ? where id = ?";
-            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-              updateStmt.setDouble(1, bid.getBidValue());
-              updateStmt.setInt(2, bid.getItemId());
-              updateStmt.executeUpdate();
-            }
-          }
-          conn.commit();
-          return inserted > 0;
-        }
-      } catch (Exception e) {
-        conn.rollback();
-        throw e;
-      }
-    } catch (Exception e) {
-      LOGGER.warn("placeBid failed", e);
-      return false;
-    }
-  }
-
-  public List<BidTransaction> getByItem(int itemId) {
-    return queryList("select * from bid_transactions where itemid = ? order by timestamp asc", itemId);
-  }
-
-  public List<BidTransaction> getBidHistory(int itemId) {
-    List<BidTransaction> history = new ArrayList<>();
-    String sql = "SELECT * FROM bid_transactions WHERE itemid = ? ORDER BY timestamp ASC";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        BidTransaction bid = new BidTransaction();
-        bid.setBidValue(rs.getDouble("bidvalue"));
-        Timestamp ts = rs.getTimestamp("timestamp");
-        if (ts != null) bid.setTimestamp(ts.toLocalDateTime());
-        history.add(bid);
-      }
-    } catch (Exception e) {
-      LOGGER.warn("getBidHistory failed", e);
-    }
-    return history;
-  }
-
-  public int getPreviousHighestBidder(int itemId) {
-    String sql = "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      ResultSet rs = ps.executeQuery();
-      if (rs.next()) return rs.getInt("userid");
-    } catch (Exception e) {
-      LOGGER.warn("getPreviousHighestBidder failed", e);
-    }
-    return -1;
-  }
-
-  // ─── Ban-handling helpers (transactional, share a Connection) ─────────────
-
-  /** Returns item ids of OPEN auctions where this user has placed at least one bid. */
-  public List<Integer> getOpenAuctionIdsForBidder(int userId) {
-    List<Integer> ids = new ArrayList<>();
-    String sql =
-        "SELECT DISTINCT b.itemid FROM bid_transactions b "
-            + "JOIN items i ON i.id = b.itemid "
-            + "WHERE b.userid = ? AND i.status = 'OPEN'";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, userId);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ids.add(rs.getInt(1));
-      }
-    } catch (Exception e) {
-      LOGGER.warn("getOpenAuctionIdsForBidder failed", e);
-    }
-    return ids;
-  }
-
-  /** Deletes (invalidates) every bid placed by the banned user on the auction. */
-  public int deleteBidsByUserOnItemTx(int itemId, int userId, Connection conn) throws SQLException {
-    String sql = "DELETE FROM bid_transactions WHERE itemid = ? AND userid = ?";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      ps.setInt(2, userId);
-      return ps.executeUpdate();
-    }
-  }
-
-  /**
-   * Highest still-valid bid (i.e. the new auction leader) on the supplied connection.
-   * Bids by locked / inactive users are skipped so banned bidders never become leader.
-   */
-  public BidTransaction findHighestValidBidTx(int itemId, Connection conn) throws SQLException {
-    String sql =
-        "SELECT b.* FROM bid_transactions b "
-            + "JOIN users u ON u.id = b.userid "
-            + "WHERE b.itemid = ? AND u.islocked = false AND u.isactive = true "
-            + "ORDER BY b.bidvalue DESC, b.timestamp ASC LIMIT 1";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return mapRow(rs);
-        }
-      }
-    }
-    return null;
-  }
-
-  /** Current top bidder id on the supplied connection (-1 when no bids exist). */
-  public int getCurrentHighestBidderTx(int itemId, Connection conn) throws SQLException {
-    String sql =
-        "SELECT userid FROM bid_transactions WHERE itemid = ? "
-            + "ORDER BY bidvalue DESC, timestamp ASC LIMIT 1";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return rs.getInt("userid");
-        }
-      }
-    }
-    return -1;
-  }
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/dao/auction/LotRepository.java">
 package com.auction.server.dao.auction;
 
@@ -4684,187 +4523,6 @@ public interface RatingRepository {
   boolean hasRated(int itemId, int userId);
   List<Rating> getByItemId(int itemId);
   void recalcUserRating(int userId);
-}
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/dao/user/UserDao.java">
-package com.auction.server.dao.user;
-
-import com.auction.server.dao.platform.BaseDao;
-
-import com.auction.shared.*;
-import java.sql.*;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class UserDao extends BaseDao<User> implements UserRepository {
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserDao.class);
-
-  @Override
-  protected User mapRow(ResultSet rs) throws SQLException {
-    String role = rs.getString("role");
-    User user = role.equalsIgnoreCase("ADMIN") ? new Admin() : role.equalsIgnoreCase("SELLER") ? new Seller() : new Bidder();
-    user.setId(rs.getInt("id")); user.setVersion(rs.getInt("version"));
-    user.setUsername(rs.getString("username")); user.setFullName(rs.getString("fullname"));
-    user.setPassword(rs.getString("password")); user.setEmail(rs.getString("email"));
-    user.setAge(rs.getString("age")); user.setPhoneNumber(rs.getString("phonenumber"));
-    user.setBalance(rs.getDouble("balance")); user.setMoneySpent(rs.getDouble("moneyspent"));
-    user.setItemsBought(rs.getInt("itemsbought")); user.setMoneyReceived(rs.getDouble("moneyreceived"));
-    user.setItemsSold(rs.getInt("itemssold")); user.setActive(rs.getBoolean("isactive"));
-    user.setLocked(rs.getBoolean("islocked")); user.setAvatarUrl(rs.getString("avatar_url"));
-    try { user.setAvgRating(rs.getDouble("avgrating")); } catch (Exception e) {}
-    try { user.setTotalRatings(rs.getInt("totalratings")); } catch (Exception e) {}
-    return user;
-  }
-
-  @Override
-  public User login(String username, String password) {
-    return querySingle(
-        "select * from users where username = ? and password = ? and isactive = true and islocked = false",
-        username, password);
-  }
-
-  @Override
-  public boolean signup(User user) {
-    try (Connection conn = getConn()) {
-      String username = normalize(user.getUsername());
-      String email = normalize(user.getEmail());
-      if (existsDuplicateUser(conn, username, email)) return false;
-      String sql = "insert into users(username, fullname, password, email, age, phonenumber, role, isactive, islocked) values(?,?,?,?,?,?,?,?,?)";
-      try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        String profileName = normalize(user.getFullName());
-        if (profileName.isBlank()) profileName = username;
-        ps.setString(1, username); ps.setString(2, profileName); ps.setString(3, user.getPassword());
-        ps.setString(4, email); ps.setString(5, user.getAge()); ps.setString(6, user.getPhoneNumber());
-        ps.setString(7, user.getRole().name()); ps.setBoolean(8, true); ps.setBoolean(9, false);
-        return ps.executeUpdate() > 0;
-      }
-    } catch (SQLIntegrityConstraintViolationException e) { return false; }
-    catch (Exception e) { LOGGER.warn("Signup failed", e); return false; }
-  }
-
-  @Override
-  public User getById(String id) {
-    try {
-      return querySingle("SELECT * FROM users WHERE id = ?", Integer.parseInt(id));
-    } catch (Exception e) {
-      LOGGER.warn("getById failed for id={}", id, e);
-      return null;
-    }
-  }
-
-  @Override
-  public List<User> getAllUsers() {
-    return queryList("select * from users");
-  }
-
-  @Override
-  public List<User> searchUsers(String keyword) {
-    String sql =
-        "select * from users where (lower(username) like ? or lower(fullname) like ?) and isactive = true and lower(role) != 'admin' limit 20";
-    String kw = "%" + keyword.toLowerCase().trim() + "%";
-    List<User> users = queryList(sql, kw, kw);
-    users.forEach(u -> u.setPassword(""));
-    return users;
-  }
-
-  @Override
-  public String updateUserProfile(int userId, String fullName, String email, String phone) {
-    String fn = normalize(fullName), em = normalize(email), ph = normalize(phone);
-    if (em.isEmpty()) return "invalid_email";
-    try (Connection conn = getConn()) {
-      if (emailTakenByOtherUser(conn, userId, em)) return "duplicate_email";
-      if (!ph.isEmpty() && phoneTakenByOtherUser(conn, userId, ph)) return "duplicate_phone";
-      String sql = "UPDATE users SET fullname = ?, email = ?, phonenumber = ? WHERE id = ?";
-      try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, fn); ps.setString(2, em); ps.setString(3, ph); ps.setInt(4, userId);
-        ps.executeUpdate();
-      }
-      return null;
-    } catch (SQLIntegrityConstraintViolationException e) { return "duplicate_email"; }
-    catch (Exception e) { return "update_failed"; }
-  }
-
-  @Override
-  public void updateAvatar(String username, String avatarUrl) throws Exception {
-    String sql = "UPDATE users SET avatar_url = ? WHERE username = ?";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, avatarUrl); ps.setString(2, username); ps.executeUpdate();
-    }
-  }
-
-  @Override
-  public boolean updateBalance(int userId, double newBalance) {
-    return executeUpdate("UPDATE users SET balance = ? WHERE id = ?", newBalance, userId);
-  }
-
-  public boolean atomicDeductBalance(int userId, double amount) {
-    return executeUpdate("UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?", amount, userId, amount);
-  }
-
-  public boolean atomicCreditBalance(int userId, double amount) {
-    return executeUpdate("UPDATE users SET balance = balance + ? WHERE id = ?", amount, userId);
-  }
-
-  @Override
-  public boolean setUserLocked(String username, boolean lockStatus) {
-    return executeUpdate("UPDATE users SET islocked = ? WHERE username = ?", lockStatus, username);
-  }
-
-  @Override
-  public boolean setUserRole(String username, String role) {
-    return executeUpdate("UPDATE users SET role = ? WHERE username = ?", role, username);
-  }
-
-  @Override
-  public boolean addBidderMetrics(int userId, double amount) {
-    return executeUpdate(
-        "UPDATE users SET moneyspent = moneyspent + ?, itemsbought = itemsbought + 1 WHERE id = ?", amount, userId);
-  }
-
-  @Override
-  public boolean addSellerMetrics(int userId, double amount) {
-    return executeUpdate(
-        "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?", amount, userId);
-  }
-
-  public User getByUsername(String username) {
-    return querySingle("SELECT * FROM users WHERE username = ? LIMIT 1", username);
-  }
-
-  public boolean creditBalanceTx(int userId, double amount, Connection conn) throws SQLException {
-    String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setDouble(1, amount); ps.setInt(2, userId); return ps.executeUpdate() > 0;
-    }
-  }
-
-  private boolean existsDuplicateUser(Connection conn, String username, String email) throws SQLException {
-    String sql = "select 1 from users where lower(trim(username)) = lower(trim(?)) or lower(trim(email)) = lower(trim(?)) limit 1";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, username); ps.setString(2, email);
-      try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
-    }
-  }
-
-  private String normalize(String value) { return value == null ? "" : value.trim(); }
-
-  private boolean emailTakenByOtherUser(Connection conn, int userId, String email) throws SQLException {
-    String sql = "select 1 from users where id <> ? and lower(trim(email)) = lower(trim(?)) limit 1";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, userId); ps.setString(2, email);
-      try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
-    }
-  }
-
-  private boolean phoneTakenByOtherUser(Connection conn, int userId, String phone) throws SQLException {
-    String sql = "select 1 from users where id <> ? and trim(coalesce(phonenumber,'')) <> '' and lower(trim(phonenumber)) = lower(trim(?)) limit 1";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, userId); ps.setString(2, phone);
-      try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
-    }
-  }
 }
 </file>
 
@@ -10346,6 +10004,177 @@ public class ClientValidationTest {
 }
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/dao/auction/BidDao.java">
+package com.auction.server.dao.auction;
+
+import com.auction.server.dao.platform.BaseDao;
+
+import com.auction.shared.BidTransaction;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class BidDao extends BaseDao<BidTransaction> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(BidDao.class);
+
+  @Override
+  protected BidTransaction mapRow(ResultSet rs) throws SQLException {
+    BidTransaction bid = new BidTransaction(rs.getInt("itemid"), rs.getInt("userid"), rs.getDouble("bidvalue"));
+    bid.setId(rs.getInt("id"));
+    bid.setVersion(rs.getInt("version"));
+    bid.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
+    return bid;
+  }
+
+  public boolean placeBid(BidTransaction bid) {
+    try (Connection conn = getConn()) {
+      conn.setAutoCommit(false);
+      try {
+        String insertSql = "insert into bid_transactions(itemid,userid,bidvalue,timestamp) values(?,?,?,?)";
+        try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+          insertStmt.setInt(1, bid.getItemId());
+          insertStmt.setInt(2, bid.getUserId());
+          insertStmt.setDouble(3, bid.getBidValue());
+          insertStmt.setTimestamp(4, Timestamp.valueOf(bid.getTimestamp()));
+          int inserted = insertStmt.executeUpdate();
+          if (inserted > 0) {
+            String updateSql = "update items set currentprice = ? where id = ?";
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+              updateStmt.setDouble(1, bid.getBidValue());
+              updateStmt.setInt(2, bid.getItemId());
+              updateStmt.executeUpdate();
+            }
+          }
+          conn.commit();
+          return inserted > 0;
+        }
+      } catch (Exception e) {
+        conn.rollback();
+        throw e;
+      }
+    } catch (Exception e) {
+      LOGGER.warn("placeBid failed", e);
+      return false;
+    }
+  }
+
+  public List<BidTransaction> getByItem(int itemId) {
+    return queryList("select * from bid_transactions where itemid = ? order by timestamp asc", itemId);
+  }
+
+  public List<BidTransaction> getBidHistory(int itemId) {
+    List<BidTransaction> history = new ArrayList<>();
+    String sql = "SELECT * FROM bid_transactions WHERE itemid = ? ORDER BY timestamp ASC";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        BidTransaction bid = new BidTransaction();
+        bid.setBidValue(rs.getDouble("bidvalue"));
+        Timestamp ts = rs.getTimestamp("timestamp");
+        if (ts != null) bid.setTimestamp(ts.toLocalDateTime());
+        history.add(bid);
+      }
+    } catch (Exception e) {
+      LOGGER.warn("getBidHistory failed", e);
+    }
+    return history;
+  }
+  //Xử lí cho lỗi đang bid thì server mất điện
+  public boolean placeBidTx(BidTransaction bid, Connection conn) throws SQLException {
+    String insertSql = "insert into bid_transactions(itemid,userid,bidvalue,timestamp) values(?,?,?,?)";
+    try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+      insertStmt.setInt(1, bid.getItemId());
+      insertStmt.setInt(2, bid.getUserId());
+      insertStmt.setDouble(3, bid.getBidValue());
+      insertStmt.setTimestamp(4, Timestamp.valueOf(bid.getTimestamp()));
+      return insertStmt.executeUpdate() > 0;
+    }
+  }
+  public int getPreviousHighestBidder(int itemId) {
+    String sql = "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      ResultSet rs = ps.executeQuery();
+      if (rs.next()) return rs.getInt("userid");
+    } catch (Exception e) {
+      LOGGER.warn("getPreviousHighestBidder failed", e);
+    }
+    return -1;
+  }
+
+  // ─── Ban-handling helpers (transactional, share a Connection) ─────────────
+
+  /** Returns item ids of OPEN auctions where this user has placed at least one bid. */
+  public List<Integer> getOpenAuctionIdsForBidder(int userId) {
+    List<Integer> ids = new ArrayList<>();
+    String sql =
+        "SELECT DISTINCT b.itemid FROM bid_transactions b "
+            + "JOIN items i ON i.id = b.itemid "
+            + "WHERE b.userid = ? AND i.status = 'OPEN'";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, userId);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        ids.add(rs.getInt(1));
+      }
+    } catch (Exception e) {
+      LOGGER.warn("getOpenAuctionIdsForBidder failed", e);
+    }
+    return ids;
+  }
+
+  /** Deletes (invalidates) every bid placed by the banned user on the auction. */
+  public int deleteBidsByUserOnItemTx(int itemId, int userId, Connection conn) throws SQLException {
+    String sql = "DELETE FROM bid_transactions WHERE itemid = ? AND userid = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      ps.setInt(2, userId);
+      return ps.executeUpdate();
+    }
+  }
+
+  /**
+   * Highest still-valid bid (i.e. the new auction leader) on the supplied connection.
+   * Bids by locked / inactive users are skipped so banned bidders never become leader.
+   */
+  public BidTransaction findHighestValidBidTx(int itemId, Connection conn) throws SQLException {
+    String sql =
+        "SELECT b.* FROM bid_transactions b "
+            + "JOIN users u ON u.id = b.userid "
+            + "WHERE b.itemid = ? AND u.islocked = false AND u.isactive = true "
+            + "ORDER BY b.bidvalue DESC, b.timestamp ASC LIMIT 1";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return mapRow(rs);
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Current top bidder id on the supplied connection (-1 when no bids exist). */
+  public int getCurrentHighestBidderTx(int itemId, Connection conn) throws SQLException {
+    String sql =
+        "SELECT userid FROM bid_transactions WHERE itemid = ? "
+            + "ORDER BY bidvalue DESC, timestamp ASC LIMIT 1";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return rs.getInt("userid");
+        }
+      }
+    }
+    return -1;
+  }
+}
+</file>
+
 <file path="auction-server/src/main/java/com/auction/server/dao/auction/ItemDao.java">
 package com.auction.server.dao.auction;
 
@@ -10706,73 +10535,6 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/dao/platform/DatabaseConnection.java">
-package com.auction.server.dao.platform;
-
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.Properties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class DatabaseConnection {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnection.class);
-
-  private static final class Holder {
-    static final DatabaseConnection INSTANCE = new DatabaseConnection();
-  }
-
-  private String url;
-  private String user;
-  private String password;
-
-  private DatabaseConnection() {
-    try {
-      Properties props = new Properties();
-      InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties");
-      if (input != null) {
-        props.load(input);
-      } else {
-        LOGGER.warn("db.properties not found on classpath, using defaults");
-        props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
-        props.setProperty("db.user", "ba_nin");
-        props.setProperty("db.password", "banin123");
-      }
-
-      this.url = props.getProperty("db.url");
-      this.user = props.getProperty("db.user");
-      this.password = props.getProperty("db.password");
-
-      Class.forName("com.mysql.cj.jdbc.Driver");
-      // Validate by opening a test connection
-      Connection test = DriverManager.getConnection(url, user, password);
-      test.close();
-      LOGGER.info("Database connection validated successfully.");
-    } catch (Exception e) {
-      LOGGER.error("Failed to initialize database connection", e);
-    }
-  }
-
-  public static DatabaseConnection getInstance() {
-    return Holder.INSTANCE;
-  }
-
-  /**
-   * Returns a NEW connection each call. Callers are responsible for closing it,
-   * or using try-with-resources. This avoids sharing a single Connection across threads.
-   */
-  public Connection getConnection() {
-    try {
-      return DriverManager.getConnection(url, user, password);
-    } catch (Exception e) {
-      LOGGER.error("Failed to create database connection", e);
-      return null;
-    }
-  }
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/dao/platform/ItemSchemaMigration.java">
 package com.auction.server.dao.platform;
 
@@ -10794,6 +10556,196 @@ final class ItemSchemaMigration {
     MigrationSchemaSupport.addColumnIfMissing(conn, "items", "dutch_reserve_price", "DOUBLE NULL");
     MigrationSchemaSupport.addColumnIfMissing(conn, "items", "dutch_tick_amount", "DOUBLE NULL");
     MigrationSchemaSupport.addColumnIfMissing(conn, "items", "dutch_tick_interval_mins", "INT NULL");
+  }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/dao/user/UserDao.java">
+package com.auction.server.dao.user;
+
+import com.auction.server.dao.platform.BaseDao;
+
+import com.auction.shared.*;
+import java.sql.*;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class UserDao extends BaseDao<User> implements UserRepository {
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserDao.class);
+
+  @Override
+  protected User mapRow(ResultSet rs) throws SQLException {
+    String role = rs.getString("role");
+    User user = role.equalsIgnoreCase("ADMIN") ? new Admin() : role.equalsIgnoreCase("SELLER") ? new Seller() : new Bidder();
+    user.setId(rs.getInt("id")); user.setVersion(rs.getInt("version"));
+    user.setUsername(rs.getString("username")); user.setFullName(rs.getString("fullname"));
+    user.setPassword(rs.getString("password")); user.setEmail(rs.getString("email"));
+    user.setAge(rs.getString("age")); user.setPhoneNumber(rs.getString("phonenumber"));
+    user.setBalance(rs.getDouble("balance")); user.setMoneySpent(rs.getDouble("moneyspent"));
+    user.setItemsBought(rs.getInt("itemsbought")); user.setMoneyReceived(rs.getDouble("moneyreceived"));
+    user.setItemsSold(rs.getInt("itemssold")); user.setActive(rs.getBoolean("isactive"));
+    user.setLocked(rs.getBoolean("islocked")); user.setAvatarUrl(rs.getString("avatar_url"));
+    try { user.setAvgRating(rs.getDouble("avgrating")); } catch (Exception e) {}
+    try { user.setTotalRatings(rs.getInt("totalratings")); } catch (Exception e) {}
+    return user;
+  }
+
+  @Override
+  public User login(String username, String password) {
+    return querySingle(
+        "select * from users where username = ? and password = ? and isactive = true and islocked = false",
+        username, password);
+  }
+
+  @Override
+  public boolean signup(User user) {
+    try (Connection conn = getConn()) {
+      String username = normalize(user.getUsername());
+      String email = normalize(user.getEmail());
+      if (existsDuplicateUser(conn, username, email)) return false;
+      String sql = "insert into users(username, fullname, password, email, age, phonenumber, role, isactive, islocked) values(?,?,?,?,?,?,?,?,?)";
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        String profileName = normalize(user.getFullName());
+        if (profileName.isBlank()) profileName = username;
+        ps.setString(1, username); ps.setString(2, profileName); ps.setString(3, user.getPassword());
+        ps.setString(4, email); ps.setString(5, user.getAge()); ps.setString(6, user.getPhoneNumber());
+        ps.setString(7, user.getRole().name()); ps.setBoolean(8, true); ps.setBoolean(9, false);
+        return ps.executeUpdate() > 0;
+      }
+    } catch (SQLIntegrityConstraintViolationException e) { return false; }
+    catch (Exception e) { LOGGER.warn("Signup failed", e); return false; }
+  }
+
+  @Override
+  public User getById(String id) {
+    try {
+      return querySingle("SELECT * FROM users WHERE id = ?", Integer.parseInt(id));
+    } catch (Exception e) {
+      LOGGER.warn("getById failed for id={}", id, e);
+      return null;
+    }
+  }
+
+  @Override
+  public List<User> getAllUsers() {
+    return queryList("select * from users");
+  }
+
+  @Override
+  public List<User> searchUsers(String keyword) {
+    String sql =
+        "select * from users where (lower(username) like ? or lower(fullname) like ?) and isactive = true and lower(role) != 'admin' limit 20";
+    String kw = "%" + keyword.toLowerCase().trim() + "%";
+    List<User> users = queryList(sql, kw, kw);
+    users.forEach(u -> u.setPassword(""));
+    return users;
+  }
+
+  @Override
+  public String updateUserProfile(int userId, String fullName, String email, String phone) {
+    String fn = normalize(fullName), em = normalize(email), ph = normalize(phone);
+    if (em.isEmpty()) return "invalid_email";
+    try (Connection conn = getConn()) {
+      if (emailTakenByOtherUser(conn, userId, em)) return "duplicate_email";
+      if (!ph.isEmpty() && phoneTakenByOtherUser(conn, userId, ph)) return "duplicate_phone";
+      String sql = "UPDATE users SET fullname = ?, email = ?, phonenumber = ? WHERE id = ?";
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, fn); ps.setString(2, em); ps.setString(3, ph); ps.setInt(4, userId);
+        ps.executeUpdate();
+      }
+      return null;
+    } catch (SQLIntegrityConstraintViolationException e) { return "duplicate_email"; }
+    catch (Exception e) { return "update_failed"; }
+  }
+
+  @Override
+  public void updateAvatar(String username, String avatarUrl) throws Exception {
+    String sql = "UPDATE users SET avatar_url = ? WHERE username = ?";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setString(1, avatarUrl); ps.setString(2, username); ps.executeUpdate();
+    }
+  }
+
+  @Override
+  public boolean updateBalance(int userId, double newBalance) {
+    return executeUpdate("UPDATE users SET balance = ? WHERE id = ?", newBalance, userId);
+  }
+
+  public boolean atomicDeductBalance(int userId, double amount) {
+    return executeUpdate("UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?", amount, userId, amount);
+  }
+
+  public boolean atomicCreditBalance(int userId, double amount) {
+    return executeUpdate("UPDATE users SET balance = balance + ? WHERE id = ?", amount, userId);
+  }
+
+  @Override
+  public boolean setUserLocked(String username, boolean lockStatus) {
+    return executeUpdate("UPDATE users SET islocked = ? WHERE username = ?", lockStatus, username);
+  }
+
+  @Override
+  public boolean setUserRole(String username, String role) {
+    return executeUpdate("UPDATE users SET role = ? WHERE username = ?", role, username);
+  }
+
+  @Override
+  public boolean addBidderMetrics(int userId, double amount) {
+    return executeUpdate(
+        "UPDATE users SET moneyspent = moneyspent + ?, itemsbought = itemsbought + 1 WHERE id = ?", amount, userId);
+  }
+
+  @Override
+  public boolean addSellerMetrics(int userId, double amount) {
+    return executeUpdate(
+        "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?", amount, userId);
+  }
+
+  public User getByUsername(String username) {
+    return querySingle("SELECT * FROM users WHERE username = ? LIMIT 1", username);
+  }
+  //Xử lí lỗi nếu đang bid chưa kịp trừ tiền thì server sập
+  public boolean deductBalanceTx(int userId, double amount, Connection conn) throws SQLException {
+    String sql = "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, amount);
+      ps.setInt(2, userId);
+      ps.setDouble(3, amount);
+      return ps.executeUpdate() > 0;
+    }
+  }
+  public boolean creditBalanceTx(int userId, double amount, Connection conn) throws SQLException {
+    String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, amount); ps.setInt(2, userId); return ps.executeUpdate() > 0;
+    }
+  }
+
+  private boolean existsDuplicateUser(Connection conn, String username, String email) throws SQLException {
+    String sql = "select 1 from users where lower(trim(username)) = lower(trim(?)) or lower(trim(email)) = lower(trim(?)) limit 1";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setString(1, username); ps.setString(2, email);
+      try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+    }
+  }
+
+  private String normalize(String value) { return value == null ? "" : value.trim(); }
+
+  private boolean emailTakenByOtherUser(Connection conn, int userId, String email) throws SQLException {
+    String sql = "select 1 from users where id <> ? and lower(trim(email)) = lower(trim(?)) limit 1";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, userId); ps.setString(2, email);
+      try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+    }
+  }
+
+  private boolean phoneTakenByOtherUser(Connection conn, int userId, String phone) throws SQLException {
+    String sql = "select 1 from users where id <> ? and trim(coalesce(phonenumber,'')) <> '' and lower(trim(phonenumber)) = lower(trim(?)) limit 1";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, userId); ps.setString(2, phone);
+      try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+    }
   }
 }
 </file>
@@ -11074,165 +11026,6 @@ public class HandlerContext {
 
   public AuctionManager getAuctionManager() {
     return AuctionManager.getInstance();
-  }
-}
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionBidPipeline.java">
-package com.auction.server.service.auction;
-
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.shared.*;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.function.IntConsumer;
-
-/**
- * Applies manual bids (buy-it-now vs incremental), escrow/refunds, and schedules realtime side-effects.
- */
-final class AuctionBidPipeline {
-
-  private static final long ANTI_SNIPE_THRESHOLD_SECONDS = 60;
-
-  private final ItemDao itemDao;
-  private final UserDao userDao;
-  private final BidDao bidDao;
-  private final TransactionLogDao logDao;
-  private final AuctionRealtimeNotifier notifier;
-  private final BidAuctionValidator validator;
-
-  /** Clears auto-bid registry when an auction closes (e.g. buy-it-now). */
-  private IntConsumer cleanupAutoBidsForItem = itemId -> {};
-
-  AuctionBidPipeline(
-      ItemDao itemDao,
-      UserDao userDao,
-      BidDao bidDao,
-      TransactionLogDao logDao,
-      AuctionRealtimeNotifier notifier,
-      BidAuctionValidator validator) {
-    this.itemDao = itemDao;
-    this.userDao = userDao;
-    this.bidDao = bidDao;
-    this.logDao = logDao;
-    this.notifier = notifier;
-    this.validator = validator;
-  }
-
-  void setCleanupAutoBidsForItem(IntConsumer cleanupAutoBidsForItem) {
-    this.cleanupAutoBidsForItem = cleanupAutoBidsForItem != null ? cleanupAutoBidsForItem : id -> {};
-  }
-
-  Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
-    Item item = itemDao.getById(bid.getItemId());
-    DutchAuctionCatalogSync.syncItem(itemDao, item);
-    item = itemDao.getById(bid.getItemId());
-    User bidder = userDao.getById(String.valueOf(bid.getUserId()));
-    Response validation = validator.validate(bid, item, bidder);
-    if (validation != null) return validation;
-    if (item != null && item.getAuctionType() == AuctionType.DUTCH) {
-      return processDutchPurchase(bid, item, bidder, after);
-    }
-    if (isBuyItNow(item, bid)) return processBuyItNow(bid, item, bidder, after);
-    return processRegularBid(bid, item, bidder, after, pendingPriceBroadcast);
-  }
-
-  private boolean isBuyItNow(Item item, BidTransaction bid) {
-    return item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice();
-  }
-
-  private Response processDutchPurchase(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
-    double price = item.getCurrentPrice();
-    if (Math.abs(bid.getBidValue() - price) > 0.02) {
-      return BidAuctionValidator.error("Enter the current listed price to purchase");
-    }
-    if (!userDao.atomicDeductBalance(bidder.getId(), price)) return BidAuctionValidator.error("Insufficient balance");
-    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
-    userDao.addBidderMetrics(bidder.getId(), price);
-    if (!itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
-      userDao.atomicCreditBalance(bidder.getId(), price);
-      logDao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
-      return BidAuctionValidator.error("Auction already closed");
-    }
-    itemDao.updatePrice(item.getId(), price, item.getVersion());
-    creditSeller(item, price, after);
-    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-    after.add(() -> notifier.broadcastItemClosed(item.getId()));
-    final int closedItemId = item.getId();
-    after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
-    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-  }
-
-  private Response processBuyItNow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
-    double p = item.getMaxPrice();
-    if (!userDao.atomicDeductBalance(bidder.getId(), p)) return BidAuctionValidator.error("Insufficient balance");
-    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -p, bid.getItemId());
-    userDao.addBidderMetrics(bidder.getId(), p);
-    if (!itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
-      userDao.atomicCreditBalance(bidder.getId(), p);
-      logDao.insertLog(bidder.getId(), "BUY_REFUND", p, bid.getItemId());
-      return BidAuctionValidator.error("Auction already closed");
-    }
-    itemDao.updatePrice(item.getId(), p, item.getVersion());
-    creditSeller(item, p, after);
-    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-    after.add(() -> notifier.broadcastItemClosed(item.getId()));
-    final int closedItemId = item.getId();
-    after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
-    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-  }
-
-  private Response processRegularBid(
-      BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
-    if (bid.getBidValue() <= item.getCurrentPrice()) return BidAuctionValidator.error("Bid too low");
-    if (!userDao.atomicDeductBalance(bidder.getId(), bid.getBidValue()))
-      return BidAuctionValidator.error("Insufficient balance");
-    logDao.insertLog(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId());
-    int prevId = bidDao.getPreviousHighestBidder(bid.getItemId());
-    double prevPrice = item.getCurrentPrice();
-    if (!bidDao.placeBid(bid)) {
-      userDao.atomicCreditBalance(bidder.getId(), bid.getBidValue());
-      logDao.insertLog(bidder.getId(), "BID_REFUND", bid.getBidValue(), bid.getItemId());
-      return BidAuctionValidator.error("conflict");
-    }
-    itemDao.updatePrice(item.getId(), bid.getBidValue(), item.getVersion());
-    refundPreviousBidder(prevId, prevPrice, bid.getItemId(), after);
-    after.add(() -> applyAntiSnipeExtension(bid.getItemId()));
-    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-    pendingPriceBroadcast.add(bid.getItemId());
-    if (prevId > 0) {
-      final int outbidItemId = bid.getItemId();
-      final int outbidUserId = prevId;
-      after.add(() -> notifier.notifyOutbidUser(outbidUserId, outbidItemId));
-    }
-    return new Response("", Response.OK, "success", bid);
-  }
-
-  private void creditSeller(Item item, double amount, List<Runnable> after) {
-    userDao.atomicCreditBalance(item.getSellerId(), amount);
-    userDao.addSellerMetrics(item.getSellerId(), amount);
-    logDao.insertLog(item.getSellerId(), "ITEM_SOLD", amount, item.getId());
-    after.add(() -> notifier.sendBalanceUpdateToUser(item.getSellerId()));
-  }
-
-  private void refundPreviousBidder(int prevId, double prevPrice, int itemId, List<Runnable> after) {
-    if (prevId <= 0 || prevPrice <= 0) return;
-    userDao.atomicCreditBalance(prevId, prevPrice);
-    logDao.insertLog(prevId, "BID_REFUND", prevPrice, itemId);
-    after.add(() -> notifier.sendBalanceUpdateToUser(prevId));
-  }
-
-  private void applyAntiSnipeExtension(int itemId) {
-    Item item = itemDao.getById(itemId);
-    if (item != null
-        && item.getEndTime() != null
-        && Duration.between(LocalDateTime.now(), item.getEndTime()).getSeconds() < ANTI_SNIPE_THRESHOLD_SECONDS)
-      itemDao.updateEndTime(item.getId(), item.getEndTime().plusSeconds(ANTI_SNIPE_THRESHOLD_SECONDS));
   }
 }
 </file>
@@ -12539,121 +12332,256 @@ public class NotificationCenter {
 </ScrollPane>
 </file>
 
-<file path="auction-server/pom.xml">
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.auction</groupId>
-        <artifactId>auction-system</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
-    <artifactId>auction-server</artifactId>
-    <dependencies>
-        <dependency>
-            <groupId>com.auction</groupId>
-            <artifactId>auction-shared</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>8.0.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.11.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.11.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>com.spotify.fmt</groupId>
-                <artifactId>fmt-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
-                <configuration>
-                    <source>25</source>
-                    <target>25</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
-                <configuration>
-                    <argLine>
-                        -XX:+EnableDynamicAgentLoading
-                        --add-opens java.base/java.lang=ALL-UNNAMED
-                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
-                        --add-opens java.base/java.util=ALL-UNNAMED
-                    </argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
-                <configuration>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals><goal>shade</goal></goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.auction.server.Main</mainClass>
-                                </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+<file path="auction-server/src/main/java/com/auction/server/dao/platform/DatabaseConnection.java">
+package com.auction.server.dao.platform;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class DatabaseConnection {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnection.class);
+
+  private static final class Holder {
+    static final DatabaseConnection INSTANCE = new DatabaseConnection();
+  }
+
+  private HikariDataSource dataSource;
+
+  private DatabaseConnection() {
+    try {
+      Properties props = new Properties();
+      InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties");
+      if (input != null) {
+        props.load(input);
+      } else {
+        props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
+        props.setProperty("db.user", "ba_nin");
+        props.setProperty("db.password", "banin123");
+      }
+
+      HikariConfig config = new HikariConfig();
+      config.setJdbcUrl(props.getProperty("db.url"));
+      config.setUsername(props.getProperty("db.user"));
+      config.setPassword(props.getProperty("db.password"));
+      config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+
+      // Cấu hình Pool chống sập Server
+      config.setMaximumPoolSize(50);
+      config.setMinimumIdle(10);
+      config.setConnectionTimeout(30000);
+
+      this.dataSource = new HikariDataSource(config);
+      LOGGER.info("HikariCP Database connection pool initialized.");
+    } catch (Exception e) {
+      LOGGER.error("Failed to initialize database connection", e);
+    }
+  }
+
+  public static DatabaseConnection getInstance() {
+    return Holder.INSTANCE;
+  }
+
+  public Connection getConnection() {
+    try {
+      return dataSource.getConnection(); // Lấy từ Pool, cực nhanh và an toàn
+    } catch (SQLException e) {
+      LOGGER.error("Failed to get connection from pool", e);
+      return null;
+    }
+  }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionBidPipeline.java">
+package com.auction.server.service.auction;
+
+import com.auction.server.dao.auction.BidDao;
+import com.auction.server.dao.auction.ItemDao;
+import com.auction.server.dao.wallet.TransactionLogDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.shared.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.function.IntConsumer;
+import java.sql.Connection;
+import java.sql.SQLException;
+/**
+ * Applies manual bids (buy-it-now vs incremental), escrow/refunds, and schedules realtime side-effects.
+ */
+final class AuctionBidPipeline {
+
+  private static final long ANTI_SNIPE_THRESHOLD_SECONDS = 60;
+
+  private final ItemDao itemDao;
+  private final UserDao userDao;
+  private final BidDao bidDao;
+  private final TransactionLogDao logDao;
+  private final AuctionRealtimeNotifier notifier;
+  private final BidAuctionValidator validator;
+
+  /** Clears auto-bid registry when an auction closes (e.g. buy-it-now). */
+  private IntConsumer cleanupAutoBidsForItem = itemId -> {};
+
+  AuctionBidPipeline(
+      ItemDao itemDao,
+      UserDao userDao,
+      BidDao bidDao,
+      TransactionLogDao logDao,
+      AuctionRealtimeNotifier notifier,
+      BidAuctionValidator validator) {
+    this.itemDao = itemDao;
+    this.userDao = userDao;
+    this.bidDao = bidDao;
+    this.logDao = logDao;
+    this.notifier = notifier;
+    this.validator = validator;
+  }
+
+  void setCleanupAutoBidsForItem(IntConsumer cleanupAutoBidsForItem) {
+    this.cleanupAutoBidsForItem = cleanupAutoBidsForItem != null ? cleanupAutoBidsForItem : id -> {};
+  }
+
+  Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
+    Item item = itemDao.getById(bid.getItemId());
+    DutchAuctionCatalogSync.syncItem(itemDao, item);
+    item = itemDao.getById(bid.getItemId());
+    User bidder = userDao.getById(String.valueOf(bid.getUserId()));
+    Response validation = validator.validate(bid, item, bidder);
+    if (validation != null) return validation;
+    if (item != null && item.getAuctionType() == AuctionType.DUTCH) {
+      return processDutchPurchase(bid, item, bidder, after);
+    }
+    if (isBuyItNow(item, bid)) return processBuyItNow(bid, item, bidder, after);
+    return processRegularBid(bid, item, bidder, after, pendingPriceBroadcast);
+  }
+
+  private boolean isBuyItNow(Item item, BidTransaction bid) {
+    return item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice();
+  }
+
+  private Response processDutchPurchase(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
+    double price = item.getCurrentPrice();
+    if (Math.abs(bid.getBidValue() - price) > 0.02) {
+      return BidAuctionValidator.error("Enter the current listed price to purchase");
+    }
+    if (!userDao.atomicDeductBalance(bidder.getId(), price)) return BidAuctionValidator.error("Insufficient balance");
+    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
+    userDao.addBidderMetrics(bidder.getId(), price);
+    if (!itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
+      userDao.atomicCreditBalance(bidder.getId(), price);
+      logDao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
+      return BidAuctionValidator.error("Auction already closed");
+    }
+    itemDao.updatePrice(item.getId(), price, item.getVersion());
+    creditSeller(item, price, after);
+    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+    after.add(() -> notifier.broadcastItemClosed(item.getId()));
+    final int closedItemId = item.getId();
+    after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
+    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
+  }
+
+  private Response processBuyItNow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
+    double p = item.getMaxPrice();
+    if (!userDao.atomicDeductBalance(bidder.getId(), p)) return BidAuctionValidator.error("Insufficient balance");
+    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -p, bid.getItemId());
+    userDao.addBidderMetrics(bidder.getId(), p);
+    if (!itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
+      userDao.atomicCreditBalance(bidder.getId(), p);
+      logDao.insertLog(bidder.getId(), "BUY_REFUND", p, bid.getItemId());
+      return BidAuctionValidator.error("Auction already closed");
+    }
+    itemDao.updatePrice(item.getId(), p, item.getVersion());
+    creditSeller(item, p, after);
+    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+    after.add(() -> notifier.broadcastItemClosed(item.getId()));
+    final int closedItemId = item.getId();
+    after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
+    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
+  }
+
+  private Response processRegularBid(
+          BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
+
+    if (bid.getBidValue() <= item.getCurrentPrice()) return BidAuctionValidator.error("Bid too low");
+
+    try (java.sql.Connection conn = com.auction.server.dao.platform.DatabaseConnection.getInstance().getConnection()) {
+      conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
+      try {
+        // 1. Trừ tiền
+        if (!userDao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn)) {
+          conn.rollback();
+          return BidAuctionValidator.error("Insufficient balance");
+        }
+        logDao.insertLogTx(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId(), conn);
+
+        // 2. Lấy thông tin người cũ
+        int prevId = bidDao.getCurrentHighestBidderTx(bid.getItemId(), conn);
+        double prevPrice = item.getCurrentPrice();
+
+        // 3. Đặt bid mới & Cập nhật giá
+        if (!bidDao.placeBidTx(bid, conn)) {
+          conn.rollback();
+          return BidAuctionValidator.error("conflict");
+        }
+        itemDao.updatePriceTx(item.getId(), bid.getBidValue(), conn);
+
+        // 4. Hoàn tiền người cũ
+        if (prevId > 0 && prevPrice > 0) {
+          userDao.creditBalanceTx(prevId, prevPrice, conn);
+          logDao.insertLogTx(prevId, "BID_REFUND", prevPrice, bid.getItemId(), conn);
+          after.add(() -> notifier.sendBalanceUpdateToUser(prevId));
+          final int outbidItemId = bid.getItemId();
+          after.add(() -> notifier.notifyOutbidUser(prevId, outbidItemId));
+        }
+
+        conn.commit(); // THÀNH CÔNG THÌ COMMIT TOÀN BỘ
+
+        after.add(() -> applyAntiSnipeExtension(bid.getItemId()));
+        after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+        pendingPriceBroadcast.add(bid.getItemId());
+
+        return new Response("", Response.OK, "success", bid);
+
+      } catch (Exception e) {
+        conn.rollback(); // LỖI BẤT KỲ ĐÂU -> ROLLBACK, KHÔNG AI MẤT TIỀN
+        return BidAuctionValidator.error("System error during bid");
+      }
+    } catch (SQLException e) {
+      return BidAuctionValidator.error("Database connection error");
+    }
+  }
+
+  private void creditSeller(Item item, double amount, List<Runnable> after) {
+    userDao.atomicCreditBalance(item.getSellerId(), amount);
+    userDao.addSellerMetrics(item.getSellerId(), amount);
+    logDao.insertLog(item.getSellerId(), "ITEM_SOLD", amount, item.getId());
+    after.add(() -> notifier.sendBalanceUpdateToUser(item.getSellerId()));
+  }
+
+  private void refundPreviousBidder(int prevId, double prevPrice, int itemId, List<Runnable> after) {
+    if (prevId <= 0 || prevPrice <= 0) return;
+    userDao.atomicCreditBalance(prevId, prevPrice);
+    logDao.insertLog(prevId, "BID_REFUND", prevPrice, itemId);
+    after.add(() -> notifier.sendBalanceUpdateToUser(prevId));
+  }
+
+  private void applyAntiSnipeExtension(int itemId) {
+    Item item = itemDao.getById(itemId);
+    if (item != null
+        && item.getEndTime() != null
+        && Duration.between(LocalDateTime.now(), item.getEndTime()).getSeconds() < ANTI_SNIPE_THRESHOLD_SECONDS)
+      itemDao.updateEndTime(item.getId(), item.getEndTime().plusSeconds(ANTI_SNIPE_THRESHOLD_SECONDS));
+  }
+}
 </file>
 
 <file path="auction-shared/src/main/java/com/auction/shared/ItemFactory.java">
@@ -13860,19 +13788,127 @@ public class RatingFormController {
 </VBox>
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/Main.java">
-package com.auction.server;
-
-import com.auction.server.controller.SocketServer;
-import com.auction.server.dao.platform.DatabaseMigration;
-
-public class Main {
-  public static void main(String[] args) {
-    DatabaseMigration.runAll();
-    SocketServer server = new SocketServer(8080);
-    server.startServer();
-  }
-}
+<file path="auction-server/pom.xml">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.auction</groupId>
+        <artifactId>auction-system</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>auction-server</artifactId>
+    <dependencies>
+        <!-- Thêm HikariCP để quản lý Connection Pool -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.auction</groupId>
+            <artifactId>auction-shared</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.11.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.11.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.spotify.fmt</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <argLine>
+                        -XX:+EnableDynamicAgentLoading
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.auction.server.Main</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 </file>
 
 <file path="auction-shared/pom.xml">
@@ -14411,6 +14447,61 @@ public class Vehicle extends Item {
 </StackPane>
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/Main.java">
+package com.auction.server;
+
+import com.auction.server.controller.SocketServer;
+import com.auction.server.dao.platform.DatabaseMigration;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+public class Main {
+  public static void main(String[] args) {
+    boolean ans = killport(8080);
+    DatabaseMigration.runAll();
+    SocketServer server = new SocketServer(8080);
+    server.startServer();
+  }
+
+  private static boolean killport(int port) {
+    boolean ans = false;
+    String osname = System.getProperty("os.name").toLowerCase();
+
+    try {
+      if (osname.contains("win")) {
+        String command = "cmd /c netstat -ano | findstr :" + port;
+        Process process = Runtime.getRuntime().exec(command);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line;
+        while ((line = reader.readLine()) != null) {
+          if (line.contains("LISTENING")) {
+            String[] parts = line.trim().split("\\s+");
+            String pid = parts[parts.length - 1];
+            Runtime.getRuntime().exec("taskkill /F /PID " + pid).waitFor();
+            ans = true;
+          }
+        }
+      } else {
+        String[] command = {"/bin/sh", "-c", "lsof -t -i :" + port};
+        Process process = Runtime.getRuntime().exec(command);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String pid;
+        while ((pid = reader.readLine()) != null) {
+          if (!pid.trim().isEmpty()) {
+            Runtime.getRuntime().exec("kill -9 " + pid).waitFor();
+            ans = true;
+          }
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return ans;
+  }
+}
+</file>
+
 <file path="auction-shared/src/main/java/com/auction/shared/ItemStatus.java">
 package com.auction.shared;
 
@@ -14507,89 +14598,6 @@ logs/
 auction-server/dependency-reduced-pom.xml
 auction-client/AuctionSystem-1.0.exe
 auction-client/error_log.txt
-</file>
-
-<file path="auction-client/src/main/java/com/auction/client/controller/LoginController.java">
-package com.auction.client.controller;
-
-import com.auction.client.ClientSession;
-import com.auction.client.SceneManager;
-import com.auction.client.network.NetworkClient;
-import com.auction.shared.*;
-import com.auction.shared.PasswordEncoder;
-import java.util.HashMap;
-import java.util.Map;
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
-
-public class LoginController {
-
-  @FXML private AnchorPane rootPane;
-  @FXML private TextField usernameField;
-  @FXML private PasswordField passwordField;
-  @FXML private Label messageLabel;
-
-  @FXML
-  private void initialize() {
-    Platform.runLater(() -> rootPane.requestFocus());
-  }
-
-  @FXML
-  public void handleLogin(ActionEvent event) {
-    String username = this.usernameField.getText().trim();
-    String rawPassword = this.passwordField.getText();
-
-    if (username.isBlank() || rawPassword.isBlank()) {
-      this.messageLabel.setText("Please enter username and password.");
-      return;
-    }
-
-    // Hash before sending — plain-text never leaves this process.
-    String hashedPassword = PasswordEncoder.hash(rawPassword);
-    Map<String, String> credentials = new HashMap<>();
-    credentials.put("username", username);
-    credentials.put("password", hashedPassword);
-
-    Request request = new Request(Request.LOGIN, credentials);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-
-    if (response == null) {
-      this.messageLabel.setText("Cannot reach server — check IP and server status.");
-      return;
-    }
-
-    if (response.getStatus().equals(Response.OK)) {
-      if (response.getPayload() instanceof User loggedInUser) {
-        ClientSession.setCurrentUser(loggedInUser);
-      }
-      this.messageLabel.setText("Login successful!");
-      try {
-        SceneManager.switchScene("/fxml/main/Khung.fxml");
-      } catch (Exception ex) {
-        this.messageLabel.setText("Logged in but failed to open main window.");
-      }
-    } else if ("account_banned".equals(response.getMessage())) {
-      this.messageLabel.setText("Your account has been suspended.");
-    } else {
-      this.messageLabel.setText("Incorrect username or password.");
-    }
-  }
-
-  @FXML
-  public void back(ActionEvent event) throws Exception {
-    SceneManager.switchScene("/fxml/welcome.fxml");
-  }
-
-  @FXML
-  public void toRegister(ActionEvent event) throws Exception {
-    SceneManager.switchScene("/fxml/register.fxml");
-  }
-}
 </file>
 
 <file path="auction-client/src/main/java/com/auction/client/ui/Chat/ChatPageController.java">
@@ -15680,6 +15688,106 @@ Dự án được phân chia công việc rõ ràng dựa trên thế mạnh c�
   * Phát triển module `auction-server`: Xây dựng các lớp DAO (Data Access Object) và truy vấn CSDL MySQL an toàn.
   * Xử lý đa luồng (Thread Pool), quản lý vòng đời của các phiên kết nối Socket (ClientHandler) và các dịch vụ chạy ngầm (Scheduled Services).
   * Hỗ trợ xây dựng, lắp ráp và tinh chỉnh các Component giao diện phía Client.
+</file>
+
+<file path="auction-client/src/main/java/com/auction/client/controller/LoginController.java">
+package com.auction.client.controller;
+
+import com.auction.client.ClientSession;
+import com.auction.client.SceneManager;
+import com.auction.client.network.NetworkClient;
+import com.auction.shared.*;
+import com.auction.shared.PasswordEncoder;
+import java.util.HashMap;
+import java.util.Map;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
+
+public class LoginController {
+
+  @FXML private AnchorPane rootPane;
+  @FXML private TextField usernameField;
+  @FXML private PasswordField passwordField;
+  @FXML private Label messageLabel;
+
+  @FXML
+  private void initialize() {
+    Platform.runLater(() -> rootPane.requestFocus());
+  }
+  //Hàm xử lí login bên giao diện
+  @FXML
+  public void handleLogin(ActionEvent event) {
+    String username = this.usernameField.getText().trim();
+    String rawPassword = this.passwordField.getText();
+
+    if (username.isBlank() || rawPassword.isBlank()) {
+      this.messageLabel.setText("Please enter username and password.");
+      return;
+    }
+
+    this.messageLabel.setText("Đang kết nối...");
+    this.rootPane.setDisable(true);
+
+    String hashedPassword = PasswordEncoder.hash(rawPassword);
+    Map<String, String> credentials = new HashMap<>();
+    credentials.put("username", username);
+    credentials.put("password", hashedPassword);
+    Request request = new Request(Request.LOGIN, credentials);
+
+    NetworkClient client;
+    try {
+      client = NetworkClient.getInstance();
+    } catch (Exception e) {
+      this.rootPane.setDisable(false);
+      this.messageLabel.setText("Cannot initialize network client.");
+      return;
+    }
+
+    new Thread(() -> {
+      Response res = client.sendRequestAndWait(request);
+
+      Platform.runLater(() -> {
+        this.rootPane.setDisable(false);
+
+        if (res == null) {
+          this.messageLabel.setText("Cannot reach server — check IP and server status.");
+          return;
+        }
+
+        if (res.getStatus().equals(Response.OK)) {
+          if (res.getPayload() instanceof User loggedInUser) {
+            ClientSession.setCurrentUser(loggedInUser);
+          }
+          this.messageLabel.setText("Login successful!");
+          try {
+            SceneManager.switchScene("/fxml/main/Khung.fxml");
+          } catch (Exception ex) {
+            this.messageLabel.setText("Logged in but failed to open main window.");
+          }
+        } else if ("account_banned".equals(res.getMessage())) {
+          this.messageLabel.setText("Your account has been suspended.");
+        } else {
+          this.messageLabel.setText("Incorrect username or password.");
+        }
+      });
+    }).start();
+  }
+
+  @FXML
+  public void back(ActionEvent event) throws Exception {
+    SceneManager.switchScene("/fxml/welcome.fxml");
+  }
+
+  @FXML
+  public void toRegister(ActionEvent event) throws Exception {
+    SceneManager.switchScene("/fxml/register.fxml");
+  }
+}
 </file>
 
 <file path="auction-client/src/main/resources/css/addnewlot/AddNewLot.css">

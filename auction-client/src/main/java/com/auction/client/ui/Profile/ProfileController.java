@@ -127,11 +127,16 @@ public class ProfileController implements NetworkEventListener {
     }
     setEditingMode(!editing);
   }
-
+  //Anti-ghosting vẫn gửi thông báo về desktop client dù đã đăng xuất
   @FXML
   public void handleLogout() {
     ClientSession.clear();
-    try { SceneManager.switchScene("/fxml/welcome.fxml"); } catch (IOException e) {}
+    Request req = new Request("LOGOUT", null);
+    NetworkClient.getInstance().sendRequestAndWait(req);
+    try {
+      SceneManager.switchScene("/fxml/welcome.fxml");
+    } catch (IOException e) {
+    }
   }
 
   @FXML
