@@ -2,7 +2,6 @@ package com.auction.server.handler.auth;
 
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
-
 import com.auction.server.dao.user.UserDao;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -18,16 +17,20 @@ public class LoginHandler implements ActionHandler {
 
     User user = context.getUserService().login(username, password);
     if (user != null) {
+      String token = java.util.UUID.randomUUID().toString();
+      user.setSessiontoken(token);
+      context.getAuctionManager().registersession(token, user);
       context.setCurrentUser(user);
-      return new Response(request.getRequestId(), Response.OK, "success", user);
+      Response ans = new Response(request.getRequestId(), Response.OK, "success", user);
+      return ans;
     }
 
-    // Distinguish "wrong credentials" from "account suspended" so the client
-    // can show a meaningful message rather than a generic "incorrect password".
-    User existingUser = new UserDao().getByUsername(username);
-    if (existingUser != null && existingUser.isLocked()) {
-      return new Response(request.getRequestId(), Response.ERROR, "account_banned", null);
+    User existinguser = new UserDao().getByUsername(username);
+    if (existinguser != null && existinguser.isLocked()) {
+      Response res = new Response(request.getRequestId(), Response.ERROR, "account_banned", null);
+      return res;
     }
-    return new Response(request.getRequestId(), Response.ERROR, "fail", null);
+    Response res2 = new Response(request.getRequestId(), Response.ERROR, "fail", null);
+    return res2;
   }
 }

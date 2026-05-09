@@ -17,6 +17,7 @@ public abstract class User extends Entity {
   protected int itemsSold;
   protected double avgRating;
   protected int totalRatings;
+  protected String sessiontoken;
 
   public User() {}
 
@@ -164,5 +165,13 @@ public abstract class User extends Entity {
 
   public void setTotalRatings(int totalRatings) {
     this.totalRatings = totalRatings;
+  }
+
+  public String getSessiontoken() {
+    return this.sessiontoken;
+  }
+
+  public void setSessiontoken(String sessiontoken) {
+    this.sessiontoken = sessiontoken;
   }
 }

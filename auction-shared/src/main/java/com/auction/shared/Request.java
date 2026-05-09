@@ -51,6 +51,9 @@ public class Request implements Serializable {
   public static final String GET_FRIENDS = "get_friends";
   public static final String GET_FRIEND_REQUESTS = "get_friend_requests";
   public static final String GET_LEADERBOARD = "GET_LEADERBOARD";
+  public static final String AUTOCOMPLETE = "AUTOCOMPLETE";
+  public static final String RECONNECT = "RECONNECT";
+
   protected String requestId;
   protected String action;
   protected Object payload;

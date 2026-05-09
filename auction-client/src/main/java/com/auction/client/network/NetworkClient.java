@@ -4,74 +4,85 @@ import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class NetworkClient {
-  private static final Logger LOGGER = LoggerFactory.getLogger(NetworkClient.class);
-  private static final long DEFAULT_REQUEST_TIMEOUT_SECONDS = 30L;
+  private static final long defaultrequesttimeoutseconds = 30L;
   private static volatile NetworkClient instance;
 
   private ObjectOutputStream out;
-  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingmap = new ConcurrentHashMap<>();
   private final List<NetworkEventListener> listeners = new CopyOnWriteArrayList<>();
+  private String serverip;
 
   private NetworkClient() {
     NetworkConnectionUi ui = new NetworkConnectionUi();
-    Optional<String> ipOpt = ui.promptForServerIp();
-    if (ipOpt.isEmpty()) {
-      LOGGER.error("No server IP provided — all requests will fail until reconnect.");
+    Optional<String> ipopt = ui.promptForServerIp();
+    if (ipopt.isEmpty()) {
       return;
     }
-    String serverIp = ipOpt.get();
+    serverip = ipopt.get();
     try {
-      LOGGER.info("Connecting to {}:8080 ...", serverIp);
-      ObjectSocketConnection conn = ObjectSocketConnection.connect(serverIp, 8080);
+      ObjectSocketConnection conn = ObjectSocketConnection.connect(serverip, 8080);
       this.out = conn.getOut();
-      IncomingResponseRouter router = new IncomingResponseRouter(pendingMap, listeners);
+      IncomingResponseRouter router = new IncomingResponseRouter(pendingmap, listeners);
       conn.startReadLoop(
-          router::dispatch,
-          e -> {
-            LOGGER.warn("Server connection lost", e);
-            failAllPending(e);
-          });
-      LOGGER.info("Socket connection established.");
+              router::dispatch,
+              e -> {
+                this.out = null;
+                failallpending(e);
+              });
+      startheartbeat();
     } catch (Exception e) {
-      LOGGER.error("Connection to {}:8080 failed — check server is running.", serverIp, e);
-      ui.showConnectionError(serverIp);
+      ui.showConnectionError(serverip);
     }
   }
 
   public static NetworkClient getInstance() {
-    if (instance == null) synchronized (NetworkClient.class) { if (instance == null) instance = new NetworkClient(); }
-    return instance;
+    if (instance == null) {
+      synchronized (NetworkClient.class) {
+        if (instance == null) {
+          instance = new NetworkClient();
+        }
+      }
+    }
+    NetworkClient ans = instance;
+    return ans;
   }
 
-  public void addListener(NetworkEventListener l) { if (!listeners.contains(l)) listeners.add(l); }
-  public void removeListener(NetworkEventListener l) { listeners.remove(l); }
-
-  private void failAllPending(Throwable cause) {
-    pendingMap.forEach((id, f) -> f.completeExceptionally(cause));
-    pendingMap.clear();
+  public void addListener(NetworkEventListener l) {
+    if (!listeners.contains(l)) {
+      listeners.add(l);
+    }
   }
-  //Sửa lại do tính năng Java làm tràn cache
-  private CompletableFuture<Response> sendRequestAsync(Request request, long timeoutseconds) {
+
+  public void removeListener(NetworkEventListener l) {
+    listeners.remove(l);
+  }
+
+  private void failallpending(Throwable cause) {
+    pendingmap.forEach((id, f) -> f.completeExceptionally(cause));
+    pendingmap.clear();
+  }
+
+  private CompletableFuture<Response> sendrequestasync(Request request, long timeoutseconds) {
     String requestid = request.getRequestId();
     CompletableFuture<Response> ans = new CompletableFuture<>();
     if (out == null) {
       ans.completeExceptionally(new IllegalStateException("not connected"));
       return ans;
     }
-    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestid, ans);
+    CompletableFuture<Response> existing = pendingmap.putIfAbsent(requestid, ans);
     if (existing != null) {
       ans.completeExceptionally(new IllegalStateException("duplicate"));
       return ans;
@@ -83,52 +94,108 @@ public class NetworkClient {
         out.flush();
       }
     } catch (IOException e) {
-      pendingMap.remove(requestid);
+      pendingmap.remove(requestid);
       ans.completeExceptionally(e);
     }
-    return ans.orTimeout(timeoutseconds, TimeUnit.SECONDS)
-            .whenComplete(
-                    (res, error) -> {
-                      pendingMap.remove(requestid);
-                    });
+    CompletableFuture<Response> res =
+            ans.orTimeout(timeoutseconds, TimeUnit.SECONDS)
+                    .whenComplete(
+                            (r, error) -> {
+                              pendingmap.remove(requestid);
+                            });
+    return res;
   }
 
   public Response sendRequestAndWait(Request request) {
     try {
-      return sendRequestAsync(request, DEFAULT_REQUEST_TIMEOUT_SECONDS).get();
+      Response ans = sendrequestasync(request, defaultrequesttimeoutseconds).get();
+      return ans;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      LOGGER.warn("Interrupted while waiting for response to {}", request.getAction());
       return null;
     } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof TimeoutException) return null;
-      LOGGER.error("Socket send/receive error", cause);
       return null;
     }
   }
 
-  public static String uploadFile(String urlString, byte[] fileBytes) throws Exception {
-    String boundary = "boundary" + System.currentTimeMillis();
-    java.net.URL url = java.net.URI.create(urlString).toURL();
-    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-    conn.setDoOutput(true);
-    conn.setRequestMethod("POST");
-    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-    try (OutputStream outStream = conn.getOutputStream()) {
-      outStream.write(("--" + boundary + "\r\n").getBytes());
-      outStream.write(("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.png\"\r\n\r\n").getBytes());
-      outStream.write(fileBytes);
-      outStream.write(("\r\n--" + boundary + "\r\n").getBytes());
-      outStream.write(("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n").getBytes());
-      outStream.write(("upload_def\r\n").getBytes());
-      outStream.write(("--" + boundary + "--\r\n").getBytes());
+  public static String uploadFile(String urlstring, byte[] filebytes) throws Exception {
+    String boundary = "boundary123";
+    byte[] head =
+            ("--"
+                    + boundary
+                    + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"item.png\"\r\n\r\n")
+                    .getBytes();
+    byte[] tail =
+            ("\r\n--"
+                    + boundary
+                    + "\r\nContent-Disposition: form-data; name=\"upload_preset\"\r\n\r\nupload_def\r\n--"
+                    + boundary
+                    + "--\r\n")
+                    .getBytes();
+    byte[] body = new byte[head.length + filebytes.length + tail.length];
+    System.arraycopy(head, 0, body, 0, head.length);
+    System.arraycopy(filebytes, 0, body, head.length, filebytes.length);
+    System.arraycopy(tail, 0, body, head.length + filebytes.length, tail.length);
+    HttpRequest req =
+            HttpRequest.newBuilder()
+                    .uri(URI.create(urlstring))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+                    .build();
+    HttpResponse<String> res =
+            HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
+    String responsebody = res.body();
+    if (!responsebody.contains("\"secure_url\"")) {
+      return null;
     }
-    try (java.util.Scanner scanner = new java.util.Scanner(conn.getInputStream())) {
-      String body = scanner.useDelimiter("\\A").next();
-      com.fasterxml.jackson.databind.JsonNode node =
-          new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
-      return node.get("secure_url").asText();
+    String ans = responsebody.split("\"secure_url\":\"")[1].split("\"")[0];
+    return ans;
+  }
+
+  private void startheartbeat() {
+    Thread thread =
+            new Thread(
+                    () -> {
+                      while (true) {
+                        try {
+                          Thread.sleep(5000);
+                          if (out != null) {
+                            Request req = new Request(Request.PING, null);
+                            sendrequestasync(req, 2);
+                          } else {
+                            reconnect();
+                          }
+                        } catch (InterruptedException e) {
+                          Thread.currentThread().interrupt();
+                          break;
+                        }
+                      }
+                    });
+    thread.setDaemon(true);
+    thread.start();
+  }
+
+  private synchronized void reconnect() {
+    try {
+      ObjectSocketConnection conn = ObjectSocketConnection.connect(serverip, 8080);
+      this.out = conn.getOut();
+      IncomingResponseRouter router = new IncomingResponseRouter(pendingmap, listeners);
+      conn.startReadLoop(
+              router::dispatch,
+              e -> {
+                this.out = null;
+                failallpending(e);
+              });
+      com.auction.shared.User user = com.auction.client.ClientSession.getCurrentUser();
+      if (user != null && user.getSessiontoken() != null) {
+        Request req = new Request(Request.RECONNECT, user.getSessiontoken());
+        Response res = sendRequestAndWait(req);
+        if (res == null || !Response.OK.equals(res.getStatus())) {
+          com.auction.client.ui.Main.KhungController.performForcedLogoutFromServer();
+        }
+      }
+    } catch (Exception e) {
+      this.out = null;
     }
   }
 }

@@ -33,6 +33,7 @@ public class AuctionManager {
   private final AutoBidCoordinator autobidcoordinator;
   private final BanCascadeService bancascade;
   private final LeaderboardService leaderboardservice = new LeaderboardService();
+  private final java.util.concurrent.ConcurrentHashMap<String, User> sessions = new java.util.concurrent.ConcurrentHashMap<>();
 
   private AuctionManager() {
     itemdao = new ItemDao();
@@ -69,7 +70,14 @@ public class AuctionManager {
       }
     }
   }
+  public void registersession(String token, User user) {
+    sessions.put(token, user);
+  }
 
+  public User getsession(String token) {
+    User ans = sessions.get(token);
+    return ans;
+  }
   public static AuctionManager getInstance() {
     if (instance == null) {
       synchronized (AuctionManager.class) {

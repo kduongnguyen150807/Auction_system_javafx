@@ -228,7 +228,7 @@ public class KhungController {
   }
 
   /** Called from {@link MainShellNetworkBridge} after account-ban alert. */
-  static void performForcedLogoutFromServer() {
+  public static void performForcedLogoutFromServer() {
     if (instance != null) instance.performUserSignOut();
   }
 

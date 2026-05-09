@@ -5,11 +5,13 @@ import com.auction.server.dao.auction.LotDao;
 import com.auction.server.dao.rating.RatingDao;
 import com.auction.server.dao.wallet.TransactionLogDao;
 import com.auction.server.handler.auction.AddLotHandler;
+import com.auction.server.handler.auction.AutocompleteHandler;
 import com.auction.server.handler.auction.BidHandler;
 import com.auction.server.handler.auction.ItemQueryHandler;
 import com.auction.server.handler.auction.ListItemsHandler;
 import com.auction.server.handler.auction.LotQueryHandler;
 import com.auction.server.handler.auth.LoginHandler;
+import com.auction.server.handler.auth.ReconnectHandler;
 import com.auction.server.handler.auth.SignupHandler;
 import com.auction.server.handler.chat.ChatHandler;
 import com.auction.server.handler.chat.FriendHandler;
@@ -27,20 +29,18 @@ import com.auction.server.service.user.UserService;
 import com.auction.shared.*;
 import java.io.*;
 import java.net.Socket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ClientHandler implements Runnable {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandler.class);
-
   private final Socket socket;
   private ObjectOutputStream out;
   private ObjectInputStream in;
   private final HandlerContext context;
   private final ActionRegistry registry;
+  private final TokenBucket bucket;
 
   public ClientHandler(Socket socket) {
     this.socket = socket;
+    this.bucket = new TokenBucket(5);
 
     UserService userService = new UserService();
     ItemDao itemDao = new ItemDao();
@@ -57,16 +57,16 @@ public class ClientHandler implements Runnable {
       this.in = new ObjectInputStream(this.socket.getInputStream());
       AuctionManager.getInstance().addClient(this);
     } catch (Exception e) {
-      LOGGER.error("Failed to initialize client handler streams", e);
     }
   }
 
   private ActionRegistry buildRegistry() {
     ActionRegistry reg = new ActionRegistry();
 
-    // ── Public (no auth required) ─────────────────────────────────────────
     reg.register(Request.LOGIN, new LoginHandler());
     reg.register(Request.SIGNUP, new SignupHandler());
+    reg.register(Request.RECONNECT, new ReconnectHandler());
+    reg.register(Request.AUTOCOMPLETE, new AutocompleteHandler());
 
     ListItemsHandler listHandler = new ListItemsHandler();
     reg.register(Request.LIST, listHandler);
@@ -105,7 +105,6 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_FRIENDS, friendHandler);
     reg.register(Request.GET_FRIEND_REQUESTS, friendHandler);
 
-    // ── Requires login ────────────────────────────────────────────────────
     reg.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));
     reg.register(Request.ADD_LOT, ActionHandler.requireAuth(new AddLotHandler()));
     reg.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
@@ -120,7 +119,6 @@ public class ClientHandler implements Runnable {
     reg.register(Request.DECLINE_FRIEND, ActionHandler.requireAuth(authFriend));
     reg.register(Request.REMOVE_FRIEND, ActionHandler.requireAuth(authFriend));
 
-    // ── Requires ADMIN role ───────────────────────────────────────────────
     reg.register(Request.LOCK_USER, ActionHandler.requireAdmin(userMgmt));
     reg.register(Request.UNLOCK_USER, ActionHandler.requireAdmin(userMgmt));
     reg.register(Request.PROMOTE_ADMIN, ActionHandler.requireAdmin(userMgmt));
@@ -130,37 +128,41 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_STATUS_STATS, ActionHandler.requireAdmin(miscHandler));
     reg.register(Request.GET_CATEGORY_STATS, ActionHandler.requireAdmin(miscHandler));
     reg.register(Request.GET_LEADERBOARD, new com.auction.server.handler.misc.LeaderboardHandler());
-    return reg;
+
+    ActionRegistry ans = reg;
+    return ans;
   }
 
   public User getCurrentUser() {
-    return this.context.getCurrentUser();
+    User ans = this.context.getCurrentUser();
+    return ans;
   }
 
+  // REFACTOR: consider sending a specific RATE_LIMIT_EXCEEDED response instead of silently dropping
   @Override
   public void run() {
     try {
       while (true) {
         Request request = (Request) this.in.readObject();
-        Response response = this.registry.dispatch(request, this.context);
-        if (response != null) {
+        if (!bucket.tryconsume()) {
+          continue;
+        }
+        Response res = this.registry.dispatch(request, this.context);
+        if (res != null) {
           synchronized (this.out) {
             this.out.reset();
-            this.out.writeObject(response);
+            this.out.writeObject(res);
             this.out.flush();
           }
         }
       }
     } catch (EOFException e) {
-      LOGGER.debug("Client disconnected");
     } catch (Exception e) {
-      LOGGER.warn("Error in client handler loop", e);
     } finally {
       AuctionManager.getInstance().removeClient(this);
       try {
         this.socket.close();
       } catch (Exception e) {
-        LOGGER.debug("Error closing socket", e);
       }
     }
   }
@@ -173,7 +175,6 @@ public class ClientHandler implements Runnable {
         this.out.flush();
       }
     } catch (Exception e) {
-      LOGGER.warn("Failed to send response to client", e);
     }
   }
 }
