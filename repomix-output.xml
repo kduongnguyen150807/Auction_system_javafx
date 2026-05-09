@@ -172,6 +172,8 @@ auction-server/src/main/java/com/auction/server/dao/wallet/TransactionLogDao.jav
 auction-server/src/main/java/com/auction/server/handler/auction/AddLotHandler.java
 auction-server/src/main/java/com/auction/server/handler/auction/BidHandler.java
 auction-server/src/main/java/com/auction/server/handler/auction/ItemQueryHandler.java
+auction-server/src/main/java/com/auction/server/handler/auction/LeaderboardHandler.java
+auction-server/src/main/java/com/auction/server/handler/auction/LeaderboardService.java
 auction-server/src/main/java/com/auction/server/handler/auction/ListItemsHandler.java
 auction-server/src/main/java/com/auction/server/handler/auction/LotQueryHandler.java
 auction-server/src/main/java/com/auction/server/handler/auth/LoginHandler.java
@@ -189,6 +191,7 @@ auction-server/src/main/java/com/auction/server/handler/user/UpdateProfileHandle
 auction-server/src/main/java/com/auction/server/handler/user/UserManagementHandler.java
 auction-server/src/main/java/com/auction/server/Main.java
 auction-server/src/main/java/com/auction/server/service/auction/AuctionBidPipeline.java
+auction-server/src/main/java/com/auction/server/service/auction/AuctionEndEvent.java
 auction-server/src/main/java/com/auction/server/service/auction/AuctionManager.java
 auction-server/src/main/java/com/auction/server/service/auction/AuctionRealtimeNotifier.java
 auction-server/src/main/java/com/auction/server/service/auction/AutoBidCoordinator.java
@@ -222,6 +225,7 @@ auction-shared/src/main/java/com/auction/shared/Friendship.java
 auction-shared/src/main/java/com/auction/shared/Item.java
 auction-shared/src/main/java/com/auction/shared/ItemFactory.java
 auction-shared/src/main/java/com/auction/shared/ItemStatus.java
+auction-shared/src/main/java/com/auction/shared/LeaderboardEntry.java
 auction-shared/src/main/java/com/auction/shared/PasswordEncoder.java
 auction-shared/src/main/java/com/auction/shared/Rating.java
 auction-shared/src/main/java/com/auction/shared/Request.java
@@ -248,6 +252,58 @@ Summary/project-uml-bản tóm tắt.md
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionEndEvent.java">
+package com.auction.server.service.auction;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
+
+public class AuctionEndEvent implements Delayed {
+    private final int itemid;
+    private final long exptime;
+
+    public AuctionEndEvent(int itemid, LocalDateTime endtime) {
+        this.itemid = itemid;
+        this.exptime = endtime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    public int getItemid() {
+        return itemid;
+    }
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+        long ans = exptime - System.currentTimeMillis();
+        return unit.convert(ans, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public int compareTo(Delayed other) {
+        long ans = this.getDelay(TimeUnit.MILLISECONDS) - other.getDelay(TimeUnit.MILLISECONDS);
+        return Long.compare(ans, 0);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        AuctionEndEvent ans = (AuctionEndEvent) obj;
+        return itemid == ans.itemid;
+    }
+
+    @Override
+    public int hashCode() {
+        return itemid;
+    }
+}
+</file>
 
 <file path="Summary/project-uml-bản đầy đủ.md">
 # UML Project 
@@ -1903,117 +1959,6 @@ public class NodeContentLoader<T extends Node> {
 }
 </file>
 
-<file path="auction-client/src/main/java/com/auction/client/network/IncomingResponseRouter.java">
-package com.auction.client.network;
-
-import com.auction.shared.ChatMessage;
-import com.auction.shared.Friendship;
-import com.auction.shared.Item;
-import com.auction.shared.ItemFactory;
-import com.auction.shared.Response;
-import com.auction.shared.User;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import javafx.application.Platform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-/**
- * Maps inbound {@link Response} payloads to {@link NetworkEventListener} callbacks and completes
- * pending request futures.
- */
-final class IncomingResponseRouter {
-  private static final Logger LOGGER = LoggerFactory.getLogger(IncomingResponseRouter.class);
-
-  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap;
-  private final List<NetworkEventListener> listeners;
-
-  IncomingResponseRouter(
-      ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap,
-      List<NetworkEventListener> listeners) {
-    this.pendingMap = pendingMap;
-    this.listeners = listeners;
-  }
-
-  void dispatch(Response response) {
-    switch (response.getStatus()) {
-      case "BALANCE_UPDATE" -> {
-        if (response.getPayload() instanceof User u) forListeners(l -> l.onBalanceUpdate(u));
-        return;
-      }
-      case "OUTBID_NOTIFY" -> {
-        if (response.getPayload() instanceof Item item) {
-          forListeners(l -> l.onOutbidNotify(item));
-        } else if (response.getPayload() instanceof Integer id) {
-          Item stub = ItemFactory.createItem(null);
-          stub.setId(id);
-          stub.setName("?");
-          forListeners(l -> l.onOutbidNotify(stub));
-        }
-        return;
-      }
-      case "CHAT_GLOBAL" -> {
-        if (response.getPayload() instanceof ChatMessage m) forListeners(l -> l.onGlobalChat(m));
-        return;
-      }
-      case "CHAT_PRIVATE" -> {
-        if (response.getPayload() instanceof ChatMessage m) forListeners(l -> l.onPrivateChat(m));
-        return;
-      }
-      case "FRIEND_REQUEST" -> {
-        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendRequest(f));
-        return;
-      }
-      case "FRIEND_REQUEST_SENT" -> {
-        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendRequestSent(f));
-        return;
-      }
-      case "FRIEND_ACCEPTED" -> {
-        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendAccepted(f));
-        return;
-      }
-      case "SELLER_BID_NOTIFY" -> {
-        if (response.getPayload() instanceof Item item)
-          forListeners(l -> l.onSellerBidNotify(item, item.getCurrentPrice()));
-        return;
-      }
-      case "ITEM_CLOSED" -> {
-        if (response.getPayload() instanceof Item item) forListeners(l -> l.onItemClosed(item));
-        return;
-      }
-      case "NEW_BID_UPDATE" -> {
-        if (response.getPayload() instanceof Item item) forListeners(l -> l.onNewBidUpdate(item));
-        return;
-      }
-      case Response.ACCOUNT_BANNED -> {
-        forListeners(l -> l.onAccountBanned(response.getMessage()));
-        return;
-      }
-      case Response.ACCOUNT_UNBANNED -> {
-        forListeners(NetworkEventListener::onAccountUnbanned);
-        return;
-      }
-      default -> {}
-    }
-    if ("priceupdate".equals(response.getMessage()) && response.getPayload() instanceof Item item) {
-      forListeners(l -> l.onNewBidUpdate(item));
-      return;
-    }
-    String requestId = response.getRequestId();
-    if (requestId == null) return;
-    CompletableFuture<Response> future = pendingMap.get(requestId);
-    if (future != null) future.complete(response);
-    else LOGGER.warn("Received response for unknown request ID: {}", requestId);
-  }
-
-  private void forListeners(Consumer<NetworkEventListener> action) {
-    Platform.runLater(() -> listeners.forEach(action));
-  }
-}
-</file>
-
 <file path="auction-client/src/main/java/com/auction/client/network/NetworkConnectionUi.java">
 package com.auction.client.network;
 
@@ -2636,143 +2581,6 @@ final class MainShellNavigator {
 
   private HBox[] menuBoxes() {
     return new HBox[] {auctionMenu, historyMenu, myItemMenu, profileMenu, chatMenu, manageUsersMenu};
-  }
-}
-</file>
-
-<file path="auction-client/src/main/java/com/auction/client/ui/Main/MainShellNetworkBridge.java">
-package com.auction.client.ui.Main;
-
-import com.auction.client.ClientSession;
-import com.auction.client.network.NetworkEventListener;
-import com.auction.client.ui.Chat.ChatPageController;
-import com.auction.client.ui.ItemInformation.ItemInformationController;
-import com.auction.client.ui.TrangChu.TrangChuController;
-import com.auction.client.util.ItemNotificationText;
-import com.auction.client.util.NotificationCenter;
-import com.auction.shared.ChatMessage;
-import com.auction.shared.Friendship;
-import com.auction.shared.Item;
-import com.auction.shared.User;
-import java.util.function.Supplier;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-
-/** Dispatches server push events into shell controllers and notifications. */
-final class MainShellNetworkBridge implements NetworkEventListener {
-
-  private final Supplier<TrangChuController> homeController;
-  private final Supplier<ChatPageController> chatController;
-
-  MainShellNetworkBridge(
-      Supplier<TrangChuController> homeController, Supplier<ChatPageController> chatController) {
-    this.homeController = homeController;
-    this.chatController = chatController;
-  }
-
-  private TrangChuController home() {
-    return homeController.get();
-  }
-
-  private ChatPageController chat() {
-    return chatController.get();
-  }
-
-  private static ItemInformationController detail() {
-    return KhungController.itemDetailController;
-  }
-
-  @Override
-  public void onNewBidUpdate(Item item) {
-    ItemInformationController d = detail();
-    if (d != null) d.updatePriceUi(item);
-    TrangChuController h = home();
-    if (h != null) h.updatePriceUi(item);
-  }
-
-  @Override
-  public void onItemClosed(Item item) {
-    TrangChuController h = home();
-    if (h != null) h.removeClosedItem(item);
-    ItemInformationController d = detail();
-    if (d != null) d.markItemClosed(item);
-    User me = ClientSession.getCurrentUser();
-    if (me != null && item.getSellerId() == me.getId())
-      NotificationCenter.addNotification(ItemNotificationText.itemClosed(item));
-  }
-
-  @Override
-  public void onSellerBidNotify(Item item, double newBidPrice) {
-    NotificationCenter.addNotification(ItemNotificationText.sellerNewBid(item, newBidPrice));
-  }
-
-  @Override
-  public void onOutbidNotify(Item item) {
-    NotificationCenter.addNotification(ItemNotificationText.outbid(item));
-  }
-
-  @Override
-  public void onGlobalChat(ChatMessage message) {
-    ChatPageController c = chat();
-    if (c != null) c.onGlobalChat(message);
-  }
-
-  @Override
-  public void onPrivateChat(ChatMessage message) {
-    ChatPageController c = chat();
-    if (c != null) c.onPrivateChat(message);
-  }
-
-  @Override
-  public void onFriendRequest(Friendship friendship) {
-    NotificationCenter.addNotification(friendship.getRequesterUsername() + " đã gửi lời mời kết bạn!");
-    ChatPageController c = chat();
-    if (c != null) c.onFriendRequest(friendship);
-  }
-
-  @Override
-  public void onFriendRequestSent(Friendship friendship) {
-    NotificationCenter.addNotification("Đã gửi lời mời kết bạn đến " + friendship.getAddresseeUsername() + "!");
-    ChatPageController c = chat();
-    if (c != null) c.onFriendRequestSent(friendship);
-  }
-
-  @Override
-  public void onFriendAccepted(Friendship friendship) {
-    ChatPageController c = chat();
-    if (c != null) c.onFriendAccepted(friendship);
-    User me = ClientSession.getCurrentUser();
-    NotificationCenter.addNotification(
-        me != null && friendship.getRequesterId() == me.getId()
-            ? friendship.getAddresseeUsername() + " đã chấp nhận lời mời kết bạn!"
-            : "Bạn và " + friendship.getRequesterUsername() + " đã trở thành bạn bè!");
-  }
-
-  @Override
-  public void onAccountBanned(String reason) {
-    showFxAlert(
-        Alert.AlertType.ERROR,
-        "Account Suspended",
-        "Your account has been suspended by an administrator.",
-        reason != null && !reason.isBlank() ? reason : "You have been banned. Please contact support.");
-    KhungController.performForcedLogoutFromServer();
-  }
-
-  @Override
-  public void onAccountUnbanned() {
-    showFxAlert(
-        Alert.AlertType.INFORMATION,
-        "Account Reinstated",
-        "Your account is active again.",
-        "An administrator has lifted your suspension. Please log in to continue.");
-  }
-
-  private static void showFxAlert(Alert.AlertType type, String title, String header, String content) {
-    Alert alert = new Alert(type);
-    alert.setTitle(title);
-    alert.setHeaderText(header);
-    alert.setContentText(content);
-    alert.showAndWait();
   }
 }
 </file>
@@ -4425,93 +4233,6 @@ final class UserSchemaMigration {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/dao/rating/RatingDao.java">
-package com.auction.server.dao.rating;
-
-import com.auction.server.dao.platform.BaseDao;
-
-import com.auction.shared.Rating;
-import java.sql.*;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class RatingDao extends BaseDao<Rating> implements RatingRepository {
-  private static final Logger LOGGER = LoggerFactory.getLogger(RatingDao.class);
-
-  @Override
-  protected Rating mapRow(ResultSet rs) throws SQLException {
-    Rating rating = new Rating();
-    rating.setId(rs.getInt("id"));
-    rating.setItemId(rs.getInt("itemid"));
-    rating.setRaterUserId(rs.getInt("rateruserid"));
-    rating.setRatedUserId(rs.getInt("rateduserid"));
-    rating.setStars(rs.getInt("stars"));
-    rating.setFeedback(rs.getString("feedback"));
-    rating.setCreatedAt(rs.getTimestamp("createdat").toLocalDateTime());
-    rating.setRaterUsername(rs.getString("rater_name"));
-    return rating;
-  }
-
-  @Override
-  public boolean insertRating(Rating rating) {
-    return executeUpdate(
-        "INSERT INTO ratings (itemid, rateruserid, rateduserid, stars, feedback) VALUES (?, ?, ?, ?, ?)",
-        rating.getItemId(),
-        rating.getRaterUserId(),
-        rating.getRatedUserId(),
-        rating.getStars(),
-        rating.getFeedback());
-  }
-
-  @Override
-  public boolean hasRated(int itemId, int userId) {
-    String sql = "SELECT 1 FROM ratings WHERE itemid = ? AND rateruserid = ? LIMIT 1";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      ps.setInt(2, userId);
-      ResultSet rs = ps.executeQuery();
-      return rs.next();
-    } catch (Exception e) {
-      LOGGER.warn("hasRated check failed", e);
-      return false;
-    }
-  }
-
-  @Override
-  public List<Rating> getByItemId(int itemId) {
-    String sql = "SELECT r.*, u.username AS rater_name FROM ratings r "
-        + "LEFT JOIN users u ON r.rateruserid = u.id WHERE r.itemid = ? ORDER BY r.createdat DESC";
-    return queryList(sql, itemId);
-  }
-
-  @Override
-  public void recalcUserRating(int userId) {
-    try (Connection conn = getConn()) {
-      String selectSql = "SELECT AVG(stars) AS avg_s, COUNT(*) AS cnt FROM ratings WHERE rateduserid = ?";
-      try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
-        ps.setInt(1, userId);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-          double avgRating = rs.getDouble("avg_s");
-          int totalRatings = rs.getInt("cnt");
-          String updateSql = "UPDATE users SET avgrating = ?, totalratings = ? WHERE id = ?";
-          try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-            updateStmt.setDouble(1, avgRating);
-            updateStmt.setInt(2, totalRatings);
-            updateStmt.setInt(3, userId);
-            updateStmt.executeUpdate();
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOGGER.warn("recalcUserRating failed", e);
-    }
-  }
-
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/dao/rating/RatingRepository.java">
 package com.auction.server.dao.rating;
 
@@ -4616,6 +4337,65 @@ public class BidHandler implements ActionHandler {
     Response result = context.getAuctionManager().processBid(bid);
     return new Response(request.getRequestId(), result.getStatus(), result.getMessage(), result.getPayload());
   }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/handler/auction/LeaderboardHandler.java">
+package com.auction.server.handler.misc;
+
+import com.auction.server.handler.dispatch.ActionHandler;
+import com.auction.server.handler.dispatch.HandlerContext;
+import com.auction.shared.LeaderboardEntry;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import java.util.List;
+
+public class LeaderboardHandler implements ActionHandler {
+    @Override
+    public Response handle(Request request, HandlerContext context) {
+        List<LeaderboardEntry> ans = context.getAuctionManager().getLeaderboardservice().gettop(10);
+        Response res = new Response(request.getRequestId(), Response.OK, "success", (java.io.Serializable) ans);
+        return res;
+    }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/handler/auction/LeaderboardService.java">
+package com.auction.server.service.auction;
+
+import com.auction.shared.LeaderboardEntry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+
+public class LeaderboardService {
+    private final ConcurrentHashMap<Integer, LeaderboardEntry> map = new ConcurrentHashMap<>();
+    private final ConcurrentSkipListSet<LeaderboardEntry> set = new ConcurrentSkipListSet<>();
+
+    public synchronized void updatescore(int userid, String username, String avatarurl, double amount) {
+        LeaderboardEntry res = map.get(userid);
+        if (res != null) {
+            set.remove(res);
+            res.setScore(res.getScore() + amount);
+            set.add(res);
+        } else {
+            LeaderboardEntry ans = new LeaderboardEntry(userid, username, avatarurl, amount);
+            map.put(userid, ans);
+            set.add(ans);
+        }
+    }
+
+    public List<LeaderboardEntry> gettop(int limit) {
+        List<LeaderboardEntry> ans = new ArrayList<>();
+        for (LeaderboardEntry res : set) {
+            ans.add(res);
+            if (ans.size() >= limit) {
+                break;
+            }
+        }
+        return ans;
+    }
 }
 </file>
 
@@ -4966,63 +4746,6 @@ public class ActionRegistry {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/handler/misc/MiscHandler.java">
-package com.auction.server.handler.misc;
-
-import com.auction.server.handler.dispatch.ActionHandler;
-import com.auction.server.handler.dispatch.HandlerContext;
-
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.shared.BidTransaction;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import com.auction.shared.TransactionLog;
-import com.auction.shared.User;
-import java.util.List;
-
-public class MiscHandler implements ActionHandler {
-  @Override
-  public Response handle(Request request, HandlerContext context) {
-    String action = request.getAction();
-    String requestId = request.getRequestId();
-    Object payload = request.getPayload();
-
-    switch (action) {
-      case Request.REFRESH_USER: {
-        User user = new UserDao().getById(String.valueOf(payload));
-        return new Response(requestId,
-            user != null ? Response.OK : Response.ERROR,
-            user != null ? "success" : "fail", user);
-      }
-
-      case Request.GET_TRANSACTIONS: {
-        List<TransactionLog> logs = context.getLogDao().getByUserId((int) payload);
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) logs);
-      }
-
-      case Request.GET_STATUS_STATS:
-        return new Response(requestId, Response.OK, "success", context.getItemDao().getStatusStats());
-
-      case Request.GET_CATEGORY_STATS:
-        return new Response(requestId, Response.OK, "success", context.getItemDao().getCategoryStats());
-
-      case Request.GET_BID_HISTORY: {
-        int itemId = (int) payload;
-        List<BidTransaction> history = new BidDao().getBidHistory(itemId);
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) history);
-      }
-
-      case Request.PING:
-        return new Response(requestId, Response.OK, "pong", null);
-
-      default:
-        return new Response(requestId, Response.ERROR, "unknown_action", null);
-    }
-  }
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/handler/rating/RatingHandler.java">
 package com.auction.server.handler.rating;
 
@@ -5287,153 +5010,6 @@ public class UserManagementHandler implements ActionHandler {
     }
 
     return new Response(requestId, Response.OK, "success", null);
-  }
-}
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionManager.java">
-package com.auction.server.service.auction;
-
-import com.auction.server.controller.ClientHandler;
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.shared.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class AuctionManager {
-  private static final Logger LOGGER = LoggerFactory.getLogger(AuctionManager.class);
-  private static volatile AuctionManager instance;
-
-  private final ClientConnectionHub connections = new ClientConnectionHub();
-  private final ItemDao itemDao;
-  private final UserDao userDao;
-  private final BidDao bidDao;
-  private final TransactionLogDao logDao;
-  private final ConcurrentHashMap<Long, ReentrantLock> auctionLocks = new ConcurrentHashMap<>();
-  private final BidAuctionValidator bidValidator = new BidAuctionValidator();
-  private final AuctionRealtimeNotifier realtime;
-  private final AuctionBidPipeline bidPipeline;
-  private final AutoBidCoordinator autoBidCoordinator;
-  private final BanCascadeService banCascade;
-
-  private AuctionManager() {
-    itemDao = new ItemDao();
-    userDao = new UserDao();
-    bidDao = new BidDao();
-    logDao = new TransactionLogDao();
-    realtime = new AuctionRealtimeNotifier(itemDao, userDao, connections);
-    bidPipeline = new AuctionBidPipeline(itemDao, userDao, bidDao, logDao, realtime, bidValidator);
-    autoBidCoordinator = new AutoBidCoordinator(itemDao, userDao, bidDao, bidValidator);
-    bidPipeline.setCleanupAutoBidsForItem(autoBidCoordinator::cleanup);
-    banCascade = new BanCascadeService(itemDao, userDao, bidDao, logDao, this);
-  }
-
-  AuctionManager(ItemDao id, UserDao ud, BidDao bd, TransactionLogDao ld) {
-    itemDao = id;
-    userDao = ud;
-    bidDao = bd;
-    logDao = ld;
-    realtime = new AuctionRealtimeNotifier(itemDao, userDao, connections);
-    bidPipeline = new AuctionBidPipeline(itemDao, userDao, bidDao, logDao, realtime, bidValidator);
-    autoBidCoordinator = new AutoBidCoordinator(itemDao, userDao, bidDao, bidValidator);
-    bidPipeline.setCleanupAutoBidsForItem(autoBidCoordinator::cleanup);
-    banCascade = new BanCascadeService(itemDao, userDao, bidDao, logDao, this);
-  }
-
-  public static AuctionManager getInstance() {
-    if (instance == null) synchronized (AuctionManager.class) { if (instance == null) instance = new AuctionManager(); }
-    return instance;
-  }
-
-  static void resetForTest() {
-    instance = null;
-  }
-
-  public ReentrantLock getAuctionLock(long id) {
-    return auctionLocks.computeIfAbsent(id, k -> new ReentrantLock());
-  }
-
-  public void addClient(ClientHandler client) {
-    connections.addClient(client);
-  }
-
-  public void removeClient(ClientHandler client) {
-    connections.removeClient(client);
-  }
-
-  public Response processBid(BidTransaction bid) {
-    User earlyCheck = userDao.getById(String.valueOf(bid.getUserId()));
-    if (earlyCheck == null) return BidAuctionValidator.error("User not found");
-    if (earlyCheck.isLocked() || !earlyCheck.isActive()) {
-      LOGGER.warn("Rejected bid from banned/locked user={} on item={}", bid.getUserId(), bid.getItemId());
-      return BidAuctionValidator.error("Account is suspended");
-    }
-    ReentrantLock lock = getAuctionLock(bid.getItemId());
-    try {
-      if (!lock.tryLock(500, TimeUnit.MILLISECONDS)) return BidAuctionValidator.error("Auction is busy, please try again");
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      return BidAuctionValidator.error("Bid interrupted");
-    }
-    List<Runnable> after = new ArrayList<>();
-    Set<Integer> pendingPriceBroadcast = new HashSet<>();
-    ManualBidExecutor exec = bidPipeline::processManualBid;
-    try {
-      if (bid.isAutoBid()) return autoBidCoordinator.handleRegistration(bid, after, pendingPriceBroadcast, exec);
-      Response result = bidPipeline.processManualBid(bid, after, pendingPriceBroadcast);
-      if (result != null && Response.OK.equals(result.getStatus()))
-        autoBidCoordinator.runRounds(bid.getItemId(), after, pendingPriceBroadcast, exec);
-      return result;
-    } finally {
-      for (Integer itemId : pendingPriceBroadcast) {
-        final int id = itemId;
-        after.add(() -> realtime.broadcastPriceUpdate(id));
-      }
-      lock.unlock();
-      after.forEach(task -> { try { task.run(); } catch (Exception e) { LOGGER.warn("Post-bid task failed", e); } });
-    }
-  }
-
-  public void handleBidderBan(int bidderId) {
-    banCascade.handleBidderBan(bidderId);
-  }
-
-  public void handleSellerBan(int sellerId) {
-    banCascade.handleSellerBan(sellerId);
-  }
-
-  void cleanupAutoBids(int itemId) {
-    autoBidCoordinator.cleanup(itemId);
-  }
-
-  public void sendBalanceUpdateToUser(int userId) {
-    realtime.sendBalanceUpdateToUser(userId);
-  }
-
-  void broadcastPriceUpdate(int itemId) {
-    realtime.broadcastPriceUpdate(itemId);
-  }
-
-  void broadcastItemClosed(int itemId) {
-    realtime.broadcastItemClosed(itemId);
-  }
-
-  public void sendToUser(int userId, Response response) {
-    connections.sendToUser(userId, response);
-  }
-
-  public void broadcast(Response response) {
-    connections.broadcast(response);
   }
 }
 </file>
@@ -5797,84 +5373,6 @@ import java.util.Set;
 interface ManualBidExecutor {
 
   Response execute(BidTransaction bid, List<Runnable> after, Set<Integer> pendingPriceBroadcast);
-}
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/service/auction/SettlementService.java">
-package com.auction.server.service.auction;
-
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.shared.*;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class SettlementService {
-  private static final Logger LOGGER = LoggerFactory.getLogger(SettlementService.class);
-
-  private final ItemDao itemDao;
-  private final UserDao userDao;
-  private final BidDao bidDao;
-  private final TransactionLogDao logDao;
-
-  public SettlementService() {
-    this.itemDao = new ItemDao();
-    this.userDao = new UserDao();
-    this.bidDao = new BidDao();
-    this.logDao = new TransactionLogDao();
-  }
-
-  public void start() {
-    Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(
-            () -> {
-              try {
-                List<Item> expiredItems = itemDao.getExpiredItems();
-                for (Item item : expiredItems) {
-                  settle(item);
-                }
-              } catch (Exception e) {
-                LOGGER.warn("Settlement cycle failed", e);
-              }
-            },
-            5, 10, TimeUnit.SECONDS);
-  }
-
-  private void settle(Item item) {
-    int winnerId = bidDao.getPreviousHighestBidder(item.getId());
-
-    if (winnerId > 0) {
-      boolean closed = itemDao.atomicCloseAuction(item.getId(), winnerId, "CLOSED");
-      if (!closed) return;
-
-      double finalPrice = item.getCurrentPrice();
-      userDao.addBidderMetrics(winnerId, 0);
-
-      userDao.atomicCreditBalance(item.getSellerId(), finalPrice);
-      userDao.addSellerMetrics(item.getSellerId(), finalPrice);
-      logDao.insertLog(item.getSellerId(), "ITEM_SOLD", finalPrice, item.getId());
-
-      User freshSeller = userDao.getById(String.valueOf(item.getSellerId()));
-      if (freshSeller != null) {
-        AuctionManager.getInstance().sendToUser(item.getSellerId(),
-            new Response("", "BALANCE_UPDATE", "Success", freshSeller));
-      }
-    } else {
-      boolean closed = itemDao.atomicCloseAuction(item.getId(), 0, "EXPIRED");
-      if (!closed) return;
-    }
-
-    Item closedItem = itemDao.getById(item.getId());
-    if (closedItem != null) {
-      AuctionManager.getInstance().broadcast(
-          new Response("", "ITEM_CLOSED", "closed", closedItem));
-    }
-  }
 }
 </file>
 
@@ -7230,6 +6728,73 @@ public class Friendship extends Entity {
 
   public LocalDateTime getCreatedAt() { return this.createdAt; }
   public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+}
+</file>
+
+<file path="auction-shared/src/main/java/com/auction/shared/LeaderboardEntry.java">
+package com.auction.shared;
+
+import java.io.Serializable;
+
+public class LeaderboardEntry implements Serializable, Comparable<LeaderboardEntry> {
+    private static final long serialVersionUID = 1L;
+    private int userid;
+    private String username;
+    private String avatarurl;
+    private double score;
+
+    public LeaderboardEntry(int userid, String username, String avatarurl, double score) {
+        this.userid = userid;
+        this.username = username;
+        this.avatarurl = avatarurl;
+        this.score = score;
+    }
+
+    public int getUserid() {
+        return userid;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getAvatarurl() {
+        return avatarurl;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
+    }
+
+    @Override
+    public int compareTo(LeaderboardEntry other) {
+        int ans = Double.compare(other.score, this.score);
+        if (ans == 0) {
+            ans = Integer.compare(this.userid, other.userid);
+        }
+        return ans;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        LeaderboardEntry ans = (LeaderboardEntry) obj;
+        return userid == ans.userid;
+    }
+
+    @Override
+    public int hashCode() {
+        return userid;
+    }
 }
 </file>
 
@@ -8846,6 +8411,129 @@ public class Main extends Application {
 }
 </file>
 
+<file path="auction-client/src/main/java/com/auction/client/network/IncomingResponseRouter.java">
+package com.auction.client.network;
+
+import com.auction.shared.ChatMessage;
+import com.auction.shared.Friendship;
+import com.auction.shared.Item;
+import com.auction.shared.ItemFactory;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import javafx.application.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Maps inbound {@link Response} payloads to {@link NetworkEventListener} callbacks and completes
+ * pending request futures.
+ */
+final class IncomingResponseRouter {
+  private static final Logger LOGGER = LoggerFactory.getLogger(IncomingResponseRouter.class);
+
+  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap;
+  private final List<NetworkEventListener> listeners;
+
+  IncomingResponseRouter(
+      ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap,
+      List<NetworkEventListener> listeners) {
+    this.pendingMap = pendingMap;
+    this.listeners = listeners;
+  }
+
+  void dispatch(Response response) {
+    switch (response.getStatus()) {
+      case "BALANCE_UPDATE" -> {
+        if (response.getPayload() instanceof User u) forListeners(l -> l.onBalanceUpdate(u));
+        return;
+      }
+      case "OUTBID_NOTIFY" -> {
+        if (response.getPayload() instanceof Item item) {
+          forListeners(l -> l.onOutbidNotify(item));
+        } else if (response.getPayload() instanceof Integer id) {
+          Item stub = ItemFactory.createItem(null);
+          stub.setId(id);
+          stub.setName("?");
+          forListeners(l -> l.onOutbidNotify(stub));
+        }
+        return;
+      }
+      case "CHAT_GLOBAL" -> {
+        if (response.getPayload() instanceof ChatMessage m) forListeners(l -> l.onGlobalChat(m));
+        return;
+      }
+      case "CHAT_PRIVATE" -> {
+        if (response.getPayload() instanceof ChatMessage m) forListeners(l -> l.onPrivateChat(m));
+        return;
+      }
+      case "FRIEND_REQUEST" -> {
+        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendRequest(f));
+        return;
+      }
+      case "FRIEND_REQUEST_SENT" -> {
+        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendRequestSent(f));
+        return;
+      }
+      case "FRIEND_ACCEPTED" -> {
+        if (response.getPayload() instanceof Friendship f) forListeners(l -> l.onFriendAccepted(f));
+        return;
+      }
+      case "SELLER_BID_NOTIFY" -> {
+        if (response.getPayload() instanceof Item item)
+          forListeners(l -> l.onSellerBidNotify(item, item.getCurrentPrice()));
+        return;
+      }
+      case "ITEM_CLOSED" -> {
+        if (response.getPayload() instanceof Item item) forListeners(l -> l.onItemClosed(item));
+        return;
+      }
+      case "NEW_BID_UPDATE" -> {
+        if (response.getPayload() instanceof Item item) forListeners(l -> l.onNewBidUpdate(item));
+        return;
+      }
+      case Response.ACCOUNT_BANNED -> {
+        forListeners(l -> l.onAccountBanned(response.getMessage()));
+        return;
+      }
+      case Response.ACCOUNT_UNBANNED -> {
+        forListeners(NetworkEventListener::onAccountUnbanned);
+        return;
+      }
+      case "LEADERBOARD_UPDATE" -> {
+        if (response.getPayload() instanceof java.util.List<?> list) {
+          java.util.List<com.auction.shared.LeaderboardEntry> ans = new java.util.ArrayList<>();
+          for (Object res : list) {
+            if (res instanceof com.auction.shared.LeaderboardEntry entry) {
+              ans.add(entry);
+            }
+          }
+          forListeners(l -> l.onLeaderboardUpdate(ans));
+        }
+        return;
+      }
+      default -> {}
+    }
+    if ("priceupdate".equals(response.getMessage()) && response.getPayload() instanceof Item item) {
+      forListeners(l -> l.onNewBidUpdate(item));
+      return;
+    }
+    String requestId = response.getRequestId();
+    if (requestId == null) return;
+    CompletableFuture<Response> future = pendingMap.get(requestId);
+    if (future != null) future.complete(response);
+    else LOGGER.warn("Received response for unknown request ID: {}", requestId);
+  }
+
+  private void forListeners(Consumer<NetworkEventListener> action) {
+    Platform.runLater(() -> listeners.forEach(action));
+  }
+}
+</file>
+
 <file path="auction-client/src/main/java/com/auction/client/service/UserAccountService.java">
 package com.auction.client.service;
 
@@ -9022,6 +8710,149 @@ final class ChatLeftListCell extends ListCell<Object> {
       setText(item.toString());
       setGraphic(null);
     }
+  }
+}
+</file>
+
+<file path="auction-client/src/main/java/com/auction/client/ui/Main/MainShellNetworkBridge.java">
+package com.auction.client.ui.Main;
+
+import com.auction.client.ClientSession;
+import com.auction.client.network.NetworkEventListener;
+import com.auction.client.ui.Chat.ChatPageController;
+import com.auction.client.ui.ItemInformation.ItemInformationController;
+import com.auction.client.ui.TrangChu.TrangChuController;
+import com.auction.client.util.ItemNotificationText;
+import com.auction.client.util.NotificationCenter;
+import com.auction.shared.ChatMessage;
+import com.auction.shared.Friendship;
+import com.auction.shared.Item;
+import com.auction.shared.User;
+import java.util.function.Supplier;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+
+/** Dispatches server push events into shell controllers and notifications. */
+final class MainShellNetworkBridge implements NetworkEventListener {
+
+  private final Supplier<TrangChuController> homeController;
+  private final Supplier<ChatPageController> chatController;
+
+  MainShellNetworkBridge(
+      Supplier<TrangChuController> homeController, Supplier<ChatPageController> chatController) {
+    this.homeController = homeController;
+    this.chatController = chatController;
+  }
+
+  private TrangChuController home() {
+    return homeController.get();
+  }
+
+  private ChatPageController chat() {
+    return chatController.get();
+  }
+
+  private static ItemInformationController detail() {
+    return KhungController.itemDetailController;
+  }
+  @Override
+  public void onLeaderboardUpdate(java.util.List<com.auction.shared.LeaderboardEntry> res) {
+    TrangChuController ans = home();
+    if (ans != null) {
+      ans.updateleaderboardui(res);
+    }
+  }
+  @Override
+  public void onNewBidUpdate(Item item) {
+    ItemInformationController d = detail();
+    if (d != null) d.updatePriceUi(item);
+    TrangChuController h = home();
+    if (h != null) h.updatePriceUi(item);
+  }
+
+  @Override
+  public void onItemClosed(Item item) {
+    TrangChuController h = home();
+    if (h != null) h.removeClosedItem(item);
+    ItemInformationController d = detail();
+    if (d != null) d.markItemClosed(item);
+    User me = ClientSession.getCurrentUser();
+    if (me != null && item.getSellerId() == me.getId())
+      NotificationCenter.addNotification(ItemNotificationText.itemClosed(item));
+  }
+
+  @Override
+  public void onSellerBidNotify(Item item, double newBidPrice) {
+    NotificationCenter.addNotification(ItemNotificationText.sellerNewBid(item, newBidPrice));
+  }
+
+  @Override
+  public void onOutbidNotify(Item item) {
+    NotificationCenter.addNotification(ItemNotificationText.outbid(item));
+  }
+
+  @Override
+  public void onGlobalChat(ChatMessage message) {
+    ChatPageController c = chat();
+    if (c != null) c.onGlobalChat(message);
+  }
+
+  @Override
+  public void onPrivateChat(ChatMessage message) {
+    ChatPageController c = chat();
+    if (c != null) c.onPrivateChat(message);
+  }
+
+  @Override
+  public void onFriendRequest(Friendship friendship) {
+    NotificationCenter.addNotification(friendship.getRequesterUsername() + " đã gửi lời mời kết bạn!");
+    ChatPageController c = chat();
+    if (c != null) c.onFriendRequest(friendship);
+  }
+
+  @Override
+  public void onFriendRequestSent(Friendship friendship) {
+    NotificationCenter.addNotification("Đã gửi lời mời kết bạn đến " + friendship.getAddresseeUsername() + "!");
+    ChatPageController c = chat();
+    if (c != null) c.onFriendRequestSent(friendship);
+  }
+
+  @Override
+  public void onFriendAccepted(Friendship friendship) {
+    ChatPageController c = chat();
+    if (c != null) c.onFriendAccepted(friendship);
+    User me = ClientSession.getCurrentUser();
+    NotificationCenter.addNotification(
+        me != null && friendship.getRequesterId() == me.getId()
+            ? friendship.getAddresseeUsername() + " đã chấp nhận lời mời kết bạn!"
+            : "Bạn và " + friendship.getRequesterUsername() + " đã trở thành bạn bè!");
+  }
+
+  @Override
+  public void onAccountBanned(String reason) {
+    showFxAlert(
+        Alert.AlertType.ERROR,
+        "Account Suspended",
+        "Your account has been suspended by an administrator.",
+        reason != null && !reason.isBlank() ? reason : "You have been banned. Please contact support.");
+    KhungController.performForcedLogoutFromServer();
+  }
+
+  @Override
+  public void onAccountUnbanned() {
+    showFxAlert(
+        Alert.AlertType.INFORMATION,
+        "Account Reinstated",
+        "Your account is active again.",
+        "An administrator has lifted your suspension. Please log in to continue.");
+  }
+
+  private static void showFxAlert(Alert.AlertType type, String title, String header, String content) {
+    Alert alert = new Alert(type);
+    alert.setTitle(title);
+    alert.setHeaderText(header);
+    alert.setContentText(content);
+    alert.showAndWait();
   }
 }
 </file>
@@ -10560,6 +10391,92 @@ final class ItemSchemaMigration {
 }
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/dao/rating/RatingDao.java">
+package com.auction.server.dao.rating;
+
+import com.auction.server.dao.platform.BaseDao;
+import com.auction.shared.Rating;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+//Chống sập do bị tràn cursor DB
+public class RatingDao extends BaseDao<Rating> implements RatingRepository {
+
+  @Override
+  protected Rating mapRow(ResultSet rs) throws SQLException {
+    Rating ans = new Rating();
+    ans.setId(rs.getInt("id"));
+    ans.setItemId(rs.getInt("itemid"));
+    ans.setRaterUserId(rs.getInt("rateruserid"));
+    ans.setRatedUserId(rs.getInt("rateduserid"));
+    ans.setStars(rs.getInt("stars"));
+    ans.setFeedback(rs.getString("feedback"));
+    ans.setCreatedAt(rs.getTimestamp("createdat").toLocalDateTime());
+    ans.setRaterUsername(rs.getString("rater_name"));
+    return ans;
+  }
+  @Override
+  public boolean insertRating(Rating rating) {
+    boolean ans = executeUpdate(
+            "INSERT INTO ratings (itemid, rateruserid, rateduserid, stars, feedback) VALUES (?, ?, ?, ?, ?)",
+            rating.getItemId(),
+            rating.getRaterUserId(),
+            rating.getRatedUserId(),
+            rating.getStars(),
+            rating.getFeedback());
+    return ans;
+  }
+
+  @Override
+  public boolean hasRated(int itemid, int userid) {
+    String sql = "SELECT 1 FROM ratings WHERE itemid = ? AND rateruserid = ? LIMIT 1";
+    try (Connection conn = getConn();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemid);
+      ps.setInt(2, userid);
+      try (ResultSet ans = ps.executeQuery()) {
+        return ans.next();
+      }
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @Override
+  public List<Rating> getByItemId(int itemid) {
+    String sql = "SELECT r.*, u.username AS rater_name FROM ratings r LEFT JOIN users u ON r.rateruserid = u.id WHERE r.itemid = ? ORDER BY r.createdat DESC";
+    List<Rating> ans = queryList(sql, itemid);
+    return ans;
+  }
+
+  @Override
+  public void recalcUserRating(int userid) {
+    try (Connection conn = getConn()) {
+      String selectsql = "SELECT AVG(stars) AS avg_s, COUNT(*) AS cnt FROM ratings WHERE rateduserid = ?";
+      try (PreparedStatement ps = conn.prepareStatement(selectsql)) {
+        ps.setInt(1, userid);
+        try (ResultSet ans = ps.executeQuery()) {
+          if (ans.next()) {
+            double avgrating = ans.getDouble("avg_s");
+            int totalratings = ans.getInt("cnt");
+            String updatesql = "UPDATE users SET avgrating = ?, totalratings = ? WHERE id = ?";
+            try (PreparedStatement updatestmt = conn.prepareStatement(updatesql)) {
+              updatestmt.setDouble(1, avgrating);
+              updatestmt.setInt(2, totalratings);
+              updatestmt.setInt(3, userid);
+              updatestmt.executeUpdate();
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+    }
+  }
+}
+</file>
+
 <file path="auction-server/src/main/java/com/auction/server/dao/user/UserDao.java">
 package com.auction.server.dao.user;
 
@@ -10838,8 +10755,8 @@ package com.auction.server.handler.auction;
 
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
-
 import com.auction.server.service.auction.DutchAuctionCatalogSync;
+import com.auction.server.service.auction.SettlementService;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -10849,47 +10766,62 @@ public class ItemQueryHandler implements ActionHandler {
   @Override
   public Response handle(Request request, HandlerContext context) {
     String action = request.getAction();
-    String requestId = request.getRequestId();
+    String requestid = request.getRequestId();
 
     switch (action) {
-      case Request.GET_MY_ITEMS: {
-        int sellerId = (int) request.getPayload();
-        List<Item> items = context.getItemDao().getBySellerId(sellerId);
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) items);
-      }
+      case Request.GET_MY_ITEMS:
+        int sellerid = (int) request.getPayload();
+        List<Item> items = context.getItemDao().getBySellerId(sellerid);
+        Response res1 = new Response(requestid, Response.OK, "success", (java.io.Serializable) items);
+        return res1;
 
-      case Request.GET_ITEM_BY_ID: {
-        int itemId = (int) request.getPayload();
-        Item item = context.getItemDao().getById(itemId);
-        if (item != null) DutchAuctionCatalogSync.syncItem(context.getItemDao(), item);
-        return new Response(requestId,
-            item != null ? Response.OK : Response.ERROR,
-            item != null ? "success" : "not_found", item);
-      }
+      case Request.GET_ITEM_BY_ID:
+        int itemid = (int) request.getPayload();
+        Item item = context.getItemDao().getById(itemid);
+        if (item != null) {
+          DutchAuctionCatalogSync.syncItem(context.getItemDao(), item);
+        }
+        Response res2 = new Response(
+                requestid,
+                item != null ? Response.OK : Response.ERROR,
+                item != null ? "success" : "not_found",
+                item);
+        return res2;
 
-      case Request.GET_PENDING_ITEMS: {
-        List<Item> items = context.getItemDao().getPendingItems();
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) items);
-      }
+      case Request.GET_PENDING_ITEMS:
+        List<Item> pendingitems = context.getItemDao().getPendingItems();
+        Response res3 = new Response(requestid, Response.OK, "success", (java.io.Serializable) pendingitems);
+        return res3;
 
-      case Request.APPROVE_ITEM: {
-        int itemId = (int) request.getPayload();
-        boolean success = context.getItemDao().approveItem(itemId);
-        return new Response(requestId,
-            success ? Response.OK : Response.ERROR,
-            success ? "success" : "fail", null);
-      }
+      case Request.APPROVE_ITEM:
+        int approveid = (int) request.getPayload();
+        boolean ans1 = context.getItemDao().approveItem(approveid);
+        if (ans1) {
+          Item res = context.getItemDao().getById(approveid);
+          if (res != null && res.getEndTime() != null) {
+            SettlementService.getInstance().schedule(approveid, res.getEndTime());
+          }
+        }
+        Response res4 = new Response(
+                requestid,
+                ans1 ? Response.OK : Response.ERROR,
+                ans1 ? "success" : "fail",
+                null);
+        return res4;
 
-      case Request.REJECT_ITEM: {
-        int itemId = (int) request.getPayload();
-        boolean success = context.getItemDao().rejectItem(itemId);
-        return new Response(requestId,
-            success ? Response.OK : Response.ERROR,
-            success ? "success" : "fail", null);
-      }
+      case Request.REJECT_ITEM:
+        int rejectid = (int) request.getPayload();
+        boolean ans2 = context.getItemDao().rejectItem(rejectid);
+        Response res5 = new Response(
+                requestid,
+                ans2 ? Response.OK : Response.ERROR,
+                ans2 ? "success" : "fail",
+                null);
+        return res5;
 
       default:
-        return new Response(requestId, Response.ERROR, "unknown_action", null);
+        Response res6 = new Response(requestid, Response.ERROR, "unknown_action", null);
+        return res6;
     }
   }
 }
@@ -11030,146 +10962,418 @@ public class HandlerContext {
 }
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/handler/misc/MiscHandler.java">
+package com.auction.server.handler.misc;
+
+import com.auction.server.dao.auction.BidDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.server.handler.dispatch.ActionHandler;
+import com.auction.server.handler.dispatch.HandlerContext;
+import com.auction.shared.BidTransaction;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import com.auction.shared.TransactionLog;
+import com.auction.shared.User;
+import java.util.List;
+//Thêm case xử lý LOGOUT để Server xóa session)
+public class MiscHandler implements ActionHandler {
+  @Override
+  public Response handle(Request request, HandlerContext context) {
+    String action = request.getAction();
+    String requestid = request.getRequestId();
+    Object payload = request.getPayload();
+
+    switch (action) {
+      case "LOGOUT":
+        context.setCurrentUser(null);
+        Response ans = new Response(requestid, Response.OK, "logged_out", null);
+        return ans;
+
+      case Request.REFRESH_USER:
+        User user = new UserDao().getById(String.valueOf(payload));
+        Response res1 = new Response(
+                requestid,
+                user != null ? Response.OK : Response.ERROR,
+                user != null ? "success" : "fail",
+                user);
+        return res1;
+
+      case Request.GET_TRANSACTIONS:
+        List<TransactionLog> logs = context.getLogDao().getByUserId((int) payload);
+        Response res2 = new Response(requestid, Response.OK, "success", (java.io.Serializable) logs);
+        return res2;
+
+      case Request.GET_STATUS_STATS:
+        Response res3 = new Response(requestid, Response.OK, "success", context.getItemDao().getStatusStats());
+        return res3;
+
+      case Request.GET_CATEGORY_STATS:
+        Response res4 = new Response(requestid, Response.OK, "success", context.getItemDao().getCategoryStats());
+        return res4;
+
+      case Request.GET_BID_HISTORY:
+        int itemid = (int) payload;
+        List<BidTransaction> history = new BidDao().getBidHistory(itemid);
+        Response res5 = new Response(requestid, Response.OK, "success", (java.io.Serializable) history);
+        return res5;
+
+      case Request.PING:
+        Response res6 = new Response(requestid, Response.OK, "pong", null);
+        return res6;
+
+      default:
+        Response res7 = new Response(requestid, Response.ERROR, "unknown_action", null);
+        return res7;
+    }
+  }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionManager.java">
+package com.auction.server.service.auction;
+
+import com.auction.server.controller.ClientHandler;
+import com.auction.server.dao.auction.BidDao;
+import com.auction.server.dao.auction.ItemDao;
+import com.auction.server.dao.wallet.TransactionLogDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.shared.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class AuctionManager {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AuctionManager.class);
+  private static volatile AuctionManager instance;
+
+  private final ClientConnectionHub connections = new ClientConnectionHub();
+  private final ItemDao itemDao;
+  private final UserDao userDao;
+  private final BidDao bidDao;
+  private final TransactionLogDao logDao;
+  private final ConcurrentHashMap<Long, ReentrantLock> auctionLocks = new ConcurrentHashMap<>();
+  private final BidAuctionValidator bidValidator = new BidAuctionValidator();
+  private final AuctionRealtimeNotifier realtime;
+  private final AuctionBidPipeline bidPipeline;
+  private final AutoBidCoordinator autoBidCoordinator;
+  private final BanCascadeService banCascade;
+  private final LeaderboardService leaderboardservice = new LeaderboardService();
+
+  private AuctionManager() {
+    itemDao = new ItemDao();
+    userDao = new UserDao();
+    bidDao = new BidDao();
+    logDao = new TransactionLogDao();
+    realtime = new AuctionRealtimeNotifier(itemDao, userDao, connections);
+    bidPipeline = new AuctionBidPipeline(itemDao, userDao, bidDao, logDao, realtime, bidValidator);
+    autoBidCoordinator = new AutoBidCoordinator(itemDao, userDao, bidDao, bidValidator);
+    bidPipeline.setCleanupAutoBidsForItem(autoBidCoordinator::cleanup);
+    banCascade = new BanCascadeService(itemDao, userDao, bidDao, logDao, this);
+  }
+
+  AuctionManager(ItemDao id, UserDao ud, BidDao bd, TransactionLogDao ld) {
+    itemDao = id;
+    userDao = ud;
+    bidDao = bd;
+    logDao = ld;
+    realtime = new AuctionRealtimeNotifier(itemDao, userDao, connections);
+    bidPipeline = new AuctionBidPipeline(itemDao, userDao, bidDao, logDao, realtime, bidValidator);
+    autoBidCoordinator = new AutoBidCoordinator(itemDao, userDao, bidDao, bidValidator);
+    bidPipeline.setCleanupAutoBidsForItem(autoBidCoordinator::cleanup);
+    banCascade = new BanCascadeService(itemDao, userDao, bidDao, logDao, this);
+  }
+
+  public static AuctionManager getInstance() {
+    if (instance == null) synchronized (AuctionManager.class) { if (instance == null) instance = new AuctionManager(); }
+    return instance;
+  }
+  public LeaderboardService getLeaderboardservice() {
+    return leaderboardservice;
+  }
+
+  public void broadcastleaderboard() {
+    List<LeaderboardEntry> ans = leaderboardservice.gettop(10);
+    Response res = new Response("", "LEADERBOARD_UPDATE", "update", (java.io.Serializable) ans);
+    broadcast(res);
+  }
+  static void resetForTest() {
+    instance = null;
+  }
+
+  public ReentrantLock getAuctionLock(long id) {
+    return auctionLocks.computeIfAbsent(id, k -> new ReentrantLock());
+  }
+
+  public void addClient(ClientHandler client) {
+    connections.addClient(client);
+  }
+
+  public void removeClient(ClientHandler client) {
+    connections.removeClient(client);
+  }
+
+  public Response processBid(BidTransaction bid) {
+    User earlyCheck = userDao.getById(String.valueOf(bid.getUserId()));
+    if (earlyCheck == null) return BidAuctionValidator.error("User not found");
+    if (earlyCheck.isLocked() || !earlyCheck.isActive()) {
+      LOGGER.warn("Rejected bid from banned/locked user={} on item={}", bid.getUserId(), bid.getItemId());
+      return BidAuctionValidator.error("Account is suspended");
+    }
+    ReentrantLock lock = getAuctionLock(bid.getItemId());
+    try {
+      if (!lock.tryLock(500, TimeUnit.MILLISECONDS)) return BidAuctionValidator.error("Auction is busy, please try again");
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return BidAuctionValidator.error("Bid interrupted");
+    }
+    List<Runnable> after = new ArrayList<>();
+    Set<Integer> pendingPriceBroadcast = new HashSet<>();
+    ManualBidExecutor exec = bidPipeline::processManualBid;
+    try {
+      if (bid.isAutoBid()) return autoBidCoordinator.handleRegistration(bid, after, pendingPriceBroadcast, exec);
+      Response result = bidPipeline.processManualBid(bid, after, pendingPriceBroadcast);
+      if (result != null && Response.OK.equals(result.getStatus()))
+        autoBidCoordinator.runRounds(bid.getItemId(), after, pendingPriceBroadcast, exec);
+      return result;
+    } finally {
+      for (Integer itemId : pendingPriceBroadcast) {
+        final int id = itemId;
+        after.add(() -> realtime.broadcastPriceUpdate(id));
+      }
+      lock.unlock();
+      after.forEach(task -> { try { task.run(); } catch (Exception e) { LOGGER.warn("Post-bid task failed", e); } });
+    }
+  }
+
+  public void handleBidderBan(int bidderId) {
+    banCascade.handleBidderBan(bidderId);
+  }
+
+  public void handleSellerBan(int sellerId) {
+    banCascade.handleSellerBan(sellerId);
+  }
+
+  void cleanupAutoBids(int itemId) {
+    autoBidCoordinator.cleanup(itemId);
+  }
+
+  public void sendBalanceUpdateToUser(int userId) {
+    realtime.sendBalanceUpdateToUser(userId);
+  }
+
+  void broadcastPriceUpdate(int itemId) {
+    realtime.broadcastPriceUpdate(itemId);
+  }
+
+  void broadcastItemClosed(int itemId) {
+    realtime.broadcastItemClosed(itemId);
+  }
+
+  public void sendToUser(int userId, Response response) {
+    connections.sendToUser(userId, response);
+  }
+
+  public void broadcast(Response response) {
+    connections.broadcast(response);
+  }
+}
+</file>
+
 <file path="auction-server/src/main/java/com/auction/server/service/auction/AutoBidCoordinator.java">
 package com.auction.server.service.auction;
 
 import com.auction.server.dao.auction.BidDao;
 import com.auction.server.dao.auction.ItemDao;
 import com.auction.server.dao.user.UserDao;
-import com.auction.shared.*;
+import com.auction.shared.AuctionType;
+import com.auction.shared.BidTransaction;
+import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
+import com.auction.shared.Response;
+import com.auction.shared.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-/** Registers max auto-bids and runs counter-offer rounds after successful manual bids. */
 final class AutoBidCoordinator {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(AutoBidCoordinator.class);
-  private static final int MAX_AUTO_BID_ROUNDS = 50;
-
-  private final ItemDao itemDao;
-  private final UserDao userDao;
-  private final BidDao bidDao;
+  private final ItemDao itemdao;
+  private final UserDao userdao;
+  private final BidDao biddao;
   private final BidAuctionValidator validator;
   private final ConcurrentHashMap<Integer, PriorityQueue<AutoBidRegistration>> registry = new ConcurrentHashMap<>();
 
-  AutoBidCoordinator(ItemDao itemDao, UserDao userDao, BidDao bidDao, BidAuctionValidator validator) {
-    this.itemDao = itemDao;
-    this.userDao = userDao;
-    this.bidDao = bidDao;
+  AutoBidCoordinator(ItemDao itemdao, UserDao userdao, BidDao biddao, BidAuctionValidator validator) {
+    this.itemdao = itemdao;
+    this.userdao = userdao;
+    this.biddao = biddao;
     this.validator = validator;
   }
 
-  void cleanup(int itemId) {
-    registry.remove(itemId);
+  void cleanup(int itemid) {
+    registry.remove(itemid);
   }
 
-  Response handleRegistration(
-      BidTransaction bid, List<Runnable> after, Set<Integer> pendingPriceBroadcast, ManualBidExecutor executor) {
-    Item item = itemDao.getById(bid.getItemId());
-    User bidder = userDao.getById(String.valueOf(bid.getUserId()));
-    Response v = validator.validate(bid, item, bidder);
-    if (v != null) return v;
-    if (item.getAuctionType() == AuctionType.DUTCH) {
-      return BidAuctionValidator.error("Auto-bid is not available for Dutch auctions");
+  Response handleRegistration(BidTransaction bid, List<Runnable> after, Set<Integer> pendingpricebroadcast, ManualBidExecutor executor) {
+    Item item = itemdao.getById(bid.getItemId());
+    User bidder = userdao.getById(String.valueOf(bid.getUserId()));
+    Response ans = validator.validate(bid, item, bidder);
+    if (ans != null) {
+      return ans;
     }
-    if (bid.getMaxAutoBid() <= item.getCurrentPrice())
-      return BidAuctionValidator.error("Max auto-bid must be higher than current price");
-    PriorityQueue<AutoBidRegistration> regs =
-        registry.computeIfAbsent(bid.getItemId(), k -> AutoBidRegistration.newQueue());
+    if (item.getAuctionType() == AuctionType.DUTCH) {
+      return BidAuctionValidator.error("error");
+    }
+    if (bid.getMaxAutoBid() <= item.getCurrentPrice()) {
+      return BidAuctionValidator.error("error");
+    }
+    PriorityQueue<AutoBidRegistration> regs = registry.computeIfAbsent(bid.getItemId(), k -> AutoBidRegistration.newQueue());
     regs.removeIf(r -> r.userId == bid.getUserId());
     double inc = bid.getAutoBidIncrement() > 0 ? bid.getAutoBidIncrement() : 10.0;
     regs.add(new AutoBidRegistration(bid.getUserId(), bid.getMaxAutoBid(), inc, LocalDateTime.now()));
-    LOGGER.info("AutoBid registered: user={} item={} max={}", bid.getUserId(), bid.getItemId(), bid.getMaxAutoBid());
-    double firstBid = Math.min(item.getCurrentPrice() + inc, bid.getMaxAutoBid());
-    if (firstBid <= item.getCurrentPrice()) return BidAuctionValidator.error("Auto-bid ceiling too low for current price");
-    BidTransaction init = new BidTransaction(bid.getItemId(), bid.getUserId(), firstBid);
+    double firstbid = Math.min(item.getCurrentPrice() + inc, bid.getMaxAutoBid());
+    if (firstbid <= item.getCurrentPrice()) {
+      return BidAuctionValidator.error("error");
+    }
+    BidTransaction init = new BidTransaction(bid.getItemId(), bid.getUserId(), firstbid);
     init.setAutoBid(false);
     init.setTimestamp(LocalDateTime.now());
-    Response result = executor.execute(init, after, pendingPriceBroadcast);
-    if (result != null && Response.OK.equals(result.getStatus()))
-      runRounds(bid.getItemId(), after, pendingPriceBroadcast, executor);
-    return result;
+    Response res = executor.execute(init, after, pendingpricebroadcast);
+    if (res != null && Response.OK.equals(res.getStatus())) {
+      runRounds(bid.getItemId(), after, pendingpricebroadcast, executor);
+    }
+    return res;
   }
 
-  void runRounds(int itemId, List<Runnable> after, Set<Integer> pendingPriceBroadcast, ManualBidExecutor executor) {
-    PriorityQueue<AutoBidRegistration> regs = registry.get(itemId);
-    if (regs == null || regs.isEmpty()) return;
-    for (int round = 0; round < MAX_AUTO_BID_ROUNDS; round++) {
-      Item item = itemDao.getById(itemId);
-      if (item == null || item.getStatus() != ItemStatus.OPEN) break;
-      double currentPrice = item.getCurrentPrice();
-      int currentLeader = bidDao.getPreviousHighestBidder(itemId);
-      PriorityQueue<AutoBidRegistration> skipped = AutoBidRegistration.newQueue();
-      AutoBidRegistration chosen = null;
-      double chosenNextBid = 0;
-      while (!regs.isEmpty()) {
-        AutoBidRegistration reg = regs.poll();
-        double nextBid = Math.min(currentPrice + reg.increment, reg.maxAutoBid);
-        if (reg.userId == currentLeader || reg.maxAutoBid <= currentPrice || nextBid <= currentPrice) {
-          skipped.add(reg);
-          continue;
-        }
-        chosen = reg;
-        chosenNextBid = nextBid;
-        break;
-      }
-      regs.addAll(skipped);
-      if (chosen == null) break;
-      final AutoBidRegistration winner = chosen;
-      BidTransaction counterBid = new BidTransaction(itemId, winner.userId, chosenNextBid);
-      counterBid.setAutoBid(false);
-      counterBid.setTimestamp(LocalDateTime.now());
-      Response result = executor.execute(counterBid, after, pendingPriceBroadcast);
-      if (result == null || !Response.OK.equals(result.getStatus())) {
-        regs.removeIf(r -> r.userId == winner.userId);
-        LOGGER.info("AutoBid removed (bid failed): user={}", winner.userId);
-      }
+  void runRounds(int itemid, List<Runnable> after, Set<Integer> pendingpricebroadcast, ManualBidExecutor executor) {
+    PriorityQueue<AutoBidRegistration> regs = registry.get(itemid);
+    if (regs == null || regs.size() < 2) {
+      return;
     }
-    Item item = itemDao.getById(itemId);
-    if (item != null) regs.removeIf(r -> r.maxAutoBid <= item.getCurrentPrice());
-    else regs.clear();
+    Item item = itemdao.getById(itemid);
+    if (item == null || item.getStatus() != ItemStatus.OPEN) {
+      return;
+    }
+    AutoBidRegistration top = regs.poll();
+    AutoBidRegistration second = regs.poll();
+    if (top != null && second != null) {
+      double target = Math.min(second.maxAutoBid + top.increment, top.maxAutoBid);
+      if (target > item.getCurrentPrice()) {
+        BidTransaction counterbid = new BidTransaction(itemid, top.userId, target);
+        counterbid.setAutoBid(false);
+        counterbid.setTimestamp(LocalDateTime.now());
+        Response res = executor.execute(counterbid, after, pendingpricebroadcast);
+        if (res != null && Response.OK.equals(res.getStatus())) {
+          regs.add(top);
+        }
+      }
+      regs.add(second);
+    }
+    Item freshitem = itemdao.getById(itemid);
+    if (freshitem != null) {
+      regs.removeIf(r -> r.maxAutoBid <= freshitem.getCurrentPrice());
+    } else {
+      regs.clear();
+    }
   }
 }
 </file>
 
-<file path="auction-client/src/main/java/com/auction/client/network/NetworkEventListener.java">
-package com.auction.client.network;
+<file path="auction-server/src/main/java/com/auction/server/service/auction/SettlementService.java">
+package com.auction.server.service.auction;
 
-import com.auction.shared.ChatMessage;
-import com.auction.shared.Friendship;
+import com.auction.server.dao.auction.BidDao;
+import com.auction.server.dao.auction.ItemDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.server.dao.wallet.TransactionLogDao;
 import com.auction.shared.Item;
+import com.auction.shared.Response;
 import com.auction.shared.User;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.DelayQueue;
 
-public interface NetworkEventListener {
-  default void onBalanceUpdate(User user) {}
-  default void onOutbidNotify(Item item) {}
-  default void onNewBidUpdate(Item item) {}
-  default void onItemClosed(Item item) {}
-  default void onGlobalChat(ChatMessage message) {}
-  default void onPrivateChat(ChatMessage message) {}
-  default void onFriendRequest(Friendship friendship) {}
-  default void onFriendRequestSent(Friendship friendship) {}
-  default void onFriendAccepted(Friendship friendship) {}
-  default void onSellerBidNotify(Item item, double newPrice) {}
+public class SettlementService {
+  private static final SettlementService instance = new SettlementService();
+  private final ItemDao itemdao;
+  private final UserDao userdao;
+  private final BidDao biddao;
+  private final TransactionLogDao logdao;
+  private final DelayQueue<AuctionEndEvent> queue;
 
-  /**
-   * Called when the server notifies this client that its account has been
-   * banned. The UI should show a modal alert and then force-logout.
-   *
-   * @param reason human-readable reason string from the server
-   */
-  default void onAccountBanned(String reason) {}
+  private SettlementService() {
+    this.itemdao = new ItemDao();
+    this.userdao = new UserDao();
+    this.biddao = new BidDao();
+    this.logdao = new TransactionLogDao();
+    this.queue = new DelayQueue<>();
+  }
 
-  /**
-   * Called when the server notifies this client that its account ban has been
-   * lifted. The UI may show an informational toast or alert.
-   */
-  default void onAccountUnbanned() {}
+  public static SettlementService getInstance() {
+    return instance;
+  }
+
+  public void schedule(int itemid, LocalDateTime endtime) {
+    AuctionEndEvent ans = new AuctionEndEvent(itemid, endtime);
+    queue.remove(ans);
+    queue.add(ans);
+  }
+
+  public void start() {
+    List<Item> res = itemdao.getAll();
+    for (Item item : res) {
+      if ("OPEN".equals(item.getStatus().name()) && item.getEndTime() != null) {
+        schedule(item.getId(), item.getEndTime());
+      }
+    }
+    new Thread(() -> {
+      while (true) {
+        try {
+          AuctionEndEvent ans = queue.take();
+          Item item = itemdao.getById(ans.getItemid());
+          if (item != null && "OPEN".equals(item.getStatus().name())) {
+            settle(item);
+          }
+        } catch (Exception e) {
+        }
+      }
+    }).start();
+  }
+
+  private void settle(Item item) {
+    int winnerid = biddao.getPreviousHighestBidder(item.getId());
+    if (winnerid > 0) {
+      boolean closed = itemdao.atomicCloseAuction(item.getId(), winnerid, "CLOSED");
+      if (!closed) {
+        return;
+      }
+      double finalprice = item.getCurrentPrice();
+      userdao.addBidderMetrics(winnerid, 0);
+      userdao.atomicCreditBalance(item.getSellerId(), finalprice);
+      userdao.addSellerMetrics(item.getSellerId(), finalprice);
+      logdao.insertLog(item.getSellerId(), "ITEM_SOLD", finalprice, item.getId());
+      User freshseller = userdao.getById(String.valueOf(item.getSellerId()));
+      if (freshseller != null) {
+        AuctionManager.getInstance().sendToUser(item.getSellerId(), new Response("", "BALANCE_UPDATE", "Success", freshseller));
+      }
+    } else {
+      boolean closed = itemdao.atomicCloseAuction(item.getId(), 0, "EXPIRED");
+      if (!closed) {
+        return;
+      }
+    }
+    Item closeditem = itemdao.getById(item.getId());
+    if (closeditem != null) {
+      AuctionManager.getInstance().broadcast(new Response("", "ITEM_CLOSED", "closed", closeditem));
+    }
+  }
 }
 </file>
 
@@ -12398,192 +12602,6 @@ public class DatabaseConnection {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionBidPipeline.java">
-package com.auction.server.service.auction;
-
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.shared.*;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.function.IntConsumer;
-import java.sql.Connection;
-import java.sql.SQLException;
-/**
- * Applies manual bids (buy-it-now vs incremental), escrow/refunds, and schedules realtime side-effects.
- */
-final class AuctionBidPipeline {
-
-  private static final long ANTI_SNIPE_THRESHOLD_SECONDS = 60;
-
-  private final ItemDao itemDao;
-  private final UserDao userDao;
-  private final BidDao bidDao;
-  private final TransactionLogDao logDao;
-  private final AuctionRealtimeNotifier notifier;
-  private final BidAuctionValidator validator;
-
-  /** Clears auto-bid registry when an auction closes (e.g. buy-it-now). */
-  private IntConsumer cleanupAutoBidsForItem = itemId -> {};
-
-  AuctionBidPipeline(
-      ItemDao itemDao,
-      UserDao userDao,
-      BidDao bidDao,
-      TransactionLogDao logDao,
-      AuctionRealtimeNotifier notifier,
-      BidAuctionValidator validator) {
-    this.itemDao = itemDao;
-    this.userDao = userDao;
-    this.bidDao = bidDao;
-    this.logDao = logDao;
-    this.notifier = notifier;
-    this.validator = validator;
-  }
-
-  void setCleanupAutoBidsForItem(IntConsumer cleanupAutoBidsForItem) {
-    this.cleanupAutoBidsForItem = cleanupAutoBidsForItem != null ? cleanupAutoBidsForItem : id -> {};
-  }
-
-  Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
-    Item item = itemDao.getById(bid.getItemId());
-    DutchAuctionCatalogSync.syncItem(itemDao, item);
-    item = itemDao.getById(bid.getItemId());
-    User bidder = userDao.getById(String.valueOf(bid.getUserId()));
-    Response validation = validator.validate(bid, item, bidder);
-    if (validation != null) return validation;
-    if (item != null && item.getAuctionType() == AuctionType.DUTCH) {
-      return processDutchPurchase(bid, item, bidder, after);
-    }
-    if (isBuyItNow(item, bid)) return processBuyItNow(bid, item, bidder, after);
-    return processRegularBid(bid, item, bidder, after, pendingPriceBroadcast);
-  }
-
-  private boolean isBuyItNow(Item item, BidTransaction bid) {
-    return item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice();
-  }
-
-  private Response processDutchPurchase(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
-    double price = item.getCurrentPrice();
-    if (Math.abs(bid.getBidValue() - price) > 0.02) {
-      return BidAuctionValidator.error("Enter the current listed price to purchase");
-    }
-    if (!userDao.atomicDeductBalance(bidder.getId(), price)) return BidAuctionValidator.error("Insufficient balance");
-    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
-    userDao.addBidderMetrics(bidder.getId(), price);
-    if (!itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
-      userDao.atomicCreditBalance(bidder.getId(), price);
-      logDao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
-      return BidAuctionValidator.error("Auction already closed");
-    }
-    itemDao.updatePrice(item.getId(), price, item.getVersion());
-    creditSeller(item, price, after);
-    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-    after.add(() -> notifier.broadcastItemClosed(item.getId()));
-    final int closedItemId = item.getId();
-    after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
-    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-  }
-
-  private Response processBuyItNow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
-    double p = item.getMaxPrice();
-    if (!userDao.atomicDeductBalance(bidder.getId(), p)) return BidAuctionValidator.error("Insufficient balance");
-    logDao.insertLog(bidder.getId(), "ITEM_BOUGHT", -p, bid.getItemId());
-    userDao.addBidderMetrics(bidder.getId(), p);
-    if (!itemDao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
-      userDao.atomicCreditBalance(bidder.getId(), p);
-      logDao.insertLog(bidder.getId(), "BUY_REFUND", p, bid.getItemId());
-      return BidAuctionValidator.error("Auction already closed");
-    }
-    itemDao.updatePrice(item.getId(), p, item.getVersion());
-    creditSeller(item, p, after);
-    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-    after.add(() -> notifier.broadcastItemClosed(item.getId()));
-    final int closedItemId = item.getId();
-    after.add(() -> cleanupAutoBidsForItem.accept(closedItemId));
-    return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-  }
-
-  private Response processRegularBid(
-          BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingPriceBroadcast) {
-
-    if (bid.getBidValue() <= item.getCurrentPrice()) return BidAuctionValidator.error("Bid too low");
-
-    try (java.sql.Connection conn = com.auction.server.dao.platform.DatabaseConnection.getInstance().getConnection()) {
-      conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
-      try {
-        // 1. Trừ tiền
-        if (!userDao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn)) {
-          conn.rollback();
-          return BidAuctionValidator.error("Insufficient balance");
-        }
-        logDao.insertLogTx(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId(), conn);
-
-        // 2. Lấy thông tin người cũ
-        int prevId = bidDao.getCurrentHighestBidderTx(bid.getItemId(), conn);
-        double prevPrice = item.getCurrentPrice();
-
-        // 3. Đặt bid mới & Cập nhật giá
-        if (!bidDao.placeBidTx(bid, conn)) {
-          conn.rollback();
-          return BidAuctionValidator.error("conflict");
-        }
-        itemDao.updatePriceTx(item.getId(), bid.getBidValue(), conn);
-
-        // 4. Hoàn tiền người cũ
-        if (prevId > 0 && prevPrice > 0) {
-          userDao.creditBalanceTx(prevId, prevPrice, conn);
-          logDao.insertLogTx(prevId, "BID_REFUND", prevPrice, bid.getItemId(), conn);
-          after.add(() -> notifier.sendBalanceUpdateToUser(prevId));
-          final int outbidItemId = bid.getItemId();
-          after.add(() -> notifier.notifyOutbidUser(prevId, outbidItemId));
-        }
-
-        conn.commit(); // THÀNH CÔNG THÌ COMMIT TOÀN BỘ
-
-        after.add(() -> applyAntiSnipeExtension(bid.getItemId()));
-        after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-        pendingPriceBroadcast.add(bid.getItemId());
-
-        return new Response("", Response.OK, "success", bid);
-
-      } catch (Exception e) {
-        conn.rollback(); // LỖI BẤT KỲ ĐÂU -> ROLLBACK, KHÔNG AI MẤT TIỀN
-        return BidAuctionValidator.error("System error during bid");
-      }
-    } catch (SQLException e) {
-      return BidAuctionValidator.error("Database connection error");
-    }
-  }
-
-  private void creditSeller(Item item, double amount, List<Runnable> after) {
-    userDao.atomicCreditBalance(item.getSellerId(), amount);
-    userDao.addSellerMetrics(item.getSellerId(), amount);
-    logDao.insertLog(item.getSellerId(), "ITEM_SOLD", amount, item.getId());
-    after.add(() -> notifier.sendBalanceUpdateToUser(item.getSellerId()));
-  }
-
-  private void refundPreviousBidder(int prevId, double prevPrice, int itemId, List<Runnable> after) {
-    if (prevId <= 0 || prevPrice <= 0) return;
-    userDao.atomicCreditBalance(prevId, prevPrice);
-    logDao.insertLog(prevId, "BID_REFUND", prevPrice, itemId);
-    after.add(() -> notifier.sendBalanceUpdateToUser(prevId));
-  }
-
-  private void applyAntiSnipeExtension(int itemId) {
-    Item item = itemDao.getById(itemId);
-    if (item != null
-        && item.getEndTime() != null
-        && Duration.between(LocalDateTime.now(), item.getEndTime()).getSeconds() < ANTI_SNIPE_THRESHOLD_SECONDS)
-      itemDao.updateEndTime(item.getId(), item.getEndTime().plusSeconds(ANTI_SNIPE_THRESHOLD_SECONDS));
-  }
-}
-</file>
-
 <file path="auction-shared/src/main/java/com/auction/shared/ItemFactory.java">
 package com.auction.shared;
 
@@ -13101,6 +13119,42 @@ public class AuctionLogicTest {
 </project>
 </file>
 
+<file path="auction-client/src/main/java/com/auction/client/network/NetworkEventListener.java">
+package com.auction.client.network;
+
+import com.auction.shared.ChatMessage;
+import com.auction.shared.Friendship;
+import com.auction.shared.Item;
+import com.auction.shared.User;
+
+public interface NetworkEventListener {
+  default void onBalanceUpdate(User user) {}
+  default void onOutbidNotify(Item item) {}
+  default void onNewBidUpdate(Item item) {}
+  default void onItemClosed(Item item) {}
+  default void onGlobalChat(ChatMessage message) {}
+  default void onPrivateChat(ChatMessage message) {}
+  default void onFriendRequest(Friendship friendship) {}
+  default void onFriendRequestSent(Friendship friendship) {}
+  default void onFriendAccepted(Friendship friendship) {}
+  default void onSellerBidNotify(Item item, double newPrice) {}
+  default void onLeaderboardUpdate(java.util.List<com.auction.shared.LeaderboardEntry> res) {}
+  /**
+   * Called when the server notifies this client that its account has been
+   * banned. The UI should show a modal alert and then force-logout.
+   *
+   * @param reason human-readable reason string from the server
+   */
+  default void onAccountBanned(String reason) {}
+
+  /**
+   * Called when the server notifies this client that its account ban has been
+   * lifted. The UI may show an informational toast or alert.
+   */
+  default void onAccountUnbanned() {}
+}
+</file>
+
 <file path="auction-client/src/main/java/com/auction/client/ui/RatingForm/RatingFormController.java">
 package com.auction.client.ui.RatingForm;
 
@@ -13594,200 +13648,6 @@ public class RatingFormController {
 </VBox>
 </file>
 
-<file path="auction-client/src/main/resources/fxml/trangchu/TrangChu.fxml">
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ContentDisplay?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.SVGPath?>
-<?import javafx.scene.text.Font?>
-
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.ui.TrangChu.TrangChuController"
-      fx:id="MainBackGround"
-      styleClass="trangchu-page"
-      stylesheets="/css/trangchu/TrangChu.css">
-    <children>
-        <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="catalog-auction-toolbar">
-            <children>
-                <Label styleClass="category-heading" text="Browse catalog" />
-                <HBox spacing="10.0" styleClass="segment-toggle-group">
-                    <children>
-                        <ToggleButton fx:id="tabEnglishAuctions" mnemonicParsing="false" prefHeight="40.0"
-                                    styleClass="catalog-auction-tab" text="English Auctions"/>
-                        <ToggleButton fx:id="tabDutchAuctions" mnemonicParsing="false" prefHeight="40.0"
-                                    styleClass="catalog-auction-tab" text="Dutch Auctions"/>
-                    </children>
-                </HBox>
-            </children>
-        </HBox>
-        <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
-            <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="260.0" percentWidth="35.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="320.0" percentWidth="65.0"/>
-            </columnConstraints>
-            <rowConstraints>
-                <RowConstraints vgrow="ALWAYS"/>
-            </rowConstraints>
-            <VBox GridPane.columnIndex="0" spacing="0.0" styleClass="col-trending" GridPane.vgrow="ALWAYS">
-                <children>
-                    <HBox>
-                        <children>
-                            <Label styleClass="TopLabel" text="Trending Lots">
-                                <font>
-                                    <Font size="24.0"/>
-                                </font>
-                            </Label>
-                        </children>
-                    </HBox>
-                    <ScrollPane fitToWidth="true"
-                                hbarPolicy="NEVER"
-                                minHeight="0.0"
-                                styleClass="scroll-pane trending-scroll"
-                                vbarPolicy="AS_NEEDED"
-                                VBox.vgrow="ALWAYS">
-                        <content>
-                            <VBox fx:id="TrendingBind"
-                                  spacing="20.0"
-                                  styleClass="TrendingBind"
-                                  alignment="TOP_CENTER"
-                                  maxWidth="Infinity"/>
-                        </content>
-                    </ScrollPane>
-                </children>
-            </VBox>
-            <ScrollPane GridPane.columnIndex="1"
-                        GridPane.rowIndex="0"
-                        GridPane.hgrow="ALWAYS"
-                        GridPane.vgrow="ALWAYS"
-                        fitToWidth="true"
-                        hbarPolicy="NEVER"
-                        minHeight="0.0"
-                        styleClass="scroll-pane auction-categories-scroll"
-                        vbarPolicy="AS_NEEDED">
-                <content>
-                    <VBox spacing="28.0"
-                          styleClass="col-categories"
-                          maxWidth="Infinity">
-                        <children>
-                            <VBox spacing="10.0" styleClass="category-block">
-                                <children>
-                                    <Label styleClass="category-heading" text="Art Lots"/>
-                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
-                                        <children>
-                                            <Button fx:id="categoryArtPrev"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselPrev"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
-                                                <children>
-                                                    <HBox fx:id="categoryArtRow" spacing="16.0" styleClass="category-row"/>
-                                                </children>
-                                            </HBox>
-                                            <Button fx:id="categoryArtNext"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselNext"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                        </children>
-                                    </HBox>
-                                </children>
-                            </VBox>
-                            <VBox spacing="10.0" styleClass="category-block">
-                                <children>
-                                    <Label styleClass="category-heading" text="Electronics Lots"/>
-                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
-                                        <children>
-                                            <Button fx:id="categoryElectronicsPrev"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselPrev"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
-                                                <children>
-                                                    <HBox fx:id="categoryElectronicsRow" spacing="16.0" styleClass="category-row"/>
-                                                </children>
-                                            </HBox>
-                                            <Button fx:id="categoryElectronicsNext"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselNext"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                        </children>
-                                    </HBox>
-                                </children>
-                            </VBox>
-                            <VBox spacing="10.0" styleClass="category-block">
-                                <children>
-                                    <Label styleClass="category-heading" text="Vehicle Lots"/>
-                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
-                                        <children>
-                                            <Button fx:id="categoryVehiclesPrev"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselPrev"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
-                                                <children>
-                                                    <HBox fx:id="categoryVehiclesRow" spacing="16.0" styleClass="category-row"/>
-                                                </children>
-                                            </HBox>
-                                            <Button fx:id="categoryVehiclesNext"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselNext"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                        </children>
-                                    </HBox>
-                                </children>
-                            </VBox>
-                        </children>
-                    </VBox>
-                </content>
-            </ScrollPane>
-        </GridPane>
-    </children>
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="16.0"/>
-    </padding>
-</VBox>
-</file>
-
 <file path="auction-server/pom.xml">
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -13909,6 +13769,192 @@ public class RatingFormController {
         </plugins>
     </build>
 </project>
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionBidPipeline.java">
+package com.auction.server.service.auction;
+
+import com.auction.server.dao.auction.BidDao;
+import com.auction.server.dao.auction.ItemDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.server.dao.wallet.TransactionLogDao;
+import com.auction.shared.AuctionType;
+import com.auction.shared.BidTransaction;
+import com.auction.shared.Item;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+import java.sql.Connection;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.function.IntConsumer;
+
+final class AuctionBidPipeline {
+  private final ItemDao itemdao;
+  private final UserDao userdao;
+  private final BidDao biddao;
+  private final TransactionLogDao logdao;
+  private final AuctionRealtimeNotifier notifier;
+  private final BidAuctionValidator validator;
+  private IntConsumer cleanupautobidsforitem = id -> {};
+
+  AuctionBidPipeline(ItemDao itemdao, UserDao userdao, BidDao biddao, TransactionLogDao logdao, AuctionRealtimeNotifier notifier, BidAuctionValidator validator) {
+    this.itemdao = itemdao;
+    this.userdao = userdao;
+    this.biddao = biddao;
+    this.logdao = logdao;
+    this.notifier = notifier;
+    this.validator = validator;
+  }
+
+  void setCleanupAutoBidsForItem(IntConsumer cleanupautobidsforitem) {
+    if (cleanupautobidsforitem != null) {
+      this.cleanupautobidsforitem = cleanupautobidsforitem;
+    }
+  }
+
+  Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
+    Item item = itemdao.getById(bid.getItemId());
+    DutchAuctionCatalogSync.syncItem(itemdao, item);
+    item = itemdao.getById(bid.getItemId());
+    User bidder = userdao.getById(String.valueOf(bid.getUserId()));
+    Response ans = validator.validate(bid, item, bidder);
+    if (ans != null) {
+      return ans;
+    }
+    if (item != null && item.getAuctionType() == AuctionType.DUTCH) {
+      return processDutchPurchase(bid, item, bidder, after);
+    }
+    if (isBuyItNow(item, bid)) {
+      return processBuyItNow(bid, item, bidder, after);
+    }
+    return processRegularBid(bid, item, bidder, after, pendingpricebroadcast);
+  }
+
+  private boolean isBuyItNow(Item item, BidTransaction bid) {
+    boolean ans = item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice();
+    return ans;
+  }
+
+  private Response processDutchPurchase(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
+    double price = item.getCurrentPrice();
+    double ans = Math.abs(bid.getBidValue() - price);
+    if (ans > 0.02) {
+      return BidAuctionValidator.error("error");
+    }
+    boolean res = userdao.atomicDeductBalance(bidder.getId(), price);
+    if (!res) {
+      return BidAuctionValidator.error("error");
+    }
+    logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
+    userdao.addBidderMetrics(bidder.getId(), price);
+    boolean res2 = itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED");
+    if (!res2) {
+      userdao.atomicCreditBalance(bidder.getId(), price);
+      logdao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
+      return BidAuctionValidator.error("error");
+    }
+    itemdao.updatePrice(item.getId(), price, item.getVersion());
+    creditSeller(item, price, after);
+    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+    after.add(() -> notifier.broadcastItemClosed(item.getId()));
+    int closeditemid = item.getId();
+    after.add(() -> cleanupautobidsforitem.accept(closeditemid));
+    AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), price);
+    after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
+    Response res3 = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
+    return res3;
+  }
+
+  private Response processBuyItNow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
+    double p = item.getMaxPrice();
+    boolean ans = userdao.atomicDeductBalance(bidder.getId(), p);
+    if (!ans) {
+      return BidAuctionValidator.error("error");
+    }
+    logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -p, bid.getItemId());
+    userdao.addBidderMetrics(bidder.getId(), p);
+    boolean res = itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED");
+    if (!res) {
+      userdao.atomicCreditBalance(bidder.getId(), p);
+      logdao.insertLog(bidder.getId(), "BUY_REFUND", p, bid.getItemId());
+      return BidAuctionValidator.error("error");
+    }
+    itemdao.updatePrice(item.getId(), p, item.getVersion());
+    creditSeller(item, p, after);
+    after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+    after.add(() -> notifier.broadcastItemClosed(item.getId()));
+    int closeditemid = item.getId();
+    after.add(() -> cleanupautobidsforitem.accept(closeditemid));
+    AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), p);
+    after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
+    Response res2 = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
+    return res2;
+  }
+
+  private Response processRegularBid(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
+    if (bid.getBidValue() <= item.getCurrentPrice()) {
+      return BidAuctionValidator.error("error");
+    }
+    try (Connection conn = com.auction.server.dao.platform.DatabaseConnection.getInstance().getConnection()) {
+      conn.setAutoCommit(false);
+      try {
+        boolean ans = userdao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn);
+        if (!ans) {
+          conn.rollback();
+          return BidAuctionValidator.error("error");
+        }
+        logdao.insertLogTx(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId(), conn);
+        int previd = biddao.getCurrentHighestBidderTx(bid.getItemId(), conn);
+        double prevprice = item.getCurrentPrice();
+        boolean res = biddao.placeBidTx(bid, conn);
+        if (!res) {
+          conn.rollback();
+          return BidAuctionValidator.error("error");
+        }
+        itemdao.updatePriceTx(item.getId(), bid.getBidValue(), conn);
+        if (previd > 0 && prevprice > 0) {
+          userdao.creditBalanceTx(previd, prevprice, conn);
+          logdao.insertLogTx(previd, "BID_REFUND", prevprice, bid.getItemId(), conn);
+          after.add(() -> notifier.sendBalanceUpdateToUser(previd));
+          int outbiditemid = bid.getItemId();
+          after.add(() -> notifier.notifyOutbidUser(previd, outbiditemid));
+        }
+        conn.commit();
+        after.add(() -> applyAntiSnipeExtension(bid.getItemId()));
+        after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+        pendingpricebroadcast.add(bid.getItemId());
+        Response res2 = new Response("", Response.OK, "success", bid);
+        return res2;
+      } catch (Exception e) {
+        conn.rollback();
+        return BidAuctionValidator.error("error");
+      }
+    } catch (Exception e) {
+      return BidAuctionValidator.error("error");
+    }
+  }
+
+  private void creditSeller(Item item, double amount, List<Runnable> after) {
+    userdao.atomicCreditBalance(item.getSellerId(), amount);
+    userdao.addSellerMetrics(item.getSellerId(), amount);
+    logdao.insertLog(item.getSellerId(), "ITEM_SOLD", amount, item.getId());
+    after.add(() -> notifier.sendBalanceUpdateToUser(item.getSellerId()));
+  }
+
+  private void applyAntiSnipeExtension(int itemid) {
+    Item item = itemdao.getById(itemid);
+    if (item != null && item.getEndTime() != null) {
+      long ans = Duration.between(LocalDateTime.now(), item.getEndTime()).getSeconds();
+      if (ans < 60) {
+        LocalDateTime res = item.getEndTime().plusSeconds(60);
+        itemdao.updateEndTime(item.getId(), res);
+        SettlementService.getInstance().schedule(item.getId(), res);
+      }
+    }
+  }
+}
 </file>
 
 <file path="auction-shared/pom.xml">
@@ -14445,6 +14491,206 @@ public class Vehicle extends Item {
         </VBox>
     </children>
 </StackPane>
+</file>
+
+<file path="auction-client/src/main/resources/fxml/trangchu/TrangChu.fxml">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ContentDisplay?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.TrangChu.TrangChuController"
+      fx:id="MainBackGround"
+      styleClass="trangchu-page"
+      stylesheets="/css/trangchu/TrangChu.css">
+    <children>
+        <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="catalog-auction-toolbar">
+            <children>
+                <Label styleClass="category-heading" text="Browse catalog" />
+                <HBox spacing="10.0" styleClass="segment-toggle-group">
+                    <children>
+                        <ToggleButton fx:id="tabEnglishAuctions" mnemonicParsing="false" prefHeight="40.0"
+                                    styleClass="catalog-auction-tab" text="English Auctions"/>
+                        <ToggleButton fx:id="tabDutchAuctions" mnemonicParsing="false" prefHeight="40.0"
+                                    styleClass="catalog-auction-tab" text="Dutch Auctions"/>
+                    </children>
+                </HBox>
+            </children>
+        </HBox>
+        <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="260.0" percentWidth="35.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="320.0" percentWidth="65.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints vgrow="ALWAYS"/>
+            </rowConstraints>
+            <VBox GridPane.columnIndex="0" spacing="0.0" styleClass="col-trending" GridPane.vgrow="ALWAYS">
+                <children>
+                    <HBox>
+                        <children>
+                            <Label styleClass="TopLabel" text="Trending Lots">
+                                <font>
+                                    <Font size="24.0"/>
+                                </font>
+                            </Label>
+                        </children>
+                    </HBox>
+                    <ScrollPane fitToWidth="true"
+                                hbarPolicy="NEVER"
+                                minHeight="0.0"
+                                styleClass="scroll-pane trending-scroll"
+                                vbarPolicy="AS_NEEDED"
+                                VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox spacing="20.0" alignment="TOP_CENTER" maxWidth="Infinity">
+                                <VBox fx:id="TrendingBind"
+                                      spacing="20.0"
+                                      styleClass="TrendingBind"
+                                      alignment="TOP_CENTER"
+                                      maxWidth="Infinity"/>
+                                <VBox spacing="15.0" styleClass="TrendingBind" alignment="TOP_CENTER" maxWidth="Infinity">
+                                    <Label styleClass="TopLabel" text="Top Đại Gia" />
+                                    <VBox fx:id="leaderboardcontainer" spacing="10.0" />
+                                </VBox>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+                </children>
+            </VBox>
+            <ScrollPane GridPane.columnIndex="1"
+                        GridPane.rowIndex="0"
+                        GridPane.hgrow="ALWAYS"
+                        GridPane.vgrow="ALWAYS"
+                        fitToWidth="true"
+                        hbarPolicy="NEVER"
+                        minHeight="0.0"
+                        styleClass="scroll-pane auction-categories-scroll"
+                        vbarPolicy="AS_NEEDED">
+                <content>
+                    <VBox spacing="28.0"
+                          styleClass="col-categories"
+                          maxWidth="Infinity">
+                        <children>
+                            <VBox spacing="10.0" styleClass="category-block">
+                                <children>
+                                    <Label styleClass="category-heading" text="Art Lots"/>
+                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
+                                        <children>
+                                            <Button fx:id="categoryArtPrev"
+                                                    contentDisplay="GRAPHIC_ONLY"
+                                                    mnemonicParsing="false"
+                                                    onAction="#categoryCarouselPrev"
+                                                    styleClass="carousel-nav-btn">
+                                                <graphic>
+                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
+                                                </graphic>
+                                            </Button>
+                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
+                                                <children>
+                                                    <HBox fx:id="categoryArtRow" spacing="16.0" styleClass="category-row"/>
+                                                </children>
+                                            </HBox>
+                                            <Button fx:id="categoryArtNext"
+                                                    contentDisplay="GRAPHIC_ONLY"
+                                                    mnemonicParsing="false"
+                                                    onAction="#categoryCarouselNext"
+                                                    styleClass="carousel-nav-btn">
+                                                <graphic>
+                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
+                                                </graphic>
+                                            </Button>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+                            <VBox spacing="10.0" styleClass="category-block">
+                                <children>
+                                    <Label styleClass="category-heading" text="Electronics Lots"/>
+                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
+                                        <children>
+                                            <Button fx:id="categoryElectronicsPrev"
+                                                    contentDisplay="GRAPHIC_ONLY"
+                                                    mnemonicParsing="false"
+                                                    onAction="#categoryCarouselPrev"
+                                                    styleClass="carousel-nav-btn">
+                                                <graphic>
+                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
+                                                </graphic>
+                                            </Button>
+                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
+                                                <children>
+                                                    <HBox fx:id="categoryElectronicsRow" spacing="16.0" styleClass="category-row"/>
+                                                </children>
+                                            </HBox>
+                                            <Button fx:id="categoryElectronicsNext"
+                                                    contentDisplay="GRAPHIC_ONLY"
+                                                    mnemonicParsing="false"
+                                                    onAction="#categoryCarouselNext"
+                                                    styleClass="carousel-nav-btn">
+                                                <graphic>
+                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
+                                                </graphic>
+                                            </Button>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+                            <VBox spacing="10.0" styleClass="category-block">
+                                <children>
+                                    <Label styleClass="category-heading" text="Vehicle Lots"/>
+                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
+                                        <children>
+                                            <Button fx:id="categoryVehiclesPrev"
+                                                    contentDisplay="GRAPHIC_ONLY"
+                                                    mnemonicParsing="false"
+                                                    onAction="#categoryCarouselPrev"
+                                                    styleClass="carousel-nav-btn">
+                                                <graphic>
+                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
+                                                </graphic>
+                                            </Button>
+                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
+                                                <children>
+                                                    <HBox fx:id="categoryVehiclesRow" spacing="16.0" styleClass="category-row"/>
+                                                </children>
+                                            </HBox>
+                                            <Button fx:id="categoryVehiclesNext"
+                                                    contentDisplay="GRAPHIC_ONLY"
+                                                    mnemonicParsing="false"
+                                                    onAction="#categoryCarouselNext"
+                                                    styleClass="carousel-nav-btn">
+                                                <graphic>
+                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
+                                                </graphic>
+                                            </Button>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+                        </children>
+                    </VBox>
+                </content>
+            </ScrollPane>
+        </GridPane>
+    </children>
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="16.0"/>
+    </padding>
+</VBox>
 </file>
 
 <file path="auction-server/src/main/java/com/auction/server/Main.java">
@@ -15439,17 +15685,12 @@ public class HistoryController {
 package com.auction.server.controller;
 
 import com.auction.server.service.auction.SettlementService;
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SocketServer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(SocketServer.class);
-
   private final int port;
   private final ExecutorService pool;
 
@@ -15460,18 +15701,14 @@ public class SocketServer {
 
   public void startServer() {
     try {
-      SettlementService settlement = new SettlementService();
-      settlement.start();
-
-      ServerSocket serverSocket = new ServerSocket(this.port);
-      LOGGER.info("Server is running on port {}", this.port);
+      SettlementService.getInstance().start();
+      ServerSocket serversocket = new ServerSocket(this.port);
       while (true) {
-        Socket client = serverSocket.accept();
+        Socket client = serversocket.accept();
         ClientHandler handler = new ClientHandler(client);
         this.pool.execute(handler);
       }
-    } catch (IOException e) {
-      LOGGER.error("Server startup failed", e);
+    } catch (Exception e) {
     }
   }
 }
@@ -17840,90 +18077,6 @@ public class AddNewLotController {
 }
 </file>
 
-<file path="auction-shared/src/main/java/com/auction/shared/Request.java">
-package com.auction.shared;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-public class Request implements Serializable {
-  private static final long serialVersionUID = 1L;
-
-  public static final String LOGIN = "LOGIN";
-  public static final String SIGNUP = "SIGNUP";
-  public static final String BID = "BID";
-  public static final String ADD = "ADD";
-  public static final String LIST = "LIST";
-  public static final String UPDATE_PROFILE = "UPDATE_PROFILE";
-  public static final String UPDATE_AVATAR = "UPDATE_AVATAR";
-  public static final String GET_ALL_USERS = "GET_ALL_USERS";
-  public static final String LOCK_USER = "LOCK_USER";
-  public static final String UNLOCK_USER = "UNLOCK_USER";
-  public static final String ADD_LOT = "ADD_LOT";
-  public static final String GET_ONGOING_BIDS = "GET_ONGOING_BIDS";
-  public static final String GET_UPCOMING_BIDS = "GET_UPCOMING_BIDS";
-  public static final String SUBMIT_RATING = "SUBMIT_RATING";
-  public static final String GET_RATINGS = "GET_RATINGS";
-  public static final String GET_PENDING_ITEMS = "GET_PENDING_ITEMS";
-  public static final String APPROVE_ITEM = "APPROVE_ITEM";
-  public static final String REJECT_ITEM = "REJECT_ITEM";
-  public static final String GET_ITEM_BY_ID = "GET_ITEM_BY_ID";
-  public static final String PROMOTE_ADMIN = "PROMOTE_ADMIN";
-  public static final String SEARCH_USERS = "SEARCH_USERS";
-  public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
-  public static final String GET_ONGOING_LOTS = "GET_ONGOING_LOTS";
-  public static final String GET_MY_ITEMS = "get_my_items";
-  public static final String GET_CLOSED_BIDS = "getclosedbids";
-  public static final String GET_PAST_BIDS = "getpastbids";
-  public static final String DEPOSIT = "deposit";
-  public static final String REFRESH_USER = "refresh_user";
-  public static final String GET_TRANSACTIONS = "get_transactions";
-  public static final String GET_STATUS_STATS = "get_status_stats";
-  public static final String GET_CATEGORY_STATS = "get_category_stats";
-  public static final String GET_BID_HISTORY = "get_bid_history";
-  public static final String PING = "ping";
-  public static final String SEND_CHAT = "send_chat";
-  public static final String GET_GLOBAL_CHAT_HISTORY = "get_global_chat_history";
-  public static final String GET_PRIVATE_CHAT_HISTORY = "get_private_chat_history";
-  public static final String GET_CHAT_CONTACTS = "get_chat_contacts";
-  public static final String ADD_FRIEND = "add_friend";
-  public static final String ACCEPT_FRIEND = "accept_friend";
-  public static final String DECLINE_FRIEND = "decline_friend";
-  public static final String REMOVE_FRIEND = "remove_friend";
-  public static final String GET_FRIENDS = "get_friends";
-  public static final String GET_FRIEND_REQUESTS = "get_friend_requests";
-
-  protected String requestId;
-  protected String action;
-  protected Object payload;
-  protected LocalDateTime timestamp;
-
-  public Request(String action, Object payload) {
-    this.requestId = UUID.randomUUID().toString();
-    this.action = action;
-    this.payload = payload;
-    this.timestamp = LocalDateTime.now();
-  }
-
-  public String getRequestId() {
-    return this.requestId;
-  }
-
-  public String getAction() {
-    return this.action;
-  }
-
-  public Object getPayload() {
-    return this.payload;
-  }
-
-  public LocalDateTime getTimestamp() {
-    return this.timestamp;
-  }
-}
-</file>
-
 <file path="auction-client/src/main/java/com/auction/client/ui/ItemCard/ItemCardController.java">
 package com.auction.client.ui.ItemCard;
 
@@ -18180,6 +18333,90 @@ public class ItemCardController {
 }
 </file>
 
+<file path="auction-shared/src/main/java/com/auction/shared/Request.java">
+package com.auction.shared;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+public class Request implements Serializable {
+  private static final long serialVersionUID = 1L;
+
+  public static final String LOGIN = "LOGIN";
+  public static final String SIGNUP = "SIGNUP";
+  public static final String BID = "BID";
+  public static final String ADD = "ADD";
+  public static final String LIST = "LIST";
+  public static final String UPDATE_PROFILE = "UPDATE_PROFILE";
+  public static final String UPDATE_AVATAR = "UPDATE_AVATAR";
+  public static final String GET_ALL_USERS = "GET_ALL_USERS";
+  public static final String LOCK_USER = "LOCK_USER";
+  public static final String UNLOCK_USER = "UNLOCK_USER";
+  public static final String ADD_LOT = "ADD_LOT";
+  public static final String GET_ONGOING_BIDS = "GET_ONGOING_BIDS";
+  public static final String GET_UPCOMING_BIDS = "GET_UPCOMING_BIDS";
+  public static final String SUBMIT_RATING = "SUBMIT_RATING";
+  public static final String GET_RATINGS = "GET_RATINGS";
+  public static final String GET_PENDING_ITEMS = "GET_PENDING_ITEMS";
+  public static final String APPROVE_ITEM = "APPROVE_ITEM";
+  public static final String REJECT_ITEM = "REJECT_ITEM";
+  public static final String GET_ITEM_BY_ID = "GET_ITEM_BY_ID";
+  public static final String PROMOTE_ADMIN = "PROMOTE_ADMIN";
+  public static final String SEARCH_USERS = "SEARCH_USERS";
+  public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
+  public static final String GET_ONGOING_LOTS = "GET_ONGOING_LOTS";
+  public static final String GET_MY_ITEMS = "get_my_items";
+  public static final String GET_CLOSED_BIDS = "getclosedbids";
+  public static final String GET_PAST_BIDS = "getpastbids";
+  public static final String DEPOSIT = "deposit";
+  public static final String REFRESH_USER = "refresh_user";
+  public static final String GET_TRANSACTIONS = "get_transactions";
+  public static final String GET_STATUS_STATS = "get_status_stats";
+  public static final String GET_CATEGORY_STATS = "get_category_stats";
+  public static final String GET_BID_HISTORY = "get_bid_history";
+  public static final String PING = "ping";
+  public static final String SEND_CHAT = "send_chat";
+  public static final String GET_GLOBAL_CHAT_HISTORY = "get_global_chat_history";
+  public static final String GET_PRIVATE_CHAT_HISTORY = "get_private_chat_history";
+  public static final String GET_CHAT_CONTACTS = "get_chat_contacts";
+  public static final String ADD_FRIEND = "add_friend";
+  public static final String ACCEPT_FRIEND = "accept_friend";
+  public static final String DECLINE_FRIEND = "decline_friend";
+  public static final String REMOVE_FRIEND = "remove_friend";
+  public static final String GET_FRIENDS = "get_friends";
+  public static final String GET_FRIEND_REQUESTS = "get_friend_requests";
+  public static final String GET_LEADERBOARD = "GET_LEADERBOARD";
+  protected String requestId;
+  protected String action;
+  protected Object payload;
+  protected LocalDateTime timestamp;
+
+  public Request(String action, Object payload) {
+    this.requestId = UUID.randomUUID().toString();
+    this.action = action;
+    this.payload = payload;
+    this.timestamp = LocalDateTime.now();
+  }
+
+  public String getRequestId() {
+    return this.requestId;
+  }
+
+  public String getAction() {
+    return this.action;
+  }
+
+  public Object getPayload() {
+    return this.payload;
+  }
+
+  public LocalDateTime getTimestamp() {
+    return this.timestamp;
+  }
+}
+</file>
+
 <file path="auction-client/src/main/resources/fxml/profile/Profile.fxml">
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -18419,36 +18656,34 @@ public class NetworkClient {
     pendingMap.forEach((id, f) -> f.completeExceptionally(cause));
     pendingMap.clear();
   }
-
-  private CompletableFuture<Response> sendRequestAsync(Request request, long timeoutSeconds) {
-    String requestId = request.getRequestId();
-    CompletableFuture<Response> future = new CompletableFuture<>();
+  //Sửa lại do tính năng Java làm tràn cache
+  private CompletableFuture<Response> sendRequestAsync(Request request, long timeoutseconds) {
+    String requestid = request.getRequestId();
+    CompletableFuture<Response> ans = new CompletableFuture<>();
     if (out == null) {
-      future.completeExceptionally(new IllegalStateException(
-          "Not connected to server — check IP address and server status."));
-      return future;
+      ans.completeExceptionally(new IllegalStateException("not connected"));
+      return ans;
     }
-    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestId, future);
+    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestid, ans);
     if (existing != null) {
-      future.completeExceptionally(new IllegalStateException("Duplicate request id: " + requestId));
-      return future;
+      ans.completeExceptionally(new IllegalStateException("duplicate"));
+      return ans;
     }
     try {
-      synchronized (out) { out.writeObject(request); out.flush(); }
+      synchronized (out) {
+        out.reset();
+        out.writeObject(request);
+        out.flush();
+      }
     } catch (IOException e) {
-      pendingMap.remove(requestId);
-      future.completeExceptionally(e);
+      pendingMap.remove(requestid);
+      ans.completeExceptionally(e);
     }
-    return future.orTimeout(timeoutSeconds, TimeUnit.SECONDS)
-        .whenComplete((response, error) -> {
-          pendingMap.remove(requestId);
-          if (error != null) {
-            if (error instanceof java.util.concurrent.TimeoutException)
-              LOGGER.warn("Server timeout ({}s) for request {} ({})", timeoutSeconds, requestId, request.getAction());
-            else
-              LOGGER.warn("Request {} ({}) failed: {}", requestId, request.getAction(), error.getMessage());
-          }
-        });
+    return ans.orTimeout(timeoutseconds, TimeUnit.SECONDS)
+            .whenComplete(
+                    (res, error) -> {
+                      pendingMap.remove(requestid);
+                    });
   }
 
   public Response sendRequestAndWait(Request request) {
@@ -18488,194 +18723,6 @@ public class NetworkClient {
           new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
       return node.get("secure_url").asText();
     }
-  }
-}
-</file>
-
-<file path="auction-client/src/main/java/com/auction/client/ui/Profile/ProfileController.java">
-package com.auction.client.ui.Profile;
-
-import com.auction.client.ClientSession;
-import com.auction.client.SceneManager;
-import com.auction.client.network.NetworkClient;
-import com.auction.client.network.NetworkEventListener;
-import com.auction.client.service.LotSubmissionService;
-import com.auction.client.service.UserAccountService;
-import com.auction.client.ui.Main.KhungController;
-import com.auction.client.util.ImagePresentationUtil;
-import com.auction.shared.*;
-import java.io.IOException;
-import javafx.application.Platform;
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class ProfileController implements NetworkEventListener {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ProfileController.class);
-
-  @FXML private ImageView avatarimageview;
-  @FXML private Label usernameLabel, fullNameLabel, emailLabel, phoneLabel, roleLabel, balanceLabel;
-  @FXML private Label moneySpentLabel, itemsBoughtLabel, moneyReceivedLabel, itemsSoldLabel;
-  @FXML private Label ratingStarsLabel, ratingCountLabel, reputationWarning, verifiedLabel;
-  @FXML private TextField fullNameInput, emailInput, phoneInput, DepositAmountField;
-  @FXML private Button editButton, toggleRoleButton;
-  @FXML private HBox bidderMetricsRow, sellerMetricsRow;
-
-  private boolean editing = false;
-  private final UserAccountService userAccountService = new UserAccountService();
-  private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
-
-  @FXML
-  public void initialize() {
-    NetworkClient.getInstance().addListener(this);
-    refreshData();
-    setEditingMode(false);
-  }
-
-  @Override public void onBalanceUpdate(User user) { ClientSession.setCurrentUser(user); refreshData(); }
-
-  @FXML
-  public void handleDeposit() {
-    try {
-      double amount = Double.parseDouble(DepositAmountField.getText());
-      int userId = ClientSession.getCurrentUser().getId();
-      if (userAccountService.deposit(userId, amount)) refreshData();
-    } catch (Exception e) {}
-  }
-
-  @FXML
-  public void handleToggleRole() { ClientSession.toggleRole(); refreshData(); KhungController.refreshSidebarFromSession(); }
-
-  private void refreshData() {
-    User u = ClientSession.getCurrentUser();
-    UserRole role = ClientSession.getActiveRole();
-    if (u == null || role == null) return;
-    usernameLabel.setText(u.getUsername()); fullNameLabel.setText(u.getFullName());
-    emailLabel.setText(u.getEmail()); phoneLabel.setText(u.getPhoneNumber()); roleLabel.setText(role.name());
-    if (verifiedLabel != null) {
-      boolean verified = u.getPhoneNumber() != null && !u.getPhoneNumber().trim().isEmpty();
-      verifiedLabel.setText(verified ? "\u2713 Verified" : "Unverified");
-      verifiedLabel.setStyle(verified
-          ? "-fx-background-color: #44cc44; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;"
-          : "-fx-background-color: #ff4444; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;");
-    }
-    if (balanceLabel != null) balanceLabel.setText(String.format("%,.0f$", u.getBalance()));
-    if (moneySpentLabel != null) moneySpentLabel.setText(String.format("%,.0f$", u.getMoneySpent()));
-    if (itemsBoughtLabel != null) itemsBoughtLabel.setText(String.valueOf(u.getItemsBought()));
-    if (moneyReceivedLabel != null) moneyReceivedLabel.setText(String.format("%,.0f$", u.getMoneyReceived()));
-    if (itemsSoldLabel != null) itemsSoldLabel.setText(String.valueOf(u.getItemsSold()));
-    toggleRoleButton.setVisible(u.getRole() != UserRole.ADMIN);
-    toggleRoleButton.setText(role == UserRole.SELLER ? "Switch to Bidder" : "Switch to Seller");
-    boolean isBidder = role == UserRole.BIDDER;
-    if (bidderMetricsRow != null) { bidderMetricsRow.setVisible(isBidder); bidderMetricsRow.setManaged(isBidder); }
-    if (sellerMetricsRow != null) { sellerMetricsRow.setVisible(!isBidder); sellerMetricsRow.setManaged(!isBidder); }
-    if (ratingStarsLabel != null) {
-      if (u.getTotalRatings() > 0) {
-        int stars = (int) Math.round(u.getAvgRating());
-        String starStr = "\u2605".repeat(stars) + "\u2606".repeat(5 - stars);
-        String sentiment = u.getAvgRating() <= 2.0 ? "Negative" : (u.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
-        String color = u.getAvgRating() <= 2.0 ? "-fx-text-fill: #ff4444;" : (u.getAvgRating() <= 3.0 ? "-fx-text-fill: #ffaa00;" : "-fx-text-fill: #44cc44;");
-        ratingStarsLabel.setText(starStr); ratingStarsLabel.setStyle("-fx-font-size: 16; " + color);
-        ratingCountLabel.setText(String.format("%.1f (%d ratings) - %s", u.getAvgRating(), u.getTotalRatings(), sentiment));
-      } else { ratingStarsLabel.setText(""); ratingCountLabel.setText("No ratings yet"); }
-    }
-    if (reputationWarning != null) {
-      boolean warn = u.getAvgRating() < 2.0 && u.getTotalRatings() >= 3;
-      reputationWarning.setText(warn ? "WARNING: Low reputation user" : "");
-      reputationWarning.setVisible(warn); reputationWarning.setManaged(warn);
-    }
-    if (u.getAvatarUrl() != null && !u.getAvatarUrl().isEmpty())
-      ImagePresentationUtil.loadCircularAvatar(avatarimageview, u.getAvatarUrl(), 34, 68);
-  }
-
-  private void setEditingMode(boolean v) {
-    editing = v;
-    editButton.setText(editing ? "Save" : "Edit Profile");
-    fullNameLabel.setVisible(!v); fullNameLabel.setManaged(!v);
-    fullNameInput.setVisible(v); fullNameInput.setManaged(v);
-    emailLabel.setVisible(!v); emailLabel.setManaged(!v);
-    emailInput.setVisible(v); emailInput.setManaged(v);
-    phoneLabel.setVisible(!v); phoneLabel.setManaged(!v);
-    phoneInput.setVisible(v); phoneInput.setManaged(v);
-    if (v) {
-      User u = ClientSession.getCurrentUser();
-      if (u != null) {
-        fullNameInput.setText(u.getFullName() != null ? u.getFullName() : "");
-        emailInput.setText(u.getEmail() != null ? u.getEmail() : "");
-        phoneInput.setText(u.getPhoneNumber() != null ? u.getPhoneNumber() : "");
-      }
-    }
-  }
-
-  @FXML
-  public void handleEditProfile() {
-    if (editing) {
-      User current = ClientSession.getCurrentUser();
-      if (current == null) return;
-      String err = userAccountService.updateProfile(
-          current.getId(), fullNameInput.getText(), emailInput.getText(), phoneInput.getText());
-      if (err == null) { refreshData(); KhungController.refreshSidebarFromSession(); }
-      else new Alert(Alert.AlertType.ERROR, err).showAndWait();
-    }
-    setEditingMode(!editing);
-  }
-
-  @FXML
-  public void handleLogout() {
-    ClientSession.clear();
-    try { SceneManager.switchScene("/fxml/welcome.fxml"); } catch (IOException e) {}
-  }
-
-  @FXML
-  public void handleChangeAvatar() throws Exception {
-    javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
-    java.io.File file = fc.showOpenDialog(null);
-    if (file != null) {
-      byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
-      String url = lotSubmissionService.uploadImage("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload", bytes);
-      userAccountService.updateAvatar(ClientSession.getUsername(), url);
-      ImagePresentationUtil.loadCircularAvatar(avatarimageview, url, 34, 68);
-    }
-  }
-
-  /** Load latest user profile from server and update UI (non-blocking). */
-  public void refreshFromServer() {
-    if (ClientSession.getCurrentUser() == null) return;
-    int userId = ClientSession.getCurrentUser().getId();
-    Thread t =
-        new Thread(
-            () -> {
-              try {
-                User refreshed = userAccountService.refreshUser(userId);
-                if (refreshed != null) {
-                  ClientSession.setCurrentUser(refreshed);
-                  Platform.runLater(this::refreshData);
-                }
-              } catch (Exception e) {
-                LOGGER.warn("refresh_user failed for id={}", userId, e);
-              }
-            });
-    t.setDaemon(true);
-    t.start();
-  }
-
-  public void handleRefresh(javafx.event.ActionEvent event) {
-    refreshFromServer();
-  }
-
-  @FXML
-  public void handleShowHistory() {
-    try {
-      javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/history/TransactionHistory.fxml"));
-      javafx.scene.Parent root = loader.load();
-      javafx.stage.Stage stage = new javafx.stage.Stage();
-      stage.setTitle("Lịch sử giao dịch");
-      stage.setScene(new javafx.scene.Scene(root, 800, 500));
-      stage.show();
-    } catch (Exception e) { LOGGER.warn("Failed to open transaction history window", e); }
   }
 }
 </file>
@@ -19010,6 +19057,199 @@ public class ItemInformationController {
 }
 </file>
 
+<file path="auction-client/src/main/java/com/auction/client/ui/Profile/ProfileController.java">
+package com.auction.client.ui.Profile;
+
+import com.auction.client.ClientSession;
+import com.auction.client.SceneManager;
+import com.auction.client.network.NetworkClient;
+import com.auction.client.network.NetworkEventListener;
+import com.auction.client.service.LotSubmissionService;
+import com.auction.client.service.UserAccountService;
+import com.auction.client.ui.Main.KhungController;
+import com.auction.client.util.ImagePresentationUtil;
+import com.auction.shared.*;
+import java.io.IOException;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ProfileController implements NetworkEventListener {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProfileController.class);
+
+  @FXML private ImageView avatarimageview;
+  @FXML private Label usernameLabel, fullNameLabel, emailLabel, phoneLabel, roleLabel, balanceLabel;
+  @FXML private Label moneySpentLabel, itemsBoughtLabel, moneyReceivedLabel, itemsSoldLabel;
+  @FXML private Label ratingStarsLabel, ratingCountLabel, reputationWarning, verifiedLabel;
+  @FXML private TextField fullNameInput, emailInput, phoneInput, DepositAmountField;
+  @FXML private Button editButton, toggleRoleButton;
+  @FXML private HBox bidderMetricsRow, sellerMetricsRow;
+
+  private boolean editing = false;
+  private final UserAccountService userAccountService = new UserAccountService();
+  private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
+
+  @FXML
+  public void initialize() {
+    NetworkClient.getInstance().addListener(this);
+    refreshData();
+    setEditingMode(false);
+  }
+
+  @Override public void onBalanceUpdate(User user) { ClientSession.setCurrentUser(user); refreshData(); }
+
+  @FXML
+  public void handleDeposit() {
+    try {
+      double amount = Double.parseDouble(DepositAmountField.getText());
+      int userId = ClientSession.getCurrentUser().getId();
+      if (userAccountService.deposit(userId, amount)) refreshData();
+    } catch (Exception e) {}
+  }
+
+  @FXML
+  public void handleToggleRole() { ClientSession.toggleRole(); refreshData(); KhungController.refreshSidebarFromSession(); }
+
+  private void refreshData() {
+    User u = ClientSession.getCurrentUser();
+    UserRole role = ClientSession.getActiveRole();
+    if (u == null || role == null) return;
+    usernameLabel.setText(u.getUsername()); fullNameLabel.setText(u.getFullName());
+    emailLabel.setText(u.getEmail()); phoneLabel.setText(u.getPhoneNumber()); roleLabel.setText(role.name());
+    if (verifiedLabel != null) {
+      boolean verified = u.getPhoneNumber() != null && !u.getPhoneNumber().trim().isEmpty();
+      verifiedLabel.setText(verified ? "\u2713 Verified" : "Unverified");
+      verifiedLabel.setStyle(verified
+          ? "-fx-background-color: #44cc44; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;"
+          : "-fx-background-color: #ff4444; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 12; -fx-font-weight: bold;");
+    }
+    if (balanceLabel != null) balanceLabel.setText(String.format("%,.0f$", u.getBalance()));
+    if (moneySpentLabel != null) moneySpentLabel.setText(String.format("%,.0f$", u.getMoneySpent()));
+    if (itemsBoughtLabel != null) itemsBoughtLabel.setText(String.valueOf(u.getItemsBought()));
+    if (moneyReceivedLabel != null) moneyReceivedLabel.setText(String.format("%,.0f$", u.getMoneyReceived()));
+    if (itemsSoldLabel != null) itemsSoldLabel.setText(String.valueOf(u.getItemsSold()));
+    toggleRoleButton.setVisible(u.getRole() != UserRole.ADMIN);
+    toggleRoleButton.setText(role == UserRole.SELLER ? "Switch to Bidder" : "Switch to Seller");
+    boolean isBidder = role == UserRole.BIDDER;
+    if (bidderMetricsRow != null) { bidderMetricsRow.setVisible(isBidder); bidderMetricsRow.setManaged(isBidder); }
+    if (sellerMetricsRow != null) { sellerMetricsRow.setVisible(!isBidder); sellerMetricsRow.setManaged(!isBidder); }
+    if (ratingStarsLabel != null) {
+      if (u.getTotalRatings() > 0) {
+        int stars = (int) Math.round(u.getAvgRating());
+        String starStr = "\u2605".repeat(stars) + "\u2606".repeat(5 - stars);
+        String sentiment = u.getAvgRating() <= 2.0 ? "Negative" : (u.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
+        String color = u.getAvgRating() <= 2.0 ? "-fx-text-fill: #ff4444;" : (u.getAvgRating() <= 3.0 ? "-fx-text-fill: #ffaa00;" : "-fx-text-fill: #44cc44;");
+        ratingStarsLabel.setText(starStr); ratingStarsLabel.setStyle("-fx-font-size: 16; " + color);
+        ratingCountLabel.setText(String.format("%.1f (%d ratings) - %s", u.getAvgRating(), u.getTotalRatings(), sentiment));
+      } else { ratingStarsLabel.setText(""); ratingCountLabel.setText("No ratings yet"); }
+    }
+    if (reputationWarning != null) {
+      boolean warn = u.getAvgRating() < 2.0 && u.getTotalRatings() >= 3;
+      reputationWarning.setText(warn ? "WARNING: Low reputation user" : "");
+      reputationWarning.setVisible(warn); reputationWarning.setManaged(warn);
+    }
+    if (u.getAvatarUrl() != null && !u.getAvatarUrl().isEmpty())
+      ImagePresentationUtil.loadCircularAvatar(avatarimageview, u.getAvatarUrl(), 34, 68);
+  }
+
+  private void setEditingMode(boolean v) {
+    editing = v;
+    editButton.setText(editing ? "Save" : "Edit Profile");
+    fullNameLabel.setVisible(!v); fullNameLabel.setManaged(!v);
+    fullNameInput.setVisible(v); fullNameInput.setManaged(v);
+    emailLabel.setVisible(!v); emailLabel.setManaged(!v);
+    emailInput.setVisible(v); emailInput.setManaged(v);
+    phoneLabel.setVisible(!v); phoneLabel.setManaged(!v);
+    phoneInput.setVisible(v); phoneInput.setManaged(v);
+    if (v) {
+      User u = ClientSession.getCurrentUser();
+      if (u != null) {
+        fullNameInput.setText(u.getFullName() != null ? u.getFullName() : "");
+        emailInput.setText(u.getEmail() != null ? u.getEmail() : "");
+        phoneInput.setText(u.getPhoneNumber() != null ? u.getPhoneNumber() : "");
+      }
+    }
+  }
+
+  @FXML
+  public void handleEditProfile() {
+    if (editing) {
+      User current = ClientSession.getCurrentUser();
+      if (current == null) return;
+      String err = userAccountService.updateProfile(
+          current.getId(), fullNameInput.getText(), emailInput.getText(), phoneInput.getText());
+      if (err == null) { refreshData(); KhungController.refreshSidebarFromSession(); }
+      else new Alert(Alert.AlertType.ERROR, err).showAndWait();
+    }
+    setEditingMode(!editing);
+  }
+  //Anti-ghosting vẫn gửi thông báo về desktop client dù đã đăng xuất
+  @FXML
+  public void handleLogout() {
+    ClientSession.clear();
+    Request req = new Request("LOGOUT", null);
+    NetworkClient.getInstance().sendRequestAndWait(req);
+    try {
+      SceneManager.switchScene("/fxml/welcome.fxml");
+    } catch (IOException e) {
+    }
+  }
+
+  @FXML
+  public void handleChangeAvatar() throws Exception {
+    javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+    java.io.File file = fc.showOpenDialog(null);
+    if (file != null) {
+      byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
+      String url = lotSubmissionService.uploadImage("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload", bytes);
+      userAccountService.updateAvatar(ClientSession.getUsername(), url);
+      ImagePresentationUtil.loadCircularAvatar(avatarimageview, url, 34, 68);
+    }
+  }
+
+  /** Load latest user profile from server and update UI (non-blocking). */
+  public void refreshFromServer() {
+    if (ClientSession.getCurrentUser() == null) return;
+    int userId = ClientSession.getCurrentUser().getId();
+    Thread t =
+        new Thread(
+            () -> {
+              try {
+                User refreshed = userAccountService.refreshUser(userId);
+                if (refreshed != null) {
+                  ClientSession.setCurrentUser(refreshed);
+                  Platform.runLater(this::refreshData);
+                }
+              } catch (Exception e) {
+                LOGGER.warn("refresh_user failed for id={}", userId, e);
+              }
+            });
+    t.setDaemon(true);
+    t.start();
+  }
+
+  public void handleRefresh(javafx.event.ActionEvent event) {
+    refreshFromServer();
+  }
+
+  @FXML
+  public void handleShowHistory() {
+    try {
+      javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/history/TransactionHistory.fxml"));
+      javafx.scene.Parent root = loader.load();
+      javafx.stage.Stage stage = new javafx.stage.Stage();
+      stage.setTitle("Lịch sử giao dịch");
+      stage.setScene(new javafx.scene.Scene(root, 800, 500));
+      stage.show();
+    } catch (Exception e) { LOGGER.warn("Failed to open transaction history window", e); }
+  }
+}
+</file>
+
 <file path="auction-client/src/main/java/com/auction/client/ui/TrangChu/TrangChuController.java">
 package com.auction.client.ui.TrangChu;
 
@@ -19032,6 +19272,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.control.Label;
 
 /**
  * FXML controller for the auction home: orchestrates data refresh, filters, trending list, category
@@ -19059,7 +19300,33 @@ public class TrangChuController {
 
   @FXML private ToggleButton tabEnglishAuctions;
   @FXML private ToggleButton tabDutchAuctions;
+  @FXML private VBox leaderboardcontainer;
 
+  public void updateleaderboardui(List<com.auction.shared.LeaderboardEntry> res) {
+    if (leaderboardcontainer == null) {
+      return;
+    }
+    javafx.application.Platform.runLater(() -> {
+      leaderboardcontainer.getChildren().clear();
+      for (int i = 0; i < res.size(); i++) {
+        com.auction.shared.LeaderboardEntry ans = res.get(i);
+        HBox row = new HBox(10);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label rank = new Label("#" + (i + 1));
+        rank.setStyle("-fx-text-fill: #ffaa00; -fx-font-weight: bold; -fx-font-size: 16px;");
+        javafx.scene.image.ImageView avatar = new javafx.scene.image.ImageView();
+        com.auction.client.util.ImagePresentationUtil.loadCircularAvatar(avatar, ans.getAvatarurl(), 15, 30);
+        VBox info = new VBox(2);
+        Label name = new Label(ans.getUsername());
+        name.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
+        Label score = new Label(String.format("%,.0f$", ans.getScore()));
+        score.setStyle("-fx-text-fill: #00d4ff; -fx-font-size: 12px;");
+        info.getChildren().addAll(name, score);
+        row.getChildren().addAll(rank, avatar, info);
+        leaderboardcontainer.getChildren().add(row);
+      }
+    });
+  }
   private HBox[] categoryRows;
   private Button[] categoryPrevButtons;
   private Button[] categoryNextButtons;
@@ -19175,6 +19442,13 @@ public class TrangChuController {
 
   public void refreshItems() {
     TrangChuOngoingItemsLoader.loadAsync(this::cacheAndRender);
+    new Thread(() -> {
+      com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.GET_LEADERBOARD, null);
+      com.auction.shared.Response ans = com.auction.client.network.NetworkClient.getInstance().sendRequestAndWait(req);
+      if (ans != null && com.auction.shared.Response.OK.equals(ans.getStatus())) {
+        updateleaderboardui((List<com.auction.shared.LeaderboardEntry>) ans.getPayload());
+      }
+    }).start();
   }
 
   public void setFilters(String keyword, String category) {
@@ -19828,7 +20102,7 @@ public class ClientHandler implements Runnable {
     reg.register(Request.REJECT_ITEM, ActionHandler.requireAdmin(itemQuery));
     reg.register(Request.GET_STATUS_STATS, ActionHandler.requireAdmin(miscHandler));
     reg.register(Request.GET_CATEGORY_STATS, ActionHandler.requireAdmin(miscHandler));
-
+    reg.register(Request.GET_LEADERBOARD, new com.auction.server.handler.misc.LeaderboardHandler());
     return reg;
   }
 

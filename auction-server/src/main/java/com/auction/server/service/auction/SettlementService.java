@@ -2,75 +2,92 @@ package com.auction.server.service.auction;
 
 import com.auction.server.dao.auction.BidDao;
 import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
 import com.auction.server.dao.user.UserDao;
-import com.auction.shared.*;
+import com.auction.server.dao.wallet.TransactionLogDao;
+import com.auction.shared.Item;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.DelayQueue;
 
 public class SettlementService {
-  private static final Logger LOGGER = LoggerFactory.getLogger(SettlementService.class);
+  private static final SettlementService instance = new SettlementService();
+  private final ItemDao itemdao;
+  private final UserDao userdao;
+  private final BidDao biddao;
+  private final TransactionLogDao logdao;
+  private final DelayQueue<AuctionEndEvent> queue;
 
-  private final ItemDao itemDao;
-  private final UserDao userDao;
-  private final BidDao bidDao;
-  private final TransactionLogDao logDao;
+  private SettlementService() {
+    this.itemdao = new ItemDao();
+    this.userdao = new UserDao();
+    this.biddao = new BidDao();
+    this.logdao = new TransactionLogDao();
+    this.queue = new DelayQueue<>();
+  }
 
-  public SettlementService() {
-    this.itemDao = new ItemDao();
-    this.userDao = new UserDao();
-    this.bidDao = new BidDao();
-    this.logDao = new TransactionLogDao();
+  public static SettlementService getInstance() {
+    return instance;
+  }
+
+  public void schedule(int itemid, LocalDateTime endtime) {
+    AuctionEndEvent ans = new AuctionEndEvent(itemid, endtime);
+    queue.remove(ans);
+    queue.add(ans);
   }
 
   public void start() {
-    Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(
-            () -> {
-              try {
-                List<Item> expiredItems = itemDao.getExpiredItems();
-                for (Item item : expiredItems) {
-                  settle(item);
-                }
-              } catch (Exception e) {
-                LOGGER.warn("Settlement cycle failed", e);
-              }
-            },
-            5, 10, TimeUnit.SECONDS);
+    List<Item> res = itemdao.getAll();
+    for (Item item : res) {
+      if ("OPEN".equals(item.getStatus().name()) && item.getEndTime() != null) {
+        schedule(item.getId(), item.getEndTime());
+      }
+    }
+    new Thread(() -> {
+      while (true) {
+        try {
+          AuctionEndEvent ans = queue.take();
+          Item item = itemdao.getById(ans.getItemid());
+          if (item != null && "OPEN".equals(item.getStatus().name())) {
+            settle(item);
+          }
+        } catch (Exception e) {
+        }
+      }
+    }).start();
   }
 
   private void settle(Item item) {
-    int winnerid = bidDao.getPreviousHighestBidder(item.getId());
+    int winnerid = biddao.getPreviousHighestBidder(item.getId());
     if (winnerid > 0) {
-      boolean closed = itemDao.atomicCloseAuction(item.getId(), winnerid, "CLOSED");
+      boolean closed = itemdao.atomicCloseAuction(item.getId(), winnerid, "CLOSED");
       if (!closed) {
         return;
       }
       double finalprice = item.getCurrentPrice();
-      userDao.addBidderMetrics(winnerid, finalprice);
-      User ans = userDao.getById(String.valueOf(winnerid));
-      if (ans != null) {
-        AuctionManager.getInstance().getLeaderboardservice().updatescore(winnerid, ans.getUsername(), ans.getAvatarUrl(), finalprice);
-      }
-      userDao.atomicCreditBalance(item.getSellerId(), finalprice);
-      userDao.addSellerMetrics(item.getSellerId(), finalprice);
-      logDao.insertLog(item.getSellerId(), "ITEM_SOLD", finalprice, item.getId());
-      User freshseller = userDao.getById(String.valueOf(item.getSellerId()));
+      userdao.addBidderMetrics(winnerid, finalprice);
+      userdao.atomicCreditBalance(item.getSellerId(), finalprice);
+      userdao.addSellerMetrics(item.getSellerId(), finalprice);
+      logdao.insertLog(item.getSellerId(), "ITEM_SOLD", finalprice, item.getId());
+      User freshseller = userdao.getById(String.valueOf(item.getSellerId()));
       if (freshseller != null) {
         AuctionManager.getInstance().sendToUser(item.getSellerId(), new Response("", "BALANCE_UPDATE", "Success", freshseller));
       }
+      User ans = userdao.getById(String.valueOf(winnerid));
+      if (ans != null) {
+        AuctionManager.getInstance().getLeaderboardservice().updatescore(winnerid, ans.getUsername(), ans.getAvatarUrl(), finalprice);
+      }
       AuctionManager.getInstance().broadcastleaderboard();
     } else {
-      boolean closed = itemDao.atomicCloseAuction(item.getId(), 0, "EXPIRED");
+      boolean closed = itemdao.atomicCloseAuction(item.getId(), 0, "EXPIRED");
       if (!closed) {
         return;
       }
     }
-    Item closeditem = itemDao.getById(item.getId());
+    Item closeditem = itemdao.getById(item.getId());
     if (closeditem != null) {
       AuctionManager.getInstance().broadcast(new Response("", "ITEM_CLOSED", "closed", closeditem));
     }
-  }}
+  }
+}
