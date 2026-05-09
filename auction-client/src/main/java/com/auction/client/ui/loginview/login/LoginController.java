@@ -5,6 +5,7 @@ import com.auction.client.navigation.SceneType;
 import com.auction.client.service.AuthService;
 import com.auction.client.ui.base.PageController;
 import com.auction.client.ui.loginview.LoginViewType;
+import com.auction.client.ui.maindashboard.HomeView;
 import com.auction.client.ui.utils.ValidationResult;
 import com.auction.shared.dto.LoginCredentials;
 import com.auction.shared.linkv2.Request;
@@ -12,6 +13,7 @@ import com.auction.shared.linkv2.Response;
 import com.auction.shared.user.User;
 import com.auction.shared.utils.PasswordEncoder;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -94,6 +96,10 @@ public class LoginController extends PageController<LoginViewType> {
 
   private void onSendSuccess(Response<User> response) {
     messageLabel.setText(response.getMessage());
+
+    Scene Home = new Scene(new HomeView());
+    SceneManager.getInstance().registerScene(SceneType.HOME ,Home);
+
     SceneManager.getInstance().switchTo(SceneType.HOME);
   }
 

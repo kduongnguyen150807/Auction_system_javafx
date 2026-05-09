@@ -30,6 +30,8 @@ public class Main extends Application {
     sceneManager.setStage(stage);
     stage.setTitle("hệ thống đấu giá online");
     boolean isConnected = NetworkClient.getInstance().connect();
+
+
     if (isConnected) {
       buildScene();
       sceneManager.switchTo(SceneType.LOGIN);
@@ -47,9 +49,6 @@ public class Main extends Application {
   private void buildScene() {
     Scene LoginView = new Scene(new LoginView());
     sceneManager.registerScene(SceneType.LOGIN ,LoginView);
-
-    Scene Home = new Scene(new HomeView());
-    sceneManager.registerScene(SceneType.HOME ,Home);
   }
 
   public static void main(String[] args) {
