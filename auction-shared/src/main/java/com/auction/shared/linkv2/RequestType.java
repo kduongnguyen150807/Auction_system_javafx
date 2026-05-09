@@ -4,4 +4,6 @@ public enum RequestType {
   LOGIN,
   GET_ONGOING_BIDS,
   REGISTER_LOT,
+  GET_ITEM_BY_STATUS,
+  GET_ALL_ITEMS,
 }
