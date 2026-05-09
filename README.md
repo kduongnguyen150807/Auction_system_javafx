@@ -1,3 +1,5 @@
+***
+
 # 🔨 Hệ Thống Đấu Giá Trực Tuyến (Realtime Online Auction System)
 
 [![Java Version](https://img.shields.io/badge/Java-25-orange.svg)](https://www.oracle.com/java/)
@@ -10,11 +12,11 @@ Dự án Hệ thống Đấu giá Trực tuyến (Online Auction System) là bà
 ---
 
 ## 📑 Mục lục
-1.[Giới thiệu dự án](#1-giới-thiệu-dự-án)
+1. [Giới thiệu dự án](#1-giới-thiệu-dự-án)
 2. [Công nghệ sử dụng](#2-công-nghệ-sử-dụng)
 3. [Kiến trúc hệ thống](#3-kiến-trúc-hệ-thống)
-4.[Tính năng nổi bật (Điểm nhấn kỹ thuật)](#4-tính-năng-nổi-bật-điểm-nhấn-kỹ-thuật)
-5. [Hướng dẫn cài đặt & Khởi chạy](#5-hướng-dẫn-cài-đặt--khởi-chạy)
+4. [Tính năng nổi bật (Điểm nhấn kỹ thuật)](#4-tính-năng-nổi-bật-điểm-nhấn-kỹ-thuật)
+5.[Hướng dẫn cài đặt & Khởi chạy](#5-hướng-dẫn-cài-đặt--khởi-chạy)
 
 ---
 
@@ -79,5 +81,33 @@ Thay vì dùng Timer quét Database liên tục gây lãng phí tài nguyên, h�
 
 ### Bước 1: Chuẩn bị Cơ sở dữ liệu
 1. Mở MySQL và tạo Database:
-   ```sql
-   CREATE DATABASE auction_db;
+    ```sql
+    CREATE DATABASE auction_db;
+    ```
+2. Cấu hình kết nối tại file: `auction-server/src/main/resources/db.properties`
+    ```properties
+    db.url=jdbc:mysql://localhost:3306/auction_db
+    db.user=root
+    db.password=your_password
+    ```
+*(Lưu ý: Hệ thống có cơ chế Database Migration, sẽ tự động tạo Bảng (Tables) và Cột (Columns) trong lần chạy đầu tiên).*
+
+### Bước 2: Build toàn bộ dự án
+Mở Terminal tại thư mục gốc của project và chạy lệnh Maven:
+```bash
+mvn clean verify
+```
+
+### Bước 3: Khởi chạy Server
+Mở Terminal tại thư mục `auction-server` và chạy lệnh:
+```bash
+mvn exec:java -Dexec.mainClass="com.auction.server.Main"
+```
+*Server sẽ tự động dọn dẹp Port 8080, chạy Migration và thông báo `Server is running on port 8080`.*
+
+### Bước 4: Khởi chạy Client
+Mở một Terminal mới tại thư mục `auction-client` và chạy lệnh:
+```bash
+mvn javafx:run
+```
+*Để test tính năng Realtime và Concurrent Bidding, bạn có thể chạy lệnh trên ở nhiều cửa sổ Terminal khác nhau để mở nhiều Client cùng lúc.*
