@@ -1,6 +1,5 @@
 package com.auction.server.controller;
 
-import com.auction.server.context.DaoContext;
 import com.auction.server.context.HandlerContext;
 import com.auction.shared.linkv2.Request;
 import com.auction.shared.linkv2.Response;
@@ -45,10 +44,10 @@ public class ClientHandler implements Runnable {
    * @param socket Kết nối socket đã được chấp nhận từ {@code ServerSocket}.
    * @param requestDispatcher Bộ điều phối các yêu cầu dùng chung của hệ thống.
    */
-  public ClientHandler(Socket socket, RequestDispatcher requestDispatcher, DaoContext daoContext) {
+  public ClientHandler(Socket socket, RequestDispatcher requestDispatcher) {
     this.socket = socket;
     this.requestDispatcher = requestDispatcher;
-    this.handlerContext = new HandlerContext(daoContext, this);
+    this.handlerContext = new HandlerContext(this);
     try {
       this.out = new ObjectOutputStream(this.socket.getOutputStream());
       this.out.flush();
