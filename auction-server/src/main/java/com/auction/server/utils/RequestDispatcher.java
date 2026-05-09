@@ -38,6 +38,10 @@ public class RequestDispatcher {
    * @param handler handler xử lý request tương ứng
    */
   public void register(RequestType type, RequestHandler<?, ?> handler) {
+    LOGGER.info(
+      "Registered handlers: {}",
+      handlers.keySet()
+    );
     if (type == null || handler == null) {
       LOGGER.error("Không thể đăng ký Handler: Command hoặc Handler bị null.");
       return;
@@ -60,6 +64,11 @@ public class RequestDispatcher {
    * @return {@link Response} kết quả xử lý hoặc
    */
   public <REQ, RES> Response<RES> dispatch(Request<REQ> request, HandlerContext handlerContext) {
+    LOGGER.info(
+      "Request type: {} ({})",
+      request.getType(),
+      request.getType().getClass()
+    );
     // ===== Validate request =====
     boolean requestError = RequestValidator.validate(request, requestRules);
     if (!requestError) {

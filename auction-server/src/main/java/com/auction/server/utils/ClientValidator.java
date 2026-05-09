@@ -1,6 +1,5 @@
 package com.auction.server.utils;
 
-import com.auction.shared.link.Request;
 import com.auction.shared.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
