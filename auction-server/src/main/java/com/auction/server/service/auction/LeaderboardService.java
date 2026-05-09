@@ -15,11 +15,21 @@ public class LeaderboardService {
         if (res != null) {
             set.remove(res);
             res.setScore(res.getScore() + amount);
+            res.setAvatarurl(avatarurl);
             set.add(res);
         } else {
             LeaderboardEntry ans = new LeaderboardEntry(userid, username, avatarurl, amount);
             map.put(userid, ans);
             set.add(ans);
+        }
+    }
+
+    public synchronized void updateuserinfo(int userid, String avatarurl) {
+        LeaderboardEntry res = map.get(userid);
+        if (res != null) {
+            set.remove(res);
+            res.setAvatarurl(avatarurl);
+            set.add(res);
         }
     }
 

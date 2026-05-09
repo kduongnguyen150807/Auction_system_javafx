@@ -28,6 +28,10 @@ public class LeaderboardEntry implements Serializable, Comparable<LeaderboardEnt
         return avatarurl;
     }
 
+    public void setAvatarurl(String avatarurl) {
+        this.avatarurl = avatarurl;
+    }
+
     public double getScore() {
         return score;
     }
