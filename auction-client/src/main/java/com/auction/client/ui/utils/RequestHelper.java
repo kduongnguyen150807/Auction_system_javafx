@@ -27,11 +27,11 @@ public final class RequestHelper {
    * @param responseConsumer callback khi thành công
    * @param errorConsumer callback khi thất bại
    */
-  public static void sendRequest(RequestType type, Object payload, Consumer<Response<?>> responseConsumer, Consumer<Throwable> errorConsumer) {
-    Request<?> request = Request.of(type, payload);
+  public static <T> void sendRequest(RequestType type, Object payload, Consumer<Response<T>> responseConsumer, Consumer<Throwable> errorConsumer) {
+    Request request = Request.of(type, payload);
     NetworkClient.getInstance().sendRequestAsync(request)
       .thenAccept(response -> {
-        Platform.runLater(() -> {responseConsumer.accept(response);});
+        Platform.runLater(() -> {responseConsumer.accept((Response<T>) response);});
       }).exceptionally(ex -> {
         Platform.runLater(() -> {errorConsumer.accept(ex);});
         return null;
