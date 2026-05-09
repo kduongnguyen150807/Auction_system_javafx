@@ -1,5 +1,6 @@
 package com.auction.server.service;
 
+import com.auction.shared.Item;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import java.util.List;
@@ -10,8 +11,12 @@ public class AdminService {
     private final ItemQueryService itemQueryService;
 
     public AdminService() {
-        this.userService = new UserService();
-        this.itemQueryService = new ItemQueryService();
+        this(new UserService(), new ItemQueryService());
+    }
+
+    public AdminService(UserService userService, ItemQueryService itemQueryService) {
+        this.userService = userService;
+        this.itemQueryService = itemQueryService;
     }
 
     public boolean isAdmin(User user) {
@@ -34,16 +39,16 @@ public class AdminService {
         return userService.setUserRole(username, role);
     }
 
-    public java.util.List<com.auction.shared.Item> getPendingItems() {
+    public List<Item> getPendingItems() {
         return itemQueryService.getPendingItems();
     }
 
-    public boolean approveItem(int id) {
-        return itemQueryService.approveItem(id);
+    public boolean approveItem(int itemId) {
+        return itemQueryService.approveItem(itemId);
     }
 
-    public boolean rejectItem(int id) {
-        return itemQueryService.rejectItem(id);
+    public boolean rejectItem(int itemId) {
+        return itemQueryService.rejectItem(itemId);
     }
 
     public Map<String, Integer> getStatusStats() {

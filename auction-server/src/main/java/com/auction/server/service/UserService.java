@@ -1,56 +1,56 @@
 package com.auction.server.service;
 
 import com.auction.server.dao.UserDao;
-import com.auction.shared.*;
+import com.auction.shared.User;
+import java.util.List;
 
 public class UserService {
-  private UserDao userDao;
+  private final UserDao userDao;
 
   public UserService() {
-    this.userDao = new UserDao();
+    this(new UserDao());
   }
 
-  public User login(String u, String p) {
-    User ans = this.userDao.login(u, p);
-    return ans;
+  public UserService(UserDao userDao) {
+    this.userDao = userDao;
   }
 
-  public boolean signup(User u) {
-    boolean ans = this.userDao.signup(u);
-    return ans;
+  public User login(String username, String password) {
+    return userDao.login(username, password);
+  }
+
+  public boolean signup(User user) {
+    return userDao.signup(user);
   }
 
   /**
-   * @return null nếu thành công; mã lỗi nếu không (vd. duplicate_email).
+   * @return null nếu thành công; mã lỗi nếu không, ví dụ duplicate_email.
    */
   public String updateProfile(int userId, String fullName, String email, String phone) {
-    return this.userDao.updateUserProfile(userId, fullName, email, phone);
+    return userDao.updateUserProfile(userId, fullName, email, phone);
   }
 
-  public void updateAvatar(String username, String ans) throws Exception {
-    this.userDao.updateAvatar(username, ans);
+  public void updateAvatar(String username, String avatarUrl) throws Exception {
+    userDao.updateAvatar(username, avatarUrl);
   }
 
-  public java.util.List<User> getAllUsers() {
-    java.util.List<User> ans = this.userDao.getAllUsers();
-    return ans;
+  public List<User> getAllUsers() {
+    return userDao.getAllUsers();
   }
 
-  public boolean setUserLocked(String username, boolean lockStatus) {
-    boolean ans = this.userDao.setUserLocked(username, lockStatus);
-    return ans;
+  public boolean setUserLocked(String username, boolean locked) {
+    return userDao.setUserLocked(username, locked);
   }
 
   public boolean setUserRole(String username, String role) {
-    boolean ans = this.userDao.setUserRole(username, role);
-    return ans;
+    return userDao.setUserRole(username, role);
   }
 
-  public java.util.List<User> searchUsers(String keyword) {
-    return this.userDao.searchUsers(keyword);
+  public List<User> searchUsers(String keyword) {
+    return userDao.searchUsers(keyword);
   }
 
-  public User getUserById(int id) {
-    return this.userDao.getById(String.valueOf(id));
+  public User getUserById(int userId) {
+    return userDao.getById(String.valueOf(userId));
   }
 }

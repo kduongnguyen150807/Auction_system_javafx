@@ -8,7 +8,11 @@ public class BidQueryService {
     private final BidDao bidDao;
 
     public BidQueryService() {
-        this.bidDao = new BidDao();
+        this(new BidDao());
+    }
+
+    public BidQueryService(BidDao bidDao) {
+        this.bidDao = bidDao;
     }
 
     public List<BidTransaction> getBidHistory(int itemId) {

@@ -8,7 +8,11 @@ public class TransactionService {
     private final TransactionLogDao logDao;
 
     public TransactionService() {
-        this.logDao = new TransactionLogDao();
+        this(new TransactionLogDao());
+    }
+
+    public TransactionService(TransactionLogDao logDao) {
+        this.logDao = logDao;
     }
 
     public List<TransactionLog> getTransactions(int userId) {

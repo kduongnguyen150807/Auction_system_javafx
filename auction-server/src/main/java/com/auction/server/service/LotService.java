@@ -8,7 +8,11 @@ public class LotService {
     private final LotDao lotDao;
 
     public LotService() {
-        this.lotDao = new LotDao();
+        this(new LotDao());
+    }
+
+    public LotService(LotDao lotDao) {
+        this.lotDao = lotDao;
     }
 
     public List<Lot> getOngoingBids(int userId) {

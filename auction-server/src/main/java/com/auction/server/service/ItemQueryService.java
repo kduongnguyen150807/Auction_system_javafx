@@ -2,6 +2,7 @@ package com.auction.server.service;
 
 import com.auction.server.dao.ItemDao;
 import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
 import java.util.List;
 import java.util.Map;
 
@@ -9,17 +10,21 @@ public class ItemQueryService {
     private final ItemDao itemDao;
 
     public ItemQueryService() {
-        this.itemDao = new ItemDao();
+        this(new ItemDao());
+    }
+
+    public ItemQueryService(ItemDao itemDao) {
+        this.itemDao = itemDao;
     }
 
     public List<Item> getOpenItems() {
         List<Item> items = itemDao.getAll();
-        items.removeIf(i -> i.getStatus() != com.auction.shared.ItemStatus.OPEN);
+        items.removeIf(item -> item.getStatus() != ItemStatus.OPEN);
         return items;
     }
 
-    public Item getById(int id) {
-        return itemDao.getById(id);
+    public Item getById(int itemId) {
+        return itemDao.getById(itemId);
     }
 
     public List<Item> getBySellerId(int sellerId) {
@@ -30,12 +35,12 @@ public class ItemQueryService {
         return itemDao.getPendingItems();
     }
 
-    public boolean approveItem(int id) {
-        return itemDao.approveItem(id);
+    public boolean approveItem(int itemId) {
+        return itemDao.approveItem(itemId);
     }
 
-    public boolean rejectItem(int id) {
-        return itemDao.rejectItem(id);
+    public boolean rejectItem(int itemId) {
+        return itemDao.rejectItem(itemId);
     }
 
     public Map<String, Integer> getStatusStats() {

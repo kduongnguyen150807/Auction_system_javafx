@@ -1,82 +1,155 @@
 package com.auction.server.service;
 
+import com.auction.server.dao.BidDao;
+import com.auction.server.dao.DatabaseConnection;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.TransactionLogDao;
 import com.auction.server.dao.UserDao;
-import com.auction.shared.*;
+import com.auction.shared.Item;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+import java.sql.Connection;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SettlementService {
-  private ItemDao itemDao;
-  private UserDao userDao;
-  private TransactionLogDao logDao;
+  private static final Logger LOGGER = Logger.getLogger(SettlementService.class.getName());
+  private static final int INITIAL_DELAY_SECONDS = 0;
+  private static final int PERIOD_SECONDS = 10;
+
+  private final ItemDao itemDao;
+  private final UserDao userDao;
+  private final TransactionLogDao logDao;
+  private final BidDao bidDao;
+  private final ScheduledExecutorService scheduler;
+
+  private boolean started;
 
   public SettlementService() {
-    this.itemDao = new ItemDao();
-    this.userDao = new UserDao();
-    this.logDao = new TransactionLogDao();
+    this(new ItemDao(), new UserDao(), new TransactionLogDao(), new BidDao());
   }
 
-  public void start() {
-    Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(
-            () -> {
-              try {
-                List<Item> res = itemDao.getExpiredItems();
-                for (Item res1 : res) {
-                  settle(res1);
-                }
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            },
-            0,
-            10,
+  public SettlementService(
+          ItemDao itemDao, UserDao userDao, TransactionLogDao logDao, BidDao bidDao) {
+    this.itemDao = itemDao;
+    this.userDao = userDao;
+    this.logDao = logDao;
+    this.bidDao = bidDao;
+    this.scheduler = Executors.newSingleThreadScheduledExecutor();
+  }
+
+  public synchronized void start() {
+    if (started) {
+      return;
+    }
+
+    scheduler.scheduleAtFixedRate(
+            this::settleExpiredItemsSafely,
+            INITIAL_DELAY_SECONDS,
+            PERIOD_SECONDS,
             TimeUnit.SECONDS);
+
+    started = true;
   }
 
-  private void settle(Item res) {
-    int res1 = getWinnerId(res.getId());
-    if (res1 > 0) {
-      double res2 = res.getCurrentPrice();
-      userDao.addBidderMetrics(res1, 0); // Thắng bid thì cộng 1 itemsbought
-
-      User res3 = userDao.getById(String.valueOf(res.getSellerId()));
-      if (res3 != null) {
-        userDao.updateBalance(res3.getId(), res3.getBalance() + res2);
-        userDao.addSellerMetrics(res3.getId(), res2);
-        logDao.insertLog(res3.getId(), "ITEM_SOLD", res2, res.getId());
-        AuctionManager.getInstance()
-            .sendToUser(
-                res3.getId(),
-                new Response(
-                    "",
-                    "BALANCE_UPDATE",
-                    "Success",
-                    userDao.getById(String.valueOf(res3.getId()))));
-      }
-      itemDao.closeAuction(res.getId(), res1, "CLOSED");
-    } else {
-      itemDao.closeAuction(res.getId(), 0, "EXPIRED");
-    }
-    AuctionManager.getInstance().broadcast(new Response("", "ITEM_CLOSED", "Success", res.getId()));
+  public synchronized void stop() {
+    scheduler.shutdown();
+    started = false;
   }
 
-  private int getWinnerId(int id) {
-    int ans = -1;
+  private void settleExpiredItemsSafely() {
     try {
-      java.sql.Connection res =
-          com.auction.server.dao.DatabaseConnection.getInstance().getConnection();
-      String res1 =
-          "SELECT userid FROM bid_transactions WHERE itemid = ? ORDER BY bidvalue DESC LIMIT 1";
-      java.sql.PreparedStatement res2 = res.prepareStatement(res1);
-      res2.setInt(1, id);
-      java.sql.ResultSet res3 = res2.executeQuery();
-      if (res3.next()) ans = res3.getInt("userid");
-    } catch (Exception e) {
+      List<Item> expiredItems = itemDao.getExpiredItems();
+      for (Item item : expiredItems) {
+        settle(item);
+      }
+    } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, "Failed to settle expired auctions", e);
     }
-    return ans;
+  }
+
+  private void settle(Item item) {
+    int winnerId = bidDao.getHighestBidderId(item.getId());
+
+    if (winnerId > 0) {
+      settleSoldItem(item, winnerId);
+    } else {
+      expireItemWithoutWinner(item);
+    }
+
+    AuctionManager.getInstance()
+            .broadcast(new Response("", "ITEM_CLOSED", "Success", item.getId()));
+  }
+
+  private void settleSoldItem(Item item, int winnerId) {
+    double finalPrice = item.getCurrentPrice();
+
+    try (Connection connection = DatabaseConnection.getInstance().getConnection()) {
+      connection.setAutoCommit(false);
+
+      try {
+        boolean bidderMetricsUpdated = userDao.addBidderMetrics(connection, winnerId, 0);
+        if (!bidderMetricsUpdated) {
+          connection.rollback();
+          return;
+        }
+
+        boolean sellerPaid = paySeller(connection, item, finalPrice);
+        if (!sellerPaid) {
+          connection.rollback();
+          return;
+        }
+
+        itemDao.closeAuction(connection, item.getId(), winnerId, "CLOSED");
+        connection.commit();
+      } catch (Exception e) {
+        connection.rollback();
+        LOGGER.log(Level.WARNING, "Failed to settle sold item " + item.getId(), e);
+      } finally {
+        connection.setAutoCommit(true);
+      }
+    } catch (Exception e) {
+      LOGGER.log(Level.WARNING, "Failed to open settlement transaction", e);
+    }
+  }
+
+  private boolean paySeller(Connection connection, Item item, double finalPrice) {
+    User seller = userDao.getById(String.valueOf(item.getSellerId()));
+    if (seller == null) {
+      return true;
+    }
+
+    double newBalance = seller.getBalance() + finalPrice;
+
+    boolean balanceUpdated = userDao.updateBalance(connection, seller.getId(), newBalance);
+    boolean metricsUpdated = userDao.addSellerMetrics(connection, seller.getId(), finalPrice);
+    boolean logInserted =
+            logDao.insertLog(connection, seller.getId(), "ITEM_SOLD", finalPrice, item.getId());
+
+    if (balanceUpdated && metricsUpdated && logInserted) {
+      sendUpdatedBalance(seller.getId());
+      return true;
+    }
+
+    return false;
+  }
+
+  private void expireItemWithoutWinner(Item item) {
+    itemDao.closeAuction(item.getId(), 0, "EXPIRED");
+  }
+
+  private void sendUpdatedBalance(int userId) {
+    AuctionManager.getInstance()
+            .sendToUser(
+                    userId,
+                    new Response(
+                            "",
+                            "BALANCE_UPDATE",
+                            "Success",
+                            userDao.getById(String.valueOf(userId))));
   }
 }
