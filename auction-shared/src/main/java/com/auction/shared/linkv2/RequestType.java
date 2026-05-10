@@ -6,4 +6,5 @@ public enum RequestType {
   REGISTER_LOT,
   GET_ITEM_BY_STATUS,
   GET_ALL_ITEMS,
+  APPROVE_ITEM,
 }

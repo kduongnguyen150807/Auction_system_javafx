@@ -91,6 +91,15 @@ public class RequestDispatcher {
       LOGGER.warn("Không tìm thấy handler cho lệnh [{}]", type);
       return Response.error(request.getId(),"Lệnh không được hỗ trợ.");
     }
+    // ===== Validate context =====
+
+    if (handler instanceof Authorizable) {
+      boolean success = ((Authorizable) handler).authorize(handlerContext);
+      if (!success) {
+        return Response.error(request.getId(), "Bạn không đủ thẩm quyền");
+      }
+    }
+
     // ===== Execute handler =====
     try {
       return handler.handle(request, handlerContext);

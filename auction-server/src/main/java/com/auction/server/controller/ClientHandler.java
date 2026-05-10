@@ -121,7 +121,9 @@ public class ClientHandler implements Runnable {
    */
   private void handleRequest(Request<?> request) {
     Response<?> response = requestDispatcher.dispatch(request, handlerContext);
+    LOGGER.info("Received response of type: {}", response.toString());
     sendResponse(response);
+    LOGGER.info("Sent response of type: {}", response.toString());
   }
 
   /**

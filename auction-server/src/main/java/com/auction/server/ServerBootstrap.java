@@ -1,7 +1,10 @@
 package com.auction.server;
 
+import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.LotDao;
 import com.auction.server.dao.UserDao;
+import com.auction.server.handler.ApproveItemHandler;
+import com.auction.server.handler.GetAllItemsHandler;
 import com.auction.server.handler.LoginHandler;
 import com.auction.server.handler.RegisterLotHandler;
 import com.auction.server.service.AuctionService;
@@ -16,14 +19,17 @@ public class ServerBootstrap {
     /* Dao */
     UserDao userDao = new UserDao();
     LotDao lotDao = new LotDao();
+    ItemDao itemDao = new ItemDao();
 
     /* Service */
     AuthService authService = new AuthService(userDao);
-    AuctionService auctionService = new AuctionService(lotDao);
+    AuctionService auctionService = new AuctionService(lotDao,  itemDao);
 
     /* Handler */
     requestDispatcher.register(RequestType.LOGIN, new LoginHandler(authService));
     requestDispatcher.register(RequestType.REGISTER_LOT, new RegisterLotHandler(auctionService));
+    requestDispatcher.register(RequestType.GET_ALL_ITEMS, new GetAllItemsHandler(auctionService));
+    requestDispatcher.register(RequestType.APPROVE_ITEM, new ApproveItemHandler(auctionService));
   }
 
   public RequestDispatcher getRequestDispatcher() {
