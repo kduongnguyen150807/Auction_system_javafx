@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<fx:root type="VBox"
+         xmlns="http://javafx.com/javafx/25"
+         xmlns:fx="http://javafx.com/fxml/1"
+         spacing="20"
+         alignment="TOP_LEFT" styleClass="main-container"
+         maxWidth="600">
+
+    <padding>
+        <Insets top="20"
+                right="20"
+                bottom="20"
+                left="20"/>
+    </padding>
+
+    <children>
+
+        <Label fx:id="itemName"
+               text="Item Name"
+               wrapText="true"
+               styleClass="item-title"/>
+
+        <HBox spacing="10"
+              alignment="CENTER_LEFT">
+
+            <children>
+
+                <ImageView fx:id="sellerAvatar"
+                           fitWidth="50"
+                           fitHeight="50">
+
+                    <clip>
+                        <Circle centerX="25"
+                                centerY="25"
+                                radius="25"/>
+                    </clip>
+
+                </ImageView>
+
+                <VBox spacing="3">
+
+                    <children>
+
+                        <Label text="SELLER"
+                               styleClass="label-caption"/>
+
+                        <Label fx:id="sellerName"
+                               text="Unknown Seller"
+                               styleClass="seller-name"/>
+
+                    </children>
+
+                </VBox>
+
+            </children>
+
+        </HBox>
+
+        <VBox spacing="5">
+
+            <children>
+
+                <Label text="DESCRIPTION"
+                       styleClass="label-caption"/>
+
+                <Label fx:id="description"
+                       text="Description"
+                       wrapText="true"
+                       styleClass="description-text"/>
+
+            </children>
+
+        </VBox>
+
+        <HBox spacing="40">
+
+            <children>
+
+                <VBox spacing="5">
+
+                    <children>
+
+                        <Label text="CURRENT BID"
+                               styleClass="label-caption"/>
+
+                        <Label fx:id="currentBid"
+                               text="0$"
+                               styleClass="current-bid"/>
+
+                    </children>
+
+                </VBox>
+
+                <VBox spacing="5">
+
+                    <children>
+
+                        <Label text="BUY IT NOW"
+                               styleClass="label-caption"/>
+
+                        <Label fx:id="buyNowPrice"
+                               text="0$"
+                               styleClass="buy-now-price"/>
+
+                    </children>
+
+                </VBox>
+
+            </children>
+
+        </HBox>
+
+        <VBox spacing="5">
+
+            <children>
+
+                <Label text="ENDS IN"
+                       styleClass="label-caption"/>
+
+                <Label fx:id="countdown"
+                       text="0h 0m"
+                       styleClass="timer-text"/>
+
+            </children>
+
+        </VBox>
+
+        <VBox spacing="10">
+
+            <children>
+
+                <Label text="REAL-TIME PRICE CURVE"
+                       styleClass="label-caption"/>
+
+                <LineChart fx:id="priceChart"
+                           prefHeight="220"
+                           animated="false"
+                           styleClass="chart-glass">
+
+                    <xAxis>
+                        <CategoryAxis/>
+                    </xAxis>
+
+                    <yAxis>
+                        <NumberAxis/>
+                    </yAxis>
+
+                </LineChart>
+
+            </children>
+
+        </VBox>
+
+    </children>
+
+</fx:root>

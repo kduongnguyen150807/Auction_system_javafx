@@ -8,6 +8,7 @@
 
 <?import javafx.scene.text.Font?>
 <?import javafx.geometry.Insets?>
+<?import com.auction.client.ui.component.ItemListPane?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.ui.maindashboard.AuctionController"
@@ -23,7 +24,7 @@
 
         <ScrollPane styleClass="TrendingScrollPane" hbarPolicy="NEVER" vbarPolicy="NEVER">
             <content>
-                <HBox fx:id="trendingBind" styleClass="TrendingBind" spacing="20"/>
+                <ItemListPane fx:id="trendingBind" styleClass="TrendingBind" spacing="20"/>
             </content>
         </ScrollPane>
     </children>

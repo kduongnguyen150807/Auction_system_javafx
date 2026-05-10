@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import com.auction.client.ui.maindashboard.itemInformation.ItemButtonLayout?>
+<?import com.auction.client.ui.maindashboard.itemInformation.ItemInfoLayout?>
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      stylesheets="@../../../css/MainDashBoard/ItemInformation.css"
+      fx:controller="com.auction.client.ui.maindashboard.itemInformation.ItemInformation"
+      prefHeight="400.0" prefWidth="600.0">
+    <children>
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <ItemInfoLayout fx:id="infoLayout" />
+
+        <ItemButtonLayout fx:id="buttonLayout" />
+
+        <Region HBox.hgrow="ALWAYS"/>
+    </children>
+</HBox>

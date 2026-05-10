@@ -1,0 +1,240 @@
+/* =========================
+   ROOT
+========================= */
+
+.main-container {
+    -fx-background-color: rgba(0,0,0,0.5);
+    -fx-background-border: 20;
+    -fx-font-family: "Consolas";
+}
+
+/* =========================
+   INFO PANEL
+========================= */
+
+.info-panel {
+    -fx-background-color: rgba(25, 25, 25, 0.85);
+    -fx-background-radius: 30;
+
+    -fx-border-color: rgba(0, 122, 255, 0.3);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 30;
+
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(0,0,0,0.6),
+        30,
+        0,
+        0,
+        10
+    );
+}
+
+/* =========================
+   IMAGE
+========================= */
+
+.image-frame {
+    -fx-background-color: rgba(0,0,0,0.3);
+
+    -fx-background-radius: 20;
+
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-border-radius: 20;
+}
+
+.item-image {
+    -fx-smooth: true;
+}
+
+/* =========================
+   TITLE
+========================= */
+
+.item-title {
+    -fx-text-fill: white;
+
+    -fx-font-size: 42px;
+
+    -fx-font-weight: 900;
+
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(255,255,255,0.3),
+        10,
+        0,
+        0,
+        0
+    );
+}
+
+/* =========================
+   LABELS
+========================= */
+
+.label-caption {
+    -fx-text-fill: #888888;
+
+    -fx-font-size: 12px;
+
+    -fx-font-weight: bold;
+}
+
+.seller-name {
+    -fx-text-fill: #00d4ff;
+
+    -fx-font-size: 20px;
+
+    -fx-font-weight: bold;
+}
+
+.description-text {
+    -fx-text-fill: #dddddd;
+
+    -fx-font-size: 16px;
+
+    -fx-line-spacing: 5px;
+}
+
+/* =========================
+   PRICE
+========================= */
+
+.current-bid {
+    -fx-text-fill: #007aff;
+
+    -fx-font-size: 34px;
+
+    -fx-font-weight: 900;
+
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(0,122,255,0.5),
+        10,
+        0,
+        0,
+        0
+    );
+}
+
+.buy-now-price {
+    -fx-text-fill: white;
+
+    -fx-font-size: 30px;
+
+    -fx-font-weight: 800;
+}
+
+/* =========================
+   TIMER
+========================= */
+
+.timer-text {
+    -fx-text-fill: #ffaa00;
+
+    -fx-font-size: 32px;
+
+    -fx-font-weight: 900;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.bid-button {
+    -fx-background-color:
+        linear-gradient(
+            to right,
+            #007aff,
+            #00d4ff
+        );
+
+    -fx-text-fill: white;
+
+    -fx-font-size: 20px;
+
+    -fx-font-weight: 900;
+
+    -fx-background-radius: 30;
+
+    -fx-cursor: hand;
+
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(0,122,255,0.6),
+        15,
+        0,
+        0,
+        0
+    );
+}
+
+.bid-button:hover {
+    -fx-background-color:
+        linear-gradient(
+            to right,
+            #00d4ff,
+            #007aff
+        );
+
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(0,122,255,0.8),
+        20,
+        0,
+        0,
+        0
+    );
+}
+
+.gold-button {
+    -fx-background-color: #ffaa00;
+
+    -fx-text-fill: black;
+
+    -fx-font-weight: 800;
+
+    -fx-background-radius: 25;
+
+    -fx-cursor: hand;
+}
+
+/* =========================
+   INPUT
+========================= */
+
+.bid-input {
+    -fx-background-color: rgba(0,0,0,0.4);
+
+    -fx-text-fill: white;
+
+    -fx-background-radius: 25;
+
+    -fx-border-color: rgba(255,255,255,0.1);
+
+    -fx-border-radius: 25;
+
+    -fx-padding: 0 20;
+}
+
+/* =========================
+   CHART
+========================= */
+
+.chart-glass {
+    -fx-background-color: transparent;
+}
+
+.chart-plot-background {
+    -fx-background-color: rgba(255,255,255,0.02);
+}
+
+.chart-series-line {
+    -fx-stroke: #007aff;
+
+    -fx-stroke-width: 3px;
+}
+
+.axis {
+    -fx-tick-label-fill: white;
+}
