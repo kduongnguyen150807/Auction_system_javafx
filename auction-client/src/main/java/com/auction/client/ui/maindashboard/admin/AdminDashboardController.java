@@ -17,13 +17,11 @@ public class AdminDashboardController {
   }
 
   private void loadAllModules() {
-
+    pendingItemController.setService(adminService);
   }
 
   private void refreshDashboard() {
-    pendingItemController.setService(adminService);
     pendingItemController.refreshData();
-
   }
 }
 

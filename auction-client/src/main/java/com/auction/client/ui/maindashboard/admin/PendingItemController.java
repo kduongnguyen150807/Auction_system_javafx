@@ -2,17 +2,23 @@ package com.auction.client.ui.maindashboard.admin;
 
 import com.auction.client.service.AdminService;
 import com.auction.client.service.AuctionService;
+import com.auction.client.service.AuthService;
 import com.auction.client.store.AuctionStore;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.shared.item.Item;
 import com.auction.shared.item.ItemStatus;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PendingItemController implements CanRefresh {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PendingItemController.class);
   private AdminService adminService;
 
   @FXML private TableView<Item> pendingTable;
@@ -38,15 +44,23 @@ public class PendingItemController implements CanRefresh {
     );
 
     sellerColumn.setCellValueFactory(cell ->
-      new SimpleStringProperty(cell.getValue().getName())
+      new SimpleStringProperty(String.valueOf(cell.getValue().getSellerId()))
     );
 
     startingPriceColumn.setCellValueFactory(cell ->
-      new SimpleStringProperty(cell.getValue().getName())
+      new SimpleStringProperty(String.valueOf(cell.getValue().getStartingPrice()))
     );
 
     categoryColumn.setCellValueFactory(cell ->
-      new SimpleStringProperty(cell.getValue().getName())
+      new SimpleStringProperty(String.valueOf(cell.getValue().getCategory()))
+    );
+
+    conditionColumn.setCellValueFactory(cell ->
+      new SimpleStringProperty(String.valueOf(cell.getValue().getStatus()))
+    );
+
+    createdAtColumn.setCellValueFactory(cell ->
+      new SimpleStringProperty(String.valueOf(cell.getValue().getStartTime()))
     );
   }
 
@@ -56,7 +70,11 @@ public class PendingItemController implements CanRefresh {
   }
 
   @FXML
-  private void handleApprove() {}
+  private void handleApprove() {
+    adminService.handleApprove(pendingTable.getSelectionModel().getSelectedItem()).thenAccept(response -> {
+      refreshData();
+    });
+  }
 
   @FXML
   private void handleReject() {}
@@ -66,10 +84,14 @@ public class PendingItemController implements CanRefresh {
 
   @Override
   public void refreshData() {
-    AuctionService.getInstance().refreshItem();
-    pendingTable.setItems(
-      AuctionService.getInstance().getItemsByStatus(ItemStatus.PENDING)
-    );
+    AuctionService.getInstance().refreshItemv2().thenAccept(response -> {
+      Platform.runLater(() -> setPendingItem(AuctionService.getInstance().
+        getItemsByStatus(ItemStatus.PENDING)));
+    });
+  }
+
+  public void setPendingItem(ObservableList<Item> items) {
+    pendingTable.getItems().setAll(items);
   }
 
   public void setService(AdminService service) {
