@@ -37,4 +37,9 @@ public final class RequestHelper {
         return null;
       });
   }
+
+  public static void sendRequest(RequestType type, Object payload) {
+    Request request = Request.of(type, payload);
+    NetworkClient.getInstance().sendRequestAsync(request);
+  }
 }
