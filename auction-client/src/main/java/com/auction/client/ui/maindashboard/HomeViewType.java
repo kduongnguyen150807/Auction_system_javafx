@@ -5,6 +5,7 @@ enum HomeViewType {
   PROFILE("/fxml/MainDashBoard/Profile.fxml"),
   REGISTER_LOT("/fxml/MainDashBoard/RegisterLot.fxml"),
   ADMIN_DASHBOARD("/fxml/MainDashBoard/admin/AdminDashBoard.fxml"),
+  ITEM_INFORMATION("/fxml/MainDashBoard/itemInformation/ItemInformation.fxml"),
   ;
 
   private final String fxmlPath;

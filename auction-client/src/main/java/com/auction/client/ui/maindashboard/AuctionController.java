@@ -1,34 +1,44 @@
 package com.auction.client.ui.maindashboard;
 
+import com.auction.client.service.AuctionService;
 import com.auction.client.ui.base.CanRefresh;
-import com.auction.shared.Lot;
+import com.auction.client.ui.base.PageController;
+import com.auction.client.ui.component.ItemListPane;
+import com.auction.shared.item.ItemStatus;
 import javafx.fxml.FXML;
-import javafx.scene.layout.HBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
+import javafx.scene.Node;
 
 
-public class AuctionController implements CanRefresh {
-  private static final Logger LOGGER = LoggerFactory.getLogger(AuctionController.class);
-
-  private final List<Lot> cachedLot = new ArrayList<>();
-
+public class AuctionController extends PageController implements CanRefresh {
   @FXML
-  private HBox trendingBind;
+  private ItemListPane trendingBind;
 
   @FXML
   public void initialize() {
     refreshData();
-    renderItemCards();
-
   }
 
   @Override
   public void refreshData() {
+    AuctionService.getInstance().refreshItemv2().thenAccept(
+      response -> {
+        renderItemCards();
+      }
+    );
   }
 
-  private void renderItemCards() { }
+  private void registerItemCard(Node node) {
+    node.setOnMouseClicked(event -> {
+      switchView.accept(HomeViewType.ITEM_INFORMATION);
+    });
+  }
+
+  private void renderItemCards() {
+    trendingBind.setItems(AuctionService.getInstance()
+      .getItemsByStatus(ItemStatus.OPEN));
+
+    for (Node node: trendingBind.getChildren()) {
+      registerItemCard(node);
+    }
+  }
 }
