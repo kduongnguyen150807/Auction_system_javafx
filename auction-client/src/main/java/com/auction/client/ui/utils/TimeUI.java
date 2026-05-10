@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.stream.IntStream;
@@ -25,5 +26,18 @@ public class TimeUI {
 
   private TimeUI() {}
 
+  public static String getRemainingTime(LocalDateTime time) {
+    Duration duration = Duration.between(LocalDateTime.now(), time);
+    long days = duration.toDays();
+    long hours = duration.toHours() % 24;
+    long minutes = duration.toMinutes() % 60;
 
+    String text = String.format(
+      "%dd %dh %dm",
+      days,
+      hours,
+      minutes
+    );
+    return text;
+  }
 }
