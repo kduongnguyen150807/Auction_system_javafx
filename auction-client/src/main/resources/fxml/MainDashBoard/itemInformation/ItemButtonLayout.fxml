@@ -5,13 +5,13 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-
-<fx:root type="VBox"
+<VBox
          xmlns="http://javafx.com/javafx/25"
          xmlns:fx="http://javafx.com/fxml/1"
          spacing="20"
          alignment="TOP_CENTER" styleClass="main-container"
-         prefWidth="300">
+         prefWidth="300"
+         fx:controller="com.auction.client.ui.maindashboard.itemInformation.ItemButtonLayoutController">
 
     <padding>
         <Insets top="20"
@@ -61,4 +61,4 @@
 
     </children>
 
-</fx:root>
+</VBox>

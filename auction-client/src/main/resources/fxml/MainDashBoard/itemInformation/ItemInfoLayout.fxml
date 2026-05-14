@@ -4,18 +4,17 @@
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
-
-<fx:root type="VBox"
+<VBox
          xmlns="http://javafx.com/javafx/25"
          xmlns:fx="http://javafx.com/fxml/1"
          spacing="20"
          alignment="TOP_LEFT" styleClass="main-container"
-         maxWidth="600">
+         maxWidth="600"
+         fx:controller="com.auction.client.ui.maindashboard.itemInformation.ItemInfoLayoutController">
 
     <padding>
         <Insets top="20"
@@ -164,4 +163,4 @@
 
     </children>
 
-</fx:root>
+</VBox>

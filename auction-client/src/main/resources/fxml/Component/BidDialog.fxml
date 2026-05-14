@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root type="VBox" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      spacing="18"
+      alignment="CENTER"
+      prefWidth="360"
+      prefHeight="220"
+      style="
+          -fx-background-color: #1e1f22;
+          -fx-background-radius: 16;
+      ">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <!-- Title -->
+    <Label text="Place Bid"
+           style="
+               -fx-text-fill: white;
+               -fx-font-size: 22px;
+               -fx-font-weight: bold;
+           "/>
+
+    <!-- Item ID -->
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <Label text="Item ID:"
+               style="
+                   -fx-text-fill: #b3b8c3;
+                   -fx-font-size: 14px;
+               "/>
+
+        <Label fx:id="itemIdLabel"
+               text="ITEM-001"
+               style="
+                   -fx-text-fill: white;
+                   -fx-font-size: 14px;
+                   -fx-font-weight: bold;
+               "/>
+    </HBox>
+
+    <!-- Amount -->
+    <VBox spacing="6" alignment="CENTER_LEFT">
+        <Label text="Bid Amount"
+               style="
+                   -fx-text-fill: #b3b8c3;
+                   -fx-font-size: 14px;
+               "/>
+
+        <TextField fx:id="amountField"
+                   promptText="Enter amount"
+                   prefHeight="38"
+                   style="
+                       -fx-background-color: #2b2d31;
+                       -fx-text-fill: white;
+                       -fx-prompt-text-fill: #7d8590;
+                       -fx-background-radius: 10;
+                       -fx-border-radius: 10;
+                       -fx-border-color: #3f4248;
+                       -fx-font-size: 14px;
+                   "/>
+    </VBox>
+
+    <Label fx:id="announcementLabel"
+           textFill="#ff6b6b"
+           wrapText="true"
+           visible="false"/>
+
+    <!-- Buttons -->
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+
+        <Button text="Cancel"
+                onAction="#handleCancel"
+                prefWidth="90"
+                style="
+                    -fx-background-color: #3a3d44;
+                    -fx-text-fill: white;
+                    -fx-background-radius: 10;
+                    -fx-font-weight: bold;
+                "/>
+
+        <Button text="Submit"
+                onAction="#handleSubmit"
+                prefWidth="90"
+                style="
+                    -fx-background-color: #4f8cff;
+                    -fx-text-fill: white;
+                    -fx-background-radius: 10;
+                    -fx-font-weight: bold;
+                "/>
+
+    </HBox>
+
+</fx:root>

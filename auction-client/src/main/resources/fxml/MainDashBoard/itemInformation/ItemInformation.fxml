@@ -5,19 +5,17 @@
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import com.auction.client.ui.maindashboard.itemInformation.ItemButtonLayout?>
-<?import com.auction.client.ui.maindashboard.itemInformation.ItemInfoLayout?>
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       stylesheets="@../../../css/MainDashBoard/ItemInformation.css"
-      fx:controller="com.auction.client.ui.maindashboard.itemInformation.ItemInformation"
+      fx:controller="com.auction.client.ui.maindashboard.itemInformation.ItemInformationController"
       prefHeight="400.0" prefWidth="600.0">
     <children>
         <Region HBox.hgrow="ALWAYS"/>
 
-        <ItemInfoLayout fx:id="infoLayout" />
+        <fx:include source="ItemInfoLayout.fxml" fx:id="infoLayout" />
 
-        <ItemButtonLayout fx:id="buttonLayout" />
+        <fx:include source="ItemButtonLayout.fxml" fx:id="buttonLayout" />
 
         <Region HBox.hgrow="ALWAYS"/>
     </children>
