@@ -9,7 +9,7 @@ import com.auction.shared.linkv2.Request;
 import com.auction.shared.linkv2.Response;
 import com.auction.shared.user.UserRole;
 
-public class ApproveItemHandler implements RequestHandler<Item, Boolean>, Authorizable {
+public class ApproveItemHandler implements RequestHandler<Item, Boolean>, Authorizable<Item> {
   private final AuctionService auctionService;
 
   public ApproveItemHandler(AuctionService auctionService) {
@@ -17,7 +17,7 @@ public class ApproveItemHandler implements RequestHandler<Item, Boolean>, Author
   }
 
   @Override
-  public boolean authorize(HandlerContext handlerContext) {
+  public boolean authorize(HandlerContext handlerContext, Request<Item> request) {
     if (handlerContext.getUser().getRole() != UserRole.ADMIN) {
       return false;
     }

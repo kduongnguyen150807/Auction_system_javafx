@@ -94,7 +94,7 @@ public class RequestDispatcher {
     // ===== Validate context =====
 
     if (handler instanceof Authorizable) {
-      boolean success = ((Authorizable) handler).authorize(handlerContext);
+      boolean success = ((Authorizable) handler).authorize(handlerContext, request);
       if (!success) {
         return Response.error(request.getId(), "Bạn không đủ thẩm quyền");
       }
@@ -127,6 +127,8 @@ public class RequestDispatcher {
   );
 
   private final List<ClientValidator.ValidationRule> ClientRule = List.of(
-    new ClientValidator.ValidationRule(user -> user.getStatus().equals(UserStatus.LOCKED), "User bị khoá")
+    new ClientValidator.ValidationRule(
+      user -> user.getStatus().equals(UserStatus.LOCKED),
+      "User bị khoá")
   );
 }

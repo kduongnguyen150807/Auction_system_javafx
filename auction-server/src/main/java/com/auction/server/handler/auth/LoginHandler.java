@@ -1,4 +1,4 @@
-package com.auction.server.handler;
+package com.auction.server.handler.auth;
 
 import com.auction.server.context.HandlerContext;
 import com.auction.server.service.AuthService;
