@@ -19,6 +19,7 @@ public class Request implements Serializable {
   public static final String UNLOCK_USER = "UNLOCK_USER";
   public static final String ADD_LOT = "ADD_LOT";
   public static final String GET_ONGOING_BIDS = "GET_ONGOING_BIDS";
+  public static final String GET_TRENDING_LOTS = "GET_TRENDING_LOTS";
   public static final String GET_UPCOMING_BIDS = "GET_UPCOMING_BIDS";
   public static final String SUBMIT_RATING = "SUBMIT_RATING";
   public static final String GET_RATINGS = "GET_RATINGS";

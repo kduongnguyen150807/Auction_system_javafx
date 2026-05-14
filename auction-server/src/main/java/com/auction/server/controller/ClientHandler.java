@@ -88,6 +88,7 @@ public class ClientHandler implements Runnable {
 
     LotQueryHandler lotQuery = new LotQueryHandler();
     reg.register(Request.GET_ONGOING_BIDS, lotQuery);
+    reg.register(Request.GET_TRENDING_LOTS, lotQuery);
     reg.register(Request.GET_UPCOMING_BIDS, lotQuery);
     reg.register(Request.GET_CLOSED_BIDS, lotQuery);
     reg.register(Request.GET_PAST_BIDS, lotQuery);

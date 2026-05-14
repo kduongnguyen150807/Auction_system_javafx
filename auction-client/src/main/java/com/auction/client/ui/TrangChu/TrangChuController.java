@@ -97,6 +97,7 @@ public class TrangChuController {
       new int[CategoryCarouselSupport.SLOT_CATEGORIES.length];
 
   private final List<Item> cachedItems = new ArrayList<>();
+  private final List<Item> cachedTrendingFromServer = new ArrayList<>();
   private final Map<Integer, ItemCardController> trendingCardMap = new HashMap<>();
   private final Map<Integer, Node> trendingRootByItemId = new HashMap<>();
 
@@ -155,6 +156,7 @@ public class TrangChuController {
                   newT == tabDutchAuctions ? AuctionType.DUTCH : AuctionType.ENGLISH;
               if (KhungController.getCatalogAuctionType() != nu) {
                 KhungController.setCatalogAuctionType(nu);
+                refreshItems();
               }
             });
     syncCatalogTabsFromShell();
@@ -204,7 +206,7 @@ public class TrangChuController {
   }
 
   public void refreshItems() {
-    TrangChuOngoingItemsLoader.loadAsync(this::cacheAndRender);
+    TrangChuOngoingItemsLoader.loadAsync(this::applyCatalogLoad);
     new Thread(() -> {
       com.auction.shared.Request req = new com.auction.shared.Request(com.auction.shared.Request.GET_LEADERBOARD, null);
       com.auction.shared.Response ans = com.auction.client.network.NetworkClient.getInstance().sendRequestAndWait(req);
@@ -221,10 +223,25 @@ public class TrangChuController {
     renderFilteredItems();
   }
 
-  private void cacheAndRender(List<Item> rawList) {
+  private void applyCatalogLoad(TrangChuCatalogLoadResult bundle) {
+    if (bundle == null) {
+      return;
+    }
     cachedItems.clear();
-    cachedItems.addAll(rawList);
+    cachedItems.addAll(bundle.ongoing());
+    cachedTrendingFromServer.clear();
+    cachedTrendingFromServer.addAll(bundle.trending());
     renderFilteredItems();
+  }
+
+  /** Trending lane: server-ranked slice when available; otherwise first 5 from filtered catalog. */
+  private List<Item> trendingSourceForFilteredRow(AuctionFilterContext filter) {
+    if (!cachedTrendingFromServer.isEmpty()) {
+      return cachedTrendingFromServer;
+    }
+    List<Item> all = filter.itemsMatchingTrending(cachedItems);
+    int n = Math.min(5, all.size());
+    return n == 0 ? List.of() : new ArrayList<>(all.subList(0, n));
   }
 
   private void renderFilteredItems() {
@@ -232,7 +249,8 @@ public class TrangChuController {
       return;
     }
     AuctionFilterContext filter = AuctionFilterContext.fromHomeState(keyword, category);
-    List<Item> trendingVisible = filter.itemsMatchingTrending(cachedItems);
+    List<Item> trendingVisible =
+        filter.itemsMatchingTrending(trendingSourceForFilteredRow(filter));
 
     rowSynchronizer.syncRow(
         TrendingBind, trendingCardMap, trendingRootByItemId, trendingVisible, false, false);
@@ -316,6 +334,7 @@ public class TrangChuController {
       return;
     }
     cachedItems.removeIf(cached -> cached.getId() == item.getId());
+    cachedTrendingFromServer.removeIf(cached -> cached.getId() == item.getId());
     renderFilteredItems();
   }
 
@@ -329,6 +348,16 @@ public class TrangChuController {
         cached.setCurrentPrice(updated.getCurrentPrice());
         cached.setEndTime(updated.getEndTime());
         cachedRef = cached;
+        break;
+      }
+    }
+    for (Item t : cachedTrendingFromServer) {
+      if (t.getId() == updated.getId()) {
+        t.setCurrentPrice(updated.getCurrentPrice());
+        t.setEndTime(updated.getEndTime());
+        if (cachedRef == null) {
+          cachedRef = t;
+        }
         break;
       }
     }
