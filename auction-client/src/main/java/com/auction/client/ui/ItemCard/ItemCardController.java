@@ -243,7 +243,10 @@ public class ItemCardController {
       ItemInformationController detailcontroller = detailloader.getController();
       if (detailcontroller != null) {
         ItemStatus status = catalogitemsnapshot != null ? catalogitemsnapshot.getStatus() : ItemStatus.OPEN;
-        detailcontroller.setData(id, itemname, currentprice, 0, description, timelabel, imageurl, sellername, selleravatarurl, status);
+        LocalDateTime start =
+            catalogitemsnapshot != null ? catalogitemsnapshot.getStartTime() : null;
+        detailcontroller.setData(id, itemname, currentprice, 0, description, timelabel, imageurl,
+            sellername, selleravatarurl, status, start);
         detailcontroller.refresh();
         KhungController.itemDetailController = detailcontroller;
       }

@@ -13,7 +13,11 @@ final class BidAuctionValidator {
   Response validate(BidTransaction bid, Item item, User bidder) {
     if (item == null) return error("Item not found");
     if (item.getStatus() != ItemStatus.OPEN) return error("Auction is no longer open");
-    if (item.getEndTime() != null && item.getEndTime().isBefore(LocalDateTime.now()))
+    LocalDateTime now = LocalDateTime.now();
+    if (item.getStartTime() != null && item.getStartTime().isAfter(now)) {
+      return error("auction_not_started");
+    }
+    if (item.getEndTime() != null && item.getEndTime().isBefore(now))
       return error("Auction has ended");
     if (bidder == null) return error("User not found");
     if (bidder.isLocked() || !bidder.isActive()) return error("Account is locked");
