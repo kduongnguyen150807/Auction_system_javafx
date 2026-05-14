@@ -1,9 +1,14 @@
 package com.auction.client.ui.loginview;
 
 import com.auction.client.app.NodeLoader;
+import com.auction.client.navigation.SceneManager;
+import com.auction.client.navigation.SceneType;
 import com.auction.client.ui.base.PageController;
+import com.auction.client.ui.maindashboard.HomeView;
+import com.auction.client.ui.utils.FXThread;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +70,7 @@ public class LoginView extends StackPane {
     try {
       registerSubView(LoginViewType.WELCOME, LoginViewType.WELCOME.getFxmlPath());
       registerSubView(LoginViewType.LOGIN, LoginViewType.LOGIN.getFxmlPath());
+      registerSubView(LoginViewType.REGISTER, LoginViewType.REGISTER.getFxmlPath());
     } catch (IOException e) {
       LOGGER.error("không thể load Node", e);
     }
@@ -100,5 +106,13 @@ public class LoginView extends StackPane {
       return;
     }
     getChildren().setAll(nodeMap.get(name));
+  }
+
+  public static void switchNextScene() {
+    FXThread.dispatch(() -> {
+      Scene Home = new Scene(new HomeView());
+      SceneManager.getInstance().registerScene(SceneType.HOME ,Home);
+      SceneManager.getInstance().switchTo(SceneType.HOME);
+    });
   }
 }
