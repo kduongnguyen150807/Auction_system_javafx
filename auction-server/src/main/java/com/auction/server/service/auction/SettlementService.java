@@ -41,6 +41,11 @@ public class SettlementService {
     queue.add(ans);
   }
 
+  /** Removes any scheduled end-time event for this item (e.g. voluntary seller cancel). */
+  public void unschedule(int itemId) {
+    queue.remove(new AuctionEndEvent(itemId, LocalDateTime.MIN));
+  }
+
   public void start() {
     List<Item> res = itemdao.getAll();
     for (Item item : res) {

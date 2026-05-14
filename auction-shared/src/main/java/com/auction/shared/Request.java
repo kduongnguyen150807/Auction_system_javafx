@@ -54,6 +54,10 @@ public class Request implements Serializable {
   public static final String GET_LEADERBOARD = "GET_LEADERBOARD";
   public static final String AUTOCOMPLETE = "AUTOCOMPLETE";
   public static final String RECONNECT = "RECONNECT";
+  /** Seller cancels own pending listing or voluntarily cancels an OPEN auction (refund leader). */
+  public static final String SELLER_CANCEL_ITEM = "SELLER_CANCEL_ITEM";
+  /** Seller edits a listing before it is live ({@code PENDING} or {@code OPEN} with future start time). */
+  public static final String SELLER_UPDATE_PENDING_ITEM = "SELLER_UPDATE_PENDING_ITEM";
 
   protected String requestId;
   protected String action;

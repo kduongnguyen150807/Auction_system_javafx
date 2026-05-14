@@ -12,11 +12,15 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -33,6 +37,10 @@ public class ItemCardController {
   @FXML private Label priceMetricCaption;
   @FXML private ImageView ImageHolder;
   @FXML private Rectangle imageClip;
+
+  @FXML private HBox sellerActionsRow;
+  @FXML private Button btnEditMyItem;
+  @FXML private Button btnDeleteMyItem;
 
   private int id;
   private String itemname, description, timelabel, imageurl, sellername, selleravatarurl;
@@ -112,6 +120,48 @@ public class ItemCardController {
     }
     boolean dutch = catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH;
     priceMetricCaption.setText(dutch ? "CURRENT PRICE" : "CURRENT BID");
+  }
+
+  /** Optional actions for seller "My Items" view. */
+  public void configureSellerItemActions(boolean showEdit, Runnable onEdit, boolean showCancel, Runnable onCancel) {
+    if (sellerActionsRow == null) {
+      return;
+    }
+    boolean any = showEdit || showCancel;
+    sellerActionsRow.setVisible(any);
+    sellerActionsRow.setManaged(any);
+    if (btnEditMyItem != null) {
+      btnEditMyItem.setVisible(showEdit);
+      btnEditMyItem.setManaged(showEdit);
+      btnEditMyItem.setOnAction(
+          ev -> {
+            ev.consume();
+            if (onEdit != null) onEdit.run();
+          });
+    }
+    if (btnDeleteMyItem != null) {
+      btnDeleteMyItem.setVisible(showCancel);
+      btnDeleteMyItem.setManaged(showCancel);
+      btnDeleteMyItem.setOnAction(
+          ev -> {
+            ev.consume();
+            if (onCancel != null) onCancel.run();
+          });
+    }
+  }
+
+  private boolean isTargetUnderSellerActions(Node target) {
+    if (sellerActionsRow == null || !sellerActionsRow.isVisible()) {
+      return false;
+    }
+    Node n = target;
+    while (n != null) {
+      if (n == sellerActionsRow) {
+        return true;
+      }
+      n = n.getParent();
+    }
+    return false;
   }
 
   private void loadimageifpresent(String url) {
@@ -236,7 +286,10 @@ public class ItemCardController {
     }
   }
 
-  public void handleItemClicked() {
+  public void handleItemClicked(MouseEvent e) {
+    if (e != null && e.getTarget() instanceof Node node && isTargetUnderSellerActions(node)) {
+      return;
+    }
     try {
       NodeContentLoader<ScrollPane> detailloader = new NodeContentLoader<>();
       detailloader.load("/fxml/iteminformation/ItemInformation.fxml");
@@ -252,7 +305,7 @@ public class ItemCardController {
       }
       NodeManager.switchNodewithNode(detailloader.getCurrentNode(), KhungController.getCurrentNode(), KhungController.getMainContentPane());
       KhungController.setMainContentNode(detailloader.getCurrentNode());
-    } catch (Exception e) {
+    } catch (Exception ex) {
     }
   }
 }

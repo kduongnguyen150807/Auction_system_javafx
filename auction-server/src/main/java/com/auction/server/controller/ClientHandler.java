@@ -122,6 +122,10 @@ public class ClientHandler implements Runnable {
 
     reg.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));
     reg.register(Request.ADD_LOT, ActionHandler.requireAuth(new AddLotHandler()));
+    reg.register(Request.SELLER_CANCEL_ITEM, ActionHandler.requireAuth(new SellerCancelItemHandler()));
+    reg.register(
+        Request.SELLER_UPDATE_PENDING_ITEM,
+        ActionHandler.requireAuth(new SellerUpdatePendingItemHandler()));
     reg.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
     reg.register(Request.UPDATE_AVATAR, ActionHandler.requireAuth(new UpdateAvatarHandler()));
     reg.register(Request.DEPOSIT, ActionHandler.requireAuth(new DepositHandler()));

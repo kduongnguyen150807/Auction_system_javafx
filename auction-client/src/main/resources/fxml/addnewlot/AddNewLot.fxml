@@ -41,7 +41,7 @@
                                 <VBox>
                                     <children>
                                         <Label styleClass="form-sub-title-mac" text="BIDDING88" />
-                                        <Label styleClass="form-title-mac" text="ADD NEW ITEM" />
+                                        <Label fx:id="formTitleLabel" styleClass="form-title-mac" text="ADD NEW ITEM" />
                                     </children>
                                 </VBox>
                                 <Region HBox.hgrow="ALWAYS" />
@@ -122,7 +122,7 @@
                                         <HBox spacing="15.0">
                                             <children>
                                                 <Button maxWidth="Infinity" onAction="#handleCancel" styleClass="btn-cancel-mac" text="CANCEL" HBox.hgrow="ALWAYS" />
-                                                <Button maxWidth="Infinity" onAction="#handleSubmit" styleClass="btn-primary-mac" text="CONFIRM UPLOAD" HBox.hgrow="ALWAYS" />
+                                                <Button fx:id="confirmSubmitButton" maxWidth="Infinity" onAction="#handleSubmit" styleClass="btn-primary-mac" text="CONFIRM UPLOAD" HBox.hgrow="ALWAYS" />
                                             </children>
                                             <padding><Insets top="5.0" /></padding>
                                         </HBox>

@@ -10,6 +10,7 @@ import com.auction.shared.Item;
 import com.auction.shared.LeaderboardEntry;
 import com.auction.shared.Response;
 import com.auction.shared.User;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -165,6 +166,22 @@ public class AuctionManager {
 
   public void handleSellerBan(int sellerid) {
     bancascade.handleSellerBan(sellerid);
+  }
+
+  /**
+   * Seller voluntarily cancels an OPEN auction they own. Uses per-auction lock; refunds current high
+   * bidder and unschedules settlement.
+   */
+  public boolean voluntarySellerCancelOpenAuction(int sellerId, int itemId) {
+    ReentrantLock lock = getAuctionLock(itemId);
+    lock.lock();
+    try {
+      return bancascade.voluntarySellerCancelOpen(itemId, sellerId);
+    } catch (SQLException e) {
+      return false;
+    } finally {
+      lock.unlock();
+    }
   }
 
   void cleanupAutoBids(int itemid) {

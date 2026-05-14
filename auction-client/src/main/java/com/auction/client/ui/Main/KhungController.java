@@ -51,6 +51,7 @@ public class KhungController {
   private ProfileController profileController;
   private AdminDashboardController adminDashboardController;
   private ChatPageController chatCtrl;
+  private com.auction.client.ui.AddNewLot.AddNewLotController addLotController;
 
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
@@ -91,6 +92,7 @@ public class KhungController {
       historyController = hist.getController();
       profileController = profile.getController();
       adminDashboardController = admin.getController();
+      addLotController = addLot.getController();
       chatCtrl = chat.getController();
       navigator =
           new MainShellNavigator(
@@ -304,6 +306,24 @@ public class KhungController {
     if (instance.homeController != null)
       instance.homeController.setFilters(instance.searchFilters.getKeyword(), instance.searchFilters.getCategory());
     if (instance.myItemsController != null) instance.myItemsController.refreshItems();
+  }
+
+  /**
+   * After editing a pending lot from My Items — returns to seller list (not home).
+   */
+  public static void returnFromLotEditor(boolean savedSuccessfully) {
+    if (instance == null || instance.navigator == null) return;
+    instance.navigator.switchPage(instance.myItemsNode, instance.MyItemMenu);
+    if (savedSuccessfully && instance.myItemsController != null) {
+      instance.myItemsController.refreshItems();
+    }
+  }
+
+  public static void openEditPendingItem(Item item) {
+    if (instance == null || item == null || instance.addLotController == null || instance.navigator == null)
+      return;
+    instance.addLotController.openForEdit(item);
+    instance.navigator.switchPage(instance.addLotNode, instance.MyItemMenu);
   }
 
   public static void returnFromAddLot(boolean refreshAfterSubmit) {

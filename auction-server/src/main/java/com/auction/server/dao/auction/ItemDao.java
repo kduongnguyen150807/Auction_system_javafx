@@ -262,6 +262,72 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
     }
   }
 
+  /** PENDING listing withdrawn by seller. */
+  public boolean sellerCancelPending(int itemId, int sellerId) {
+    String sql =
+        "UPDATE items SET status = 'CANCELED' WHERE id = ? AND sellerid = ? AND status = 'PENDING'";
+    return executeUpdate(sql, itemId, sellerId);
+  }
+
+  /**
+   * Seller updates listing while it is not live yet: {@code PENDING}, or {@code OPEN} with {@code
+   * starttime} still in the future (before the auction has started).
+   */
+  public boolean updateSellerListingBeforeStartBySeller(
+      int itemId,
+      int sellerId,
+      String name,
+      String description,
+      double startingPrice,
+      double maxPrice,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      String imageUrl,
+      String category,
+      AuctionType auctionType,
+      double dutchReserve,
+      double dutchTick,
+      int dutchIntervalMin) {
+
+    AuctionType type = (auctionType != null) ? auctionType : AuctionType.ENGLISH;
+    String sql =
+        "UPDATE items SET category=?, auction_type=?, name=?, description=?, "
+            + "startingprice=?, currentprice=?, maxprice=?, dutch_reserve_price=?, dutch_tick_amount=?, "
+            + "dutch_tick_interval_mins=?, starttime=?, endtime=?, image_url=?, version=version+1 "
+            + "WHERE id=? AND sellerid=? AND (status='PENDING' OR (status='OPEN' AND starttime > NOW()))";
+
+    try (Connection conn = getConn();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setString(1, (category == null) ? "Vehicle" : category);
+      ps.setString(2, type.dbName());
+      ps.setString(3, name);
+      ps.setString(4, description);
+      ps.setDouble(5, startingPrice);
+      ps.setDouble(6, startingPrice);
+      ps.setDouble(7, type == AuctionType.DUTCH ? 0 : maxPrice);
+
+      if (type == AuctionType.DUTCH) {
+        ps.setDouble(8, dutchReserve);
+        ps.setDouble(9, dutchTick);
+        ps.setInt(10, dutchIntervalMin);
+      } else {
+        ps.setNull(8, Types.DOUBLE);
+        ps.setNull(9, Types.DOUBLE);
+        ps.setNull(10, Types.INTEGER);
+      }
+
+      ps.setTimestamp(11, Timestamp.valueOf(startTime));
+      ps.setTimestamp(12, Timestamp.valueOf(endTime));
+      ps.setString(13, imageUrl != null ? imageUrl : "");
+      ps.setInt(14, itemId);
+      ps.setInt(15, sellerId);
+
+      return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
   /**
    * Transactional update with Optimistic Locking.
    */
