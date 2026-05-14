@@ -1,6 +1,6 @@
 package com.auction.client;
 
-import com.auction.shared.UserRole;
+import com.auction.shared.user.UserRole;
 import com.auction.shared.user.User;
 
 public class ClientSession {
