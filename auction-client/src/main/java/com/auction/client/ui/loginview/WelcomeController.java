@@ -12,6 +12,6 @@ public class WelcomeController extends PageController<LoginViewType> {
 
   @FXML
   private void toRegister() {
-
+    switchView.accept(LoginViewType.REGISTER);
   }
 }
