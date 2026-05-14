@@ -1,14 +1,17 @@
 package com.auction.client.service;
 
+import com.auction.client.repository.AuctionRepository;
 import com.auction.client.store.AuctionStore;
 import com.auction.client.ui.maindashboard.registerlot.LotForm;
 import com.auction.client.ui.maindashboard.registerlot.LotMapper;
 import com.auction.client.ui.utils.RequestHelper;
+import com.auction.shared.dto.BidForm;
 import com.auction.shared.item.Item;
 import com.auction.shared.item.ItemStatus;
 import com.auction.shared.linkv2.RequestType;
 import com.auction.shared.linkv2.Response;
 import com.auction.shared.linkv2.ResponseStatus;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import org.slf4j.Logger;
@@ -19,18 +22,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public final class AuctionService {
-  private final static Logger LOGGER = LoggerFactory.getLogger(AuctionService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AuctionService.class);
+
+  private final AuctionStore auctionStore = new AuctionStore();
+  private final AuctionRepository auctionRepository = new AuctionRepository();
+  private final LotMapper lotMapper = new LotMapper();
 
   private static AuctionService instance;
-  private final LotMapper lotMapper;
-  private final AuctionStore auctionStore;
 
-  private AuctionService() {
-    this.auctionStore = new AuctionStore();
-    lotMapper = new LotMapper();
-  }
-
-
+  private AuctionService() {}
 
   public static AuctionService getInstance() {
     if (instance == null) {
@@ -39,41 +39,42 @@ public final class AuctionService {
     return instance;
   }
 
-  public void refreshItem() {
-    RequestHelper.<List<Item>>sendRequest(RequestType.GET_ALL_ITEMS, null,
-      response -> {
-        List<Item> items = response.getData();
-        auctionStore.refreshItem(items);
-      },  response -> { response.printStackTrace(); });
+  public CompletableFuture<ResponseStatus> registerLot(LotForm form) {
+    Item item = lotMapper.map(form);
+    return auctionRepository.registerLot(item);
   }
 
-  public CompletableFuture<List<Item>> refreshItemv2() {
-    CompletableFuture<List<Item>> future = new CompletableFuture<>();
-
-    RequestHelper.<List<Item>>sendRequest(RequestType.GET_ALL_ITEMS, null,
-      response -> {
-        List<Item> items = response.getData();
+  public CompletableFuture<List<Item>> refreshItems() {
+    return auctionRepository.getAllItems()
+      .thenApply(items -> {
         auctionStore.refreshItem(items);
-        future.complete(items);
-       },
-        future::completeExceptionally
-      );
+        return items;
+      });
+  }
 
-    return future;
+  public CompletableFuture<ResponseStatus> placeBid(BidForm form) {
+    return auctionRepository.placeBid(form)
+      .thenApply(status ->  {
+        if (status == ResponseStatus.SUCCESS) {
+          LOGGER.info("Successfully placed lot for auction");
+        } else  {
+          LOGGER.info("Failed to place lot for auction");
+        }
+        return status;
+      });
   }
 
   public ObservableList<Item> getItemsByStatus(ItemStatus status) {
-    LOGGER.info("return items to controller by status {}", status);
     return auctionStore.filterStatus(status);
   }
 
-  public ObservableList<Item> getAllItems() {
-    return auctionStore.getItems();
+  public void setFocusedItem(Item item) {
+    auctionStore.setFocusedItem(item);
   }
 
-  public void registerLot(LotForm lotForm, Consumer<Response<Object>> callback, Consumer<Throwable> errorCallback) {
-    RequestHelper.<Object>sendRequest(RequestType.REGISTER_LOT, lotMapper.map(lotForm),
-      callback, errorCallback);
+  public Item getFocusedItem() {
+    return auctionStore.getFocusedItem();
   }
 
+  public ObjectProperty<Item> getFocusedItemProperty() { return auctionStore.focusedItemProperty(); }
 }
