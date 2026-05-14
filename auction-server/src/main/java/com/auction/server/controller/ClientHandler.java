@@ -91,7 +91,9 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_UPCOMING_BIDS, lotQuery);
     reg.register(Request.GET_CLOSED_BIDS, lotQuery);
     reg.register(Request.GET_PAST_BIDS, lotQuery);
-
+    ForgotPasswordHandler forgotPwHandler = new ForgotPasswordHandler();
+    reg.register(Request.FORGOT_PASSWORD_REQ, forgotPwHandler);
+    reg.register(Request.FORGOT_PASSWORD_RESET, forgotPwHandler);
     ItemQueryHandler itemQuery = new ItemQueryHandler();
     reg.register(Request.GET_MY_ITEMS, itemQuery);
     reg.register(Request.GET_ITEM_BY_ID, itemQuery);

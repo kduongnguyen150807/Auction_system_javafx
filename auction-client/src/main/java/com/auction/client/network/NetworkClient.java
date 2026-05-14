@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class NetworkClient {
   private NetworkClient() {
     this.jsonMapper = new ObjectMapper();
     this.jsonMapper.registerModule(new JavaTimeModule());
-    // BỎ QUA CÁC TRƯỜNG KHÔNG TỒN TẠI TRONG CLASS (NHƯ "role")
+    // BỎ QUA CÁC TRƯỜNG KHÔNG TỒN TẠI TRONG CLASS
     this.jsonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
@@ -104,29 +105,46 @@ public class NetworkClient {
     pendingMap.clear();
   }
 
-  public Response sendRequestAndWait(Request request) {
+  // HÀM MỚI: Xử lý Async Timeout bằng CompletableFuture
+  private CompletableFuture<Response> sendRequestWithFuture(Request request, long timeoutSeconds) {
     String requestId = request.getRequestId();
     CompletableFuture<Response> future = new CompletableFuture<>();
-
     if (out == null) {
-      return null;
+      future.completeExceptionally(new IllegalStateException("Not connected to server"));
+      return future;
     }
 
-    pendingMap.put(requestId, future);
+    CompletableFuture<Response> existing = pendingMap.putIfAbsent(requestId, future);
+    if (existing != null) {
+      future.completeExceptionally(new IllegalStateException("Duplicate request ID"));
+      return future;
+    }
 
     try {
       byte[] jsonBytes = jsonMapper.writeValueAsBytes(request);
-
       synchronized (out) {
         out.writeInt(jsonBytes.length);
         out.write(jsonBytes);
         out.flush();
       }
-
-      return future.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     } catch (Exception e) {
-      logger.error("Lỗi gửi request {}: {}", requestId, e.getMessage());
       pendingMap.remove(requestId);
+      future.completeExceptionally(e);
+    }
+
+    return future.orTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .whenComplete((r, error) -> pendingMap.remove(requestId));
+  }
+
+  // HÀM ĐÃ SỬA: Gọi hàm async ở trên để tránh block vĩnh viễn
+  public Response sendRequestAndWait(Request request) {
+    try {
+      return sendRequestWithFuture(request, REQUEST_TIMEOUT).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return null;
+    } catch (ExecutionException e) {
+      logger.error("Lỗi gửi request {}: {}", request.getRequestId(), e.getMessage());
       return null;
     }
   }
@@ -185,7 +203,21 @@ public class NetworkClient {
     } catch (Exception ignored) {}
   }
 
+  // HÀM ĐÃ SỬA: Phục hồi Session khi rớt mạng
   private synchronized void attemptReconnect() {
-    initializeConnection();
+    try {
+      initializeConnection();
+
+      com.auction.shared.User user = com.auction.client.ClientSession.getCurrentUser();
+      if (user != null && user.getSessiontoken() != null) {
+        Request req = new Request(Request.RECONNECT, user.getSessiontoken());
+        Response res = sendRequestAndWait(req);
+        if (res == null || !Response.OK.equals(res.getStatus())) {
+          com.auction.client.ui.Main.KhungController.performForcedLogoutFromServer();
+        }
+      }
+    } catch (Exception e) {
+      this.out = null;
+    }
   }
 }

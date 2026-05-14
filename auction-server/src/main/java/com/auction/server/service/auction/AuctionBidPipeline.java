@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
+interface BiddingStrategy {
+  Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast);
+}
+
 /**
  * Xử lý luồng đặt giá (Bidding Pipeline).
  * Đã sửa lỗi tương thích với Optimistic Locking.
@@ -57,13 +61,16 @@ final class AuctionBidPipeline {
     Response valres = validator.validate(bid, item, bidder);
     if (valres != null) return valres;
 
-    if (item.getAuctionType() == AuctionType.DUTCH) {
-      return new DutchBiddingStrategy().process(bid, item, bidder, after, pendingpricebroadcast);
-    }
-    return new EnglishBiddingStrategy().process(bid, item, bidder, after, pendingpricebroadcast);
+    // Dùng Strategy Pattern
+    BiddingStrategy strategy = (item.getAuctionType() == AuctionType.DUTCH)
+            ? new DutchBiddingStrategy()
+            : new EnglishBiddingStrategy();
+
+    return strategy.process(bid, item, bidder, after, pendingpricebroadcast);
   }
 
-  private class DutchBiddingStrategy {
+  private class DutchBiddingStrategy implements BiddingStrategy {
+    @Override
     public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
       double price = item.getCurrentPrice();
       if (Math.abs(bid.getBidValue() - price) > 0.02) return BidAuctionValidator.error("invalid_dutch_price");
@@ -84,13 +91,19 @@ final class AuctionBidPipeline {
 
       after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
       after.add(() -> notifier.broadcastItemClosed(item.getId()));
-      after.add(() -> cleanupautobidsforitem.accept(item.getId()));
+      int targetid = item.getId();
+      after.add(() -> cleanupautobidsforitem.accept(targetid));
+
+      // THÊM LOGIC LEADERBOARD TỪ VER 2
+      AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), price);
+      after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
 
       return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
     }
   }
 
-  private class EnglishBiddingStrategy {
+  private class EnglishBiddingStrategy implements BiddingStrategy {
+    @Override
     public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
       if (item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice()) {
         return processbuyitnow(bid, item, bidder, after);
@@ -155,9 +168,16 @@ final class AuctionBidPipeline {
 
       itemdao.updatePrice(item.getId(), targetprice, item.getVersion());
       creditseller(item, targetprice, after);
+
       after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
       after.add(() -> notifier.broadcastItemClosed(item.getId()));
-      after.add(() -> cleanupautobidsforitem.accept(item.getId()));
+      int targetid = item.getId();
+      after.add(() -> cleanupautobidsforitem.accept(targetid));
+
+      // THÊM LOGIC LEADERBOARD TỪ VER 2
+      AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), targetprice);
+      after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
+
       return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
     }
   }

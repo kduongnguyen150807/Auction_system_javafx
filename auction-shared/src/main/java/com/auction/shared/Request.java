@@ -53,13 +53,14 @@ public class Request implements Serializable {
   public static final String GET_LEADERBOARD = "GET_LEADERBOARD";
   public static final String AUTOCOMPLETE = "AUTOCOMPLETE";
   public static final String RECONNECT = "RECONNECT";
+  public static final String FORGOT_PASSWORD_REQ = "FORGOT_PASSWORD_REQ";
+  public static final String FORGOT_PASSWORD_RESET = "FORGOT_PASSWORD_RESET";
 
   protected String requestId;
   protected String action;
   protected Object payload;
   protected LocalDateTime timestamp;
 
-  // BẮT BUỘC PHẢI CÓ CHO JACKSON
   public Request() {}
 
   public Request(String action, Object payload) {
@@ -70,14 +71,14 @@ public class Request implements Serializable {
   }
 
   public String getRequestId() { return this.requestId; }
-  public void setRequestId(String requestId) { this.requestId = requestId; } // Thêm Setter
+  public void setRequestId(String requestId) { this.requestId = requestId; }
 
   public String getAction() { return this.action; }
-  public void setAction(String action) { this.action = action; } // Thêm Setter
+  public void setAction(String action) { this.action = action; }
 
   public Object getPayload() { return this.payload; }
-  public void setPayload(Object payload) { this.payload = payload; } // Thêm Setter
+  public void setPayload(Object payload) { this.payload = payload; }
 
   public LocalDateTime getTimestamp() { return this.timestamp; }
-  public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; } // Thêm Setter
+  public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

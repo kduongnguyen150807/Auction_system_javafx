@@ -126,7 +126,14 @@ public class UserDao extends BaseDao<User> implements UserRepository {
   public boolean setUserRole(String username, String role) {
     return executeUpdate("UPDATE users SET role = ? WHERE username = ?", role, username);
   }
+  public boolean updatePasswordByEmail(String email, String newHashedPassword) {
+    return executeUpdate("UPDATE users SET password = ? WHERE email = ?", newHashedPassword, email);
+  }
 
+  public boolean isEmailExists(String email) {
+    User u = querySingle("SELECT * FROM users WHERE email = ? LIMIT 1", email);
+    return u != null;
+  }
   @Override
   public boolean addBidderMetrics(int userId, double amount) {
     return executeUpdate(

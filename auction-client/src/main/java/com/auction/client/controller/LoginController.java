@@ -84,7 +84,10 @@ public class LoginController {
       });
     }).start();
   }
-
+  @FXML
+  public void toForgotPassword(ActionEvent event) throws Exception {
+    SceneManager.switchScene("/fxml/forgot_password.fxml");
+  }
   @FXML
   public void back(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/welcome.fxml");
