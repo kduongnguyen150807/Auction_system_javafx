@@ -12,6 +12,7 @@ final class UserSchemaMigration {
   private UserSchemaMigration() {}
 
   static void applyStructure(Connection conn) {
+    ensureUsersTable(conn);
     MigrationSchemaSupport.addColumnIfMissing(conn, "users", "fullname", "VARCHAR(255) NULL");
     MigrationSchemaSupport.executeIfColumnAdded(
         conn, "users", "fullname", "UPDATE users SET fullname = username WHERE fullname IS NULL OR TRIM(fullname) = ''");
@@ -20,6 +21,37 @@ final class UserSchemaMigration {
 
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_username", "username");
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_email", "email");
+  }
+
+  private static void ensureUsersTable(Connection conn) {
+    try (Statement st = conn.createStatement()) {
+      st.executeUpdate(
+          "CREATE TABLE IF NOT EXISTS users ("
+              + "id INT AUTO_INCREMENT PRIMARY KEY, "
+              + "version INT NOT NULL DEFAULT 0, "
+              + "username VARCHAR(100) NOT NULL, "
+              + "fullname VARCHAR(255) NULL, "
+              + "password VARCHAR(255) NOT NULL, "
+              + "email VARCHAR(255) NOT NULL, "
+              + "age VARCHAR(32) NULL, "
+              + "phonenumber VARCHAR(64) NULL, "
+              + "role VARCHAR(20) NOT NULL, "
+              + "balance DOUBLE NOT NULL DEFAULT 0, "
+              + "moneyspent DOUBLE NOT NULL DEFAULT 0, "
+              + "itemsbought INT NOT NULL DEFAULT 0, "
+              + "moneyreceived DOUBLE NOT NULL DEFAULT 0, "
+              + "itemssold INT NOT NULL DEFAULT 0, "
+              + "isactive TINYINT(1) NOT NULL DEFAULT 1, "
+              + "islocked TINYINT(1) NOT NULL DEFAULT 0, "
+              + "avatar_url VARCHAR(2048) NULL, "
+              + "avgrating DOUBLE NOT NULL DEFAULT 0, "
+              + "totalratings INT NOT NULL DEFAULT 0, "
+              + "UNIQUE KEY uk_users_username (username), "
+              + "UNIQUE KEY uk_users_email (email)"
+              + ")");
+    } catch (Exception e) {
+      LOGGER.warn("Failed to ensure users table", e);
+    }
   }
 
   /**
