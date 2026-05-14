@@ -7,7 +7,7 @@ public abstract class User extends Entity {
   protected String fullName;
   protected String password;
   protected String email;
-  protected String age;
+  protected int age;
   protected String phoneNumber;
   protected double balance;
   protected boolean active;
@@ -25,7 +25,7 @@ public abstract class User extends Entity {
 
   public User() {}
 
-  public User(String u, String p, String e, String a, String ph) {
+  public User(String u, String p, String e, int a, String ph) {
     this.username = u;
     this.fullName = u;
     this.password = p;
@@ -83,11 +83,11 @@ public abstract class User extends Entity {
     this.email = e;
   }
 
-  public String getAge() {
+  public int getAge() {
     return this.age;
   }
 
-  public void setAge(String a) {
+  public void setAge(int a) {
     this.age = a;
   }
 

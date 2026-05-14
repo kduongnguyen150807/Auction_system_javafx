@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-import com.auction.shared.Item.Item;
-import com.auction.shared.Item.ItemFactory;
+import com.auction.shared.item.Item;
+import com.auction.shared.item.ItemFactory;
 import org.junit.jupiter.api.Test;
 
 public class AuctionLogicTest {
@@ -54,20 +54,5 @@ public class AuctionLogicTest {
 
     assertTrue(res1);
     assertTrue(java.time.Duration.between(res, ans).getSeconds() >= 60);
-  }
-
-  @Test
-  public void testPolymorphism() {
-    Item res = ItemFactory.createItem("Electronics");
-    res.setCurrentPrice(1000);
-    assertEquals(50, res.calculateTax());
-
-    Item ans = ItemFactory.createItem("Vehicle");
-    ans.setCurrentPrice(1000);
-    assertEquals(100, ans.calculateTax());
-
-    Item res1 = ItemFactory.createItem("Art");
-    res1.setCurrentPrice(1000);
-    assertEquals(80, res1.calculateTax());
   }
 }

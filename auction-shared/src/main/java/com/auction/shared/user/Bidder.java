@@ -7,7 +7,7 @@ public class Bidder extends User {
     super();
   }
 
-  public Bidder(String u, String p, String e, String a, String ph) {
+  public Bidder(String u, String p, String e, int a, String ph) {
     super(u, p, e, a, ph);
   }
 

@@ -7,7 +7,7 @@ public class Seller extends User {
     super();
   }
 
-  public Seller(String u, String p, String e, String a, String ph) {
+  public Seller(String u, String p, String e, int a, String ph) {
     super(u, p, e, a, ph);
   }
 
