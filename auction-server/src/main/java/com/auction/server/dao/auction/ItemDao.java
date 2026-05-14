@@ -94,11 +94,6 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
   }
 
   @Override
-  public List<Item> getExpiredItems() {
-    return queryList("SELECT * FROM items WHERE endtime <= NOW() AND status = 'OPEN'");
-  }
-
-  @Override
   public List<Item> getPendingItems() {
     return queryList(SELECT_ITEM_WITH_SELLER + " WHERE i.status = 'PENDING' ORDER BY i.id DESC");
   }

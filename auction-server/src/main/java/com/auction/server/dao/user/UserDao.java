@@ -104,11 +104,6 @@ public class UserDao extends BaseDao<User> implements UserRepository {
     }
   }
 
-  @Override
-  public boolean updateBalance(int userId, double newBalance) {
-    return executeUpdate("UPDATE users SET balance = ? WHERE id = ?", newBalance, userId);
-  }
-
   public boolean atomicDeductBalance(int userId, double amount) {
     return executeUpdate("UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?", amount, userId, amount);
   }
