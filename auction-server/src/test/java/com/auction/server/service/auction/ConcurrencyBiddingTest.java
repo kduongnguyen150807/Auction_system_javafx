@@ -118,7 +118,9 @@ public class ConcurrencyBiddingTest extends AbstractAuctionManagerMockingTest {
     when(logDao.insertLogTx(anyInt(), eq("BID_HOLD"), eq(-600.0), eq(100), eq(jdbcConn))).thenReturn(true);
     when(bidDao.getCurrentHighestBidderTx(eq(100), eq(jdbcConn))).thenReturn(-1);
     when(bidDao.placeBidTx(any(BidTransaction.class), eq(jdbcConn))).thenReturn(true);
-    when(itemDao.updatePriceTx(eq(100), eq(600.0), eq(jdbcConn))).thenReturn(true);
+
+    // FIX: Thêm anyInt() cho tham số version của Optimistic Locking
+    when(itemDao.updatePriceTx(eq(100), eq(600.0), anyInt(), eq(jdbcConn))).thenReturn(true);
 
     ExecutorService pool = Executors.newFixedThreadPool(THREAD_COUNT);
     CountDownLatch startGate = new CountDownLatch(1);
@@ -213,6 +215,6 @@ public class ConcurrencyBiddingTest extends AbstractAuctionManagerMockingTest {
     pool.shutdown();
 
     assertEquals(1, maxConcurrent.get(),
-        "Maximum concurrent threads inside the lock should always be 1 — no data race");
+            "Maximum concurrent threads inside the lock should always be 1 — no data race");
   }
 }
