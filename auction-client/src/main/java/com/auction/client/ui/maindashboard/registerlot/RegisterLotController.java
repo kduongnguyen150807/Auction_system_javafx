@@ -1,12 +1,11 @@
 package com.auction.client.ui.maindashboard.registerlot;
 
 import com.auction.client.service.AuctionService;
+import com.auction.client.ui.utils.FXThread;
 import com.auction.client.ui.utils.RequestHelper;
 import com.auction.client.ui.utils.ValidationResult;
 import com.auction.client.ui.utils.TimeUI;
 import com.auction.shared.item.ItemType;
-import com.auction.shared.linkv2.Response;
-import com.auction.shared.linkv2.RequestType;
 import com.auction.shared.linkv2.ResponseStatus;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -228,19 +227,25 @@ public class RegisterLotController {
       return;
     }
 
-    AuctionService.getInstance().registerLot(lotForm, this::onSendSuccess, this::onSendFailure);
+    AuctionService.getInstance().registerLot(lotForm)
+      .thenAccept(status -> FXThread.dispatch(() -> {
+        onSendSuccess(status);
+      }))
+      .exceptionally(throwable -> FXThread.dispatch(() -> {
+        onSendFailure(throwable);
+      }));
   }
 
   /**
    * Callback được gọi khi gửi request thành công.
    *
-   * @param response phản hồi từ server
+   * @param status phản hồi từ server
    */
-  private void onSendSuccess(Response<Object> response) {
-    if (response.getStatus().equals(ResponseStatus.SUCCESS)) {
+  private void onSendSuccess(ResponseStatus status) {
+    if (status.equals(ResponseStatus.SUCCESS)) {
       showStatus("Thành công: Vật phẩm đã được đăng ký!", "#28a745");
     } else {
-      showStatus("Thất bại: " + response.getMessage(), "#dc3545"); // Red
+      showStatus("Thất bại", "#dc3545");
     }
   }
 
@@ -249,9 +254,10 @@ public class RegisterLotController {
    *
    * @param throwable exception xảy ra
    */
-  private void onSendFailure(Throwable throwable) {
+  private Void onSendFailure(Throwable throwable) {
     LOGGER.error("Lỗi gửi yêu cầu đăng ký", throwable);
     showStatus("Lỗi kết nối: Không thể gửi yêu cầu đến Server.", "#dc3545");
+    return null;
   }
 
   private void showStatus(String message, String colorHex) {
