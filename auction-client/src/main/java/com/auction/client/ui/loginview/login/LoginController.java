@@ -4,12 +4,15 @@ import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
 import com.auction.client.service.AuthService;
 import com.auction.client.ui.base.PageController;
+import com.auction.client.ui.loginview.LoginView;
 import com.auction.client.ui.loginview.LoginViewType;
 import com.auction.client.ui.maindashboard.HomeView;
+import com.auction.client.ui.utils.FXThread;
 import com.auction.client.ui.utils.ValidationResult;
 import com.auction.shared.dto.LoginCredentials;
 import com.auction.shared.linkv2.Request;
 import com.auction.shared.linkv2.Response;
+import com.auction.shared.linkv2.ResponseStatus;
 import com.auction.shared.user.User;
 import com.auction.shared.utils.PasswordEncoder;
 import javafx.fxml.FXML;
@@ -91,20 +94,27 @@ public class LoginController extends PageController<LoginViewType> {
       return;
     }
 
-    AuthService.getInstance().login(credentials, this::onSendSuccess, this::onSendFailure);
+    AuthService.getInstance().login(credentials)
+      .thenAccept(response -> {
+        if (response.equals(ResponseStatus.SUCCESS)) {
+          FXThread.<String>dispatch(this::onSendSuccess, "success");
+        } else {
+          FXThread.<String>dispatch(this::onSendFailure, "invalid username or password");
+        }
+      })
+      .exceptionally(ex -> {
+        ex.printStackTrace();
+        return null;
+      });
   }
 
-  private void onSendSuccess(Response<User> response) {
-    messageLabel.setText(response.getMessage());
-
-    Scene Home = new Scene(new HomeView());
-    SceneManager.getInstance().registerScene(SceneType.HOME ,Home);
-
-    SceneManager.getInstance().switchTo(SceneType.HOME);
+  private void onSendSuccess(String message) {
+    messageLabel.setText(message);
+    LoginView.switchNextScene();
   }
 
-  private void onSendFailure(Throwable throwable) {
-    messageLabel.setText(throwable.getMessage());
+  private void onSendFailure(String message) {
+    messageLabel.setText(message);
   }
 
   private LoginCredentials collectData() {
