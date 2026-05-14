@@ -137,7 +137,9 @@ final class AuctionBidPipeline {
             userdao.creditBalanceTx(previd, prevprice, conn);
             logdao.insertLogTx(previd, "BID_REFUND", prevprice, bid.getItemId(), conn);
             after.add(() -> notifier.sendBalanceUpdateToUser(previd));
-            after.add(() -> notifier.notifyOutbidUser(previd, item.getId()));
+            if (previd != bid.getUserId()) {
+              after.add(() -> notifier.notifyOutbidUser(previd, item.getId()));
+            }
           }
 
           conn.commit();

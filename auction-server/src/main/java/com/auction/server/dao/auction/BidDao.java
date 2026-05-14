@@ -21,42 +21,6 @@ public class BidDao extends BaseDao<BidTransaction> {
     return bid;
   }
 
-  public boolean placeBid(BidTransaction bid) {
-    try (Connection conn = getConn()) {
-      conn.setAutoCommit(false);
-      try {
-        String insertSql = "insert into bid_transactions(itemid,userid,bidvalue,timestamp) values(?,?,?,?)";
-        try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
-          insertStmt.setInt(1, bid.getItemId());
-          insertStmt.setInt(2, bid.getUserId());
-          insertStmt.setDouble(3, bid.getBidValue());
-          insertStmt.setTimestamp(4, Timestamp.valueOf(bid.getTimestamp()));
-          int inserted = insertStmt.executeUpdate();
-          if (inserted > 0) {
-            String updateSql = "update items set currentprice = ? where id = ?";
-            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-              updateStmt.setDouble(1, bid.getBidValue());
-              updateStmt.setInt(2, bid.getItemId());
-              updateStmt.executeUpdate();
-            }
-          }
-          conn.commit();
-          return inserted > 0;
-        }
-      } catch (Exception e) {
-        conn.rollback();
-        throw e;
-      }
-    } catch (Exception e) {
-      LOGGER.warn("placeBid failed", e);
-      return false;
-    }
-  }
-
-  public List<BidTransaction> getByItem(int itemId) {
-    return queryList("select * from bid_transactions where itemid = ? order by timestamp asc", itemId);
-  }
-
   public List<BidTransaction> getBidHistory(int itemId) {
     List<BidTransaction> history = new ArrayList<>();
     String sql = "SELECT * FROM bid_transactions WHERE itemid = ? ORDER BY timestamp ASC";

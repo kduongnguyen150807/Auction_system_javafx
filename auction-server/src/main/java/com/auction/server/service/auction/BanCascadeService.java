@@ -111,6 +111,45 @@ class BanCascadeService {
     manager.broadcastItemClosed(itemId);
   }
 
+  /**
+   * Voluntary cancellation by the seller: OPEN → CANCELED, refund current high bidder escrow, cleanup
+   * queue/autobids. Caller must hold {@link AuctionManager#getAuctionLock}.
+   */
+  boolean voluntarySellerCancelOpen(int itemId, int sellerId) throws SQLException {
+    int[] refundedBidder = {-1};
+    boolean[] cancelled = {false};
+    runTransaction(
+        conn -> {
+          Item item = itemDao.getByIdTx(itemId, conn);
+          if (item == null
+              || item.getStatus() != ItemStatus.OPEN
+              || item.getSellerId() != sellerId) {
+            return;
+          }
+          int currentBidder = bidDao.getCurrentHighestBidderTx(itemId, conn);
+          if (!itemDao.cancelAuctionTx(itemId, conn)) {
+            return;
+          }
+          cancelled[0] = true;
+          if (currentBidder > 0) {
+            double held = item.getCurrentPrice();
+            userDao.creditBalanceTx(currentBidder, held, conn);
+            logDao.insertLogTx(currentBidder, "BID_REFUND_SELLER_CANCEL", held, itemId, conn);
+            refundedBidder[0] = currentBidder;
+          }
+        });
+    if (!cancelled[0]) {
+      return false;
+    }
+    manager.cleanupAutoBids(itemId);
+    SettlementService.getInstance().unschedule(itemId);
+    if (refundedBidder[0] > 0) {
+      manager.sendBalanceUpdateToUser(refundedBidder[0]);
+    }
+    manager.broadcastItemClosed(itemId);
+    return true;
+  }
+
   private void runTransaction(SqlOp op) throws SQLException {
     Connection conn = DatabaseConnection.getInstance().getConnection();
     if (conn == null) throw new SQLException("No database connection available");

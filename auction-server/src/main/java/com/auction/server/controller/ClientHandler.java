@@ -88,6 +88,7 @@ public class ClientHandler implements Runnable {
 
     LotQueryHandler lotQuery = new LotQueryHandler();
     reg.register(Request.GET_ONGOING_BIDS, lotQuery);
+    reg.register(Request.GET_TRENDING_LOTS, lotQuery);
     reg.register(Request.GET_UPCOMING_BIDS, lotQuery);
     reg.register(Request.GET_CLOSED_BIDS, lotQuery);
     reg.register(Request.GET_PAST_BIDS, lotQuery);
@@ -123,6 +124,10 @@ public class ClientHandler implements Runnable {
 
     reg.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));
     reg.register(Request.ADD_LOT, ActionHandler.requireAuth(new AddLotHandler()));
+    reg.register(Request.SELLER_CANCEL_ITEM, ActionHandler.requireAuth(new SellerCancelItemHandler()));
+    reg.register(
+        Request.SELLER_UPDATE_PENDING_ITEM,
+        ActionHandler.requireAuth(new SellerUpdatePendingItemHandler()));
     reg.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
     reg.register(Request.UPDATE_AVATAR, ActionHandler.requireAuth(new UpdateAvatarHandler()));
     reg.register(Request.DEPOSIT, ActionHandler.requireAuth(new DepositHandler()));

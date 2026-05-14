@@ -15,8 +15,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * Covers bid eligibility rules from {@link BidAuctionValidator} (open status, end time, account and
- * phone verification, self-bid guard).
+ * Covers bid eligibility rules from {@link BidAuctionValidator} (open status, start/end window,
+ * account and phone verification, self-bid guard).
  */
 @DisplayName("BidAuctionValidator")
 class BidAuctionValidatorTest {
@@ -69,6 +69,12 @@ class BidAuctionValidatorTest {
     }
 
     @Test
+    void auctionNotStartedYet() {
+      item.setStartTime(LocalDateTime.now().plusHours(2));
+      assertError(validator.validate(bid, item, bidder), "auction_not_started");
+    }
+
+    @Test
     void bidderNull() {
       assertError(validator.validate(bid, item, null), "User");
     }
@@ -104,6 +110,13 @@ class BidAuctionValidatorTest {
 
     @Test
     void happyPath_returnsNull() {
+      item.setStartTime(LocalDateTime.now().minusHours(1));
+      assertNull(validator.validate(bid, item, bidder));
+    }
+
+    @Test
+    void startTimeNull_stillAcceptedWhenOpen() {
+      item.setStartTime(null);
       assertNull(validator.validate(bid, item, bidder));
     }
 

@@ -40,6 +40,19 @@
     -fx-font-size: 18px;
 }
 
+.btn-seller-item {
+    -fx-background-color: rgba(0, 122, 255, 0.25);
+    -fx-text-fill: #e8f4ff;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 6 12;
+}
+
+.btn-seller-item:hover {
+    -fx-background-color: rgba(0, 229, 255, 0.35);
+}
+
 /* Fixed-slot category cards: content stays within narrow column */
 .item-card-compact {
     -fx-min-width: 208px;
@@ -52,3 +65,4 @@
 .item-card-compact .label-sm-gray { -fx-font-size: 9px; }
 .item-card-compact .price-val-cyan { -fx-font-size: 17px; }
 .item-card-compact .timer-val-orange { -fx-font-size: 15px; }
+.item-card-compact .btn-seller-item { -fx-font-size: 9px; -fx-padding: 4 8; }

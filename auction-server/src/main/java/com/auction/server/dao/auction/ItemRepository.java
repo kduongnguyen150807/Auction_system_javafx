@@ -10,7 +10,6 @@ public interface ItemRepository {
   List<Item> getAll();
   Item getById(int id);
   List<Item> getBySellerId(int sellerId);
-  List<Item> getExpiredItems();
   List<Item> getPendingItems();
   boolean updatePrice(int itemId, double price, int version);
   boolean updateEndTime(int itemId, LocalDateTime endTime);

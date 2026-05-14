@@ -11,7 +11,6 @@ public interface UserRepository {
   List<User> searchUsers(String keyword);
   String updateUserProfile(int userId, String fullName, String email, String phone);
   void updateAvatar(String username, String avatarUrl) throws Exception;
-  boolean updateBalance(int userId, double newBalance);
   boolean setUserLocked(String username, boolean lockStatus);
   boolean setUserRole(String username, String role);
   boolean addBidderMetrics(int userId, double amount);
