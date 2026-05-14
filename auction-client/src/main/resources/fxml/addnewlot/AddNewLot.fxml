@@ -62,15 +62,15 @@
                                     </children>
                                 </VBox>
 
-                                <VBox prefWidth="480.0" spacing="10.0">
+                                <VBox prefWidth="480.0" maxWidth="Infinity" spacing="10.0">
                                     <children>
                                         <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="input-mac-blue" />
 
                                         <Label styleClass="label-sm" text="AUCTION FORMAT" />
-                                        <HBox spacing="10.0" styleClass="auction-type-segments">
+                                        <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="10.0" styleClass="auction-type-segments">
                                             <children>
-                                                <ToggleButton fx:id="kindEnglishToggle" mnemonicParsing="false" prefWidth="228.0" styleClass="segment-toggle-auction" text="English auction" />
-                                                <ToggleButton fx:id="kindDutchToggle" mnemonicParsing="false" prefWidth="228.0" styleClass="segment-toggle-auction" text="Dutch auction" />
+                                                <ToggleButton fx:id="kindEnglishToggle" maxWidth="Infinity" mnemonicParsing="false" styleClass="segment-toggle-auction" text="English auction" HBox.hgrow="ALWAYS" />
+                                                <ToggleButton fx:id="kindDutchToggle" maxWidth="Infinity" mnemonicParsing="false" styleClass="segment-toggle-auction" text="Dutch auction" HBox.hgrow="ALWAYS" />
                                             </children>
                                         </HBox>
 
@@ -90,7 +90,7 @@
                                                         <TextField fx:id="txtDutchIntervalMinutes" promptText="INTERVAL (MINUTES)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
                                                     </children>
                                                 </HBox>
-                                                <Label styleClass="label-sm-muted" maxWidth="440.0"
+                                                <Label styleClass="label-sm-muted" maxWidth="Infinity"
                                                        text="Dutch auctions lower the listing by the step amount each interval until someone buys at the current price or the reserve/end is reached." wrapText="true" />
                                             </children>
                                         </VBox>
@@ -98,22 +98,22 @@
                                         <TextArea fx:id="txtQuantity" prefRowCount="2" promptText="DESCRIPTION" styleClass="input-mac-blue" wrapText="true" />
 
                                         <Label styleClass="label-sm" text="AUCTION START" />
-                                        <HBox spacing="8.0">
+                                        <DatePicker fx:id="startDatePicker" maxWidth="Infinity" promptText="START DATE" styleClass="date-mac" />
+                                        <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="8.0">
                                             <children>
-                                                <DatePicker fx:id="startDatePicker" promptText="START DATE" styleClass="date-mac" HBox.hgrow="ALWAYS" />
-                                                <ComboBox fx:id="startHourCombo" prefWidth="65.0" promptText="HH" styleClass="combo-mac" />
-                                                <ComboBox fx:id="startMinuteCombo" prefWidth="65.0" promptText="MM" styleClass="combo-mac" />
-                                                <ComboBox fx:id="startSecondCombo" prefWidth="65.0" promptText="SS" styleClass="combo-mac" />
+                                                <ComboBox fx:id="startHourCombo" minWidth="70.0" promptText="HH" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="startMinuteCombo" minWidth="70.0" promptText="MM" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="startSecondCombo" minWidth="70.0" promptText="SS" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
                                             </children>
                                         </HBox>
 
                                         <Label styleClass="label-sm" text="AUCTION END" />
-                                        <HBox spacing="8.0">
+                                        <DatePicker fx:id="endDatePicker" maxWidth="Infinity" promptText="END DATE" styleClass="date-mac" />
+                                        <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="8.0">
                                             <children>
-                                                <DatePicker fx:id="endDatePicker" promptText="END DATE" styleClass="date-mac" HBox.hgrow="ALWAYS" />
-                                                <ComboBox fx:id="endHourCombo" prefWidth="65.0" promptText="HH" styleClass="combo-mac" />
-                                                <ComboBox fx:id="endMinuteCombo" prefWidth="65.0" promptText="MM" styleClass="combo-mac" />
-                                                <ComboBox fx:id="endSecondCombo" prefWidth="65.0" promptText="SS" styleClass="combo-mac" />
+                                                <ComboBox fx:id="endHourCombo" minWidth="70.0" promptText="HH" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="endMinuteCombo" minWidth="70.0" promptText="MM" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
+                                                <ComboBox fx:id="endSecondCombo" minWidth="70.0" promptText="SS" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
                                             </children>
                                         </HBox>
 
