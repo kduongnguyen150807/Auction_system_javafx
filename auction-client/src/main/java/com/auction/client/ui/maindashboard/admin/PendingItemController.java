@@ -84,14 +84,14 @@ public class PendingItemController implements CanRefresh {
 
   @Override
   public void refreshData() {
-    AuctionService.getInstance().refreshItemv2().thenAccept(response -> {
-      Platform.runLater(() -> setPendingItem(AuctionService.getInstance().
-        getItemsByStatus(ItemStatus.PENDING)));
-    });
+    AuctionService.getInstance().refreshItems()
+      .thenAccept(response -> setPendingItem()
+      );
   }
 
-  public void setPendingItem(ObservableList<Item> items) {
-    pendingTable.getItems().setAll(items);
+  public void setPendingItem() {
+    pendingTable.getItems()
+      .setAll(AuctionService.getInstance().getItemsByStatus(ItemStatus.PENDING));
   }
 
   public void setService(AdminService service) {
