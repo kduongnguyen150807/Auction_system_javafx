@@ -1,7 +1,19 @@
 package com.auction.shared;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.LocalDateTime;
 
+// Tính năng 1: Giúp Jackson biết chính xác lớp con nào để khởi tạo khi nhận JSON
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Electronics.class, name = "electronics"),
+        @JsonSubTypes.Type(value = Art.class, name = "art"),
+        @JsonSubTypes.Type(value = Vehicle.class, name = "vehicle")
+})
 public abstract class Item extends Entity {
   private static final long serialVersionUID = 1L;
   protected String name;

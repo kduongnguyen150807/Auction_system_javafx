@@ -2,7 +2,6 @@ package com.auction.server.handler.chat;
 
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
-
 import com.auction.server.dao.chat.ChatDao;
 import com.auction.server.dao.user.UserDao;
 import com.auction.server.service.auction.AuctionManager;
@@ -27,11 +26,12 @@ public class ChatHandler implements ActionHandler {
         return handleGetGlobalHistory(requestId);
 
       case Request.GET_PRIVATE_CHAT_HISTORY: {
+        // Ép kiểu an toàn từ JSON Map
         Map<String, Object> data = (Map<String, Object>) request.getPayload();
         int myId = ((Number) data.get("myId")).intValue();
         int otherId = ((Number) data.get("otherId")).intValue();
         List<ChatMessage> history = chatDao.getPrivateHistory(myId, otherId, 100);
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) history);
+        return new Response(requestId, Response.OK, "success", history);
       }
 
       case Request.GET_CHAT_CONTACTS: {
@@ -41,11 +41,11 @@ public class ChatHandler implements ActionHandler {
         for (int id : contactIds) {
           User user = userDao.getById(String.valueOf(id));
           if (user != null) {
-            user.setPassword("");
+            user.setPassword(""); // Bảo mật: xóa password trước khi gửi
             contacts.add(user);
           }
         }
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) contacts);
+        return new Response(requestId, Response.OK, "success", contacts);
       }
 
       default:
@@ -56,38 +56,29 @@ public class ChatHandler implements ActionHandler {
   private Response handleSendChat(Request request, HandlerContext context) {
     ChatMessage msg = (ChatMessage) request.getPayload();
     User sender = context.getCurrentUser();
+    if (sender == null) return new Response(request.getRequestId(), Response.ERROR, "Unauthorized", null);
+
     msg.setSenderId(sender.getId());
     msg.setSenderUsername(sender.getUsername());
     msg.setSenderAvatarUrl(sender.getAvatarUrl());
 
-    String content = msg.getContent();
-    if (content == null || content.trim().isEmpty()) {
+    if (msg.getContent() == null || msg.getContent().trim().isEmpty()) {
       return new Response(request.getRequestId(), Response.ERROR, "Empty message", null);
     }
-    if (content.length() > 500) {
-      msg.setContent(content.substring(0, 500));
-    }
 
-    boolean saved = chatDao.insertMessage(msg);
-    if (!saved) {
-      return new Response(request.getRequestId(), Response.ERROR, "Failed to save", null);
+    if (chatDao.insertMessage(msg)) {
+      if (ChatMessage.TYPE_GLOBAL.equals(msg.getMessageType())) {
+        AuctionManager.getInstance().broadcast(new Response("", "CHAT_GLOBAL", "new_message", msg));
+      } else {
+        AuctionManager.getInstance().sendToUser(msg.getReceiverId(), new Response("", "CHAT_PRIVATE", "new_message", msg));
+        AuctionManager.getInstance().sendToUser(msg.getSenderId(), new Response("", "CHAT_PRIVATE", "new_message", msg));
+      }
+      return new Response(request.getRequestId(), Response.OK, "sent", msg);
     }
-
-    if (ChatMessage.TYPE_GLOBAL.equals(msg.getMessageType())) {
-      AuctionManager.getInstance().broadcast(
-          new Response("", "CHAT_GLOBAL", "new_message", msg));
-    } else if (ChatMessage.TYPE_PRIVATE.equals(msg.getMessageType())) {
-      AuctionManager.getInstance().sendToUser(msg.getReceiverId(),
-          new Response("", "CHAT_PRIVATE", "new_message", msg));
-      AuctionManager.getInstance().sendToUser(msg.getSenderId(),
-          new Response("", "CHAT_PRIVATE", "new_message", msg));
-    }
-
-    return new Response(request.getRequestId(), Response.OK, "sent", msg);
+    return new Response(request.getRequestId(), Response.ERROR, "Failed to save", null);
   }
 
   private Response handleGetGlobalHistory(String requestId) {
-    List<ChatMessage> history = chatDao.getGlobalHistory(100);
-    return new Response(requestId, Response.OK, "success", (java.io.Serializable) history);
+    return new Response(requestId, Response.OK, "success", chatDao.getGlobalHistory(100));
   }
 }

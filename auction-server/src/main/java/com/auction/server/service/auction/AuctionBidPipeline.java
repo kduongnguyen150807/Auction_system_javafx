@@ -16,10 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
-interface BiddingStrategy {
-  Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast);
-}
-
+/**
+ * Xử lý luồng đặt giá (Bidding Pipeline).
+ * Đã sửa lỗi tương thích với Optimistic Locking.
+ */
 final class AuctionBidPipeline {
   private final ItemDao itemdao;
   private final UserDao userdao;
@@ -29,7 +29,8 @@ final class AuctionBidPipeline {
   private final BidAuctionValidator validator;
   private IntConsumer cleanupautobidsforitem = id -> {};
 
-  AuctionBidPipeline(ItemDao itemdao, UserDao userdao, BidDao biddao, TransactionLogDao logdao, AuctionRealtimeNotifier notifier, BidAuctionValidator validator) {
+  AuctionBidPipeline(ItemDao itemdao, UserDao userdao, BidDao biddao, TransactionLogDao logdao,
+                     AuctionRealtimeNotifier notifier, BidAuctionValidator validator) {
     this.itemdao = itemdao;
     this.userdao = userdao;
     this.biddao = biddao;
@@ -46,141 +47,118 @@ final class AuctionBidPipeline {
 
   Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
     Item item = itemdao.getById(bid.getItemId());
+    if (item == null) return BidAuctionValidator.error("Item not found");
+
+    // Đồng bộ giá cho đấu giá Hà Lan nếu cần
     DutchAuctionCatalogSync.syncItem(itemdao, item);
-    item = itemdao.getById(bid.getItemId());
+    item = itemdao.getById(bid.getItemId()); // Lấy lại bản ghi mới nhất kèm version mới
+
     User bidder = userdao.getById(String.valueOf(bid.getUserId()));
     Response valres = validator.validate(bid, item, bidder);
-    if (valres != null) {
-      return valres;
+    if (valres != null) return valres;
+
+    if (item.getAuctionType() == AuctionType.DUTCH) {
+      return new DutchBiddingStrategy().process(bid, item, bidder, after, pendingpricebroadcast);
     }
-    BiddingStrategy strategy = getstrategy(item);
-    Response ans = strategy.process(bid, item, bidder, after, pendingpricebroadcast);
-    return ans;
+    return new EnglishBiddingStrategy().process(bid, item, bidder, after, pendingpricebroadcast);
   }
 
-  private BiddingStrategy getstrategy(Item item) {
-    if (item != null && item.getAuctionType() == AuctionType.DUTCH) {
-      return new DutchBiddingStrategy();
-    }
-    return new EnglishBiddingStrategy();
-  }
-
-  private class DutchBiddingStrategy implements BiddingStrategy {
-    @Override
+  private class DutchBiddingStrategy {
     public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
       double price = item.getCurrentPrice();
-      double diff = Math.abs(bid.getBidValue() - price);
-      if (diff > 0.02) {
-        Response res = BidAuctionValidator.error("invalid_dutch_price");
-        return res;
-      }
-      boolean deductres = userdao.atomicDeductBalance(bidder.getId(), price);
-      if (!deductres) {
-        Response res = BidAuctionValidator.error("insufficient_balance");
-        return res;
-      }
+      if (Math.abs(bid.getBidValue() - price) > 0.02) return BidAuctionValidator.error("invalid_dutch_price");
+
+      if (!userdao.atomicDeductBalance(bidder.getId(), price)) return BidAuctionValidator.error("insufficient_balance");
+
       logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
       userdao.addBidderMetrics(bidder.getId(), price);
-      boolean closeres = itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED");
-      if (!closeres) {
+
+      if (!itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
         userdao.atomicCreditBalance(bidder.getId(), price);
         logdao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
-        Response res = BidAuctionValidator.error("auction_already_closed");
-        return res;
+        return BidAuctionValidator.error("auction_already_closed");
       }
+
       itemdao.updatePrice(item.getId(), price, item.getVersion());
       creditseller(item, price, after);
+
       after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
       after.add(() -> notifier.broadcastItemClosed(item.getId()));
-      int targetid = item.getId();
-      after.add(() -> cleanupautobidsforitem.accept(targetid));
-      AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), price);
-      after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
-      Response ans = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-      return ans;
+      after.add(() -> cleanupautobidsforitem.accept(item.getId()));
+
+      return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
     }
   }
 
-  private class EnglishBiddingStrategy implements BiddingStrategy {
-    @Override
+  private class EnglishBiddingStrategy {
     public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
       if (item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice()) {
-        Response ans = processbuyitnow(bid, item, bidder, after);
-        return ans;
+        return processbuyitnow(bid, item, bidder, after);
       }
-      if (bid.getBidValue() <= item.getCurrentPrice()) {
-        Response ans = BidAuctionValidator.error("bid_too_low");
-        return ans;
-      }
+      if (bid.getBidValue() <= item.getCurrentPrice()) return BidAuctionValidator.error("bid_too_low");
+
       try (Connection conn = com.auction.server.dao.platform.DatabaseConnection.getInstance().getConnection()) {
         conn.setAutoCommit(false);
         try {
-          boolean deductres = userdao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn);
-          if (!deductres) {
+          if (!userdao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn)) {
             conn.rollback();
-            Response ans = BidAuctionValidator.error("insufficient_balance");
-            return ans;
+            return BidAuctionValidator.error("insufficient_balance");
           }
+
           logdao.insertLogTx(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId(), conn);
           int previd = biddao.getCurrentHighestBidderTx(bid.getItemId(), conn);
           double prevprice = item.getCurrentPrice();
-          boolean placeres = biddao.placeBidTx(bid, conn);
-          if (!placeres) {
+
+          if (!biddao.placeBidTx(bid, conn)) {
             conn.rollback();
-            Response ans = BidAuctionValidator.error("bid_failed");
-            return ans;
+            return BidAuctionValidator.error("bid_failed");
           }
-          itemdao.updatePriceTx(item.getId(), bid.getBidValue(), conn);
+
+          // FIX: Thêm item.getVersion() vào đây
+          if (!itemdao.updatePriceTx(item.getId(), bid.getBidValue(), item.getVersion(), conn)) {
+            conn.rollback();
+            return BidAuctionValidator.error("conflict_detected_try_again");
+          }
+
           if (previd > 0 && prevprice > 0) {
             userdao.creditBalanceTx(previd, prevprice, conn);
             logdao.insertLogTx(previd, "BID_REFUND", prevprice, bid.getItemId(), conn);
             after.add(() -> notifier.sendBalanceUpdateToUser(previd));
-            int targetid = bid.getItemId();
-            after.add(() -> notifier.notifyOutbidUser(previd, targetid));
+            after.add(() -> notifier.notifyOutbidUser(previd, item.getId()));
           }
+
           conn.commit();
-          after.add(() -> applyantisnipeextension(bid.getItemId()));
+          applyantisnipeextension(item.getId());
           after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-          pendingpricebroadcast.add(bid.getItemId());
-          Response ans = new Response("", Response.OK, "success", bid);
-          return ans;
+          pendingpricebroadcast.add(item.getId());
+          return new Response("", Response.OK, "success", bid);
         } catch (Exception e) {
           conn.rollback();
-          Response ans = BidAuctionValidator.error("db_transaction_error");
-          return ans;
+          return BidAuctionValidator.error("db_transaction_error");
         }
       } catch (Exception e) {
-        Response ans = BidAuctionValidator.error("db_connection_error");
-        return ans;
+        return BidAuctionValidator.error("db_connection_error");
       }
     }
 
     private Response processbuyitnow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
       double targetprice = item.getMaxPrice();
-      boolean deductres = userdao.atomicDeductBalance(bidder.getId(), targetprice);
-      if (!deductres) {
-        Response ans = BidAuctionValidator.error("insufficient_balance");
-        return ans;
-      }
+      if (!userdao.atomicDeductBalance(bidder.getId(), targetprice)) return BidAuctionValidator.error("insufficient_balance");
+
       logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -targetprice, bid.getItemId());
       userdao.addBidderMetrics(bidder.getId(), targetprice);
-      boolean closeres = itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED");
-      if (!closeres) {
+
+      if (!itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
         userdao.atomicCreditBalance(bidder.getId(), targetprice);
-        logdao.insertLog(bidder.getId(), "BUY_REFUND", targetprice, bid.getItemId());
-        Response ans = BidAuctionValidator.error("auction_already_closed");
-        return ans;
+        return BidAuctionValidator.error("auction_already_closed");
       }
+
       itemdao.updatePrice(item.getId(), targetprice, item.getVersion());
       creditseller(item, targetprice, after);
       after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
       after.add(() -> notifier.broadcastItemClosed(item.getId()));
-      int targetid = item.getId();
-      after.add(() -> cleanupautobidsforitem.accept(targetid));
-      AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), targetprice);
-      after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
-      Response ans = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-      return ans;
+      after.add(() -> cleanupautobidsforitem.accept(item.getId()));
+      return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
     }
   }
 
