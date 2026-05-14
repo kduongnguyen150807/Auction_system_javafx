@@ -19,6 +19,7 @@ public class Request implements Serializable {
   public static final String UNLOCK_USER = "UNLOCK_USER";
   public static final String ADD_LOT = "ADD_LOT";
   public static final String GET_ONGOING_BIDS = "GET_ONGOING_BIDS";
+  public static final String GET_TRENDING_LOTS = "GET_TRENDING_LOTS";
   public static final String GET_UPCOMING_BIDS = "GET_UPCOMING_BIDS";
   public static final String SUBMIT_RATING = "SUBMIT_RATING";
   public static final String GET_RATINGS = "GET_RATINGS";
@@ -53,14 +54,21 @@ public class Request implements Serializable {
   public static final String GET_LEADERBOARD = "GET_LEADERBOARD";
   public static final String AUTOCOMPLETE = "AUTOCOMPLETE";
   public static final String RECONNECT = "RECONNECT";
+
+  // --- Tính năng Quên mật khẩu ---
   public static final String FORGOT_PASSWORD_REQ = "FORGOT_PASSWORD_REQ";
   public static final String FORGOT_PASSWORD_RESET = "FORGOT_PASSWORD_RESET";
+
+  // --- Tính năng Seller quản lý Item ---
+  public static final String SELLER_CANCEL_ITEM = "SELLER_CANCEL_ITEM";
+  public static final String SELLER_UPDATE_PENDING_ITEM = "SELLER_UPDATE_PENDING_ITEM";
 
   protected String requestId;
   protected String action;
   protected Object payload;
   protected LocalDateTime timestamp;
 
+  // BẮT BUỘC PHẢI CÓ CHO JACKSON
   public Request() {}
 
   public Request(String action, Object payload) {
