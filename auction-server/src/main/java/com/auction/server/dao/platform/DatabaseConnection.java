@@ -43,17 +43,23 @@ public class DatabaseConnection {
   }
 
   public static DatabaseConnection getInstance() {
-    DatabaseConnection ans = Holder.instance;
-    return ans;
+    return Holder.instance;
   }
 
   public Connection getConnection() {
     try {
-      Connection ans = datasource.getConnection();
-      return ans;
+      return datasource.getConnection();
     } catch (SQLException e) {
       logger.error("pool_error", e);
       return null;
+    }
+  }
+
+  // TÍNH NĂNG 4: HÀM ĐÓNG POOL KHI SHUTDOWN SERVER
+  public void closePool() {
+    if (datasource != null && !datasource.isClosed()) {
+      datasource.close();
+      logger.info("Đã đóng HikariCP Database Connection Pool an toàn.");
     }
   }
 }

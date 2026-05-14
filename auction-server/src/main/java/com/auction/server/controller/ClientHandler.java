@@ -30,9 +30,9 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC; // IMPORT MDC
 
 public class ClientHandler implements Runnable {
 
@@ -52,7 +52,6 @@ public class ClientHandler implements Runnable {
 
     this.jsonMapper = new ObjectMapper();
     this.jsonMapper.registerModule(new JavaTimeModule());
-    // BỎ QUA CÁC TRƯỜNG KHÔNG TỒN TẠI TRONG CLASS (NHƯ "role")
     this.jsonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
@@ -166,14 +165,26 @@ public class ClientHandler implements Runnable {
         String jsonReq = new String(payload, StandardCharsets.UTF_8);
         Request request = jsonMapper.readValue(jsonReq, Request.class);
 
-        if (!bucket.tryconsume()) {
-          send(new Response(request.getRequestId(), Response.ERROR, "rate_limit_exceeded", null));
-          continue;
+        // TÍNH NĂNG 4: MDC LOGGING - Gắn RequestID vào Thread hiện tại
+        if (request.getRequestId() != null) {
+          MDC.put("reqId", request.getRequestId());
+        } else {
+          MDC.put("reqId", "SYSTEM");
         }
 
-        Response res = this.registry.dispatch(request, this.context);
-        if (res != null) {
-          send(res);
+        try {
+          if (!bucket.tryconsume()) {
+            send(new Response(request.getRequestId(), Response.ERROR, "rate_limit_exceeded", null));
+            continue;
+          }
+
+          Response res = this.registry.dispatch(request, this.context);
+          if (res != null) {
+            send(res);
+          }
+        } finally {
+          // Bắt buộc clear MDC để không bị rò rỉ ID sang Request tiếp theo của cùng Thread
+          MDC.clear();
         }
       }
     } catch (EOFException e) {

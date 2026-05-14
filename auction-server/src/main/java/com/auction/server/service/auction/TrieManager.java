@@ -5,7 +5,6 @@ import com.auction.shared.Item;
 import java.util.List;
 
 public class TrieManager {
-    // REFACTOR: implement a mechanism to dynamically update the trie when new items are added
     private static final TrieManager instance = new TrieManager();
     private final Trie trie = new Trie();
 
@@ -20,12 +19,17 @@ public class TrieManager {
     }
 
     public static TrieManager getInstance() {
-        TrieManager ans = instance;
-        return ans;
+        return instance;
     }
 
     public List<String> search(String prefix) {
-        List<String> res = trie.search(prefix);
-        return res;
+        return trie.search(prefix);
+    }
+
+    // TÍNH NĂNG 5: DYNAMIC TRIE UPDATE
+    public synchronized void insertNewItem(String itemName) {
+        if (itemName != null && !itemName.trim().isEmpty()) {
+            trie.insert(itemName.trim());
+        }
     }
 }

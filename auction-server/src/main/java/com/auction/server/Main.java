@@ -1,11 +1,10 @@
 package com.auction.server;
 
 import com.auction.server.controller.SocketServer;
+import com.auction.server.dao.platform.DatabaseConnection;
 import com.auction.server.dao.platform.DatabaseMigration;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +17,18 @@ public class Main {
 
     killport(port);
     DatabaseMigration.runAll();
+
+    // TÍNH NĂNG 4: GRACEFUL SHUTDOWN HOOK
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      logger.info("=== HỆ THỐNG ĐANG TẮT (GRACEFUL SHUTDOWN) ===");
+      try {
+        DatabaseConnection.getInstance().closePool();
+      } catch (Exception e) {
+        logger.error("Lỗi khi đóng Database Pool", e);
+      }
+      logger.info("=== SERVER ĐÃ TẮT HOÀN TOÀN ===");
+    }));
+
     SocketServer server = new SocketServer(port);
     server.startServer();
   }
