@@ -4,6 +4,8 @@ import com.auction.client.ClientSession;
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
+import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -31,7 +33,7 @@ public class HistoryController {
   @FXML private FlowPane upcomingcontainer;
   @FXML private FlowPane closedcontainer;
   @FXML private FlowPane pastcontainer;
-  private final PaneCards ongoingmodel = new PaneCards();
+  private final PaneCards trendingSectionCards = new PaneCards();
   private final PaneCards upcomingmodel = new PaneCards();
   private final PaneCards closedmodel = new PaneCards();
   private final PaneCards pastmodel = new PaneCards();
@@ -54,7 +56,7 @@ public class HistoryController {
     int userid = ClientSession.getCurrentUser().getId();
     long currentgen = fetchgen.incrementAndGet();
     Thread thread = new Thread(() -> {
-      List<Item> ongoing = fetchitems(Request.GET_ONGOING_BIDS, userid);
+      List<Item> trending = fetchTrendingLotsForCatalogType();
       List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
       List<Item> closed = fetchitems("getclosedbids", userid);
       List<Item> past = fetchitems("getpastbids", userid);
@@ -62,8 +64,9 @@ public class HistoryController {
         if (currentgen != fetchgen.get()) {
           return;
         }
-        if (ongoingcontainer != null && ongoing != null) {
-          incrementalrender(ongoingcontainer, ongoing, ongoingmodel, this::timecaptionongoing);
+        if (ongoingcontainer != null && trending != null) {
+          incrementalrender(
+              ongoingcontainer, trending, trendingSectionCards, this::timecaptionongoing);
         }
         if (upcomingcontainer != null && upcoming != null) {
           incrementalrender(upcomingcontainer, upcoming, upcomingmodel, this::timecaptionscheduled);
@@ -96,6 +99,26 @@ public class HistoryController {
       timelabel = "Winner: " + item.getWinnerUsername();
     }
     return timelabel;
+  }
+
+  /**
+   * Cùng nguồn với hàng Trending trên Trang chủ — theo kiểu English / Dutch đang chọn trên sidebar.
+   */
+  @SuppressWarnings("unchecked")
+  private List<Item> fetchTrendingLotsForCatalogType() {
+    AuctionType kind = KhungController.getCatalogAuctionType();
+    if (kind == null) {
+      kind = AuctionType.ENGLISH;
+    }
+    Request req = new Request(Request.GET_TRENDING_LOTS, kind.dbName());
+    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+    if (res != null && Response.OK.equals(res.getStatus())) {
+      Object payload = res.getPayload();
+      if (payload instanceof List) {
+        return (List<Item>) payload;
+      }
+    }
+    return new ArrayList<>();
   }
 
   @SuppressWarnings("unchecked")
@@ -151,6 +174,7 @@ public class HistoryController {
       String caption = captionfn.apply(item);
       if (card != null) {
         card.syncFromCatalogItemStaticTime(item, caption);
+        card.attachCatalogItem(item);
       } else {
         try {
           NodeContentLoader<VBox> cardloader = new NodeContentLoader<>();
@@ -160,6 +184,7 @@ public class HistoryController {
           if (newcard != null && root != null) {
             newcard.setData(item.getId(), safe(item.getName()), item.getCurrentPrice(), safe(item.getDescription()), caption, safe(item.getImageUrl()), safe(item.getSellerUsername()), safe(item.getSellerAvatarUrl()));
             newcard.setEndTime(null);
+            newcard.attachCatalogItem(item);
             cardmap.put(item.getId(), newcard);
             rootbyitemid.put(item.getId(), root);
           }

@@ -298,6 +298,10 @@ public class KhungController {
       instance.homeController.setFilters(
           instance.searchFilters.getKeyword(), instance.searchFilters.getCategory());
     }
+    Node current = getCurrentNode();
+    if (instance.historyController != null && current != null && current == instance.historyNode) {
+      instance.historyController.refreshHistory();
+    }
   }
 
   public static void applySearchFilter(String keyword, String category, double min, double max) {
