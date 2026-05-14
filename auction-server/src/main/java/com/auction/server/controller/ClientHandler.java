@@ -18,7 +18,11 @@ import com.auction.server.service.user.UserService;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.auction.shared.User;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -26,12 +30,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Handles individual client connections using JSON protocol over TCP.
- */
 public class ClientHandler implements Runnable {
 
   private static final Logger logger = LoggerFactory.getLogger(ClientHandler.class);
@@ -48,9 +50,15 @@ public class ClientHandler implements Runnable {
     this.socket = socket;
     this.bucket = new TokenBucket(100);
 
-    // Initialize JSON Mapper with JavaTime support
     this.jsonMapper = new ObjectMapper();
     this.jsonMapper.registerModule(new JavaTimeModule());
+    // BỎ QUA CÁC TRƯỜNG KHÔNG TỒN TẠI TRONG CLASS (NHƯ "role")
+    this.jsonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType(Object.class)
+            .build();
+    this.jsonMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
 
     this.in = new DataInputStream(socket.getInputStream());
     this.out = new DataOutputStream(socket.getOutputStream());
@@ -70,12 +78,10 @@ public class ClientHandler implements Runnable {
   private ActionRegistry buildRegistry() {
     ActionRegistry reg = new ActionRegistry();
 
-    // Auth Handlers
     reg.register(Request.LOGIN, new LoginHandler());
     reg.register(Request.SIGNUP, new SignupHandler());
     reg.register(Request.RECONNECT, new ReconnectHandler());
 
-    // Auction Handlers
     reg.register(Request.AUTOCOMPLETE, new AutocompleteHandler());
     ListItemsHandler listHandler = new ListItemsHandler();
     reg.register(Request.LIST, listHandler);
@@ -91,7 +97,6 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_MY_ITEMS, itemQuery);
     reg.register(Request.GET_ITEM_BY_ID, itemQuery);
 
-    // Rating & Misc
     RatingHandler ratingHandler = new RatingHandler();
     reg.register(Request.GET_RATINGS, ratingHandler);
 
@@ -101,7 +106,6 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_BID_HISTORY, miscHandler);
     reg.register(Request.PING, miscHandler);
 
-    // Chat & Friends
     ChatHandler chatHandler = new ChatHandler();
     reg.register(Request.GET_GLOBAL_CHAT_HISTORY, chatHandler);
     reg.register(Request.GET_PRIVATE_CHAT_HISTORY, chatHandler);
@@ -116,7 +120,6 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_FRIENDS, friendHandler);
     reg.register(Request.GET_FRIEND_REQUESTS, friendHandler);
 
-    // Protected Actions (Require Auth)
     reg.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));
     reg.register(Request.ADD_LOT, ActionHandler.requireAuth(new AddLotHandler()));
     reg.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
@@ -130,7 +133,6 @@ public class ClientHandler implements Runnable {
     reg.register(Request.DECLINE_FRIEND, ActionHandler.requireAuth(friendHandler));
     reg.register(Request.REMOVE_FRIEND, ActionHandler.requireAuth(friendHandler));
 
-    // Admin Actions
     reg.register(Request.LOCK_USER, ActionHandler.requireAdmin(userMgmt));
     reg.register(Request.UNLOCK_USER, ActionHandler.requireAdmin(userMgmt));
     reg.register(Request.PROMOTE_ADMIN, ActionHandler.requireAdmin(userMgmt));
@@ -153,26 +155,22 @@ public class ClientHandler implements Runnable {
   public void run() {
     try {
       while (!socket.isClosed()) {
-        // 1. Read length prefix (4 bytes)
         int length = in.readInt();
-        if (length <= 0 || length > 10 * 1024 * 1024) { // Max 10MB
+        if (length <= 0 || length > 10 * 1024 * 1024) {
           throw new IOException("Invalid packet length: " + length);
         }
 
-        // 2. Read JSON bytes
         byte[] payload = new byte[length];
         in.readFully(payload);
 
         String jsonReq = new String(payload, StandardCharsets.UTF_8);
         Request request = jsonMapper.readValue(jsonReq, Request.class);
 
-        // 3. Rate Limiting
         if (!bucket.tryconsume()) {
           send(new Response(request.getRequestId(), Response.ERROR, "rate_limit_exceeded", null));
           continue;
         }
 
-        // 4. Dispatch & Process
         Response res = this.registry.dispatch(request, this.context);
         if (res != null) {
           send(res);
@@ -187,17 +185,14 @@ public class ClientHandler implements Runnable {
     }
   }
 
-  /**
-   * Sends a Response object as a JSON string with a length prefix.
-   */
   public void send(Response response) {
     try {
       String jsonRes = jsonMapper.writeValueAsString(response);
       byte[] data = jsonRes.getBytes(StandardCharsets.UTF_8);
 
       synchronized (out) {
-        out.writeInt(data.length); // Send length first
-        out.write(data);           // Send JSON data
+        out.writeInt(data.length);
+        out.write(data);
         out.flush();
       }
     } catch (IOException e) {

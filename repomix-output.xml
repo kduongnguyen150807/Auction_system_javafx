@@ -2061,100 +2061,6 @@ final class NetworkConnectionUi {
 }
 </file>
 
-<file path="auction-client/src/main/java/com/auction/client/network/ObjectSocketConnection.java">
-package com.auction.client.network;
-
-import com.auction.shared.Response;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.function.Consumer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-/**
- * Quản lý kết nối TCP thô và vòng lặp đọc dữ liệu JSON.
- * Tuân thủ Google Coding Convention.
- */
-final class ObjectSocketConnection {
-
-  private static final Logger logger = LoggerFactory.getLogger(ObjectSocketConnection.class);
-  private static final int MAX_PACKET_SIZE = 10 * 1024 * 1024; // Giới hạn 10MB tránh OOM
-
-  private final Socket socket;
-  private final DataOutputStream out;
-  private final DataInputStream in;
-  private final ObjectMapper jsonMapper;
-
-  private ObjectSocketConnection(Socket socket) throws IOException {
-    this.socket = socket;
-    this.out = new DataOutputStream(socket.getOutputStream());
-    this.in = new DataInputStream(socket.getInputStream());
-    this.jsonMapper = new ObjectMapper();
-    this.jsonMapper.registerModule(new JavaTimeModule());
-  }
-
-  static ObjectSocketConnection connect(String host, int port) throws IOException {
-    Socket socket = new Socket(host, port);
-    socket.setKeepAlive(true);
-    socket.setTcpNoDelay(true); // Giảm độ trễ cho các gói tin nhỏ
-    return new ObjectSocketConnection(socket);
-  }
-
-  DataOutputStream getOut() {
-    return out;
-  }
-
-  Socket getSocket() {
-    return socket;
-  }
-
-  /**
-   * Vòng lặp đọc dữ liệu chạy ngầm.
-   * Giao thức: [4 bytes độ dài][Chuỗi JSON UTF-8]
-   */
-  void startReadLoop(Consumer<Response> onResponse, Consumer<Throwable> onDisconnect) {
-    Thread listenerThread = new Thread(() -> {
-      try {
-        while (!socket.isClosed()) {
-          // 1. Đọc độ dài gói tin
-          int length = in.readInt();
-          if (length <= 0 || length > MAX_PACKET_SIZE) {
-            throw new IOException("Kích thước gói tin không hợp lệ: " + length);
-          }
-
-          // 2. Đọc nội dung JSON dựa trên độ dài
-          byte[] payload = new byte[length];
-          in.readFully(payload);
-
-          // 3. Giải mã JSON thành Response Object
-          String jsonStr = new String(payload, StandardCharsets.UTF_8);
-          Response response = jsonMapper.readValue(jsonStr, Response.class);
-
-          if (response != null) {
-            onResponse.accept(response);
-          }
-        }
-      } catch (EOFException e) {
-        logger.info("Server đã ngắt kết nối (EOF).");
-        onDisconnect.accept(e);
-      } catch (Exception e) {
-        logger.error("Lỗi vòng lặp đọc: {}", e.getMessage());
-        onDisconnect.accept(e);
-      }
-    }, "Network-Listener-Thread");
-
-    listenerThread.setDaemon(true);
-    listenerThread.start();
-  }
-}
-</file>
-
 <file path="auction-client/src/main/java/com/auction/client/ui/Chat/ChatBubbleRowFactory.java">
 package com.auction.client.ui.Chat;
 
@@ -3540,7 +3446,8 @@ public class NotificationPopup {
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/auction-client.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <!-- ĐÃ SỬA CLASS Ở ĐÂY -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/auction-client.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>7</maxHistory>
@@ -4552,102 +4459,6 @@ public class SignupHandler implements ActionHandler {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/handler/chat/ChatHandler.java">
-package com.auction.server.handler.chat;
-
-import com.auction.server.handler.dispatch.ActionHandler;
-import com.auction.server.handler.dispatch.HandlerContext;
-
-import com.auction.server.dao.chat.ChatDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.server.service.auction.AuctionManager;
-import com.auction.shared.*;
-import java.util.List;
-import java.util.Map;
-
-public class ChatHandler implements ActionHandler {
-  private final ChatDao chatDao = new ChatDao();
-  private final UserDao userDao = new UserDao();
-
-  @Override
-  public Response handle(Request request, HandlerContext context) {
-    String action = request.getAction();
-    String requestId = request.getRequestId();
-
-    switch (action) {
-      case Request.SEND_CHAT:
-        return handleSendChat(request, context);
-
-      case Request.GET_GLOBAL_CHAT_HISTORY:
-        return handleGetGlobalHistory(requestId);
-
-      case Request.GET_PRIVATE_CHAT_HISTORY: {
-        Map<String, Object> data = (Map<String, Object>) request.getPayload();
-        int myId = ((Number) data.get("myId")).intValue();
-        int otherId = ((Number) data.get("otherId")).intValue();
-        List<ChatMessage> history = chatDao.getPrivateHistory(myId, otherId, 100);
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) history);
-      }
-
-      case Request.GET_CHAT_CONTACTS: {
-        int userId = ((Number) request.getPayload()).intValue();
-        List<Integer> contactIds = chatDao.getContactIds(userId);
-        java.util.List<User> contacts = new java.util.ArrayList<>();
-        for (int id : contactIds) {
-          User user = userDao.getById(String.valueOf(id));
-          if (user != null) {
-            user.setPassword("");
-            contacts.add(user);
-          }
-        }
-        return new Response(requestId, Response.OK, "success", (java.io.Serializable) contacts);
-      }
-
-      default:
-        return new Response(requestId, Response.ERROR, "unknown_chat_action", null);
-    }
-  }
-
-  private Response handleSendChat(Request request, HandlerContext context) {
-    ChatMessage msg = (ChatMessage) request.getPayload();
-    User sender = context.getCurrentUser();
-    msg.setSenderId(sender.getId());
-    msg.setSenderUsername(sender.getUsername());
-    msg.setSenderAvatarUrl(sender.getAvatarUrl());
-
-    String content = msg.getContent();
-    if (content == null || content.trim().isEmpty()) {
-      return new Response(request.getRequestId(), Response.ERROR, "Empty message", null);
-    }
-    if (content.length() > 500) {
-      msg.setContent(content.substring(0, 500));
-    }
-
-    boolean saved = chatDao.insertMessage(msg);
-    if (!saved) {
-      return new Response(request.getRequestId(), Response.ERROR, "Failed to save", null);
-    }
-
-    if (ChatMessage.TYPE_GLOBAL.equals(msg.getMessageType())) {
-      AuctionManager.getInstance().broadcast(
-          new Response("", "CHAT_GLOBAL", "new_message", msg));
-    } else if (ChatMessage.TYPE_PRIVATE.equals(msg.getMessageType())) {
-      AuctionManager.getInstance().sendToUser(msg.getReceiverId(),
-          new Response("", "CHAT_PRIVATE", "new_message", msg));
-      AuctionManager.getInstance().sendToUser(msg.getSenderId(),
-          new Response("", "CHAT_PRIVATE", "new_message", msg));
-    }
-
-    return new Response(request.getRequestId(), Response.OK, "sent", msg);
-  }
-
-  private Response handleGetGlobalHistory(String requestId) {
-    List<ChatMessage> history = chatDao.getGlobalHistory(100);
-    return new Response(requestId, Response.OK, "success", (java.io.Serializable) history);
-  }
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/handler/chat/FriendHandler.java">
 package com.auction.server.handler.chat;
 
@@ -5135,154 +4946,6 @@ final class AutoBidRegistration {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/service/auction/BanCascadeService.java">
-package com.auction.server.service.auction;
-
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.platform.DatabaseConnection;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.shared.BidTransaction;
-import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-class BanCascadeService {
-  private static final Logger LOGGER = LoggerFactory.getLogger(BanCascadeService.class);
-
-  private final ItemDao itemDao;
-  private final UserDao userDao;
-  private final BidDao bidDao;
-  private final TransactionLogDao logDao;
-  private final AuctionManager manager;
-
-  BanCascadeService(ItemDao itemDao, UserDao userDao, BidDao bidDao,
-      TransactionLogDao logDao, AuctionManager manager) {
-    this.itemDao = itemDao;
-    this.userDao = userDao;
-    this.bidDao = bidDao;
-    this.logDao = logDao;
-    this.manager = manager;
-  }
-
-  void handleBidderBan(int bidderId) {
-    List<Integer> affected = bidDao.getOpenAuctionIdsForBidder(bidderId);
-    LOGGER.info("Bidder ban: user={} affectedOpenAuctions={}", bidderId, affected.size());
-    for (int itemId : affected) {
-      ReentrantLock lock = manager.getAuctionLock(itemId);
-      lock.lock();
-      try {
-        processBidderBan(itemId, bidderId);
-      } catch (Exception e) {
-        LOGGER.error("Bidder-ban failed for auction {}", itemId, e);
-      } finally {
-        lock.unlock();
-      }
-    }
-  }
-
-  void handleSellerBan(int sellerId) {
-    List<Integer> affected = itemDao.getOpenAuctionIdsBySeller(sellerId);
-    LOGGER.info("Seller ban: user={} affectedOpenAuctions={}", sellerId, affected.size());
-    for (int itemId : affected) {
-      ReentrantLock lock = manager.getAuctionLock(itemId);
-      lock.lock();
-      try {
-        processSellerBan(itemId);
-      } catch (Exception e) {
-        LOGGER.error("Seller-ban failed for auction {}", itemId, e);
-      } finally {
-        lock.unlock();
-      }
-    }
-  }
-
-  private void processBidderBan(int itemId, int bidderId) throws SQLException {
-    boolean[] refunded = {false};
-    runTransaction(conn -> {
-      Item item = itemDao.getByIdTx(itemId, conn);
-      if (item == null || item.getStatus() != ItemStatus.OPEN) return;
-      int currentLeader = bidDao.getCurrentHighestBidderTx(itemId, conn);
-      double escrow = item.getCurrentPrice();
-      int deleted = bidDao.deleteBidsByUserOnItemTx(itemId, bidderId, conn);
-      LOGGER.info("Bidder ban: removed {} bid(s) on auction {} for user {}", deleted, itemId, bidderId);
-      if (currentLeader == bidderId && deleted > 0) {
-        userDao.creditBalanceTx(bidderId, escrow, conn);
-        logDao.insertLogTx(bidderId, "BID_REFUND_BAN", escrow, itemId, conn);
-        BidTransaction newLeader = bidDao.findHighestValidBidTx(itemId, conn);
-        double newPrice = newLeader != null ? newLeader.getBidValue() : item.getStartingPrice();
-        itemDao.updatePriceTx(itemId, newPrice, conn);
-        LOGGER.info("Bidder ban: auction {} new leader={} new price={}", itemId,
-            newLeader != null ? newLeader.getUserId() : -1, newPrice);
-        refunded[0] = true;
-      }
-    });
-    if (refunded[0]) {
-      manager.sendBalanceUpdateToUser(bidderId);
-      manager.broadcastPriceUpdate(itemId);
-    }
-  }
-
-  private void processSellerBan(int itemId) throws SQLException {
-    int[] refundedBidder = {-1};
-    double[] refundedAmount = {0};
-    runTransaction(conn -> {
-      Item item = itemDao.getByIdTx(itemId, conn);
-      if (item == null || item.getStatus() != ItemStatus.OPEN) return;
-      int currentBidder = bidDao.getCurrentHighestBidderTx(itemId, conn);
-      if (!itemDao.cancelAuctionTx(itemId, conn)) {
-        LOGGER.warn("Seller ban: cancelAuctionTx returned false for item={}, may already be closed", itemId);
-        return;
-      }
-      if (currentBidder > 0) {
-        double held = item.getCurrentPrice();
-        userDao.creditBalanceTx(currentBidder, held, conn);
-        logDao.insertLogTx(currentBidder, "BID_REFUND_SELLER_BAN", held, itemId, conn);
-        refundedBidder[0] = currentBidder;
-        refundedAmount[0] = held;
-      }
-    });
-    manager.cleanupAutoBids(itemId);
-    if (refundedBidder[0] > 0) {
-      manager.sendBalanceUpdateToUser(refundedBidder[0]);
-      LOGGER.info("Seller ban: auction {} CANCELED, refunded bidder={} amount={}", itemId, refundedBidder[0], refundedAmount[0]);
-    } else {
-      LOGGER.info("Seller ban: auction {} CANCELED, no active bidder to refund", itemId);
-    }
-    manager.broadcastItemClosed(itemId);
-  }
-
-  @FunctionalInterface
-  private interface SqlOp {
-    void execute(Connection conn) throws SQLException;
-  }
-
-  private void runTransaction(SqlOp op) throws SQLException {
-    Connection conn = DatabaseConnection.getInstance().getConnection();
-    if (conn == null) throw new SQLException("No database connection available");
-    try {
-      conn.setAutoCommit(false);
-      try {
-        op.execute(conn);
-        conn.commit();
-      } catch (SQLException e) {
-        conn.rollback();
-        throw e;
-      }
-    } finally {
-      try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
-      try { conn.close(); } catch (SQLException ignored) {}
-    }
-  }
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/service/auction/BidAuctionValidator.java">
 package com.auction.server.service.auction;
 
@@ -5573,7 +5236,8 @@ public class UserService {
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/auction-server.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <!-- ĐÃ SỬA CLASS Ở ĐÂY -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/auction-server.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>14</maxHistory>
@@ -5583,7 +5247,6 @@ public class UserService {
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
-
     <logger name="com.auction" level="INFO"/>
     <logger name="com.mysql" level="WARN"/>
 
@@ -7621,144 +7284,101 @@ flowchart LR
 </project>
 </file>
 
-<file path="auction-client/src/main/java/com/auction/client/network/IncomingResponseRouter.java">
+<file path="auction-client/src/main/java/com/auction/client/network/ObjectSocketConnection.java">
 package com.auction.client.network;
 
-import com.auction.shared.ChatMessage;
-import com.auction.shared.Friendship;
-import com.auction.shared.Item;
-import com.auction.shared.ItemFactory;
-import com.auction.shared.LeaderboardEntry;
 import com.auction.shared.Response;
-import com.auction.shared.User;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
-import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Điều hướng các Response từ Server tới các Listener hoặc các Future đang đợi.
- */
-final class IncomingResponseRouter {
+final class ObjectSocketConnection {
 
-  private static final Logger logger = LoggerFactory.getLogger(IncomingResponseRouter.class);
+  private static final Logger logger = LoggerFactory.getLogger(ObjectSocketConnection.class);
+  private static final int MAX_PACKET_SIZE = 10 * 1024 * 1024;
 
-  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap;
-  private final List<NetworkEventListener> listeners;
+  private final Socket socket;
+  private final DataOutputStream out;
+  private final DataInputStream in;
+  private final ObjectMapper jsonMapper;
 
-  IncomingResponseRouter(
-          ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap,
-          List<NetworkEventListener> listeners) {
-    this.pendingMap = pendingMap;
-    this.listeners = listeners;
+  private ObjectSocketConnection(Socket socket) throws IOException {
+    this.socket = socket;
+    this.out = new DataOutputStream(socket.getOutputStream());
+    this.in = new DataInputStream(socket.getInputStream());
+
+    this.jsonMapper = new ObjectMapper();
+    this.jsonMapper.registerModule(new JavaTimeModule());
+
+    // BẬT TÍNH NĂNG TỰ ĐỘNG NHẬN DIỆN KIỂU DỮ LIỆU (POLYMORPHISM)
+    PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType(Object.class)
+            .build();
+    this.jsonMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
   }
 
-  void dispatch(Response response) {
-    if (response == null) {
-      return;
-    }
-
-    String status = response.getStatus();
-    Object payload = response.getPayload();
-
-    // 1. Xử lý các sự kiện Real-time (Server Push)
-    switch (status) {
-      case "BALANCE_UPDATE" -> {
-        if (payload instanceof User u) {
-          forListeners(l -> l.onBalanceUpdate(u));
-        }
-        return;
-      }
-      case "OUTBID_NOTIFY" -> {
-        handleOutbid(payload);
-        return;
-      }
-      case "CHAT_GLOBAL" -> {
-        if (payload instanceof ChatMessage m) {
-          forListeners(l -> l.onGlobalChat(m));
-        }
-        return;
-      }
-      case "CHAT_PRIVATE" -> {
-        if (payload instanceof ChatMessage m) {
-          forListeners(l -> l.onPrivateChat(m));
-        }
-        return;
-      }
-      case "FRIEND_REQUEST" -> {
-        if (payload instanceof Friendship f) {
-          forListeners(l -> l.onFriendRequest(f));
-        }
-        return;
-      }
-      case "ITEM_CLOSED" -> {
-        if (payload instanceof Item item) {
-          forListeners(l -> l.onItemClosed(item));
-        }
-        return;
-      }
-      case "NEW_BID_UPDATE" -> {
-        if (payload instanceof Item item) {
-          forListeners(l -> l.onNewBidUpdate(item));
-        }
-        return;
-      }
-      case Response.ACCOUNT_BANNED -> {
-        forListeners(l -> l.onAccountBanned(response.getMessage()));
-        return;
-      }
-      case "LEADERBOARD_UPDATE" -> {
-        handleLeaderboard(payload);
-        return;
-      }
-      default -> {
-        // Tiếp tục xử lý nếu không phải Push event
-      }
-    }
-
-    // 2. Xử lý phản hồi cho Request (Dựa trên requestId)
-    String requestId = response.getRequestId();
-    if (requestId != null) {
-      CompletableFuture<Response> future = pendingMap.remove(requestId);
-      if (future != null) {
-        future.complete(response);
-      } else {
-        logger.warn("Nhận được phản hồi cho requestId không tồn tại: {}", requestId);
-      }
-    }
+  static ObjectSocketConnection connect(String host, int port) throws IOException {
+    Socket socket = new Socket(host, port);
+    socket.setKeepAlive(true);
+    socket.setTcpNoDelay(true); // Giảm độ trễ cho các gói tin nhỏ
+    return new ObjectSocketConnection(socket);
   }
 
-  private void handleOutbid(Object payload) {
-    if (payload instanceof Item item) {
-      forListeners(l -> l.onOutbidNotify(item));
-    } else if (payload instanceof Integer id) {
-      Item stub = ItemFactory.createItem(null);
-      stub.setId(id);
-      stub.setName("?");
-      forListeners(l -> l.onOutbidNotify(stub));
-    }
+  DataOutputStream getOut() {
+    return out;
   }
 
-  @SuppressWarnings("unchecked")
-  private void handleLeaderboard(Object payload) {
-    if (payload instanceof List<?> rawList) {
-      List<LeaderboardEntry> entries = new ArrayList<>();
-      for (Object obj : rawList) {
-        if (obj instanceof LeaderboardEntry e) {
-          entries.add(e);
+  Socket getSocket() {
+    return socket;
+  }
+
+  /**
+   * Vòng lặp đọc dữ liệu chạy ngầm.
+   * Giao thức: [4 bytes độ dài][Chuỗi JSON UTF-8]
+   */
+  void startReadLoop(Consumer<Response> onResponse, Consumer<Throwable> onDisconnect) {
+    Thread listenerThread = new Thread(() -> {
+      try {
+        while (!socket.isClosed()) {
+          // 1. Đọc độ dài gói tin
+          int length = in.readInt();
+          if (length <= 0 || length > MAX_PACKET_SIZE) {
+            throw new IOException("Kích thước gói tin không hợp lệ: " + length);
+          }
+
+          // 2. Đọc nội dung JSON dựa trên độ dài
+          byte[] payload = new byte[length];
+          in.readFully(payload);
+
+          // 3. Giải mã JSON thành Response Object
+          String jsonStr = new String(payload, StandardCharsets.UTF_8);
+          Response response = jsonMapper.readValue(jsonStr, Response.class);
+
+          if (response != null) {
+            onResponse.accept(response);
+          }
         }
+      } catch (EOFException e) {
+        logger.info("Server đã ngắt kết nối (EOF).");
+        onDisconnect.accept(e);
+      } catch (Exception e) {
+        logger.error("Lỗi vòng lặp đọc: {}", e.getMessage());
+        onDisconnect.accept(e);
       }
-      forListeners(l -> l.onLeaderboardUpdate(entries));
-    }
-  }
+    }, "Network-Listener-Thread");
 
-  private void forListeners(Consumer<NetworkEventListener> action) {
-    // Luôn cập nhật UI trên JavaFX Application Thread
-    Platform.runLater(() -> listeners.forEach(action));
+    listenerThread.setDaemon(true);
+    listenerThread.start();
   }
 }
 </file>
@@ -10325,6 +9945,93 @@ public class LoginHandler implements ActionHandler {
 }
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/handler/chat/ChatHandler.java">
+package com.auction.server.handler.chat;
+
+import com.auction.server.handler.dispatch.ActionHandler;
+import com.auction.server.handler.dispatch.HandlerContext;
+import com.auction.server.dao.chat.ChatDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.server.service.auction.AuctionManager;
+import com.auction.shared.*;
+import java.util.List;
+import java.util.Map;
+
+public class ChatHandler implements ActionHandler {
+  private final ChatDao chatDao = new ChatDao();
+  private final UserDao userDao = new UserDao();
+
+  @Override
+  public Response handle(Request request, HandlerContext context) {
+    String action = request.getAction();
+    String requestId = request.getRequestId();
+
+    switch (action) {
+      case Request.SEND_CHAT:
+        return handleSendChat(request, context);
+
+      case Request.GET_GLOBAL_CHAT_HISTORY:
+        return handleGetGlobalHistory(requestId);
+
+      case Request.GET_PRIVATE_CHAT_HISTORY: {
+        // Ép kiểu an toàn từ JSON Map
+        Map<String, Object> data = (Map<String, Object>) request.getPayload();
+        int myId = ((Number) data.get("myId")).intValue();
+        int otherId = ((Number) data.get("otherId")).intValue();
+        List<ChatMessage> history = chatDao.getPrivateHistory(myId, otherId, 100);
+        return new Response(requestId, Response.OK, "success", history);
+      }
+
+      case Request.GET_CHAT_CONTACTS: {
+        int userId = ((Number) request.getPayload()).intValue();
+        List<Integer> contactIds = chatDao.getContactIds(userId);
+        java.util.List<User> contacts = new java.util.ArrayList<>();
+        for (int id : contactIds) {
+          User user = userDao.getById(String.valueOf(id));
+          if (user != null) {
+            user.setPassword(""); // Bảo mật: xóa password trước khi gửi
+            contacts.add(user);
+          }
+        }
+        return new Response(requestId, Response.OK, "success", contacts);
+      }
+
+      default:
+        return new Response(requestId, Response.ERROR, "unknown_chat_action", null);
+    }
+  }
+
+  private Response handleSendChat(Request request, HandlerContext context) {
+    ChatMessage msg = (ChatMessage) request.getPayload();
+    User sender = context.getCurrentUser();
+    if (sender == null) return new Response(request.getRequestId(), Response.ERROR, "Unauthorized", null);
+
+    msg.setSenderId(sender.getId());
+    msg.setSenderUsername(sender.getUsername());
+    msg.setSenderAvatarUrl(sender.getAvatarUrl());
+
+    if (msg.getContent() == null || msg.getContent().trim().isEmpty()) {
+      return new Response(request.getRequestId(), Response.ERROR, "Empty message", null);
+    }
+
+    if (chatDao.insertMessage(msg)) {
+      if (ChatMessage.TYPE_GLOBAL.equals(msg.getMessageType())) {
+        AuctionManager.getInstance().broadcast(new Response("", "CHAT_GLOBAL", "new_message", msg));
+      } else {
+        AuctionManager.getInstance().sendToUser(msg.getReceiverId(), new Response("", "CHAT_PRIVATE", "new_message", msg));
+        AuctionManager.getInstance().sendToUser(msg.getSenderId(), new Response("", "CHAT_PRIVATE", "new_message", msg));
+      }
+      return new Response(request.getRequestId(), Response.OK, "sent", msg);
+    }
+    return new Response(request.getRequestId(), Response.ERROR, "Failed to save", null);
+  }
+
+  private Response handleGetGlobalHistory(String requestId) {
+    return new Response(requestId, Response.OK, "success", chatDao.getGlobalHistory(100));
+  }
+}
+</file>
+
 <file path="auction-server/src/main/java/com/auction/server/handler/dispatch/HandlerContext.java">
 package com.auction.server.handler.dispatch;
 
@@ -10550,6 +10257,143 @@ public class UpdateAvatarHandler implements ActionHandler {
       Response res = new Response(request.getRequestId(), Response.ERROR, "fail", null);
       return res;
     }
+  }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/service/auction/BanCascadeService.java">
+package com.auction.server.service.auction;
+
+import com.auction.server.dao.auction.BidDao;
+import com.auction.server.dao.platform.DatabaseConnection;
+import com.auction.server.dao.auction.ItemDao;
+import com.auction.server.dao.wallet.TransactionLogDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.shared.BidTransaction;
+import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+class BanCascadeService {
+  private static final Logger LOGGER = LoggerFactory.getLogger(BanCascadeService.class);
+
+  private final ItemDao itemDao;
+  private final UserDao userDao;
+  private final BidDao bidDao;
+  private final TransactionLogDao logDao;
+  private final AuctionManager manager;
+
+  BanCascadeService(ItemDao itemDao, UserDao userDao, BidDao bidDao,
+                    TransactionLogDao logDao, AuctionManager manager) {
+    this.itemDao = itemDao;
+    this.userDao = userDao;
+    this.bidDao = bidDao;
+    this.logDao = logDao;
+    this.manager = manager;
+  }
+
+  void handleBidderBan(int bidderId) {
+    List<Integer> affected = bidDao.getOpenAuctionIdsForBidder(bidderId);
+    for (int itemId : affected) {
+      ReentrantLock lock = manager.getAuctionLock(itemId);
+      lock.lock();
+      try {
+        processBidderBan(itemId, bidderId);
+      } catch (Exception e) {
+        LOGGER.error("Bidder-ban failed for auction {}", itemId, e);
+      } finally {
+        lock.unlock();
+      }
+    }
+  }
+
+  void handleSellerBan(int sellerId) {
+    List<Integer> affected = itemDao.getOpenAuctionIdsBySeller(sellerId);
+    for (int itemId : affected) {
+      ReentrantLock lock = manager.getAuctionLock(itemId);
+      lock.lock();
+      try {
+        processSellerBan(itemId);
+      } catch (Exception e) {
+        LOGGER.error("Seller-ban failed for auction {}", itemId, e);
+      } finally {
+        lock.unlock();
+      }
+    }
+  }
+
+  private void processBidderBan(int itemId, int bidderId) throws SQLException {
+    boolean[] refunded = {false};
+    runTransaction(conn -> {
+      Item item = itemDao.getByIdTx(itemId, conn);
+      if (item == null || item.getStatus() != ItemStatus.OPEN) return;
+
+      int currentLeader = bidDao.getCurrentHighestBidderTx(itemId, conn);
+      double escrow = item.getCurrentPrice();
+      int deleted = bidDao.deleteBidsByUserOnItemTx(itemId, bidderId, conn);
+
+      if (currentLeader == bidderId && deleted > 0) {
+        userDao.creditBalanceTx(bidderId, escrow, conn);
+        logDao.insertLogTx(bidderId, "BID_REFUND_BAN", escrow, itemId, conn);
+
+        BidTransaction newLeader = bidDao.findHighestValidBidTx(itemId, conn);
+        double newPrice = newLeader != null ? newLeader.getBidValue() : item.getStartingPrice();
+
+        // FIX: Thêm item.getVersion() vào đây
+        itemDao.updatePriceTx(itemId, newPrice, item.getVersion(), conn);
+        refunded[0] = true;
+      }
+    });
+    if (refunded[0]) {
+      manager.sendBalanceUpdateToUser(bidderId);
+      manager.broadcastPriceUpdate(itemId);
+    }
+  }
+
+  private void processSellerBan(int itemId) throws SQLException {
+    int[] refundedBidder = {-1};
+    runTransaction(conn -> {
+      Item item = itemDao.getByIdTx(itemId, conn);
+      if (item == null || item.getStatus() != ItemStatus.OPEN) return;
+      int currentBidder = bidDao.getCurrentHighestBidderTx(itemId, conn);
+      if (!itemDao.cancelAuctionTx(itemId, conn)) return;
+
+      if (currentBidder > 0) {
+        double held = item.getCurrentPrice();
+        userDao.creditBalanceTx(currentBidder, held, conn);
+        logDao.insertLogTx(currentBidder, "BID_REFUND_SELLER_BAN", held, itemId, conn);
+        refundedBidder[0] = currentBidder;
+      }
+    });
+    manager.cleanupAutoBids(itemId);
+    if (refundedBidder[0] > 0) manager.sendBalanceUpdateToUser(refundedBidder[0]);
+    manager.broadcastItemClosed(itemId);
+  }
+
+  private void runTransaction(SqlOp op) throws SQLException {
+    Connection conn = DatabaseConnection.getInstance().getConnection();
+    if (conn == null) throw new SQLException("No database connection available");
+    try {
+      conn.setAutoCommit(false);
+      op.execute(conn);
+      conn.commit();
+    } catch (SQLException e) {
+      conn.rollback();
+      throw e;
+    } finally {
+      conn.setAutoCommit(true);
+      conn.close();
+    }
+  }
+
+  @FunctionalInterface
+  private interface SqlOp {
+    void execute(Connection conn) throws SQLException;
   }
 }
 </file>
@@ -11475,128 +11319,6 @@ public class LeaderboardEntry implements Serializable, Comparable<LeaderboardEnt
 }
 </file>
 
-<file path="pom.xml">
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>com.auction</groupId>
-    <artifactId>auction-system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>auction-shared</module>
-        <module>auction-server</module>
-        <module>auction-client</module>
-    </modules>
-
-    <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j.version>2.0.16</slf4j.version>
-        <logback.version>1.5.18</logback.version>
-        <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
-        <checkstyle.version>10.21.0</checkstyle.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>2.15.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jul-to-slf4j</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>com.spotify.fmt</groupId>
-                    <artifactId>fmt-maven-plugin</artifactId>
-                    <version>2.25</version>
-                    <configuration>
-                        <style>google</style>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>${checkstyle.plugin.version}</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.puppycrawl.tools</groupId>
-                            <artifactId>checkstyle</artifactId>
-                            <version>${checkstyle.version}</version>
-                        </dependency>
-                    </dependencies>
-                    <configuration>
-                        <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
-                        <suppressionsLocation>${maven.multiModuleProjectDirectory}/checkstyle-suppressions.xml</suppressionsLocation>
-                        <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
-                        <consoleOutput>true</consoleOutput>
-                        <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                        <failOnViolation>true</failOnViolation>
-                        <failsOnError>true</failsOnError>
-                        <linkXRef>false</linkXRef>
-                        <violationSeverity>error</violationSeverity>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>checkstyle-validate</id>
-                            <phase>validate</phase>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-
-</project>
-</file>
-
 <file path=".github/workflows/build.yml">
 name: CI — Build, Test & Checkstyle
 
@@ -11659,6 +11381,148 @@ jobs:
       # ── 7. Run Checkstyle across all modules ─────────────────────────────
       - name: Checkstyle
         run: mvn checkstyle:check --batch-mode
+</file>
+
+<file path="auction-client/src/main/java/com/auction/client/network/IncomingResponseRouter.java">
+package com.auction.client.network;
+
+import com.auction.shared.ChatMessage;
+import com.auction.shared.Friendship;
+import com.auction.shared.Item;
+import com.auction.shared.ItemFactory;
+import com.auction.shared.LeaderboardEntry;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import javafx.application.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Điều hướng các Response từ Server tới các Listener hoặc các Future đang đợi.
+ */
+final class IncomingResponseRouter {
+
+  private static final Logger logger = LoggerFactory.getLogger(IncomingResponseRouter.class);
+
+  private final ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap;
+  private final List<NetworkEventListener> listeners;
+
+  IncomingResponseRouter(
+          ConcurrentHashMap<String, CompletableFuture<Response>> pendingMap,
+          List<NetworkEventListener> listeners) {
+    this.pendingMap = pendingMap;
+    this.listeners = listeners;
+  }
+
+  void dispatch(Response response) {
+    if (response == null) {
+      return;
+    }
+
+    String status = response.getStatus();
+    Object payload = response.getPayload();
+
+    // 1. Xử lý các sự kiện Real-time (Server Push)
+    switch (status) {
+      case "BALANCE_UPDATE" -> {
+        if (payload instanceof User u) {
+          forListeners(l -> l.onBalanceUpdate(u));
+        }
+        return;
+      }
+      case "OUTBID_NOTIFY" -> {
+        handleOutbid(payload);
+        return;
+      }
+      case "CHAT_GLOBAL" -> {
+        if (payload instanceof ChatMessage m) {
+          forListeners(l -> l.onGlobalChat(m));
+        }
+        return;
+      }
+      case "CHAT_PRIVATE" -> {
+        if (payload instanceof ChatMessage m) {
+          forListeners(l -> l.onPrivateChat(m));
+        }
+        return;
+      }
+      case "FRIEND_REQUEST" -> {
+        if (payload instanceof Friendship f) {
+          forListeners(l -> l.onFriendRequest(f));
+        }
+        return;
+      }
+      case "ITEM_CLOSED" -> {
+        if (payload instanceof Item item) {
+          forListeners(l -> l.onItemClosed(item));
+        }
+        return;
+      }
+      case "NEW_BID_UPDATE" -> {
+        if (payload instanceof Item item) {
+          forListeners(l -> l.onNewBidUpdate(item));
+        }
+        return;
+      }
+      case Response.ACCOUNT_BANNED -> {
+        forListeners(l -> l.onAccountBanned(response.getMessage()));
+        return;
+      }
+      case "LEADERBOARD_UPDATE" -> {
+        handleLeaderboard(payload);
+        return;
+      }
+      default -> {
+        // Tiếp tục xử lý nếu không phải Push event
+      }
+    }
+
+    // 2. Xử lý phản hồi cho Request (Dựa trên requestId)
+    String requestId = response.getRequestId();
+    if (requestId != null) {
+      CompletableFuture<Response> future = pendingMap.remove(requestId);
+      if (future != null) {
+        future.complete(response);
+      } else {
+        logger.warn("Nhận được phản hồi cho requestId không tồn tại: {}", requestId);
+      }
+    }
+  }
+
+  private void handleOutbid(Object payload) {
+    if (payload instanceof Item item) {
+      forListeners(l -> l.onOutbidNotify(item));
+    } else if (payload instanceof Integer id) {
+      Item stub = ItemFactory.createItem(null);
+      stub.setId(id);
+      stub.setName("?");
+      forListeners(l -> l.onOutbidNotify(stub));
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void handleLeaderboard(Object payload) {
+    if (payload instanceof List<?> rawList) {
+      List<LeaderboardEntry> entries = new ArrayList<>();
+      for (Object obj : rawList) {
+        if (obj instanceof LeaderboardEntry e) {
+          entries.add(e);
+        }
+      }
+      forListeners(l -> l.onLeaderboardUpdate(entries));
+    }
+  }
+
+  private void forListeners(Consumer<NetworkEventListener> action) {
+    // Luôn cập nhật UI trên JavaFX Application Thread
+    Platform.runLater(() -> listeners.forEach(action));
+  }
+}
 </file>
 
 <file path="auction-client/src/main/java/com/auction/client/service/BiddingClientService.java">
@@ -12722,288 +12586,6 @@ public class NotificationCenter {
 </project>
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/dao/auction/ItemDao.java">
-package com.auction.server.dao.auction;
-
-import com.auction.server.dao.platform.BaseDao;
-import com.auction.shared.AuctionType;
-import com.auction.shared.Item;
-import com.auction.shared.ItemFactory;
-import com.auction.shared.ItemStatus;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-/**
- * Data Access Object for Items.
- * Implements Optimistic Locking using the 'version' column.
- */
-public class ItemDao extends BaseDao<Item> implements ItemRepository {
-
-  private static final String SELECT_ITEM_WITH_SELLER =
-          "SELECT i.*, u.username AS seller_name, u.avatar_url AS seller_avatar "
-                  + "FROM items i LEFT JOIN users u ON i.sellerid = u.id";
-
-  @Override
-  protected Item mapRow(ResultSet rs) throws SQLException {
-    Item item = ItemFactory.createItem(rs.getString("category"));
-    item.setId(rs.getInt("id"));
-    item.setVersion(rs.getInt("version")); // Quan trọng cho Optimistic Locking
-    item.setName(rs.getString("name"));
-    item.setDescription(rs.getString("description"));
-    item.setStartingPrice(rs.getDouble("startingprice"));
-    item.setCurrentPrice(rs.getDouble("currentprice"));
-    item.setMaxPrice(rs.getDouble("maxprice"));
-
-    Timestamp startTs = rs.getTimestamp("starttime");
-    if (startTs != null) {
-      item.setStartTime(startTs.toLocalDateTime());
-    }
-    Timestamp endTs = rs.getTimestamp("endtime");
-    if (endTs != null) {
-      item.setEndTime(endTs.toLocalDateTime());
-    }
-
-    item.setSellerId(rs.getInt("sellerid"));
-    item.setWinnerId(rs.getInt("winnerid"));
-    item.setStatus(ItemStatus.parse(rs.getString("status")));
-    item.setImageUrl(rs.getString("image_url"));
-
-    try {
-      item.setAuctionType(AuctionType.parse(rs.getString("auction_type")));
-      double dr = rs.getDouble("dutch_reserve_price");
-      if (!rs.wasNull()) {
-        item.setDutchReservePrice(dr);
-      }
-      double da = rs.getDouble("dutch_tick_amount");
-      if (!rs.wasNull()) {
-        item.setDutchTickAmount(da);
-      }
-      int im = rs.getInt("dutch_tick_interval_mins");
-      if (!rs.wasNull()) {
-        item.setDutchTickIntervalMinutes(im);
-      }
-    } catch (SQLException ignored) {
-      // Optional columns
-    }
-
-    try {
-      item.setSellerUsername(rs.getString("seller_name"));
-      item.setSellerAvatarUrl(rs.getString("seller_avatar"));
-    } catch (SQLException ignored) {
-      // Optional join columns
-    }
-    return item;
-  }
-
-  @Override
-  public List<Item> getAll() {
-    return queryList(SELECT_ITEM_WITH_SELLER);
-  }
-
-  @Override
-  public Item getById(int itemId) {
-    return querySingle(SELECT_ITEM_WITH_SELLER + " WHERE i.id = ?", itemId);
-  }
-
-  @Override
-  public List<Item> getBySellerId(int sellerId) {
-    return queryList(SELECT_ITEM_WITH_SELLER + " WHERE i.sellerid = ? ORDER BY i.id DESC", sellerId);
-  }
-
-  @Override
-  public List<Item> getExpiredItems() {
-    return queryList("SELECT * FROM items WHERE endtime <= NOW() AND status = 'OPEN'");
-  }
-
-  @Override
-  public List<Item> getPendingItems() {
-    return queryList(SELECT_ITEM_WITH_SELLER + " WHERE i.status = 'PENDING' ORDER BY i.id DESC");
-  }
-
-  /**
-   * Updates price using Optimistic Locking.
-   */
-  @Override
-  public boolean updatePrice(int itemId, double price, int version) {
-    String sql = "UPDATE items SET currentprice = ?, version = version + 1 "
-            + "WHERE id = ? AND version = ?";
-    return executeUpdate(sql, price, itemId, version);
-  }
-
-  @Override
-  public boolean updateEndTime(int itemId, LocalDateTime endTime) {
-    return executeUpdate("UPDATE items SET endtime = ? WHERE id = ?",
-            Timestamp.valueOf(endTime), itemId);
-  }
-
-  @Override
-  public boolean insertLot(String name, String description, double startingPrice, double maxPrice,
-                           LocalDateTime startTime, LocalDateTime endTime, String sellerUsername, String imageUrl,
-                           String category, AuctionType auctionType, double dutchReserve, double dutchTick, int interval) {
-
-    try (Connection conn = getConn()) {
-      int sellerId = -1;
-      try (PreparedStatement lookup = conn.prepareStatement(
-              "SELECT id FROM users WHERE username = ? LIMIT 1")) {
-        lookup.setString(1, sellerUsername);
-        ResultSet rs = lookup.executeQuery();
-        if (rs.next()) {
-          sellerId = rs.getInt(1);
-        }
-      }
-
-      if (sellerId <= 0) {
-        return false;
-      }
-
-      AuctionType type = (auctionType != null) ? auctionType : AuctionType.ENGLISH;
-      String sql = "INSERT INTO items (category, auction_type, name, description, startingprice, "
-              + "currentprice, maxprice, dutch_reserve_price, dutch_tick_amount, "
-              + "dutch_tick_interval_mins, starttime, endtime, sellerid, status, version, image_url) "
-              + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
-      try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, (category == null) ? "Vehicle" : category);
-        ps.setString(2, type.dbName());
-        ps.setString(3, name);
-        ps.setString(4, description);
-        ps.setDouble(5, startingPrice);
-        ps.setDouble(6, startingPrice);
-        ps.setDouble(7, maxPrice);
-
-        if (type == AuctionType.DUTCH) {
-          ps.setDouble(8, dutchReserve);
-          ps.setDouble(9, dutchTick);
-          ps.setInt(10, interval);
-        } else {
-          ps.setNull(8, Types.DOUBLE);
-          ps.setNull(9, Types.DOUBLE);
-          ps.setNull(10, Types.INTEGER);
-        }
-
-        ps.setTimestamp(11, Timestamp.valueOf(startTime));
-        ps.setTimestamp(12, Timestamp.valueOf(endTime));
-        ps.setInt(13, sellerId);
-        ps.setString(14, ItemStatus.PENDING.name());
-        ps.setInt(15, 0); // Initial version
-        ps.setString(16, imageUrl);
-
-        return ps.executeUpdate() > 0;
-      }
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  @Override
-  public void closeAuction(int itemId, int winnerId, String status) {
-    executeUpdate("UPDATE items SET winnerid = ?, status = ? WHERE id = ?",
-            winnerId, status, itemId);
-  }
-
-  public boolean atomicCloseAuction(int itemId, int winnerId, String newStatus) {
-    return executeUpdate("UPDATE items SET winnerid = ?, status = ? WHERE id = ? AND status = 'OPEN'",
-            winnerId, newStatus, itemId);
-  }
-
-  @Override
-  public boolean approveItem(int itemId) {
-    return executeUpdate("UPDATE items SET status = 'OPEN' WHERE id = ? AND status = 'PENDING'",
-            itemId);
-  }
-
-  @Override
-  public boolean rejectItem(int itemId) {
-    return executeUpdate("UPDATE items SET status = 'CANCELED' WHERE id = ? AND status = 'PENDING'",
-            itemId);
-  }
-
-  @Override
-  public HashMap<String, Integer> getStatusStats() {
-    HashMap<String, Integer> stats = new HashMap<>();
-    String sql = "SELECT status, COUNT(*) AS cnt FROM items GROUP BY status";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        stats.put(rs.getString("status"), rs.getInt("cnt"));
-      }
-    } catch (Exception ignored) {}
-    return stats;
-  }
-
-  @Override
-  public HashMap<String, Double> getCategoryStats() {
-    HashMap<String, Double> stats = new HashMap<>();
-    String sql = "SELECT category, SUM(currentprice) AS total FROM items "
-            + "WHERE status IN ('CLOSED', 'FINISHED') GROUP BY category";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        stats.put(rs.getString("category"), rs.getDouble("total"));
-      }
-    } catch (Exception ignored) {}
-    return stats;
-  }
-
-  public List<Integer> getOpenAuctionIdsBySeller(int sellerId) {
-    List<Integer> ids = new ArrayList<>();
-    String sql = "SELECT id FROM items WHERE sellerid = ? AND status = 'OPEN'";
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, sellerId);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        ids.add(rs.getInt(1));
-      }
-    } catch (Exception ignored) {}
-    return ids;
-  }
-
-  public Item getByIdTx(int itemId, Connection conn) throws SQLException {
-    String sql = SELECT_ITEM_WITH_SELLER + " WHERE i.id = ?";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return mapRow(rs);
-        }
-      }
-    }
-    return null;
-  }
-
-  public boolean cancelAuctionTx(int itemId, Connection conn) throws SQLException {
-    String sql = "UPDATE items SET status = 'CANCELED' WHERE id = ? AND status = 'OPEN'";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, itemId);
-      return ps.executeUpdate() > 0;
-    }
-  }
-
-  /**
-   * Transactional update with Optimistic Locking.
-   */
-  public boolean updatePriceTx(int itemId, double price, int version, Connection conn)
-          throws SQLException {
-    String sql = "UPDATE items SET currentprice = ?, version = version + 1 "
-            + "WHERE id = ? AND version = ?";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setDouble(1, price);
-      ps.setInt(2, itemId);
-      ps.setInt(3, version);
-      return ps.executeUpdate() > 0;
-    }
-  }
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/dao/rating/RatingDao.java">
 package com.auction.server.dao.rating;
 
@@ -13273,71 +12855,6 @@ final class AutoBidCoordinator {
 }
 </file>
 
-<file path="auction-shared/pom.xml">
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.auction</groupId>
-        <artifactId>auction-system</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
-    <artifactId>auction-shared</artifactId>
-    <dependencies>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.15.2</version>
-        </dependency>
-    </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>com.spotify.fmt</groupId>
-                <artifactId>fmt-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
-                <configuration>
-                    <source>25</source>
-                    <target>25</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-</file>
-
 <file path="auction-shared/src/main/java/com/auction/shared/Admin.java">
 package com.auction.shared;
 
@@ -13425,25 +12942,6 @@ public class Electronics extends Item {
   public double calculateTax() {
     return this.currentPrice * 0.05;
   }
-}
-</file>
-
-<file path="auction-shared/src/main/java/com/auction/shared/Entity.java">
-package com.auction.shared;
-
-import java.io.Serializable;
-
-public abstract class Entity implements Serializable {
-  private static final long serialVersionUID = 1L;
-  protected int id;
-  // Tính năng 3: Optimistic Locking version
-  protected int version;
-
-  public int getId() { return id; }
-  public void setId(int id) { this.id = id; }
-
-  public int getVersion() { return version; }
-  public void setVersion(int version) { this.version = version; }
 }
 </file>
 
@@ -13803,6 +13301,128 @@ public class AuctionLogicTest {
     assertFalse(PasswordEncoder.matches("wrongPassword", stored));
   }
 }
+</file>
+
+<file path="pom.xml">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.auction</groupId>
+    <artifactId>auction-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>auction-shared</module>
+        <module>auction-server</module>
+        <module>auction-client</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <slf4j.version>2.0.16</slf4j.version>
+        <logback.version>1.5.18</logback.version>
+        <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
+        <checkstyle.version>10.21.0</checkstyle.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>2.15.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jul-to-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.spotify.fmt</groupId>
+                    <artifactId>fmt-maven-plugin</artifactId>
+                    <version>2.25</version>
+                    <configuration>
+                        <style>google</style>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${checkstyle.plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>${checkstyle.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
+                        <suppressionsLocation>${maven.multiModuleProjectDirectory}/checkstyle-suppressions.xml</suppressionsLocation>
+                        <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+                        <consoleOutput>true</consoleOutput>
+                        <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                        <failOnViolation>true</failOnViolation>
+                        <failsOnError>true</failsOnError>
+                        <linkXRef>false</linkXRef>
+                        <violationSeverity>error</violationSeverity>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>checkstyle-validate</id>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
 </file>
 
 <file path="auction-client/src/main/java/com/auction/client/network/NetworkEventListener.java">
@@ -14448,6 +14068,288 @@ public class RatingFormController {
 </VBox>
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/dao/auction/ItemDao.java">
+package com.auction.server.dao.auction;
+
+import com.auction.server.dao.platform.BaseDao;
+import com.auction.shared.AuctionType;
+import com.auction.shared.Item;
+import com.auction.shared.ItemFactory;
+import com.auction.shared.ItemStatus;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+/**
+ * Data Access Object for Items.
+ * Implements Optimistic Locking using the 'version' column.
+ */
+public class ItemDao extends BaseDao<Item> implements ItemRepository {
+
+  private static final String SELECT_ITEM_WITH_SELLER =
+          "SELECT i.*, u.username AS seller_name, u.avatar_url AS seller_avatar "
+                  + "FROM items i LEFT JOIN users u ON i.sellerid = u.id";
+
+  @Override
+  protected Item mapRow(ResultSet rs) throws SQLException {
+    Item item = ItemFactory.createItem(rs.getString("category"));
+    item.setId(rs.getInt("id"));
+    item.setVersion(rs.getInt("version")); // Quan trọng cho Optimistic Locking
+    item.setName(rs.getString("name"));
+    item.setDescription(rs.getString("description"));
+    item.setStartingPrice(rs.getDouble("startingprice"));
+    item.setCurrentPrice(rs.getDouble("currentprice"));
+    item.setMaxPrice(rs.getDouble("maxprice"));
+
+    Timestamp startTs = rs.getTimestamp("starttime");
+    if (startTs != null) {
+      item.setStartTime(startTs.toLocalDateTime());
+    }
+    Timestamp endTs = rs.getTimestamp("endtime");
+    if (endTs != null) {
+      item.setEndTime(endTs.toLocalDateTime());
+    }
+
+    item.setSellerId(rs.getInt("sellerid"));
+    item.setWinnerId(rs.getInt("winnerid"));
+    item.setStatus(ItemStatus.parse(rs.getString("status")));
+    item.setImageUrl(rs.getString("image_url"));
+
+    try {
+      item.setAuctionType(AuctionType.parse(rs.getString("auction_type")));
+      double dr = rs.getDouble("dutch_reserve_price");
+      if (!rs.wasNull()) {
+        item.setDutchReservePrice(dr);
+      }
+      double da = rs.getDouble("dutch_tick_amount");
+      if (!rs.wasNull()) {
+        item.setDutchTickAmount(da);
+      }
+      int im = rs.getInt("dutch_tick_interval_mins");
+      if (!rs.wasNull()) {
+        item.setDutchTickIntervalMinutes(im);
+      }
+    } catch (SQLException ignored) {
+      // Optional columns
+    }
+
+    try {
+      item.setSellerUsername(rs.getString("seller_name"));
+      item.setSellerAvatarUrl(rs.getString("seller_avatar"));
+    } catch (SQLException ignored) {
+      // Optional join columns
+    }
+    return item;
+  }
+
+  @Override
+  public List<Item> getAll() {
+    return queryList(SELECT_ITEM_WITH_SELLER);
+  }
+
+  @Override
+  public Item getById(int itemId) {
+    return querySingle(SELECT_ITEM_WITH_SELLER + " WHERE i.id = ?", itemId);
+  }
+
+  @Override
+  public List<Item> getBySellerId(int sellerId) {
+    return queryList(SELECT_ITEM_WITH_SELLER + " WHERE i.sellerid = ? ORDER BY i.id DESC", sellerId);
+  }
+
+  @Override
+  public List<Item> getExpiredItems() {
+    return queryList("SELECT * FROM items WHERE endtime <= NOW() AND status = 'OPEN'");
+  }
+
+  @Override
+  public List<Item> getPendingItems() {
+    return queryList(SELECT_ITEM_WITH_SELLER + " WHERE i.status = 'PENDING' ORDER BY i.id DESC");
+  }
+
+  /**
+   * Updates price using Optimistic Locking.
+   */
+  @Override
+  public boolean updatePrice(int itemId, double price, int version) {
+    String sql = "UPDATE items SET currentprice = ?, version = version + 1 "
+            + "WHERE id = ? AND version = ?";
+    return executeUpdate(sql, price, itemId, version);
+  }
+
+  @Override
+  public boolean updateEndTime(int itemId, LocalDateTime endTime) {
+    return executeUpdate("UPDATE items SET endtime = ? WHERE id = ?",
+            Timestamp.valueOf(endTime), itemId);
+  }
+
+  @Override
+  public boolean insertLot(String name, String description, double startingPrice, double maxPrice,
+                           LocalDateTime startTime, LocalDateTime endTime, String sellerUsername, String imageUrl,
+                           String category, AuctionType auctionType, double dutchReserve, double dutchTick, int interval) {
+
+    try (Connection conn = getConn()) {
+      int sellerId = -1;
+      try (PreparedStatement lookup = conn.prepareStatement(
+              "SELECT id FROM users WHERE username = ? LIMIT 1")) {
+        lookup.setString(1, sellerUsername);
+        ResultSet rs = lookup.executeQuery();
+        if (rs.next()) {
+          sellerId = rs.getInt(1);
+        }
+      }
+
+      if (sellerId <= 0) {
+        return false;
+      }
+
+      AuctionType type = (auctionType != null) ? auctionType : AuctionType.ENGLISH;
+      String sql = "INSERT INTO items (category, auction_type, name, description, startingprice, "
+              + "currentprice, maxprice, dutch_reserve_price, dutch_tick_amount, "
+              + "dutch_tick_interval_mins, starttime, endtime, sellerid, status, version, image_url) "
+              + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, (category == null) ? "Vehicle" : category);
+        ps.setString(2, type.dbName());
+        ps.setString(3, name);
+        ps.setString(4, description);
+        ps.setDouble(5, startingPrice);
+        ps.setDouble(6, startingPrice);
+        ps.setDouble(7, maxPrice);
+
+        if (type == AuctionType.DUTCH) {
+          ps.setDouble(8, dutchReserve);
+          ps.setDouble(9, dutchTick);
+          ps.setInt(10, interval);
+        } else {
+          ps.setNull(8, Types.DOUBLE);
+          ps.setNull(9, Types.DOUBLE);
+          ps.setNull(10, Types.INTEGER);
+        }
+
+        ps.setTimestamp(11, Timestamp.valueOf(startTime));
+        ps.setTimestamp(12, Timestamp.valueOf(endTime));
+        ps.setInt(13, sellerId);
+        ps.setString(14, ItemStatus.PENDING.name());
+        ps.setInt(15, 0); // Initial version
+        ps.setString(16, imageUrl);
+
+        return ps.executeUpdate() > 0;
+      }
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @Override
+  public void closeAuction(int itemId, int winnerId, String status) {
+    executeUpdate("UPDATE items SET winnerid = ?, status = ? WHERE id = ?",
+            winnerId, status, itemId);
+  }
+
+  public boolean atomicCloseAuction(int itemId, int winnerId, String newStatus) {
+    return executeUpdate("UPDATE items SET winnerid = ?, status = ? WHERE id = ? AND status = 'OPEN'",
+            winnerId, newStatus, itemId);
+  }
+
+  @Override
+  public boolean approveItem(int itemId) {
+    return executeUpdate("UPDATE items SET status = 'OPEN' WHERE id = ? AND status = 'PENDING'",
+            itemId);
+  }
+
+  @Override
+  public boolean rejectItem(int itemId) {
+    return executeUpdate("UPDATE items SET status = 'CANCELED' WHERE id = ? AND status = 'PENDING'",
+            itemId);
+  }
+
+  @Override
+  public HashMap<String, Integer> getStatusStats() {
+    HashMap<String, Integer> stats = new HashMap<>();
+    String sql = "SELECT status, COUNT(*) AS cnt FROM items GROUP BY status";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        stats.put(rs.getString("status"), rs.getInt("cnt"));
+      }
+    } catch (Exception ignored) {}
+    return stats;
+  }
+
+  @Override
+  public HashMap<String, Double> getCategoryStats() {
+    HashMap<String, Double> stats = new HashMap<>();
+    String sql = "SELECT category, SUM(currentprice) AS total FROM items "
+            + "WHERE status IN ('CLOSED', 'FINISHED') GROUP BY category";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        stats.put(rs.getString("category"), rs.getDouble("total"));
+      }
+    } catch (Exception ignored) {}
+    return stats;
+  }
+
+  public List<Integer> getOpenAuctionIdsBySeller(int sellerId) {
+    List<Integer> ids = new ArrayList<>();
+    String sql = "SELECT id FROM items WHERE sellerid = ? AND status = 'OPEN'";
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, sellerId);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) {
+        ids.add(rs.getInt(1));
+      }
+    } catch (Exception ignored) {}
+    return ids;
+  }
+
+  public Item getByIdTx(int itemId, Connection conn) throws SQLException {
+    String sql = SELECT_ITEM_WITH_SELLER + " WHERE i.id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return mapRow(rs);
+        }
+      }
+    }
+    return null;
+  }
+
+  public boolean cancelAuctionTx(int itemId, Connection conn) throws SQLException {
+    String sql = "UPDATE items SET status = 'CANCELED' WHERE id = ? AND status = 'OPEN'";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, itemId);
+      return ps.executeUpdate() > 0;
+    }
+  }
+
+  /**
+   * Transactional update with Optimistic Locking.
+   */
+  public boolean updatePriceTx(int itemId, double price, int version, Connection conn)
+          throws SQLException {
+    String sql = "UPDATE items SET currentprice = ?, version = version + 1 "
+            + "WHERE id = ? AND version = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, price);
+      ps.setInt(2, itemId);
+      ps.setInt(3, version);
+      return ps.executeUpdate() > 0;
+    }
+  }
+}
+</file>
+
 <file path="auction-server/src/main/java/com/auction/server/dao/platform/DatabaseConnection.java">
 package com.auction.server.dao.platform;
 
@@ -14615,6 +14517,90 @@ public class SettlementService {
 }
 </file>
 
+<file path="auction-shared/pom.xml">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.auction</groupId>
+        <artifactId>auction-system</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>auction-shared</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.spotify.fmt</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+</file>
+
+<file path="auction-shared/src/main/java/com/auction/shared/Entity.java">
+package com.auction.shared;
+
+import java.io.Serializable;
+
+public abstract class Entity implements Serializable {
+  private static final long serialVersionUID = 1L;
+  protected int id;
+  // Tính năng 3: Optimistic Locking version
+  protected int version;
+
+  public int getId() { return id; }
+  public void setId(int id) { this.id = id; }
+
+  public int getVersion() { return version; }
+  public void setVersion(int version) { this.version = version; }
+}
+</file>
+
 <file path="auction-shared/src/main/java/com/auction/shared/ItemStatus.java">
 package com.auction.shared;
 
@@ -14660,10 +14646,7 @@ public class Response implements Serializable {
   public static final String OK = "SUCCESS";
   public static final String ERROR = "ERROR";
 
-  /** Server-push event type: sent to a user whose account has just been locked by an admin. */
   public static final String ACCOUNT_BANNED = "ACCOUNT_BANNED";
-
-  /** Server-push event type: sent to a user whose account has just been unlocked by an admin. */
   public static final String ACCOUNT_UNBANNED = "ACCOUNT_UNBANNED";
 
   protected String requestId;
@@ -14671,6 +14654,9 @@ public class Response implements Serializable {
   protected String message;
   protected Object payload;
   protected LocalDateTime timestamp;
+
+  // BẮT BUỘC PHẢI CÓ CHO JACKSON
+  public Response() {}
 
   public Response(String requestId, String status, String message, Object payload) {
     this.requestId = requestId;
@@ -14680,25 +14666,20 @@ public class Response implements Serializable {
     this.timestamp = LocalDateTime.now();
   }
 
-  public String getRequestId() {
-    return this.requestId;
-  }
+  public String getRequestId() { return this.requestId; }
+  public void setRequestId(String requestId) { this.requestId = requestId; } // Thêm Setter
 
-  public String getStatus() {
-    return this.status;
-  }
+  public String getStatus() { return this.status; }
+  public void setStatus(String status) { this.status = status; } // Thêm Setter
 
-  public String getMessage() {
-    return this.message;
-  }
+  public String getMessage() { return this.message; }
+  public void setMessage(String message) { this.message = message; } // Thêm Setter
 
-  public Object getPayload() {
-    return this.payload;
-  }
+  public Object getPayload() { return this.payload; }
+  public void setPayload(Object payload) { this.payload = payload; } // Thêm Setter
 
-  public LocalDateTime getTimestamp() {
-    return this.timestamp;
-  }
+  public LocalDateTime getTimestamp() { return this.timestamp; }
+  public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; } // Thêm Setter
 }
 </file>
 
@@ -15070,68 +15051,6 @@ public class TransactionLog implements Serializable {
         </VBox>
     </children>
 </VBox>
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/Main.java">
-package com.auction.server;
-
-import com.auction.server.controller.SocketServer;
-import com.auction.server.dao.platform.DatabaseMigration;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class Main {
-  private static final Logger logger = LoggerFactory.getLogger(Main.class);
-
-  public static void main(String[] args) {
-    String portstr = System.getenv("SERVER_PORT");
-    int port = (portstr != null && !portstr.trim().isEmpty()) ? Integer.parseInt(portstr) : 8080;
-
-    boolean ans = killport(port);
-    DatabaseMigration.runAll();
-    SocketServer server = new SocketServer(port);
-    server.startServer();
-  }
-
-  private static boolean killport(int port) {
-    boolean ans = false;
-    String osname = System.getProperty("os.name").toLowerCase();
-
-    try {
-      if (osname.contains("win")) {
-        String command = "cmd /c netstat -ano | findstr :" + port;
-        Process process = Runtime.getRuntime().exec(command);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null) {
-          if (line.contains("LISTENING")) {
-            String[] parts = line.trim().split("\\s+");
-            String pid = parts[parts.length - 1];
-            Runtime.getRuntime().exec("taskkill /F /PID " + pid).waitFor();
-            ans = true;
-          }
-        }
-      } else {
-        String[] command = {"/bin/sh", "-c", "lsof -t -i :" + port};
-        Process process = Runtime.getRuntime().exec(command);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String pid;
-        while ((pid = reader.readLine()) != null) {
-          if (!pid.trim().isEmpty()) {
-            Runtime.getRuntime().exec("kill -9 " + pid).waitFor();
-            ans = true;
-          }
-        }
-      }
-    } catch (Exception e) {
-      logger.error("error killing port", e);
-    }
-
-    return ans;
-  }
-}
 </file>
 
 <file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionManager.java">
@@ -16073,209 +15992,55 @@ public class HistoryController {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionBidPipeline.java">
-package com.auction.server.service.auction;
+<file path="auction-server/src/main/java/com/auction/server/Main.java">
+package com.auction.server;
 
-import com.auction.server.dao.auction.BidDao;
-import com.auction.server.dao.auction.ItemDao;
-import com.auction.server.dao.user.UserDao;
-import com.auction.server.dao.wallet.TransactionLogDao;
-import com.auction.shared.AuctionType;
-import com.auction.shared.BidTransaction;
-import com.auction.shared.Item;
-import com.auction.shared.Response;
-import com.auction.shared.User;
-import java.sql.Connection;
-import java.time.Duration;
-import java.time.LocalDateTime;
+import com.auction.server.controller.SocketServer;
+import com.auction.server.dao.platform.DatabaseMigration;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.function.IntConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-interface BiddingStrategy {
-  Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast);
-}
+public class Main {
+  private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-final class AuctionBidPipeline {
-  private final ItemDao itemdao;
-  private final UserDao userdao;
-  private final BidDao biddao;
-  private final TransactionLogDao logdao;
-  private final AuctionRealtimeNotifier notifier;
-  private final BidAuctionValidator validator;
-  private IntConsumer cleanupautobidsforitem = id -> {};
+  public static void main(String[] args) {
+    String portstr = System.getenv("SERVER_PORT");
+    int port = (portstr != null && !portstr.trim().isEmpty()) ? Integer.parseInt(portstr) : 8080;
 
-  AuctionBidPipeline(ItemDao itemdao, UserDao userdao, BidDao biddao, TransactionLogDao logdao, AuctionRealtimeNotifier notifier, BidAuctionValidator validator) {
-    this.itemdao = itemdao;
-    this.userdao = userdao;
-    this.biddao = biddao;
-    this.logdao = logdao;
-    this.notifier = notifier;
-    this.validator = validator;
+    killport(port);
+    DatabaseMigration.runAll();
+    SocketServer server = new SocketServer(port);
+    server.startServer();
   }
 
-  void setCleanupAutoBidsForItem(IntConsumer cleanupautobidsforitem) {
-    if (cleanupautobidsforitem != null) {
-      this.cleanupautobidsforitem = cleanupautobidsforitem;
-    }
-  }
+  private static void killport(int port) {
+    String osname = System.getProperty("os.name").toLowerCase();
+    try {
+      ProcessBuilder pb;
+      if (osname.contains("win")) {
+        pb = new ProcessBuilder("cmd", "/c", "netstat -ano | findstr :" + port);
+      } else {
+        pb = new ProcessBuilder("sh", "-c", "lsof -t -i :" + port);
+      }
 
-  Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
-    Item item = itemdao.getById(bid.getItemId());
-    DutchAuctionCatalogSync.syncItem(itemdao, item);
-    item = itemdao.getById(bid.getItemId());
-    User bidder = userdao.getById(String.valueOf(bid.getUserId()));
-    Response valres = validator.validate(bid, item, bidder);
-    if (valres != null) {
-      return valres;
-    }
-    BiddingStrategy strategy = getstrategy(item);
-    Response ans = strategy.process(bid, item, bidder, after, pendingpricebroadcast);
-    return ans;
-  }
-
-  private BiddingStrategy getstrategy(Item item) {
-    if (item != null && item.getAuctionType() == AuctionType.DUTCH) {
-      return new DutchBiddingStrategy();
-    }
-    return new EnglishBiddingStrategy();
-  }
-
-  private class DutchBiddingStrategy implements BiddingStrategy {
-    @Override
-    public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
-      double price = item.getCurrentPrice();
-      double diff = Math.abs(bid.getBidValue() - price);
-      if (diff > 0.02) {
-        Response res = BidAuctionValidator.error("invalid_dutch_price");
-        return res;
-      }
-      boolean deductres = userdao.atomicDeductBalance(bidder.getId(), price);
-      if (!deductres) {
-        Response res = BidAuctionValidator.error("insufficient_balance");
-        return res;
-      }
-      logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
-      userdao.addBidderMetrics(bidder.getId(), price);
-      boolean closeres = itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED");
-      if (!closeres) {
-        userdao.atomicCreditBalance(bidder.getId(), price);
-        logdao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
-        Response res = BidAuctionValidator.error("auction_already_closed");
-        return res;
-      }
-      itemdao.updatePrice(item.getId(), price, item.getVersion());
-      creditseller(item, price, after);
-      after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-      after.add(() -> notifier.broadcastItemClosed(item.getId()));
-      int targetid = item.getId();
-      after.add(() -> cleanupautobidsforitem.accept(targetid));
-      AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), price);
-      after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
-      Response ans = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-      return ans;
-    }
-  }
-
-  private class EnglishBiddingStrategy implements BiddingStrategy {
-    @Override
-    public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
-      if (item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice()) {
-        Response ans = processbuyitnow(bid, item, bidder, after);
-        return ans;
-      }
-      if (bid.getBidValue() <= item.getCurrentPrice()) {
-        Response ans = BidAuctionValidator.error("bid_too_low");
-        return ans;
-      }
-      try (Connection conn = com.auction.server.dao.platform.DatabaseConnection.getInstance().getConnection()) {
-        conn.setAutoCommit(false);
-        try {
-          boolean deductres = userdao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn);
-          if (!deductres) {
-            conn.rollback();
-            Response ans = BidAuctionValidator.error("insufficient_balance");
-            return ans;
-          }
-          logdao.insertLogTx(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId(), conn);
-          int previd = biddao.getCurrentHighestBidderTx(bid.getItemId(), conn);
-          double prevprice = item.getCurrentPrice();
-          boolean placeres = biddao.placeBidTx(bid, conn);
-          if (!placeres) {
-            conn.rollback();
-            Response ans = BidAuctionValidator.error("bid_failed");
-            return ans;
-          }
-          itemdao.updatePriceTx(item.getId(), bid.getBidValue(), conn);
-          if (previd > 0 && prevprice > 0) {
-            userdao.creditBalanceTx(previd, prevprice, conn);
-            logdao.insertLogTx(previd, "BID_REFUND", prevprice, bid.getItemId(), conn);
-            after.add(() -> notifier.sendBalanceUpdateToUser(previd));
-            int targetid = bid.getItemId();
-            after.add(() -> notifier.notifyOutbidUser(previd, targetid));
-          }
-          conn.commit();
-          after.add(() -> applyantisnipeextension(bid.getItemId()));
-          after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-          pendingpricebroadcast.add(bid.getItemId());
-          Response ans = new Response("", Response.OK, "success", bid);
-          return ans;
-        } catch (Exception e) {
-          conn.rollback();
-          Response ans = BidAuctionValidator.error("db_transaction_error");
-          return ans;
+      Process process = pb.start();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        if (osname.contains("win") && line.contains("LISTENING")) {
+          String[] parts = line.trim().split("\\s+");
+          String pid = parts[parts.length - 1];
+          new ProcessBuilder("taskkill", "/F", "/PID", pid).start().waitFor();
+        } else if (!osname.contains("win") && !line.trim().isEmpty()) {
+          new ProcessBuilder("kill", "-9", line.trim()).start().waitFor();
         }
-      } catch (Exception e) {
-        Response ans = BidAuctionValidator.error("db_connection_error");
-        return ans;
       }
-    }
-
-    private Response processbuyitnow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
-      double targetprice = item.getMaxPrice();
-      boolean deductres = userdao.atomicDeductBalance(bidder.getId(), targetprice);
-      if (!deductres) {
-        Response ans = BidAuctionValidator.error("insufficient_balance");
-        return ans;
-      }
-      logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -targetprice, bid.getItemId());
-      userdao.addBidderMetrics(bidder.getId(), targetprice);
-      boolean closeres = itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED");
-      if (!closeres) {
-        userdao.atomicCreditBalance(bidder.getId(), targetprice);
-        logdao.insertLog(bidder.getId(), "BUY_REFUND", targetprice, bid.getItemId());
-        Response ans = BidAuctionValidator.error("auction_already_closed");
-        return ans;
-      }
-      itemdao.updatePrice(item.getId(), targetprice, item.getVersion());
-      creditseller(item, targetprice, after);
-      after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
-      after.add(() -> notifier.broadcastItemClosed(item.getId()));
-      int targetid = item.getId();
-      after.add(() -> cleanupautobidsforitem.accept(targetid));
-      AuctionManager.getInstance().getLeaderboardservice().updatescore(bidder.getId(), bidder.getUsername(), bidder.getAvatarUrl(), targetprice);
-      after.add(() -> AuctionManager.getInstance().broadcastleaderboard());
-      Response ans = new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
-      return ans;
-    }
-  }
-
-  private void creditseller(Item item, double amount, List<Runnable> after) {
-    userdao.atomicCreditBalance(item.getSellerId(), amount);
-    userdao.addSellerMetrics(item.getSellerId(), amount);
-    logdao.insertLog(item.getSellerId(), "ITEM_SOLD", amount, item.getId());
-    after.add(() -> notifier.sendBalanceUpdateToUser(item.getSellerId()));
-  }
-
-  private void applyantisnipeextension(int itemid) {
-    Item item = itemdao.getById(itemid);
-    if (item != null && item.getEndTime() != null) {
-      long diff = Duration.between(LocalDateTime.now(), item.getEndTime()).getSeconds();
-      if (diff < 60) {
-        LocalDateTime newend = item.getEndTime().plusSeconds(60);
-        itemdao.updateEndTime(item.getId(), newend);
-        SettlementService.getInstance().schedule(item.getId(), newend);
-      }
+    } catch (Exception e) {
+      logger.error("Error killing port {}", port, e);
     }
   }
 }
@@ -16285,200 +16050,6 @@ final class AuctionBidPipeline {
 db.url=jdbc:mysql://localhost:3306/auction_db
 db.user=ba_nin
 db.password=banin123
-</file>
-
-<file path="auction-shared/src/main/java/com/auction/shared/User.java">
-package com.auction.shared;
-
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import java.time.LocalDateTime;
-
-// Tính năng 1: Giúp Jackson biết chính xác lớp con nào để khởi tạo khi nhận JSON
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = Electronics.class, name = "electronics"),
-        @JsonSubTypes.Type(value = Art.class, name = "art"),
-        @JsonSubTypes.Type(value = Vehicle.class, name = "vehicle")
-})
-public abstract class User extends Entity {
-  protected String username;
-  protected String fullName;
-  protected String password;
-  protected String email;
-  protected String age;
-  protected String phoneNumber;
-  protected double balance;
-  protected boolean active;
-  protected boolean locked;
-  protected String avatarUrl;
-  protected double moneySpent;
-  protected int itemsBought;
-  protected double moneyReceived;
-  protected int itemsSold;
-  protected double avgRating;
-  protected int totalRatings;
-  protected String sessiontoken;
-
-  public User() {}
-
-  public User(String username, String password, String email, String age, String phoneNumber) {
-    this.username = username;
-    this.fullName = username;
-    this.password = password;
-    this.email = email;
-    this.age = age;
-    this.phoneNumber = phoneNumber;
-    this.balance = 0.0;
-    this.moneySpent = 0.0;
-    this.itemsBought = 0;
-    this.moneyReceived = 0.0;
-    this.itemsSold = 0;
-    this.active = true;
-    this.locked = false;
-  }
-
-  public abstract UserRole getRole();
-
-  public String getUsername() {
-    return this.username;
-  }
-
-  public void setUsername(String username) {
-    this.username = username;
-  }
-
-  public String getFullName() {
-    return this.fullName;
-  }
-
-  public void setFullName(String fullName) {
-    this.fullName = fullName;
-  }
-
-  public String getPassword() {
-    return this.password;
-  }
-
-  public void setPassword(String password) {
-    this.password = password;
-  }
-
-  public String getEmail() {
-    return this.email;
-  }
-
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public String getAge() {
-    return this.age;
-  }
-
-  public void setAge(String age) {
-    this.age = age;
-  }
-
-  public String getPhoneNumber() {
-    return this.phoneNumber;
-  }
-
-  public void setPhoneNumber(String phoneNumber) {
-    this.phoneNumber = phoneNumber;
-  }
-
-  public double getBalance() {
-    return this.balance;
-  }
-
-  public void setBalance(double balance) {
-    this.balance = balance;
-  }
-
-  public boolean isActive() {
-    return this.active;
-  }
-
-  public void setActive(boolean active) {
-    this.active = active;
-  }
-
-  public boolean isLocked() {
-    return this.locked;
-  }
-
-  public void setLocked(boolean locked) {
-    this.locked = locked;
-  }
-
-  public String getAvatarUrl() {
-    return this.avatarUrl;
-  }
-
-  public void setAvatarUrl(String avatarUrl) {
-    this.avatarUrl = avatarUrl;
-  }
-
-  public double getMoneySpent() {
-    return this.moneySpent;
-  }
-
-  public void setMoneySpent(double moneySpent) {
-    this.moneySpent = moneySpent;
-  }
-
-  public int getItemsBought() {
-    return this.itemsBought;
-  }
-
-  public void setItemsBought(int itemsBought) {
-    this.itemsBought = itemsBought;
-  }
-
-  public double getMoneyReceived() {
-    return this.moneyReceived;
-  }
-
-  public void setMoneyReceived(double moneyReceived) {
-    this.moneyReceived = moneyReceived;
-  }
-
-  public int getItemsSold() {
-    return this.itemsSold;
-  }
-
-  public void setItemsSold(int itemsSold) {
-    this.itemsSold = itemsSold;
-  }
-
-  public double getAvgRating() {
-    return this.avgRating;
-  }
-
-  public void setAvgRating(double avgRating) {
-    this.avgRating = avgRating;
-  }
-
-  public int getTotalRatings() {
-    return this.totalRatings;
-  }
-
-  public void setTotalRatings(int totalRatings) {
-    this.totalRatings = totalRatings;
-  }
-
-  public String getSessiontoken() {
-    return this.sessiontoken;
-  }
-
-  public void setSessiontoken(String sessiontoken) {
-    this.sessiontoken = sessiontoken;
-  }
-}
 </file>
 
 <file path="auction-client/src/main/java/com/auction/client/ClientSession.java">
@@ -16779,6 +16350,386 @@ public class SocketServer {
     } catch (Exception e) {
       logger.error("socket_server_error", e);
     }
+  }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/service/auction/AuctionBidPipeline.java">
+package com.auction.server.service.auction;
+
+import com.auction.server.dao.auction.BidDao;
+import com.auction.server.dao.auction.ItemDao;
+import com.auction.server.dao.user.UserDao;
+import com.auction.server.dao.wallet.TransactionLogDao;
+import com.auction.shared.AuctionType;
+import com.auction.shared.BidTransaction;
+import com.auction.shared.Item;
+import com.auction.shared.Response;
+import com.auction.shared.User;
+import java.sql.Connection;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.function.IntConsumer;
+
+/**
+ * Xử lý luồng đặt giá (Bidding Pipeline).
+ * Đã sửa lỗi tương thích với Optimistic Locking.
+ */
+final class AuctionBidPipeline {
+  private final ItemDao itemdao;
+  private final UserDao userdao;
+  private final BidDao biddao;
+  private final TransactionLogDao logdao;
+  private final AuctionRealtimeNotifier notifier;
+  private final BidAuctionValidator validator;
+  private IntConsumer cleanupautobidsforitem = id -> {};
+
+  AuctionBidPipeline(ItemDao itemdao, UserDao userdao, BidDao biddao, TransactionLogDao logdao,
+                     AuctionRealtimeNotifier notifier, BidAuctionValidator validator) {
+    this.itemdao = itemdao;
+    this.userdao = userdao;
+    this.biddao = biddao;
+    this.logdao = logdao;
+    this.notifier = notifier;
+    this.validator = validator;
+  }
+
+  void setCleanupAutoBidsForItem(IntConsumer cleanupautobidsforitem) {
+    if (cleanupautobidsforitem != null) {
+      this.cleanupautobidsforitem = cleanupautobidsforitem;
+    }
+  }
+
+  Response processManualBid(BidTransaction bid, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
+    Item item = itemdao.getById(bid.getItemId());
+    if (item == null) return BidAuctionValidator.error("Item not found");
+
+    // Đồng bộ giá cho đấu giá Hà Lan nếu cần
+    DutchAuctionCatalogSync.syncItem(itemdao, item);
+    item = itemdao.getById(bid.getItemId()); // Lấy lại bản ghi mới nhất kèm version mới
+
+    User bidder = userdao.getById(String.valueOf(bid.getUserId()));
+    Response valres = validator.validate(bid, item, bidder);
+    if (valres != null) return valres;
+
+    if (item.getAuctionType() == AuctionType.DUTCH) {
+      return new DutchBiddingStrategy().process(bid, item, bidder, after, pendingpricebroadcast);
+    }
+    return new EnglishBiddingStrategy().process(bid, item, bidder, after, pendingpricebroadcast);
+  }
+
+  private class DutchBiddingStrategy {
+    public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
+      double price = item.getCurrentPrice();
+      if (Math.abs(bid.getBidValue() - price) > 0.02) return BidAuctionValidator.error("invalid_dutch_price");
+
+      if (!userdao.atomicDeductBalance(bidder.getId(), price)) return BidAuctionValidator.error("insufficient_balance");
+
+      logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -price, bid.getItemId());
+      userdao.addBidderMetrics(bidder.getId(), price);
+
+      if (!itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
+        userdao.atomicCreditBalance(bidder.getId(), price);
+        logdao.insertLog(bidder.getId(), "BUY_REFUND", price, bid.getItemId());
+        return BidAuctionValidator.error("auction_already_closed");
+      }
+
+      itemdao.updatePrice(item.getId(), price, item.getVersion());
+      creditseller(item, price, after);
+
+      after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+      after.add(() -> notifier.broadcastItemClosed(item.getId()));
+      after.add(() -> cleanupautobidsforitem.accept(item.getId()));
+
+      return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
+    }
+  }
+
+  private class EnglishBiddingStrategy {
+    public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
+      if (item.getMaxPrice() > 0 && bid.getBidValue() >= item.getMaxPrice()) {
+        return processbuyitnow(bid, item, bidder, after);
+      }
+      if (bid.getBidValue() <= item.getCurrentPrice()) return BidAuctionValidator.error("bid_too_low");
+
+      try (Connection conn = com.auction.server.dao.platform.DatabaseConnection.getInstance().getConnection()) {
+        conn.setAutoCommit(false);
+        try {
+          if (!userdao.deductBalanceTx(bidder.getId(), bid.getBidValue(), conn)) {
+            conn.rollback();
+            return BidAuctionValidator.error("insufficient_balance");
+          }
+
+          logdao.insertLogTx(bidder.getId(), "BID_HOLD", -bid.getBidValue(), bid.getItemId(), conn);
+          int previd = biddao.getCurrentHighestBidderTx(bid.getItemId(), conn);
+          double prevprice = item.getCurrentPrice();
+
+          if (!biddao.placeBidTx(bid, conn)) {
+            conn.rollback();
+            return BidAuctionValidator.error("bid_failed");
+          }
+
+          // FIX: Thêm item.getVersion() vào đây
+          if (!itemdao.updatePriceTx(item.getId(), bid.getBidValue(), item.getVersion(), conn)) {
+            conn.rollback();
+            return BidAuctionValidator.error("conflict_detected_try_again");
+          }
+
+          if (previd > 0 && prevprice > 0) {
+            userdao.creditBalanceTx(previd, prevprice, conn);
+            logdao.insertLogTx(previd, "BID_REFUND", prevprice, bid.getItemId(), conn);
+            after.add(() -> notifier.sendBalanceUpdateToUser(previd));
+            after.add(() -> notifier.notifyOutbidUser(previd, item.getId()));
+          }
+
+          conn.commit();
+          applyantisnipeextension(item.getId());
+          after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+          pendingpricebroadcast.add(item.getId());
+          return new Response("", Response.OK, "success", bid);
+        } catch (Exception e) {
+          conn.rollback();
+          return BidAuctionValidator.error("db_transaction_error");
+        }
+      } catch (Exception e) {
+        return BidAuctionValidator.error("db_connection_error");
+      }
+    }
+
+    private Response processbuyitnow(BidTransaction bid, Item item, User bidder, List<Runnable> after) {
+      double targetprice = item.getMaxPrice();
+      if (!userdao.atomicDeductBalance(bidder.getId(), targetprice)) return BidAuctionValidator.error("insufficient_balance");
+
+      logdao.insertLog(bidder.getId(), "ITEM_BOUGHT", -targetprice, bid.getItemId());
+      userdao.addBidderMetrics(bidder.getId(), targetprice);
+
+      if (!itemdao.atomicCloseAuction(item.getId(), bid.getUserId(), "CLOSED")) {
+        userdao.atomicCreditBalance(bidder.getId(), targetprice);
+        return BidAuctionValidator.error("auction_already_closed");
+      }
+
+      itemdao.updatePrice(item.getId(), targetprice, item.getVersion());
+      creditseller(item, targetprice, after);
+      after.add(() -> notifier.sendBalanceUpdateToUser(bidder.getId()));
+      after.add(() -> notifier.broadcastItemClosed(item.getId()));
+      after.add(() -> cleanupautobidsforitem.accept(item.getId()));
+      return new Response("", Response.OK, "BUY_IT_NOW_SUCCESS", bid.getItemId());
+    }
+  }
+
+  private void creditseller(Item item, double amount, List<Runnable> after) {
+    userdao.atomicCreditBalance(item.getSellerId(), amount);
+    userdao.addSellerMetrics(item.getSellerId(), amount);
+    logdao.insertLog(item.getSellerId(), "ITEM_SOLD", amount, item.getId());
+    after.add(() -> notifier.sendBalanceUpdateToUser(item.getSellerId()));
+  }
+
+  private void applyantisnipeextension(int itemid) {
+    Item item = itemdao.getById(itemid);
+    if (item != null && item.getEndTime() != null) {
+      long diff = Duration.between(LocalDateTime.now(), item.getEndTime()).getSeconds();
+      if (diff < 60) {
+        LocalDateTime newend = item.getEndTime().plusSeconds(60);
+        itemdao.updateEndTime(item.getId(), newend);
+        SettlementService.getInstance().schedule(item.getId(), newend);
+      }
+    }
+  }
+}
+</file>
+
+<file path="auction-shared/src/main/java/com/auction/shared/User.java">
+package com.auction.shared;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.time.LocalDateTime;
+
+// Tính năng 1: Giúp Jackson biết chính xác lớp con nào để khởi tạo khi nhận JSON
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Electronics.class, name = "electronics"),
+        @JsonSubTypes.Type(value = Art.class, name = "art"),
+        @JsonSubTypes.Type(value = Vehicle.class, name = "vehicle")
+})
+public abstract class User extends Entity {
+  protected String username;
+  protected String fullName;
+  protected String password;
+  protected String email;
+  protected String age;
+  protected String phoneNumber;
+  protected double balance;
+  protected boolean active;
+  protected boolean locked;
+  protected String avatarUrl;
+  protected double moneySpent;
+  protected int itemsBought;
+  protected double moneyReceived;
+  protected int itemsSold;
+  protected double avgRating;
+  protected int totalRatings;
+  protected String sessiontoken;
+
+  public User() {}
+
+  public User(String username, String password, String email, String age, String phoneNumber) {
+    this.username = username;
+    this.fullName = username;
+    this.password = password;
+    this.email = email;
+    this.age = age;
+    this.phoneNumber = phoneNumber;
+    this.balance = 0.0;
+    this.moneySpent = 0.0;
+    this.itemsBought = 0;
+    this.moneyReceived = 0.0;
+    this.itemsSold = 0;
+    this.active = true;
+    this.locked = false;
+  }
+
+  public abstract UserRole getRole();
+
+  public String getUsername() {
+    return this.username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public String getFullName() {
+    return this.fullName;
+  }
+
+  public void setFullName(String fullName) {
+    this.fullName = fullName;
+  }
+
+  public String getPassword() {
+    return this.password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public String getEmail() {
+    return this.email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getAge() {
+    return this.age;
+  }
+
+  public void setAge(String age) {
+    this.age = age;
+  }
+
+  public String getPhoneNumber() {
+    return this.phoneNumber;
+  }
+
+  public void setPhoneNumber(String phoneNumber) {
+    this.phoneNumber = phoneNumber;
+  }
+
+  public double getBalance() {
+    return this.balance;
+  }
+
+  public void setBalance(double balance) {
+    this.balance = balance;
+  }
+
+  public boolean isActive() {
+    return this.active;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
+  }
+
+  public boolean isLocked() {
+    return this.locked;
+  }
+
+  public void setLocked(boolean locked) {
+    this.locked = locked;
+  }
+
+  public String getAvatarUrl() {
+    return this.avatarUrl;
+  }
+
+  public void setAvatarUrl(String avatarUrl) {
+    this.avatarUrl = avatarUrl;
+  }
+
+  public double getMoneySpent() {
+    return this.moneySpent;
+  }
+
+  public void setMoneySpent(double moneySpent) {
+    this.moneySpent = moneySpent;
+  }
+
+  public int getItemsBought() {
+    return this.itemsBought;
+  }
+
+  public void setItemsBought(int itemsBought) {
+    this.itemsBought = itemsBought;
+  }
+
+  public double getMoneyReceived() {
+    return this.moneyReceived;
+  }
+
+  public void setMoneyReceived(double moneyReceived) {
+    this.moneyReceived = moneyReceived;
+  }
+
+  public int getItemsSold() {
+    return this.itemsSold;
+  }
+
+  public void setItemsSold(int itemsSold) {
+    this.itemsSold = itemsSold;
+  }
+
+  public double getAvgRating() {
+    return this.avgRating;
+  }
+
+  public void setAvgRating(double avgRating) {
+    this.avgRating = avgRating;
+  }
+
+  public int getTotalRatings() {
+    return this.totalRatings;
+  }
+
+  public void setTotalRatings(int totalRatings) {
+    this.totalRatings = totalRatings;
+  }
+
+  public String getSessiontoken() {
+    return this.sessiontoken;
+  }
+
+  public void setSessiontoken(String sessiontoken) {
+    this.sessiontoken = sessiontoken;
   }
 }
 </file>
@@ -18461,6 +18412,9 @@ public class Request implements Serializable {
   protected Object payload;
   protected LocalDateTime timestamp;
 
+  // BẮT BUỘC PHẢI CÓ CHO JACKSON
+  public Request() {}
+
   public Request(String action, Object payload) {
     this.requestId = UUID.randomUUID().toString();
     this.action = action;
@@ -18468,21 +18422,17 @@ public class Request implements Serializable {
     this.timestamp = LocalDateTime.now();
   }
 
-  public String getRequestId() {
-    return this.requestId;
-  }
+  public String getRequestId() { return this.requestId; }
+  public void setRequestId(String requestId) { this.requestId = requestId; } // Thêm Setter
 
-  public String getAction() {
-    return this.action;
-  }
+  public String getAction() { return this.action; }
+  public void setAction(String action) { this.action = action; } // Thêm Setter
 
-  public Object getPayload() {
-    return this.payload;
-  }
+  public Object getPayload() { return this.payload; }
+  public void setPayload(Object payload) { this.payload = payload; } // Thêm Setter
 
-  public LocalDateTime getTimestamp() {
-    return this.timestamp;
-  }
+  public LocalDateTime getTimestamp() { return this.timestamp; }
+  public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; } // Thêm Setter
 }
 </file>
 

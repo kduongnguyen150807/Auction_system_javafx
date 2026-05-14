@@ -2,7 +2,11 @@ package com.auction.client.network;
 
 import com.auction.shared.Request;
 import com.auction.shared.Response;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -20,9 +24,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Singleton NetworkClient sử dụng giao thức JSON over TCP.
- */
 public class NetworkClient {
 
   private static final Logger logger = LoggerFactory.getLogger(NetworkClient.class);
@@ -40,6 +41,13 @@ public class NetworkClient {
   private NetworkClient() {
     this.jsonMapper = new ObjectMapper();
     this.jsonMapper.registerModule(new JavaTimeModule());
+    // BỎ QUA CÁC TRƯỜNG KHÔNG TỒN TẠI TRONG CLASS (NHƯ "role")
+    this.jsonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType(Object.class)
+            .build();
+    this.jsonMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
 
     NetworkConnectionUi ui = new NetworkConnectionUi();
     Optional<String> ipOpt = ui.promptForServerIp();
@@ -96,9 +104,6 @@ public class NetworkClient {
     pendingMap.clear();
   }
 
-  /**
-   * Gửi Request JSON với cơ chế Length-prefix.
-   */
   public Response sendRequestAndWait(Request request) {
     String requestId = request.getRequestId();
     CompletableFuture<Response> future = new CompletableFuture<>();
@@ -127,7 +132,6 @@ public class NetworkClient {
   }
 
   public static String uploadFile(String url, byte[] fileBytes) throws Exception {
-    // Giữ nguyên logic upload HTTP cũ nhưng dùng StandardCharsets
     String boundary = "boundary123";
     byte[] head = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"item.png\"\r\n\r\n")
             .getBytes(StandardCharsets.UTF_8);
@@ -157,7 +161,6 @@ public class NetworkClient {
         try {
           Thread.sleep(5000);
           if (out != null) {
-            // Gửi Ping thô để giữ kết nối
             sendRequestAsync(new Request(Request.PING, null));
           } else {
             attemptReconnect();
@@ -184,6 +187,5 @@ public class NetworkClient {
 
   private synchronized void attemptReconnect() {
     initializeConnection();
-    // Logic khôi phục session nếu cần...
   }
 }

@@ -1,7 +1,11 @@
 package com.auction.client.network;
 
 import com.auction.shared.Response;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,14 +17,10 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Quản lý kết nối TCP thô và vòng lặp đọc dữ liệu JSON.
- * Tuân thủ Google Coding Convention.
- */
 final class ObjectSocketConnection {
 
   private static final Logger logger = LoggerFactory.getLogger(ObjectSocketConnection.class);
-  private static final int MAX_PACKET_SIZE = 10 * 1024 * 1024; // Giới hạn 10MB tránh OOM
+  private static final int MAX_PACKET_SIZE = 10 * 1024 * 1024;
 
   private final Socket socket;
   private final DataOutputStream out;
@@ -31,14 +31,22 @@ final class ObjectSocketConnection {
     this.socket = socket;
     this.out = new DataOutputStream(socket.getOutputStream());
     this.in = new DataInputStream(socket.getInputStream());
+
     this.jsonMapper = new ObjectMapper();
     this.jsonMapper.registerModule(new JavaTimeModule());
+    // BỎ QUA CÁC TRƯỜNG KHÔNG TỒN TẠI TRONG CLASS (NHƯ "role")
+    this.jsonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType(Object.class)
+            .build();
+    this.jsonMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
   }
 
   static ObjectSocketConnection connect(String host, int port) throws IOException {
     Socket socket = new Socket(host, port);
     socket.setKeepAlive(true);
-    socket.setTcpNoDelay(true); // Giảm độ trễ cho các gói tin nhỏ
+    socket.setTcpNoDelay(true);
     return new ObjectSocketConnection(socket);
   }
 
@@ -50,25 +58,18 @@ final class ObjectSocketConnection {
     return socket;
   }
 
-  /**
-   * Vòng lặp đọc dữ liệu chạy ngầm.
-   * Giao thức: [4 bytes độ dài][Chuỗi JSON UTF-8]
-   */
   void startReadLoop(Consumer<Response> onResponse, Consumer<Throwable> onDisconnect) {
     Thread listenerThread = new Thread(() -> {
       try {
         while (!socket.isClosed()) {
-          // 1. Đọc độ dài gói tin
           int length = in.readInt();
           if (length <= 0 || length > MAX_PACKET_SIZE) {
             throw new IOException("Kích thước gói tin không hợp lệ: " + length);
           }
 
-          // 2. Đọc nội dung JSON dựa trên độ dài
           byte[] payload = new byte[length];
           in.readFully(payload);
 
-          // 3. Giải mã JSON thành Response Object
           String jsonStr = new String(payload, StandardCharsets.UTF_8);
           Response response = jsonMapper.readValue(jsonStr, Response.class);
 

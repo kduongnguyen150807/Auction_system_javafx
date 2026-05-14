@@ -59,6 +59,9 @@ public class Request implements Serializable {
   protected Object payload;
   protected LocalDateTime timestamp;
 
+  // BẮT BUỘC PHẢI CÓ CHO JACKSON
+  public Request() {}
+
   public Request(String action, Object payload) {
     this.requestId = UUID.randomUUID().toString();
     this.action = action;
@@ -66,19 +69,15 @@ public class Request implements Serializable {
     this.timestamp = LocalDateTime.now();
   }
 
-  public String getRequestId() {
-    return this.requestId;
-  }
+  public String getRequestId() { return this.requestId; }
+  public void setRequestId(String requestId) { this.requestId = requestId; } // Thêm Setter
 
-  public String getAction() {
-    return this.action;
-  }
+  public String getAction() { return this.action; }
+  public void setAction(String action) { this.action = action; } // Thêm Setter
 
-  public Object getPayload() {
-    return this.payload;
-  }
+  public Object getPayload() { return this.payload; }
+  public void setPayload(Object payload) { this.payload = payload; } // Thêm Setter
 
-  public LocalDateTime getTimestamp() {
-    return this.timestamp;
-  }
+  public LocalDateTime getTimestamp() { return this.timestamp; }
+  public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; } // Thêm Setter
 }

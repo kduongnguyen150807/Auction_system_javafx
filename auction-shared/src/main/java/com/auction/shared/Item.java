@@ -1,19 +1,7 @@
 package com.auction.shared;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.LocalDateTime;
 
-// Tính năng 1: Giúp Jackson biết chính xác lớp con nào để khởi tạo khi nhận JSON
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = Electronics.class, name = "electronics"),
-        @JsonSubTypes.Type(value = Art.class, name = "art"),
-        @JsonSubTypes.Type(value = Vehicle.class, name = "vehicle")
-})
 public abstract class Item extends Entity {
   private static final long serialVersionUID = 1L;
   protected String name;
@@ -50,155 +38,60 @@ public abstract class Item extends Entity {
 
   public abstract double calculateTax();
 
-  public String getCategory() {
-    return this.category;
-  }
+  public String getCategory() { return this.category; }
+  public void setCategory(String category) { this.category = category; }
 
-  public void setCategory(String category) {
-    this.category = category;
-  }
+  public AuctionType getAuctionType() { return auctionType != null ? auctionType : AuctionType.ENGLISH; }
+  public void setAuctionType(AuctionType auctionType) { this.auctionType = auctionType != null ? auctionType : AuctionType.ENGLISH; }
 
-  public AuctionType getAuctionType() {
-    return auctionType != null ? auctionType : AuctionType.ENGLISH;
-  }
+  public double getDutchReservePrice() { return dutchReservePrice; }
+  public void setDutchReservePrice(double dutchReservePrice) { this.dutchReservePrice = dutchReservePrice; }
 
-  public void setAuctionType(AuctionType auctionType) {
-    this.auctionType = auctionType != null ? auctionType : AuctionType.ENGLISH;
-  }
+  public double getDutchTickAmount() { return dutchTickAmount; }
+  public void setDutchTickAmount(double dutchTickAmount) { this.dutchTickAmount = dutchTickAmount; }
 
-  public double getDutchReservePrice() {
-    return dutchReservePrice;
-  }
+  public int getDutchTickIntervalMinutes() { return dutchTickIntervalMinutes; }
+  public void setDutchTickIntervalMinutes(int dutchTickIntervalMinutes) { this.dutchTickIntervalMinutes = dutchTickIntervalMinutes; }
 
-  public void setDutchReservePrice(double dutchReservePrice) {
-    this.dutchReservePrice = dutchReservePrice;
-  }
+  public String getName() { return this.name; }
+  public void setName(String name) { this.name = name; }
 
-  public double getDutchTickAmount() {
-    return dutchTickAmount;
-  }
+  public String getDescription() { return this.description; }
+  public void setDescription(String description) { this.description = description; }
 
-  public void setDutchTickAmount(double dutchTickAmount) {
-    this.dutchTickAmount = dutchTickAmount;
-  }
+  public double getStartingPrice() { return this.startingPrice; }
+  public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
 
-  public int getDutchTickIntervalMinutes() {
-    return dutchTickIntervalMinutes;
-  }
+  public double getCurrentPrice() { return this.currentPrice; }
+  public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
 
-  public void setDutchTickIntervalMinutes(int dutchTickIntervalMinutes) {
-    this.dutchTickIntervalMinutes = dutchTickIntervalMinutes;
-  }
+  public LocalDateTime getStartTime() { return this.startTime; }
+  public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
-  public String getName() {
-    return this.name;
-  }
+  public LocalDateTime getEndTime() { return this.endTime; }
+  public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+  public double getMaxPrice() { return this.maxPrice; }
+  public void setMaxPrice(double maxPrice) { this.maxPrice = maxPrice; }
 
-  public String getDescription() {
-    return this.description;
-  }
+  public int getSellerId() { return this.sellerId; }
+  public void setSellerId(int sellerId) { this.sellerId = sellerId; }
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+  public int getWinnerId() { return this.winnerId; }
+  public void setWinnerId(int winnerId) { this.winnerId = winnerId; }
 
-  public double getStartingPrice() {
-    return this.startingPrice;
-  }
+  public ItemStatus getStatus() { return this.status; }
+  public void setStatus(ItemStatus status) { this.status = status; }
 
-  public void setStartingPrice(double startingPrice) {
-    this.startingPrice = startingPrice;
-  }
+  public String getImageUrl() { return this.imageUrl; }
+  public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-  public double getCurrentPrice() {
-    return this.currentPrice;
-  }
+  public String getSellerUsername() { return this.sellerUsername; }
+  public void setSellerUsername(String sellerUsername) { this.sellerUsername = sellerUsername; }
 
-  public void setCurrentPrice(double currentPrice) {
-    this.currentPrice = currentPrice;
-  }
+  public String getSellerAvatarUrl() { return this.sellerAvatarUrl; }
+  public void setSellerAvatarUrl(String sellerAvatarUrl) { this.sellerAvatarUrl = sellerAvatarUrl; }
 
-  public LocalDateTime getStartTime() {
-    return this.startTime;
-  }
-
-  public void setStartTime(LocalDateTime startTime) {
-    this.startTime = startTime;
-  }
-
-  public LocalDateTime getEndTime() {
-    return this.endTime;
-  }
-
-  public void setEndTime(LocalDateTime endTime) {
-    this.endTime = endTime;
-  }
-
-  public double getMaxPrice() {
-    return this.maxPrice;
-  }
-
-  public void setMaxPrice(double maxPrice) {
-    this.maxPrice = maxPrice;
-  }
-
-  public int getSellerId() {
-    return this.sellerId;
-  }
-
-  public void setSellerId(int sellerId) {
-    this.sellerId = sellerId;
-  }
-
-  public int getWinnerId() {
-    return this.winnerId;
-  }
-
-  public void setWinnerId(int winnerId) {
-    this.winnerId = winnerId;
-  }
-
-  public ItemStatus getStatus() {
-    return this.status;
-  }
-
-  public void setStatus(ItemStatus status) {
-    this.status = status;
-  }
-
-  public String getImageUrl() {
-    return this.imageUrl;
-  }
-
-  public void setImageUrl(String imageUrl) {
-    this.imageUrl = imageUrl;
-  }
-
-  public String getSellerUsername() {
-    return this.sellerUsername;
-  }
-
-  public void setSellerUsername(String sellerUsername) {
-    this.sellerUsername = sellerUsername;
-  }
-
-  public String getSellerAvatarUrl() {
-    return this.sellerAvatarUrl;
-  }
-
-  public void setSellerAvatarUrl(String sellerAvatarUrl) {
-    this.sellerAvatarUrl = sellerAvatarUrl;
-  }
-
-  public String getWinnerUsername() {
-    return this.winnerUsername;
-  }
-
-  public void setWinnerUsername(String winnerUsername) {
-    this.winnerUsername = winnerUsername;
-  }
+  public String getWinnerUsername() { return this.winnerUsername; }
+  public void setWinnerUsername(String winnerUsername) { this.winnerUsername = winnerUsername; }
 }
