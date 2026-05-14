@@ -32,6 +32,9 @@ public class Request implements Serializable {
   public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
   public static final String GET_ONGOING_LOTS = "GET_ONGOING_LOTS";
   public static final String GET_MY_ITEMS = "get_my_items";
+  public static final String GET_WATCHLIST = "GET_WATCHLIST";
+  public static final String TOGGLE_WATCHLIST = "TOGGLE_WATCHLIST";
+  public static final String GET_WATCHLIST_ITEMS = "GET_WATCHLIST_ITEMS";
   public static final String GET_CLOSED_BIDS = "getclosedbids";
   public static final String GET_PAST_BIDS = "getpastbids";
   public static final String DEPOSIT = "deposit";

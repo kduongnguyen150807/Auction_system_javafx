@@ -375,4 +375,13 @@ public class TrangChuController {
       }
     }
   }
+  public void updateWatchlistUi(int itemId, boolean isWatched) {
+    ItemCardController t = trendingCardMap.get(itemId);
+    if (t != null) t.setHeartUI(isWatched);
+
+    for (Map<Integer, ItemCardController> m : categoryCardMaps) {
+      ItemCardController c = m.get(itemId);
+      if (c != null) c.setHeartUI(isWatched);
+    }
+  }
 }

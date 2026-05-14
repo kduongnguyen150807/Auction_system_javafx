@@ -33,6 +33,8 @@ public class HistoryController {
   @FXML private FlowPane upcomingcontainer;
   @FXML private FlowPane closedcontainer;
   @FXML private FlowPane pastcontainer;
+  @FXML private FlowPane watchlistcontainer;
+  private final PaneCards watchlistmodel = new PaneCards();
   private final PaneCards trendingSectionCards = new PaneCards();
   private final PaneCards upcomingmodel = new PaneCards();
   private final PaneCards closedmodel = new PaneCards();
@@ -56,17 +58,22 @@ public class HistoryController {
     int userid = ClientSession.getCurrentUser().getId();
     long currentgen = fetchgen.incrementAndGet();
     Thread thread = new Thread(() -> {
+      List<Item> watchlist = fetchitems(Request.GET_WATCHLIST_ITEMS, userid); // Lấy Watchlist
       List<Item> trending = fetchTrendingLotsForCatalogType();
       List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
       List<Item> closed = fetchitems("getclosedbids", userid);
       List<Item> past = fetchitems("getpastbids", userid);
+
       Platform.runLater(() -> {
-        if (currentgen != fetchgen.get()) {
-          return;
+        if (currentgen != fetchgen.get()) return;
+
+        // Render Watchlist
+        if (watchlistcontainer != null && watchlist != null) {
+          incrementalrender(watchlistcontainer, watchlist, watchlistmodel, this::timecaptionscheduled);
         }
+
         if (ongoingcontainer != null && trending != null) {
-          incrementalrender(
-              ongoingcontainer, trending, trendingSectionCards, this::timecaptionongoing);
+          incrementalrender(ongoingcontainer, trending, trendingSectionCards, this::timecaptionongoing);
         }
         if (upcomingcontainer != null && upcoming != null) {
           incrementalrender(upcomingcontainer, upcoming, upcomingmodel, this::timecaptionscheduled);
@@ -234,5 +241,19 @@ public class HistoryController {
     }
     String ans = (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
     return ans;
+  }
+  public void updateWatchlistUi(int itemId, boolean isWatched) {
+    updateCardHeart(trendingSectionCards, itemId, isWatched);
+    updateCardHeart(upcomingmodel, itemId, isWatched);
+    updateCardHeart(closedmodel, itemId, isWatched);
+    updateCardHeart(pastmodel, itemId, isWatched);
+    // Riêng thẻ trong mục Watchlist, nếu bỏ tim thì ta vẫn giữ nguyên trên màn hình (chỉ đổi icon thành trắng)
+    // để tránh việc UI bị giật/biến mất đột ngột. Lần sau user ấn Refresh nó mới biến mất.
+    updateCardHeart(watchlistmodel, itemId, isWatched);
+  }
+
+  private void updateCardHeart(PaneCards model, int itemId, boolean isWatched) {
+    ItemCardController card = model.cards.get(itemId);
+    if (card != null) card.setHeartUI(isWatched);
   }
 }

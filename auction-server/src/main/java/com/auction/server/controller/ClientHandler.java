@@ -92,6 +92,8 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_UPCOMING_BIDS, lotQuery);
     reg.register(Request.GET_CLOSED_BIDS, lotQuery);
     reg.register(Request.GET_PAST_BIDS, lotQuery);
+    reg.register(Request.GET_WATCHLIST_ITEMS, lotQuery);
+
     ForgotPasswordHandler forgotPwHandler = new ForgotPasswordHandler();
     reg.register(Request.FORGOT_PASSWORD_REQ, forgotPwHandler);
     reg.register(Request.FORGOT_PASSWORD_RESET, forgotPwHandler);
@@ -112,6 +114,10 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_GLOBAL_CHAT_HISTORY, chatHandler);
     reg.register(Request.GET_PRIVATE_CHAT_HISTORY, chatHandler);
     reg.register(Request.GET_CHAT_CONTACTS, chatHandler);
+
+    WatchlistHandler watchlistHandler = new WatchlistHandler();
+    reg.register(Request.GET_WATCHLIST, ActionHandler.requireAuth(watchlistHandler));
+    reg.register(Request.TOGGLE_WATCHLIST, ActionHandler.requireAuth(watchlistHandler));
 
     UserManagementHandler userMgmt = new UserManagementHandler();
     reg.register(Request.GET_ALL_USERS, userMgmt);

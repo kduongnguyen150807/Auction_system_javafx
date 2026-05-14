@@ -21,6 +21,17 @@ final class UserSchemaMigration {
 
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_username", "username");
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_email", "email");
+    try (Statement st = conn.createStatement()) {
+      st.executeUpdate(
+              "CREATE TABLE IF NOT EXISTS watchlists ("
+                      + "user_id INT NOT NULL, "
+                      + "item_id INT NOT NULL, "
+                      + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP, "
+                      + "PRIMARY KEY (user_id, item_id), "
+                      + "INDEX idx_watchlist_item (item_id))"); // Index để sau này truy vấn "Ai đang theo dõi item này" cực nhanh
+    } catch (Exception e) {
+      LOGGER.warn("Failed to ensure watchlists table", e);
+    }
   }
 
   private static void ensureUsersTable(Connection conn) {

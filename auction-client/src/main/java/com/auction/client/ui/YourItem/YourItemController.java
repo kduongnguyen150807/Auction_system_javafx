@@ -275,4 +275,8 @@ public class YourItemController {
     if (item.getCurrentPrice() < minPrice || item.getCurrentPrice() > maxPrice) return false;
     return true;
   }
+  public void updateWatchlistUi(int itemId, boolean isWatched) {
+    ItemCardController c = cardMap.get(itemId);
+    if (c != null) c.setHeartUI(isWatched);
+  }
 }

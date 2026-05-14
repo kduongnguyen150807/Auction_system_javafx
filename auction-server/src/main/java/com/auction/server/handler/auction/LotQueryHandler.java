@@ -36,6 +36,9 @@ public class LotQueryHandler implements ActionHandler {
       case Request.GET_PAST_BIDS:
         results = syncedPast(context, parseUserId(payload));
         break;
+      case Request.GET_WATCHLIST_ITEMS:
+        results = syncedWatchlist(context, parseUserId(payload));
+        break;
       default:
         return new Response(requestId, Response.ERROR, "unknown_action", null);
     }
@@ -98,6 +101,12 @@ public class LotQueryHandler implements ActionHandler {
   @SuppressWarnings("unchecked")
   private List<Item> syncedPast(HandlerContext ctx, int userId) {
     List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getPastBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedWatchlist(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getWatchlistItems(userId);
     DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
     return rows;
   }

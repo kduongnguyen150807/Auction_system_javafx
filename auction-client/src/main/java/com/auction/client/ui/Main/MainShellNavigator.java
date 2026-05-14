@@ -9,6 +9,7 @@ final class MainShellNavigator {
 
   private final StackPane contentArea;
   private final HBox auctionMenu;
+  private final HBox watchlistMenu; // ĐÃ THÊM NÚT WATCHLIST
   private final HBox historyMenu;
   private final HBox myItemMenu;
   private final HBox profileMenu;
@@ -18,16 +19,18 @@ final class MainShellNavigator {
   private Node currentContentNode;
 
   MainShellNavigator(
-      StackPane contentArea,
-      HBox auctionMenu,
-      HBox historyMenu,
-      HBox myItemMenu,
-      HBox profileMenu,
-      HBox chatMenu,
-      HBox manageUsersMenu,
-      Node initialContent) {
+          StackPane contentArea,
+          HBox auctionMenu,
+          HBox watchlistMenu, // ĐÃ THÊM NÚT WATCHLIST
+          HBox historyMenu,
+          HBox myItemMenu,
+          HBox profileMenu,
+          HBox chatMenu,
+          HBox manageUsersMenu,
+          Node initialContent) {
     this.contentArea = contentArea;
     this.auctionMenu = auctionMenu;
+    this.watchlistMenu = watchlistMenu; // ĐÃ THÊM NÚT WATCHLIST
     this.historyMenu = historyMenu;
     this.myItemMenu = myItemMenu;
     this.profileMenu = profileMenu;
@@ -74,6 +77,7 @@ final class MainShellNavigator {
   }
 
   private HBox[] menuBoxes() {
-    return new HBox[] {auctionMenu, historyMenu, myItemMenu, profileMenu, chatMenu, manageUsersMenu};
+    // ĐÃ THÊM watchlistMenu VÀO MẢNG ĐỂ NÓ ĐỔI MÀU KHI CLICK
+    return new HBox[] {auctionMenu, watchlistMenu, historyMenu, myItemMenu, profileMenu, chatMenu, manageUsersMenu};
   }
 }

@@ -67,36 +67,36 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
   @Override
   public List<Item> getOngoingBids(int userId) {
     return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()");
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()");
   }
 
   @Override
   public List<Item> getUpcomingBids(int userId) {
     return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "WHERE i.status = 'OPEN' AND i.starttime > NOW()");
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE i.status = 'OPEN' AND i.starttime > NOW()");
   }
 
   @Override
   public List<Item> getClosedBids(int userId) {
     return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "LEFT JOIN users w ON i.winnerid = w.id "
-            + "WHERE i.status = 'CLOSED'");
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "LEFT JOIN users w ON i.winnerid = w.id "
+                    + "WHERE i.status = 'CLOSED'");
   }
 
   @Override
   public List<Item> getPastBids(int userId) {
     return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "LEFT JOIN users w ON i.winnerid = w.id "
-            + "WHERE i.status IN ('FINISHED', 'CANCELED') "
-            + "   OR (i.status = 'OPEN' AND i.endtime <= NOW())");
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "LEFT JOIN users w ON i.winnerid = w.id "
+                    + "WHERE i.status IN ('FINISHED', 'CANCELED') "
+                    + "   OR (i.status = 'OPEN' AND i.endtime <= NOW())");
   }
 
   @Override
@@ -106,17 +106,17 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
     String typeName = kind.dbName();
     List<TrendingAggRow> agg = fetchTrendingAggregates(typeName);
     agg.sort(
-        (r1, r2) ->
-            Double.compare(
-                TrendingLotsFormula.computeTrendScore(r2.wLong, r2.wShort, r2.distinctBidders),
-                TrendingLotsFormula.computeTrendScore(r1.wLong, r1.wShort, r1.distinctBidders)));
+            (r1, r2) ->
+                    Double.compare(
+                            TrendingLotsFormula.computeTrendScore(r2.wLong, r2.wShort, r2.distinctBidders),
+                            TrendingLotsFormula.computeTrendScore(r1.wLong, r1.wShort, r1.distinctBidders)));
     List<Integer> orderedIds = new ArrayList<>();
     for (TrendingAggRow row : agg) {
       if (orderedIds.size() >= lim) {
         break;
       }
       double s =
-          TrendingLotsFormula.computeTrendScore(row.wLong, row.wShort, row.distinctBidders);
+              TrendingLotsFormula.computeTrendScore(row.wLong, row.wShort, row.distinctBidders);
       if (s > TrendingLotsFormula.EPS) {
         orderedIds.add(row.itemId);
       }
@@ -130,17 +130,17 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
   /** Pre-sort key only — sort uses full formula fields on row. */
   private List<TrendingAggRow> fetchTrendingAggregates(String auctionTypeName) {
     String sql =
-        "SELECT b.itemid AS item_id, "
-            + "SUM(EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?))) AS w_long, "
-            + "SUM(CASE WHEN b.timestamp >= NOW() - INTERVAL ? MINUTE "
-            + "THEN EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?)) ELSE 0 END) AS w_short, "
-            + "COUNT(DISTINCT b.userid) AS u_cnt "
-            + "FROM bid_transactions b "
-            + "INNER JOIN items i ON i.id = b.itemid "
-            + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
-            + "AND i.auction_type = ? "
-            + "AND b.timestamp >= NOW() - INTERVAL ? HOUR "
-            + "GROUP BY b.itemid";
+            "SELECT b.itemid AS item_id, "
+                    + "SUM(EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?))) AS w_long, "
+                    + "SUM(CASE WHEN b.timestamp >= NOW() - INTERVAL ? MINUTE "
+                    + "THEN EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?)) ELSE 0 END) AS w_short, "
+                    + "COUNT(DISTINCT b.userid) AS u_cnt "
+                    + "FROM bid_transactions b "
+                    + "INNER JOIN items i ON i.id = b.itemid "
+                    + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
+                    + "AND i.auction_type = ? "
+                    + "AND b.timestamp >= NOW() - INTERVAL ? HOUR "
+                    + "GROUP BY b.itemid";
     List<TrendingAggRow> out = new ArrayList<>();
     try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setDouble(1, TrendingLotsFormula.TAU_DECAY_HOURS);
@@ -151,11 +151,11 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           out.add(
-              new TrendingAggRow(
-                  rs.getInt("item_id"),
-                  rs.getDouble("w_long"),
-                  rs.getDouble("w_short"),
-                  rs.getInt("u_cnt")));
+                  new TrendingAggRow(
+                          rs.getInt("item_id"),
+                          rs.getDouble("w_long"),
+                          rs.getDouble("w_short"),
+                          rs.getInt("u_cnt")));
         }
       }
     } catch (SQLException e) {
@@ -165,15 +165,15 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
   }
 
   private List<Integer> fetchBackfillLiveItemIds(
-      String auctionTypeName, List<Integer> excluded, int need) {
+          String auctionTypeName, List<Integer> excluded, int need) {
     List<Integer> out = new ArrayList<>();
     if (need <= 0) {
       return out;
     }
     StringBuilder sql =
-        new StringBuilder(
-            "SELECT i.id FROM items i WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
-                + "AND i.auction_type = ? ");
+            new StringBuilder(
+                    "SELECT i.id FROM items i WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
+                            + "AND i.auction_type = ? ");
     List<Object> params = new ArrayList<>();
     params.add(auctionTypeName);
     if (excluded != null && !excluded.isEmpty()) {
@@ -228,10 +228,10 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
       in.append("?");
     }
     String sql =
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar FROM items i "
-            + "LEFT JOIN users u ON i.sellerid = u.id WHERE i.id IN ("
-            + in
-            + ") AND i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar FROM items i "
+                    + "LEFT JOIN users u ON i.sellerid = u.id WHERE i.id IN ("
+                    + in
+                    + ") AND i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
     Object[] argv = ids.stream().map(i -> (Object) i).toArray();
     List<Item> rows = queryList(sql, argv);
     Map<Integer, Item> byId = new HashMap<>();
@@ -250,4 +250,15 @@ public class LotDao extends BaseDao<Item> implements LotRepository {
   }
 
   private record TrendingAggRow(int itemId, double wLong, double wShort, int distinctBidders) {}
+
+  // ĐÃ FIX LỖI Ở ĐÂY: Dùng queryList và truyền userId vào
+  public List<Item> getWatchlistItems(int userId) {
+    return queryList(
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i "
+                    + "JOIN watchlists w ON i.id = w.item_id "
+                    + "LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE w.user_id = ? ORDER BY w.created_at DESC",
+            userId);
+  }
 }

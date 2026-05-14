@@ -44,7 +44,8 @@ public class KhungController {
   private MainShellNavigator navigator;
   private MainShellNetworkBridge networkBridge;
 
-  private Node auctionHomeNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
+  // ĐÃ THÊM watchlistNode
+  private Node auctionHomeNode, watchlistNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
   private TrangChuController homeController;
   private YourItemController myItemsController;
   private HistoryController historyController;
@@ -53,9 +54,14 @@ public class KhungController {
   private ChatPageController chatCtrl;
   private com.auction.client.ui.AddNewLot.AddNewLotController addLotController;
 
+  // ĐÃ THÊM watchlistController
+  private com.auction.client.ui.Watchlist.WatchlistController watchlistController;
+
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
-  @FXML private HBox AuctionMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
+
+  // ĐÃ THÊM WatchlistMenu
+  @FXML private HBox AuctionMenu, WatchlistMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
   @FXML private Label UserName, Rank;
   @FXML private ImageView sidebaravatar;
 
@@ -72,56 +78,70 @@ public class KhungController {
     try {
       NodeContentLoader<HBox> search = loadFxml("/fxml/searchbar/ThanhTimKiem.fxml");
       NodeContentLoader<Pane> auction = loadFxml("/fxml/trangchu/TrangChu.fxml");
+
+      // ĐÃ THÊM LOAD WATCHLIST FXML
+      NodeContentLoader<Pane> watchlist = loadFxml("/fxml/watchlist/Watchlist.fxml");
+
       NodeContentLoader<Pane> hist = loadFxml("/fxml/history/History.fxml");
       NodeContentLoader<Pane> myItem = loadFxml("/fxml/youritem/YourItem.fxml");
       NodeContentLoader<Pane> profile = loadFxml("/fxml/profile/Profile.fxml");
       NodeContentLoader<Pane> admin = loadFxml("/fxml/main/AdminDashboard.fxml");
       NodeContentLoader<Pane> addLot = loadFxml("/fxml/addnewlot/AddNewLot.fxml");
       NodeContentLoader<Pane> chat = loadFxml("/fxml/chat/ChatPage.fxml");
+
       if (ContentArea != null) ContentArea.getChildren().add(auction.getCurrentNode());
       if (SearchContainer != null) SearchContainer.getChildren().add(search.getCurrentNode());
+
       auctionHomeNode = auction.getCurrentNode();
+      watchlistNode = watchlist.getCurrentNode(); // Gán Node
       historyNode = hist.getCurrentNode();
       myItemsNode = myItem.getCurrentNode();
       profileNode = profile.getCurrentNode();
       adminDashboardNode = admin.getCurrentNode();
       addLotNode = addLot.getCurrentNode();
       chatNode = chat.getCurrentNode();
+
       homeController = auction.getController();
+      watchlistController = watchlist.getController(); // Gán Controller
       myItemsController = myItem.getController();
       historyController = hist.getController();
       profileController = profile.getController();
       adminDashboardController = admin.getController();
       addLotController = addLot.getController();
       chatCtrl = chat.getController();
+
+      // ĐÃ THÊM WatchlistMenu VÀO NAVIGATOR
       navigator =
-          new MainShellNavigator(
-              ContentArea,
-              AuctionMenu,
-              HistoryMenu,
-              MyItemMenu,
-              ProfileMenu,
-              ChatMenu,
-              ManageUsersMenu,
-              auctionHomeNode);
+              new MainShellNavigator(
+                      ContentArea,
+                      AuctionMenu,
+                      WatchlistMenu,
+                      HistoryMenu,
+                      MyItemMenu,
+                      ProfileMenu,
+                      ChatMenu,
+                      ManageUsersMenu,
+                      auctionHomeNode);
       navigator.setMenu(AuctionMenu);
+
       networkBridge = new MainShellNetworkBridge(() -> homeController, () -> chatCtrl);
       NetworkClient.getInstance().addListener(networkBridge);
       update();
+
       Platform.runLater(
-          () -> {
-            Scene scene = mainContentPane.getScene();
-            if (scene != null)
-              scene.addEventFilter(
-                  javafx.scene.input.KeyEvent.KEY_PRESSED,
-                  event -> {
-                    if (event.getCode() == javafx.scene.input.KeyCode.F11) {
-                      Stage stage = (Stage) scene.getWindow();
-                      stage.setFullScreen(!stage.isFullScreen());
-                      event.consume();
-                    }
-                  });
-          });
+              () -> {
+                Scene scene = mainContentPane.getScene();
+                if (scene != null)
+                  scene.addEventFilter(
+                          javafx.scene.input.KeyEvent.KEY_PRESSED,
+                          event -> {
+                            if (event.getCode() == javafx.scene.input.KeyCode.F11) {
+                              Stage stage = (Stage) scene.getWindow();
+                              stage.setFullScreen(!stage.isFullScreen());
+                              event.consume();
+                            }
+                          });
+              });
     } catch (Exception e) {
       LOGGER.warn("Main shell initialize failed", e);
     }
@@ -140,6 +160,14 @@ public class KhungController {
   @FXML
   public void openAuction(MouseEvent event) {
     if (switchPage(auctionHomeNode, AuctionMenu)) refreshAuctionHome();
+  }
+
+  // ĐÃ THÊM HÀM MỞ WATCHLIST
+  @FXML
+  public void openWatchlist(MouseEvent event) {
+    if (switchPage(watchlistNode, WatchlistMenu) && watchlistController != null) {
+      watchlistController.refreshItems();
+    }
   }
 
   @FXML
@@ -172,6 +200,7 @@ public class KhungController {
   public void handleRefresh(ActionEvent event) {
     Node current = navigator != null ? navigator.getCurrentContentNode() : null;
     if (current == auctionHomeNode) refreshAuctionHome();
+    else if (current == watchlistNode && watchlistController != null) watchlistController.refreshItems(); // ĐÃ THÊM REFRESH WATCHLIST
     else if (current == historyNode && historyController != null) historyController.refreshHistory();
     else if (current == myItemsNode && myItemsController != null) myItemsController.refreshItems();
     else if (current == profileNode && profileController != null) profileController.refreshFromServer();
@@ -205,13 +234,13 @@ public class KhungController {
       String rankText = ClientSession.getActiveRole().name();
       if (currentUser.getTotalRatings() > 0)
         rankText +=
-            " | "
-                + String.format(
-                    "%.1f\u2605 %s",
-                    currentUser.getAvgRating(),
-                    currentUser.getAvgRating() <= 2.0
-                        ? "Negative"
-                        : currentUser.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
+                " | "
+                        + String.format(
+                        "%.1f\u2605 %s",
+                        currentUser.getAvgRating(),
+                        currentUser.getAvgRating() <= 2.0
+                                ? "Negative"
+                                : currentUser.getAvgRating() <= 3.0 ? "Neutral" : "Positive");
       Rank.setText(rankText);
     }
     boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
@@ -220,13 +249,24 @@ public class KhungController {
       ManageUsersMenu.setManaged(isAdmin);
     }
     if (sidebaravatar != null
-        && currentUser.getAvatarUrl() != null
-        && !currentUser.getAvatarUrl().isBlank())
+            && currentUser.getAvatarUrl() != null
+            && !currentUser.getAvatarUrl().isBlank())
       ImagePresentationUtil.loadCircularAvatar(sidebaravatar, currentUser.getAvatarUrl(), 24, 48);
   }
 
   static void notifyHomePriceUpdate(Item item) {
     if (instance != null && instance.homeController != null) instance.homeController.updatePriceUi(item);
+  }
+
+  // ĐÃ THÊM CẬP NHẬT WATCHLIST CONTROLLER
+  public static void notifyWatchlistToggle(int itemId, boolean isWatched) {
+    if (instance == null) return;
+    Platform.runLater(() -> {
+      if (instance.homeController != null) instance.homeController.updateWatchlistUi(itemId, isWatched);
+      if (instance.historyController != null) instance.historyController.updateWatchlistUi(itemId, isWatched);
+      if (instance.myItemsController != null) instance.myItemsController.updateWatchlistUi(itemId, isWatched);
+      if (instance.watchlistController != null) instance.watchlistController.updateWatchlistUi(itemId, isWatched);
+    });
   }
 
   /** Called from {@link MainShellNetworkBridge} after account-ban alert. */
@@ -286,17 +326,17 @@ public class KhungController {
 
   public static AuctionType getCatalogAuctionType() {
     return instance != null
-        ? instance.searchFilters.getCatalogAuctionType()
-        : AuctionType.ENGLISH;
+            ? instance.searchFilters.getCatalogAuctionType()
+            : AuctionType.ENGLISH;
   }
 
   public static void setCatalogAuctionType(AuctionType auctionType) {
     if (instance == null) return;
     instance.searchFilters.setCatalogAuctionType(
-        auctionType != null ? auctionType : AuctionType.ENGLISH);
+            auctionType != null ? auctionType : AuctionType.ENGLISH);
     if (instance.homeController != null) {
       instance.homeController.setFilters(
-          instance.searchFilters.getKeyword(), instance.searchFilters.getCategory());
+              instance.searchFilters.getKeyword(), instance.searchFilters.getCategory());
     }
     Node current = getCurrentNode();
     if (instance.historyController != null && current != null && current == instance.historyNode) {
@@ -342,24 +382,24 @@ public class KhungController {
   public static void showUserProfile(User user) {
     if (instance == null || user == null || instance.navigator == null) return;
     Platform.runLater(
-        () -> {
-          try {
-            NodeContentLoader<Parent> profileLoader =
-                instance.loadFxml("/fxml/userprofile/UserProfile.fxml");
-            profileLoader.<UserProfileController>getController().setUser(user);
-            instance.navigator.replaceContent(profileLoader.getCurrentNode(), null);
-          } catch (Exception ignored) {
-          }
-        });
+            () -> {
+              try {
+                NodeContentLoader<Parent> profileLoader =
+                        instance.loadFxml("/fxml/userprofile/UserProfile.fxml");
+                profileLoader.<UserProfileController>getController().setUser(user);
+                instance.navigator.replaceContent(profileLoader.getCurrentNode(), null);
+              } catch (Exception ignored) {
+              }
+            });
   }
 
   public static void returnToAuction() {
     if (instance == null || instance.navigator == null) return;
     Platform.runLater(
-        () -> {
-          if (instance.navigator.switchPage(instance.auctionHomeNode, instance.AuctionMenu))
-            instance.refreshAuctionHome();
-        });
+            () -> {
+              if (instance.navigator.switchPage(instance.auctionHomeNode, instance.AuctionMenu))
+                instance.refreshAuctionHome();
+            });
   }
 
   /** Holds auction home / my-items filter criteria for the main shell (no UI). */

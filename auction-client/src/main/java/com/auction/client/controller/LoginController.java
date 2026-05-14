@@ -69,6 +69,14 @@ public class LoginController {
         if (res.getStatus().equals(Response.OK)) {
           if (res.getPayload() instanceof User loggedInUser) {
             ClientSession.setCurrentUser(loggedInUser);
+
+            // TẢI WATCHLIST VÀO RAM NGAY KHI LOGIN
+            new Thread(() -> {
+              Response watchRes = client.sendRequestAndWait(new Request(Request.GET_WATCHLIST, null));
+              if (watchRes != null && Response.OK.equals(watchRes.getStatus())) {
+                ClientSession.setWatchlist((java.util.List<Integer>) watchRes.getPayload());
+              }
+            }).start();
           }
           this.messageLabel.setText("Login successful!");
           try {
