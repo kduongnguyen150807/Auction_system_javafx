@@ -5,20 +5,45 @@ import com.auction.shared.item.ItemFactory;
 import com.auction.shared.item.ItemStatus;
 import com.auction.shared.item.ItemType;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
 public class ItemDao extends BaseDao{
-  public List<Item> getAllItems() {
+  public List<Item> getAllItems(Connection connection) {
     String sql = "select * from items";
-    return query(sql, null, this::mapResultSet);
+    return query(connection, sql, null, this::mapResultSet);
   }
 
-  public boolean approveItem(String itemId) {
+  public boolean approveItem(int itemId, Connection connection) {
     String sql = "UPDATE items SET status = 'OPEN' WHERE id = ?";
-    return update(sql, List.of(itemId));
+    return update(connection, sql, List.of(itemId));
+  }
+
+  public Item getItemById(int itemId, Connection connection) {
+    String sql = "SELECT * FROM items WHERE id = ?";
+    List<Item> items = query(connection ,sql, List.of(itemId), this::mapResultSet);
+    return items.isEmpty() ? null : items.getFirst();
+  }
+
+  public Item findForUpdate(int itemId, Connection connection) {
+    String sql = "SELECT * FROM items WHERE id = ? FOR UPDATE";
+    List<Item> items = query(connection, sql, List.of(itemId), this::mapResultSet);
+    return items.isEmpty() ? null : items.getFirst();
+  }
+
+  public boolean updateItemStatus(int itemId, ItemStatus itemStatus, Connection connection) {
+    String sql = "UPDATE items SET status = ? WHERE id = ?";
+    return update(connection, sql, List.of(itemStatus.name(), itemId));
+  }
+
+  public boolean updateBidInfo(int itemId, double amount, int winnerId, Connection connection) {
+    String sql = "UPDATE items SET " +
+      "winnerid = ?, currentprice = ?, version = version + 1 " +
+      "WHERE id = ?";
+    return update(connection, sql, List.of(winnerId, amount, itemId));
   }
 
   private Item mapResultSet(ResultSet rs) throws SQLException {
@@ -32,6 +57,7 @@ public class ItemDao extends BaseDao{
     item.setSellerId(rs.getInt("sellerid")); item.setWinnerId(rs.getInt("winnerid"));
     item.setStatus(ItemStatus.valueOf(rs.getString("status")));
     item.setImageUrl(rs.getString("image_url"));
+
     try {
       String sn = rs.getString("seller_name"); if (sn != null) item.setSellerUsername(sn);
       String sa = rs.getString("seller_avatar"); if (sa != null) item.setSellerAvatarUrl(sa);

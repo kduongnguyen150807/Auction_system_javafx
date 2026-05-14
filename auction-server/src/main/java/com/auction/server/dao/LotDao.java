@@ -4,23 +4,20 @@ import com.auction.shared.Lot;
 import com.auction.shared.item.Item;
 import com.auction.shared.item.ItemStatus;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LotDao extends BaseDao {
-  public List<Lot> getOngoingBids() {
+  public List<Lot> getOngoingBids(Connection connection) {
     String sql = "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
       + "FROM items i "
       + "LEFT JOIN users u ON i.sellerid = u.id "
       + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() and i.endtime >= NOW() ";
-    return query(sql, null, this::mapResultSet);
+    return query(connection, sql, null, this::mapResultSet);
   }
 
-  public boolean registerLot(Item item, int sellerId) {
+  public boolean registerLot(Item item, int sellerId, Connection connection) {
     String sql =
       "INSERT INTO items (category, name, description, startingprice, currentprice, maxprice, starttime, endtime, sellerid, winnerid, status, version, image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
@@ -39,7 +36,7 @@ public class LotDao extends BaseDao {
     params.add(0);
     params.add(item.getImageUrl());
 
-    return update(sql, params);
+    return update(connection, sql, params);
   }
 
   private Lot mapResultSet(ResultSet rs) throws SQLException {

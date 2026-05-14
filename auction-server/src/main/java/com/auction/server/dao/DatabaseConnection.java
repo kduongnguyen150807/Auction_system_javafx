@@ -1,10 +1,14 @@
 package com.auction.server.dao;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,43 +35,38 @@ public class DatabaseConnection {
     static final DatabaseConnection INSTANCE = new DatabaseConnection();
   }
 
-  private String url;
-  private String user;
-  private String password;
+  private static final HikariDataSource ds;
 
-  /**
-   * Khởi tạo và nạp cấu hình cơ sở dữ liệu.
-   * <p>
-   * Thực hiện nạp Driver MySQL và kiểm tra tính hợp lệ của cấu hình bằng cách
-   * mở một kết nối thử nghiệm ngay khi khởi tạo instance.
-   * </p>
-   */
-  private DatabaseConnection() {
-    try {
-      Properties props = new Properties();
-      InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties");
+  static {
+    HikariConfig config = new HikariConfig();
+    config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+    try (InputStream input =
+           DatabaseConnection.class.getClassLoader().getResourceAsStream("db.properties")) {
       if (input != null) {
+        Properties props = new Properties();
         props.load(input);
+
+        config.setJdbcUrl(props.getProperty("db.url"));
+        config.setUsername(props.getProperty("db.username"));
+        config.setPassword(props.getProperty("db.password"));
+
+        config.setMaximumPoolSize(
+          Integer.parseInt(props.getProperty("db.poolSize", "10"))
+        );
       } else {
-        LOGGER.warn("db.properties not found on classpath, using defaults");
-        props.setProperty("db.url", "jdbc:mysql://localhost:3306/auction_db");
-        props.setProperty("db.user", "ba_nin");
-        props.setProperty("db.password", "banin123");
+        LOGGER.warn("db.properties not found, using defaults");
+        config.setJdbcUrl("jdbc:mysql://localhost:3306/auction_db");
+        config.setUsername("ba_nin");
+        config.setPassword("banin123");
+        config.setMaximumPoolSize(10);
       }
-
-      this.url = props.getProperty("db.url");
-      this.user = props.getProperty("db.user");
-      this.password = props.getProperty("db.password");
-
-      Class.forName("com.mysql.cj.jdbc.Driver");
-      // Validate by opening a test connection
-      Connection test = DriverManager.getConnection(url, user, password);
-      test.close();
-      LOGGER.info("Database connection validated successfully.");
     } catch (Exception e) {
-      LOGGER.error("Failed to initialize database connection", e);
+      throw new RuntimeException("Failed to load db.properties", e);
     }
+    ds = new HikariDataSource(config);
   }
+
+  private DatabaseConnection() {}
 
   /**
    * Trả về instance duy nhất của lớp {@code DatabaseConnection}.
@@ -78,30 +77,11 @@ public class DatabaseConnection {
     return Holder.INSTANCE;
   }
 
-  /**
-   * Tạo và trả về một kết nối {@link Connection} mới tới cơ sở dữ liệu.
-   * <p>
-   * Mỗi luồng xử lý (Thread) nên gọi phương thức này để nhận một kết nối riêng biệt,
-   * đảm bảo tính độc lập dữ liệu giữa các phiên làm việc của Client.
-   * </p>
-   *
-   * <pre>
-   * // Cách sử dụng khuyến nghị:
-   * try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-   *     // Thực hiện truy vấn SQL
-   * } catch (SQLException e) {
-   *     // Xử lý lỗi
-   * }
-   * </pre>
-   *
-   * @return Đối tượng {@link Connection} mới, hoặc {@code null} nếu không thể thiết lập kết nối.
-   */
   public Connection getConnection() {
     try {
-      return DriverManager.getConnection(url, user, password);
-    } catch (Exception e) {
-      LOGGER.error("Failed to create database connection", e);
-      return null;
+      return ds.getConnection();
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to connect to database", e);
     }
   }
 }

@@ -13,51 +13,41 @@ import java.util.List;
 public abstract class BaseDao {
   private static final Logger LOGGER = LoggerFactory.getLogger(BaseDao.class);
 
-  protected Connection getConnection() {
-    return DatabaseConnection.getInstance().getConnection();
-  }
+  protected boolean update(Connection connection, String sql, List<Object> params) {
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+      setParams(ps, params);
 
-  protected boolean update(String sql, List<Object> params) {
-    try (Connection conn = getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-      if (params != null) {
-        for (int i = 0; i < params.size(); i++) {
-          ps.setObject(i + 1, params.get(i));
-        }
-      }
-
-      int affectedRows = ps.executeUpdate();
-      LOGGER.info("Execute update thành công. Số dòng bị ảnh hưởng: {}", affectedRows);
-      return affectedRows > 0;
-
+      int res = ps.executeUpdate();
+      return res > 0;
     } catch (SQLException e) {
-      LOGGER.error("Lỗi khi thực thi lệnh UPDATE: {}", sql, e);
-      return false;
+      LOGGER.error(e.getMessage(), e);
+      throw new RuntimeException(e);
     }
   }
 
-  protected <T> List<T> query(String sql, List<Object> params, ResultSetMapper<T> mapper) {
+  protected <T> List<T> query(Connection connection, String sql, List<Object> params, ResultSetMapper<T> mapper) {
     List<T> results = new ArrayList<>();
-    try (Connection conn = getConnection()) {
-      try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        if (params != null) {
-          for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-          }
-        }
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+      setParams(ps, params);
 
-        try (ResultSet rs = ps.executeQuery()) {
-          while (rs.next()) {
-            results.add(mapper.map(rs));
-          }
-        } catch (SQLException e) {
-          LOGGER.error("Error while executing query", e);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          results.add(mapper.map(rs));
         }
       }
     } catch (SQLException e) {
-      LOGGER.error("Error while executing query", e);
+      LOGGER.error(e.getMessage(), e);
+      throw new RuntimeException(e);
     }
+
     return results;
+  }
+
+  void setParams(PreparedStatement ps, List<Object> params) throws SQLException {
+    if  (params == null) return;
+    for (int i = 0; i < params.size(); i++) {
+      ps.setObject(i + 1, params.get(i));
+    }
   }
 }
 

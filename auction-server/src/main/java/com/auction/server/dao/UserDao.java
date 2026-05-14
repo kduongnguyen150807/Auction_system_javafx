@@ -6,6 +6,7 @@ import com.auction.shared.user.UserStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -36,10 +37,32 @@ public class UserDao extends BaseDao{
    * @param password mật khẩu
    * @return {@link User} nếu đăng nhập thành công, ngược lại trả về null
    */
-  public User login(String username, String password) {
-    String sql = "SELECT * FROM users WHERE username = ? AND password = ? AND isactive = true";
-    List<User> results =  query(sql, List.of(username, password), this::mapUser);
+  public User login(String username, String password, Connection connection) {
+    String sql = "SELECT * FROM users WHERE username = ? AND password = ? AND status = 'ACTIVE'";
+    List<User> results =  query(connection, sql, List.of(username, password), this::mapUser);
     return results.isEmpty() ? null : results.getFirst();
+  }
+
+  public boolean register(String username, String password, String email, int age, Connection connection) {
+    String sql = "INSERT INTO users (username, password, email, age) VALUES (?, ?, ?, ?)";
+    return update(connection, sql, List.of(username, password, email, age));
+  }
+
+  public boolean updateBalance(int userId, double amount, Connection connection) {
+    String sql = "UPDATE users SET balance = balance + ? WHERE id = ? AND balance + ? > 0";
+    return update(connection, sql, List.of(amount, userId, amount));
+  }
+
+  public User findForUpdate(int userId, Connection connection) {
+    String sql = "SELECT * FROM users WHERE id = ? FOR UPDATE";
+    List<User> list = query(connection, sql, List.of(userId), this::mapUser);
+    return list.isEmpty() ? null : list.getFirst();
+  }
+
+  public User findById(int id, Connection connection) {
+    String sql = "SELECT * FROM users WHERE id = ?";
+    List<User> list = query(connection, sql, List.of(id), this::mapUser);
+    return list.isEmpty() ? null : list.get(0);
   }
 
   /**
@@ -56,21 +79,13 @@ public class UserDao extends BaseDao{
       User user = UserFactory.create(role);
 
       user.setId(resultSet.getInt("id"));
-      user.setVersion(resultSet.getInt("version"));
       user.setUsername(resultSet.getString("username"));
       user.setFullName(resultSet.getString("fullname"));
       user.setEmail(resultSet.getString("email"));
       user.setPhoneNumber(resultSet.getString("phonenumber"));
       user.setBalance(resultSet.getDouble("balance"));
-      user.setAvatarUrl(resultSet.getString("avatar_url"));
-      user.setAvgRating(resultSet.getDouble("avgrating"));
-      user.setTotalRatings(resultSet.getInt("totalratings"));
       user.setActive(resultSet.getBoolean("isactive"));
-      user.setLocked(resultSet.getBoolean("islocked"));
-      user.setMoneySpent(resultSet.getDouble("moneyspent"));
-      user.setItemsBought(resultSet.getInt("itemsbought"));
-      user.setMoneyReceived(resultSet.getDouble("moneyreceived"));
-      user.setItemsSold(resultSet.getInt("itemssold"));
+      user.setAge(resultSet.getInt("age"));
       String statusStr = resultSet.getString("status");
       if (statusStr != null) {
         try {
@@ -82,7 +97,7 @@ public class UserDao extends BaseDao{
       }
       return user;
     }catch (SQLException e){
-      System.out.println("error setting attribute");
+      LOGGER.info(e.getMessage());
     }
     return null;
   }
