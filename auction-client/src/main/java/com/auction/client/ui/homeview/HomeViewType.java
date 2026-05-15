@@ -1,0 +1,20 @@
+package com.auction.client.ui.homeview;
+
+public enum HomeViewType {
+  TRANG_CHU("/fxml/homeview/TrangChu.fxml"),
+  PROFILE("/fxml/homeview/Profile.fxml"),
+  ADD_NEW_LOT("/fxml/homeview/AddNewLot.fxml"),
+  ADMIN_DASHBOARD("/fxml/homeview/AdminDashboard.fxml"),
+  ITEM_INFORMATION("/fxml/homeview/iteminformation/ItemInformation.fxml"),
+  ;
+
+  private String fxmlPath;
+
+  HomeViewType(String fxmlPath) {
+    this.fxmlPath = fxmlPath;
+  }
+
+  public String getFxmlPath() {
+    return fxmlPath;
+  }
+}
