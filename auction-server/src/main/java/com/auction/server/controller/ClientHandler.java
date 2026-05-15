@@ -69,95 +69,10 @@ public class ClientHandler implements Runnable {
     RatingDao ratingDao = new RatingDao();
 
     this.context = new HandlerContext(userService, itemDao, lotDao, logDao, ratingDao, this);
-    this.registry = buildRegistry();
-
+    this.registry = ActionRegistryFactory.create();
     AuctionManager.getInstance().addClient(this);
   }
 
-  private ActionRegistry buildRegistry() {
-    ActionRegistry reg = new ActionRegistry();
-
-    reg.register(Request.LOGIN, new LoginHandler());
-    reg.register(Request.SIGNUP, new SignupHandler());
-    reg.register(Request.RECONNECT, new ReconnectHandler());
-
-    reg.register(Request.AUTOCOMPLETE, new AutocompleteHandler());
-    ListItemsHandler listHandler = new ListItemsHandler();
-    reg.register(Request.LIST, listHandler);
-    reg.register(Request.GET_ONGOING_LOTS, listHandler);
-
-    LotQueryHandler lotQuery = new LotQueryHandler();
-    reg.register(Request.GET_ONGOING_BIDS, lotQuery);
-    reg.register(Request.GET_TRENDING_LOTS, lotQuery);
-    reg.register(Request.GET_UPCOMING_BIDS, lotQuery);
-    reg.register(Request.GET_CLOSED_BIDS, lotQuery);
-    reg.register(Request.GET_PAST_BIDS, lotQuery);
-    reg.register(Request.GET_WATCHLIST_ITEMS, lotQuery);
-
-    ForgotPasswordHandler forgotPwHandler = new ForgotPasswordHandler();
-    reg.register(Request.FORGOT_PASSWORD_REQ, forgotPwHandler);
-    reg.register(Request.FORGOT_PASSWORD_RESET, forgotPwHandler);
-    ItemQueryHandler itemQuery = new ItemQueryHandler();
-    reg.register(Request.GET_MY_ITEMS, itemQuery);
-    reg.register(Request.GET_ITEM_BY_ID, itemQuery);
-
-    RatingHandler ratingHandler = new RatingHandler();
-    reg.register(Request.GET_RATINGS, ratingHandler);
-
-    MiscHandler miscHandler = new MiscHandler();
-    reg.register(Request.REFRESH_USER, miscHandler);
-    reg.register(Request.GET_TRANSACTIONS, miscHandler);
-    reg.register(Request.GET_BID_HISTORY, miscHandler);
-    reg.register(Request.PING, miscHandler);
-
-    ChatHandler chatHandler = new ChatHandler();
-    reg.register(Request.GET_GLOBAL_CHAT_HISTORY, chatHandler);
-    reg.register(Request.GET_PRIVATE_CHAT_HISTORY, chatHandler);
-    reg.register(Request.GET_CHAT_CONTACTS, chatHandler);
-
-    WatchlistHandler watchlistHandler = new WatchlistHandler();
-    reg.register(Request.GET_WATCHLIST, ActionHandler.requireAuth(watchlistHandler));
-    reg.register(Request.TOGGLE_WATCHLIST, ActionHandler.requireAuth(watchlistHandler));
-
-    UserManagementHandler userMgmt = new UserManagementHandler();
-    reg.register(Request.GET_ALL_USERS, userMgmt);
-    reg.register(Request.SEARCH_USERS, userMgmt);
-    reg.register(Request.GET_USER_BY_ID, userMgmt);
-
-    FriendHandler friendHandler = new FriendHandler();
-    reg.register(Request.GET_FRIENDS, friendHandler);
-    reg.register(Request.GET_FRIEND_REQUESTS, friendHandler);
-
-    reg.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));
-    reg.register(Request.ADD_LOT, ActionHandler.requireAuth(new AddLotHandler()));
-    reg.register(Request.SELLER_CANCEL_ITEM, ActionHandler.requireAuth(new SellerCancelItemHandler()));
-    reg.register(
-        Request.SELLER_UPDATE_PENDING_ITEM,
-        ActionHandler.requireAuth(new SellerUpdatePendingItemHandler()));
-    reg.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
-    reg.register(Request.UPDATE_AVATAR, ActionHandler.requireAuth(new UpdateAvatarHandler()));
-    reg.register(Request.DEPOSIT, ActionHandler.requireAuth(new DepositHandler()));
-    reg.register(Request.SUBMIT_RATING, ActionHandler.requireAuth(ratingHandler));
-    reg.register(Request.SEND_CHAT, ActionHandler.requireAuth(chatHandler));
-
-    reg.register(Request.ADD_FRIEND, ActionHandler.requireAuth(friendHandler));
-    reg.register(Request.ACCEPT_FRIEND, ActionHandler.requireAuth(friendHandler));
-    reg.register(Request.DECLINE_FRIEND, ActionHandler.requireAuth(friendHandler));
-    reg.register(Request.REMOVE_FRIEND, ActionHandler.requireAuth(friendHandler));
-
-    reg.register(Request.LOCK_USER, ActionHandler.requireAdmin(userMgmt));
-    reg.register(Request.UNLOCK_USER, ActionHandler.requireAdmin(userMgmt));
-    reg.register(Request.PROMOTE_ADMIN, ActionHandler.requireAdmin(userMgmt));
-    reg.register(Request.GET_PENDING_ITEMS, ActionHandler.requireAdmin(itemQuery));
-    reg.register(Request.APPROVE_ITEM, ActionHandler.requireAdmin(itemQuery));
-    reg.register(Request.REJECT_ITEM, ActionHandler.requireAdmin(itemQuery));
-    reg.register(Request.GET_STATUS_STATS, ActionHandler.requireAdmin(miscHandler));
-    reg.register(Request.GET_CATEGORY_STATS, ActionHandler.requireAdmin(miscHandler));
-
-    reg.register(Request.GET_LEADERBOARD, new com.auction.server.handler.misc.LeaderboardHandler());
-
-    return reg;
-  }
 
   public User getCurrentUser() {
     return this.context.getCurrentUser();

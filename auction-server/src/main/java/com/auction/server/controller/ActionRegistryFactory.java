@@ -6,6 +6,10 @@ import com.auction.server.handler.auction.BidHandler;
 import com.auction.server.handler.auction.ItemQueryHandler;
 import com.auction.server.handler.auction.ListItemsHandler;
 import com.auction.server.handler.auction.LotQueryHandler;
+import com.auction.server.handler.auction.SellerCancelItemHandler;
+import com.auction.server.handler.auction.SellerUpdatePendingItemHandler;
+import com.auction.server.handler.user.WatchlistHandler;
+import com.auction.server.handler.auth.ForgotPasswordHandler;
 import com.auction.server.handler.auth.LoginHandler;
 import com.auction.server.handler.auth.ReconnectHandler;
 import com.auction.server.handler.auth.SignupHandler;
@@ -24,8 +28,7 @@ import com.auction.shared.Request;
 
 public final class ActionRegistryFactory {
 
-    private ActionRegistryFactory() {
-    }
+    private ActionRegistryFactory() {}
 
     public static ActionRegistry create() {
         ActionRegistry registry = new ActionRegistry();
@@ -33,6 +36,10 @@ public final class ActionRegistryFactory {
         registry.register(Request.LOGIN, new LoginHandler());
         registry.register(Request.SIGNUP, new SignupHandler());
         registry.register(Request.RECONNECT, new ReconnectHandler());
+
+        ForgotPasswordHandler forgotPasswordHandler = new ForgotPasswordHandler();
+        registry.register(Request.FORGOT_PASSWORD_REQ, forgotPasswordHandler);
+        registry.register(Request.FORGOT_PASSWORD_RESET, forgotPasswordHandler);
 
         registry.register(Request.AUTOCOMPLETE, new AutocompleteHandler());
 
@@ -42,9 +49,11 @@ public final class ActionRegistryFactory {
 
         LotQueryHandler lotQueryHandler = new LotQueryHandler();
         registry.register(Request.GET_ONGOING_BIDS, lotQueryHandler);
+        registry.register(Request.GET_TRENDING_LOTS, lotQueryHandler);
         registry.register(Request.GET_UPCOMING_BIDS, lotQueryHandler);
         registry.register(Request.GET_CLOSED_BIDS, lotQueryHandler);
         registry.register(Request.GET_PAST_BIDS, lotQueryHandler);
+        registry.register(Request.GET_WATCHLIST_ITEMS, lotQueryHandler);
 
         ItemQueryHandler itemQueryHandler = new ItemQueryHandler();
         registry.register(Request.GET_MY_ITEMS, itemQueryHandler);
@@ -73,8 +82,16 @@ public final class ActionRegistryFactory {
         registry.register(Request.GET_FRIENDS, friendHandler);
         registry.register(Request.GET_FRIEND_REQUESTS, friendHandler);
 
+        WatchlistHandler watchlistHandler = new WatchlistHandler();
+        registry.register(Request.GET_WATCHLIST, ActionHandler.requireAuth(watchlistHandler));
+        registry.register(Request.TOGGLE_WATCHLIST, ActionHandler.requireAuth(watchlistHandler));
+
         registry.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));
         registry.register(Request.ADD_LOT, ActionHandler.requireAuth(new AddLotHandler()));
+        registry.register(Request.SELLER_CANCEL_ITEM, ActionHandler.requireAuth(new SellerCancelItemHandler()));
+        registry.register(
+                Request.SELLER_UPDATE_PENDING_ITEM,
+                ActionHandler.requireAuth(new SellerUpdatePendingItemHandler()));
         registry.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
         registry.register(Request.UPDATE_AVATAR, ActionHandler.requireAuth(new UpdateAvatarHandler()));
         registry.register(Request.DEPOSIT, ActionHandler.requireAuth(new DepositHandler()));
