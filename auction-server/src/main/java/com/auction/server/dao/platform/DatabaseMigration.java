@@ -16,6 +16,7 @@ public class DatabaseMigration {
       LOGGER.info("Running database migrations...");
       UserSchemaMigration.applyStructure(conn);
       ItemSchemaMigration.apply(conn);
+      BidTransactionsSchemaMigration.apply(conn);
       RatingsSchemaMigration.apply(conn);
       TransactionLogSchemaMigration.apply(conn);
       ChatSchemaMigration.apply(conn);
