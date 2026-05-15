@@ -1,30 +1,37 @@
 package com.auction.server.controller;
 
 public class TokenBucket {
-    private final int max;
+    private final int maxTokens;
     private int tokens;
-    private long lastrefill;
+    private long lastRefillTime;
 
-    public TokenBucket(int max) {
-        this.max = max;
-        this.tokens = max;
-        this.lastrefill = System.currentTimeMillis();
+    public TokenBucket(int maxTokens) {
+        this.maxTokens = maxTokens;
+        this.tokens = maxTokens;
+        this.lastRefillTime = System.currentTimeMillis();
     }
 
-    public synchronized boolean tryconsume() {
+    public synchronized boolean tryConsume() {
+        refill();
+
+        if (tokens <= 0) {
+            return false;
+        }
+
+        tokens--;
+        return true;
+    }
+
+    private void refill() {
         long now = System.currentTimeMillis();
-        long diff = now - lastrefill;
-        if (diff > 100) {
-            int add = (int) (diff / 100) * 10;
-            tokens = Math.min(max, tokens + add);
-            lastrefill = now;
+        long elapsedTime = now - lastRefillTime;
+
+        if (elapsedTime <= 100) {
+            return;
         }
-        if (tokens > 0) {
-            tokens--;
-            boolean ans = true;
-            return ans;
-        }
-        boolean res = false;
-        return res;
+
+        int tokensToAdd = (int) (elapsedTime / 100) * 10;
+        tokens = Math.min(maxTokens, tokens + tokensToAdd);
+        lastRefillTime = now;
     }
 }

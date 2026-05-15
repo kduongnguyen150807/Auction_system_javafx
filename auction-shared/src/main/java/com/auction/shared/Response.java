@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public class Response implements Serializable {
   private static final long serialVersionUID = 1L;
+
   public static final String OK = "SUCCESS";
   public static final String ERROR = "ERROR";
 
@@ -20,22 +21,15 @@ public class Response implements Serializable {
   protected Object payload;
   protected LocalDateTime timestamp;
 
-<<<<<<< HEAD
-  public Response(){
-
+  public Response() {
+    this.timestamp = LocalDateTime.now();
   }
-  public Response(String rid, String st, String msg, Object obj) {
-    this.requestId = rid;
-    this.status = st;
-    this.message = msg;
-    this.payload = obj;
-=======
+
   public Response(String requestId, String status, String message, Object payload) {
     this.requestId = requestId;
     this.status = status;
     this.message = message;
     this.payload = payload;
->>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
     this.timestamp = LocalDateTime.now();
   }
 

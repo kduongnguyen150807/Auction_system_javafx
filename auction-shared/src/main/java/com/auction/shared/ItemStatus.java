@@ -11,11 +11,8 @@ public enum ItemStatus {
   CLOSED,
   /** Time expired — winner determined, awaiting manual settlement confirmation. */
   FINISHED,
-<<<<<<< HEAD
   PAID,
-  CANCELED,
   EXPRIED,
-=======
   /** Ended with no winning bidder when the auction time elapsed. */
   EXPIRED,
   /** Cancelled (e.g. seller banned, or admin rejection). */
@@ -33,5 +30,4 @@ public enum ItemStatus {
       return OPEN;
     }
   }
->>>>>>> 7da57c30d1fc0b20d3aa86204c23ea6cd0d18068
 }
