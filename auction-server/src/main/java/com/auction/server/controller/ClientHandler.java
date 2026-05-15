@@ -186,7 +186,7 @@ public class ClientHandler implements Runnable {
         }
 
         try {
-          if (!bucket.tryconsume()) {
+          if (!bucket.tryConsume()) {
             send(new Response(request.getRequestId(), Response.ERROR, "rate_limit_exceeded", null));
             continue;
           }
