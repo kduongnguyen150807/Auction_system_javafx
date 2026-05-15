@@ -12,9 +12,13 @@ import com.auction.shared.*;
 import java.io.IOException;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.StageStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,8 +186,20 @@ public class ProfileController implements NetworkEventListener {
       javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/history/TransactionHistory.fxml"));
       javafx.scene.Parent root = loader.load();
       javafx.stage.Stage stage = new javafx.stage.Stage();
+      stage.initModality(Modality.APPLICATION_MODAL);
+      stage.initStyle(StageStyle.TRANSPARENT);
       stage.setTitle("Lịch sử giao dịch");
-      stage.setScene(new javafx.scene.Scene(root, 800, 500));
+      Scene scene = new Scene(root, 800, 500);
+
+
+      scene.setFill(Color.TRANSPARENT);
+      stage.setScene(scene);
+
+      stage.focusedProperty().addListener((obs, oldVal, focused) -> {
+        if (!focused) {
+          stage.close();
+        }
+      });
       stage.show();
     } catch (Exception e) { LOGGER.warn("Failed to open transaction history window", e); }
   }
