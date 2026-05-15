@@ -105,10 +105,12 @@ public class UserDao extends BaseDao<User> implements UserRepository {
   }
 
   public boolean atomicDeductBalance(int userId, double amount) {
+    if (amount <= 0) return false; // CHỐNG HACK SỐ ÂM
     return executeUpdate("UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?", amount, userId, amount);
   }
 
   public boolean atomicCreditBalance(int userId, double amount) {
+    if (amount <= 0) return false; // CHỐNG HACK SỐ ÂM
     return executeUpdate("UPDATE users SET balance = balance + ? WHERE id = ?", amount, userId);
   }
 
@@ -146,6 +148,7 @@ public class UserDao extends BaseDao<User> implements UserRepository {
   }
   //Xử lí lỗi nếu đang bid chưa kịp trừ tiền thì server sập
   public boolean deductBalanceTx(int userId, double amount, Connection conn) throws SQLException {
+    if (amount <= 0) return false; // CHỐNG HACK SỐ ÂM
     String sql = "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setDouble(1, amount);
@@ -155,6 +158,7 @@ public class UserDao extends BaseDao<User> implements UserRepository {
     }
   }
   public boolean creditBalanceTx(int userId, double amount, Connection conn) throws SQLException {
+    if (amount <= 0) return false; // CHỐNG HACK SỐ ÂM
     String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setDouble(1, amount); ps.setInt(2, userId); return ps.executeUpdate() > 0;
