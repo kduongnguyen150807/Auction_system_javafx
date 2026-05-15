@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root type="HBox" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      prefWidth="200" stylesheets="@../../css/component/RedOrBlueToolbar.css"
+      alignment="CENTER_LEFT" spacing="16" styleClass="catalog-auction-toolbar">
+    <children>
+        <Label styleClass="category-heading" text="text Here" fx:id="titleLabel"/>
+        <HBox spacing="10.0" styleClass="segment-toggle-group">
+            <children>
+                <ToggleButton fx:id="red" mnemonicParsing="false" prefHeight="40.0"
+                              styleClass="catalog-auction-tab" text="Red"/>
+                <ToggleButton fx:id="blue" mnemonicParsing="false" prefHeight="40.0"
+                              styleClass="catalog-auction-tab" text="Blue"/>
+            </children>
+        </HBox>
+    </children>
+</fx:root>

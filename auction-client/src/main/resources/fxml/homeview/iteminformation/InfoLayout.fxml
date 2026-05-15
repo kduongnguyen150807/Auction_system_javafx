@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.image.ImageView?>
+<VBox xmlns="http://javafx.com/javafx" spacing="10"
+      fx:controller="com.auction.client.ui.homeview.controller.iteminformation.InfoLayoutController"
+      xmlns:fx="http://javafx.com/fxml"
+      prefHeight="400.0" prefWidth="600.0">
+    <children>
+        <Label fx:id="itemName" styleClass="item-title-glow" text="Hugo" wrapText="true"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="seller-box-mac">
+            <children>
+                <ImageView fx:id="sellerAvatar" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true">
+                    <clip>
+                        <Circle centerX="25" centerY="25" radius="25"/>
+                    </clip>
+                </ImageView>
+                <VBox alignment="CENTER_LEFT">
+                    <children>
+                        <Label styleClass="label-sm-gray" text="SELLER"/>
+                        <Label fx:id="sellerName" styleClass="seller-name-blue" text="Unknown Seller"/>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+
+        <VBox spacing="8.0">
+            <children>
+                <Label styleClass="label-sm-gray" text="DESCRIPTION"/>
+                <Label fx:id="itemDescription" styleClass="desc-text-mac" text="Tuổi thơ dữ dội..." wrapText="true"/>
+            </children>
+        </VBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="40.0">
+            <children>
+                <VBox spacing="5.0">
+                    <children>
+                        <Label fx:id="BidMetricCaption" styleClass="label-sm-gray" text="CURRENT BID"/>
+                        <Label fx:id="currentHighestBidValue" styleClass="price-val-blue" text="7,000,000$"/>
+                    </children>
+                </VBox>
+                <VBox fx:id="buyItNowVBox" spacing="5.0">
+                    <children>
+                        <Label styleClass="label-sm-gray" text="BUY IT NOW"/>
+                        <Label fx:id="maxPriceValue" styleClass="price-val-white" text="NO BUY IT NOW"/>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+
+        <VBox spacing="5.0">
+            <children>
+                <Label styleClass="label-sm-gray" text="ENDS IN"/>
+                <Label fx:id="endsInValue" styleClass="timer-val-glow" text="22h 12m"/>
+            </children>
+        </VBox>
+    </children>
+</VBox>

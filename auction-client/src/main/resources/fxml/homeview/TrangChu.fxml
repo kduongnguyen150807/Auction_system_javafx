@@ -14,26 +14,17 @@
 <?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.text.Font?>
 
+<?import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar?>
+<?import com.auction.client.ui.homeview.homeviewcomponent.TrendingBind?>
+<?import com.auction.client.ui.homeview.homeviewcomponent.ListPane?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.ui.TrangChu.TrangChuController"
+      fx:controller="com.auction.client.ui.homeview.controller.TrangChuController"
       fx:id="MainBackGround"
-      styleClass="trangchu-page" prefWidth="Infinity"
+      styleClass="trangchu-page"
       stylesheets="/css/trangchu/TrangChu.css">
     <children>
-        <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="catalog-auction-toolbar">
-            <children>
-                <Label styleClass="category-heading" text="Browse catalog" />
-                <HBox spacing="10.0" styleClass="segment-toggle-group">
-                    <children>
-                        <ToggleButton fx:id="tabEnglishAuctions" mnemonicParsing="false" prefHeight="40.0"
-                                    styleClass="catalog-auction-tab" text="English Auctions"/>
-                        <ToggleButton fx:id="tabDutchAuctions" mnemonicParsing="false" prefHeight="40.0"
-                                    styleClass="catalog-auction-tab" text="Dutch Auctions"/>
-                    </children>
-                </HBox>
-            </children>
-        </HBox>
+        <RedOrBlueToolbar fx:id="auctionTypeToggle" />
         <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="260.0" percentWidth="35.0"/>
@@ -61,11 +52,7 @@
                                 VBox.vgrow="ALWAYS">
                         <content>
                             <VBox spacing="20.0" alignment="TOP_CENTER" maxWidth="Infinity">
-                                <VBox fx:id="TrendingBind"
-                                      spacing="20.0"
-                                      styleClass="TrendingBind"
-                                      alignment="TOP_CENTER"
-                                      maxWidth="Infinity"/>
+                                <TrendingBind fx:id="trendingBind"/>
                                 <VBox spacing="15.0" styleClass="TrendingBind" alignment="TOP_CENTER" maxWidth="Infinity">
                                     <Label styleClass="TopLabel" text="Top Đại Gia" />
                                     <VBox fx:id="leaderboardcontainer" spacing="10.0" />
@@ -89,38 +76,7 @@
                           styleClass="col-categories"
                           maxWidth="Infinity">
                         <children>
-                            <VBox spacing="10.0" styleClass="category-block">
-                                <children>
-                                    <Label styleClass="category-heading" text="Art Lots"/>
-                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
-                                        <children>
-                                            <Button fx:id="categoryArtPrev"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselPrev"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
-                                                <children>
-                                                    <HBox fx:id="categoryArtRow" spacing="16.0" styleClass="category-row"/>
-                                                </children>
-                                            </HBox>
-                                            <Button fx:id="categoryArtNext"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselNext"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                        </children>
-                                    </HBox>
-                                </children>
-                            </VBox>
+                            <ListPane fx:id="artLots"/>
                             <VBox spacing="10.0" styleClass="category-block">
                                 <children>
                                     <Label styleClass="category-heading" text="Electronics Lots"/>

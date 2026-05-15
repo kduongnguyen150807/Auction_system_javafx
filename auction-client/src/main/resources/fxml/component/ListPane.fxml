@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.shape.SVGPath?>
+<fx:root type="VBox" xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml" stylesheets="@../../css/component/ListPane.css"
+         spacing="10.0" styleClass="category-block">
+    <children>
+        <Label fx:id="lotsName" styleClass="category-heading" text="Art Lots"/>
+        <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
+            <children>
+                <Button fx:id="prevButton"
+                        contentDisplay="GRAPHIC_ONLY"
+                        mnemonicParsing="false"
+                        onAction="#handlePrev"
+                        styleClass="carousel-nav-btn">
+                    <graphic>
+                        <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
+                    </graphic>
+                </Button>
+                <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
+                    <children>
+                        <HBox fx:id="listRow" spacing="16.0" styleClass="category-row" HBox.hgrow="ALWAYS"/>
+                    </children>
+                </HBox>
+                <Button fx:id="nextButton"
+                        contentDisplay="GRAPHIC_ONLY"
+                        mnemonicParsing="false"
+                        onAction="#handleNext"
+                        styleClass="carousel-nav-btn">
+                    <graphic>
+                        <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
+                    </graphic>
+                </Button>
+            </children>
+        </HBox>
+    </children>
+</fx:root>

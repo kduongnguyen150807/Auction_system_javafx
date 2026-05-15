@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" spacing="10"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.auction.client.ui.homeview.controller.iteminformation.ButtonLayoutController"
+            prefHeight="400.0" prefWidth="600.0" >
+    <children>
+        <Button fx:id="BidButton" maxWidth="Infinity" onAction="#showBiddingForm" prefHeight="60.0" styleClass="btn-bid-main" text="PLACE BID NOW" />
+
+        <HBox fx:id="autoBidHBox" spacing="10" alignment="CENTER">
+            <children>
+                <TextField fx:id="autobidfield" promptText="Max Auto-Bid $" styleClass="input-mac-blue" prefHeight="45.0" HBox.hgrow="ALWAYS" />
+                <Button fx:id="autobidbutton" onAction="#handleAutoBid" prefHeight="45.0" prefWidth="120.0" text="AUTO BID" styleClass="btn-rounded-gold-sm" />
+            </children>
+        </HBox>
+
+        <Button fx:id="RateButton" maxWidth="Infinity" onAction="#showRatingForm" prefHeight="50.0" text="RATE THIS TRANSACTION" visible="false" managed="false" styleClass="btn-rounded-gold-sm" />
+
+        <VBox fx:id="RatingsContainer" spacing="8.0" visible="false" managed="false">
+            <children>
+                <HBox spacing="12.0" alignment="CENTER_LEFT">
+                    <children>
+                        <Label text="RATINGS" styleClass="label-sm-gray" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="RatingFilterCombo" onAction="#handleRatingFilter" prefWidth="130" styleClass="combo-mac-sm" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</VBox>
