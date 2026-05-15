@@ -42,4 +42,12 @@ public class Response implements Serializable {
 
   public LocalDateTime getTimestamp() { return this.timestamp; }
   public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; } // Thêm Setter
+
+  public static Response error(String requestId, String message) {
+    return new Response(requestId, Response.ERROR, message, null);
+  }
+
+  public static Response success(String requestId, String message, Object payload) {
+    return new Response(requestId, Response.OK, message, payload);
+  }
 }
