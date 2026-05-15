@@ -9,6 +9,9 @@ public class LeaderboardEntry implements Serializable, Comparable<LeaderboardEnt
     private String avatarurl;
     private double score;
 
+    // BẮT BUỘC PHẢI CÓ CHO JACKSON
+    public LeaderboardEntry() {}
+
     public LeaderboardEntry(int userid, String username, String avatarurl, double score) {
         this.userid = userid;
         this.username = username;
@@ -16,29 +19,12 @@ public class LeaderboardEntry implements Serializable, Comparable<LeaderboardEnt
         this.score = score;
     }
 
-    public int getUserid() {
-        return userid;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getAvatarurl() {
-        return avatarurl;
-    }
-
-    public void setAvatarurl(String avatarurl) {
-        this.avatarurl = avatarurl;
-    }
-
-    public double getScore() {
-        return score;
-    }
-
-    public void setScore(double score) {
-        this.score = score;
-    }
+    public int getUserid() { return userid; }
+    public String getUsername() { return username; }
+    public String getAvatarurl() { return avatarurl; }
+    public void setAvatarurl(String avatarurl) { this.avatarurl = avatarurl; }
+    public double getScore() { return score; }
+    public void setScore(double score) { this.score = score; }
 
     @Override
     public int compareTo(LeaderboardEntry other) {

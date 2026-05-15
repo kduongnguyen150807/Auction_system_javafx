@@ -19,6 +19,7 @@ public class Request implements Serializable {
   public static final String UNLOCK_USER = "UNLOCK_USER";
   public static final String ADD_LOT = "ADD_LOT";
   public static final String GET_ONGOING_BIDS = "GET_ONGOING_BIDS";
+  public static final String GET_TRENDING_LOTS = "GET_TRENDING_LOTS";
   public static final String GET_UPCOMING_BIDS = "GET_UPCOMING_BIDS";
   public static final String SUBMIT_RATING = "SUBMIT_RATING";
   public static final String GET_RATINGS = "GET_RATINGS";
@@ -31,6 +32,9 @@ public class Request implements Serializable {
   public static final String GET_USER_BY_ID = "GET_USER_BY_ID";
   public static final String GET_ONGOING_LOTS = "GET_ONGOING_LOTS";
   public static final String GET_MY_ITEMS = "get_my_items";
+  public static final String GET_WATCHLIST = "GET_WATCHLIST";
+  public static final String TOGGLE_WATCHLIST = "TOGGLE_WATCHLIST";
+  public static final String GET_WATCHLIST_ITEMS = "GET_WATCHLIST_ITEMS";
   public static final String GET_CLOSED_BIDS = "getclosedbids";
   public static final String GET_PAST_BIDS = "getpastbids";
   public static final String DEPOSIT = "deposit";
@@ -54,10 +58,21 @@ public class Request implements Serializable {
   public static final String AUTOCOMPLETE = "AUTOCOMPLETE";
   public static final String RECONNECT = "RECONNECT";
 
+  // --- Tính năng Quên mật khẩu ---
+  public static final String FORGOT_PASSWORD_REQ = "FORGOT_PASSWORD_REQ";
+  public static final String FORGOT_PASSWORD_RESET = "FORGOT_PASSWORD_RESET";
+
+  // --- Tính năng Seller quản lý Item ---
+  public static final String SELLER_CANCEL_ITEM = "SELLER_CANCEL_ITEM";
+  public static final String SELLER_UPDATE_PENDING_ITEM = "SELLER_UPDATE_PENDING_ITEM";
+
   protected String requestId;
   protected String action;
   protected Object payload;
   protected LocalDateTime timestamp;
+
+  // BẮT BUỘC PHẢI CÓ CHO JACKSON
+  public Request() {}
 
   public Request(String action, Object payload) {
     this.requestId = UUID.randomUUID().toString();
@@ -66,19 +81,15 @@ public class Request implements Serializable {
     this.timestamp = LocalDateTime.now();
   }
 
-  public String getRequestId() {
-    return this.requestId;
-  }
+  public String getRequestId() { return this.requestId; }
+  public void setRequestId(String requestId) { this.requestId = requestId; }
 
-  public String getAction() {
-    return this.action;
-  }
+  public String getAction() { return this.action; }
+  public void setAction(String action) { this.action = action; }
 
-  public Object getPayload() {
-    return this.payload;
-  }
+  public Object getPayload() { return this.payload; }
+  public void setPayload(Object payload) { this.payload = payload; }
 
-  public LocalDateTime getTimestamp() {
-    return this.timestamp;
-  }
+  public LocalDateTime getTimestamp() { return this.timestamp; }
+  public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

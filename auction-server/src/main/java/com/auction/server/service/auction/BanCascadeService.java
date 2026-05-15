@@ -25,7 +25,7 @@ class BanCascadeService {
   private final AuctionManager manager;
 
   BanCascadeService(ItemDao itemDao, UserDao userDao, BidDao bidDao,
-      TransactionLogDao logDao, AuctionManager manager) {
+                    TransactionLogDao logDao, AuctionManager manager) {
     this.itemDao = itemDao;
     this.userDao = userDao;
     this.bidDao = bidDao;
@@ -35,7 +35,6 @@ class BanCascadeService {
 
   void handleBidderBan(int bidderId) {
     List<Integer> affected = bidDao.getOpenAuctionIdsForBidder(bidderId);
-    LOGGER.info("Bidder ban: user={} affectedOpenAuctions={}", bidderId, affected.size());
     for (int itemId : affected) {
       ReentrantLock lock = manager.getAuctionLock(itemId);
       lock.lock();
@@ -51,7 +50,6 @@ class BanCascadeService {
 
   void handleSellerBan(int sellerId) {
     List<Integer> affected = itemDao.getOpenAuctionIdsBySeller(sellerId);
-    LOGGER.info("Seller ban: user={} affectedOpenAuctions={}", sellerId, affected.size());
     for (int itemId : affected) {
       ReentrantLock lock = manager.getAuctionLock(itemId);
       lock.lock();
@@ -70,18 +68,20 @@ class BanCascadeService {
     runTransaction(conn -> {
       Item item = itemDao.getByIdTx(itemId, conn);
       if (item == null || item.getStatus() != ItemStatus.OPEN) return;
+
       int currentLeader = bidDao.getCurrentHighestBidderTx(itemId, conn);
       double escrow = item.getCurrentPrice();
       int deleted = bidDao.deleteBidsByUserOnItemTx(itemId, bidderId, conn);
-      LOGGER.info("Bidder ban: removed {} bid(s) on auction {} for user {}", deleted, itemId, bidderId);
+
       if (currentLeader == bidderId && deleted > 0) {
         userDao.creditBalanceTx(bidderId, escrow, conn);
         logDao.insertLogTx(bidderId, "BID_REFUND_BAN", escrow, itemId, conn);
+
         BidTransaction newLeader = bidDao.findHighestValidBidTx(itemId, conn);
         double newPrice = newLeader != null ? newLeader.getBidValue() : item.getStartingPrice();
-        itemDao.updatePriceTx(itemId, newPrice, conn);
-        LOGGER.info("Bidder ban: auction {} new leader={} new price={}", itemId,
-            newLeader != null ? newLeader.getUserId() : -1, newPrice);
+
+        // FIX: Thêm item.getVersion() vào đây
+        itemDao.updatePriceTx(itemId, newPrice, item.getVersion(), conn);
         refunded[0] = true;
       }
     });
@@ -93,36 +93,61 @@ class BanCascadeService {
 
   private void processSellerBan(int itemId) throws SQLException {
     int[] refundedBidder = {-1};
-    double[] refundedAmount = {0};
     runTransaction(conn -> {
       Item item = itemDao.getByIdTx(itemId, conn);
       if (item == null || item.getStatus() != ItemStatus.OPEN) return;
       int currentBidder = bidDao.getCurrentHighestBidderTx(itemId, conn);
-      if (!itemDao.cancelAuctionTx(itemId, conn)) {
-        LOGGER.warn("Seller ban: cancelAuctionTx returned false for item={}, may already be closed", itemId);
-        return;
-      }
+      if (!itemDao.cancelAuctionTx(itemId, conn)) return;
+
       if (currentBidder > 0) {
         double held = item.getCurrentPrice();
         userDao.creditBalanceTx(currentBidder, held, conn);
         logDao.insertLogTx(currentBidder, "BID_REFUND_SELLER_BAN", held, itemId, conn);
         refundedBidder[0] = currentBidder;
-        refundedAmount[0] = held;
       }
     });
     manager.cleanupAutoBids(itemId);
-    if (refundedBidder[0] > 0) {
-      manager.sendBalanceUpdateToUser(refundedBidder[0]);
-      LOGGER.info("Seller ban: auction {} CANCELED, refunded bidder={} amount={}", itemId, refundedBidder[0], refundedAmount[0]);
-    } else {
-      LOGGER.info("Seller ban: auction {} CANCELED, no active bidder to refund", itemId);
-    }
+    if (refundedBidder[0] > 0) manager.sendBalanceUpdateToUser(refundedBidder[0]);
     manager.broadcastItemClosed(itemId);
   }
 
-  @FunctionalInterface
-  private interface SqlOp {
-    void execute(Connection conn) throws SQLException;
+  /**
+   * Voluntary cancellation by the seller: OPEN → CANCELED, refund current high bidder escrow, cleanup
+   * queue/autobids. Caller must hold {@link AuctionManager#getAuctionLock}.
+   */
+  boolean voluntarySellerCancelOpen(int itemId, int sellerId) throws SQLException {
+    int[] refundedBidder = {-1};
+    boolean[] cancelled = {false};
+    runTransaction(
+        conn -> {
+          Item item = itemDao.getByIdTx(itemId, conn);
+          if (item == null
+              || item.getStatus() != ItemStatus.OPEN
+              || item.getSellerId() != sellerId) {
+            return;
+          }
+          int currentBidder = bidDao.getCurrentHighestBidderTx(itemId, conn);
+          if (!itemDao.cancelAuctionTx(itemId, conn)) {
+            return;
+          }
+          cancelled[0] = true;
+          if (currentBidder > 0) {
+            double held = item.getCurrentPrice();
+            userDao.creditBalanceTx(currentBidder, held, conn);
+            logDao.insertLogTx(currentBidder, "BID_REFUND_SELLER_CANCEL", held, itemId, conn);
+            refundedBidder[0] = currentBidder;
+          }
+        });
+    if (!cancelled[0]) {
+      return false;
+    }
+    manager.cleanupAutoBids(itemId);
+    SettlementService.getInstance().unschedule(itemId);
+    if (refundedBidder[0] > 0) {
+      manager.sendBalanceUpdateToUser(refundedBidder[0]);
+    }
+    manager.broadcastItemClosed(itemId);
+    return true;
   }
 
   private void runTransaction(SqlOp op) throws SQLException {
@@ -130,16 +155,19 @@ class BanCascadeService {
     if (conn == null) throw new SQLException("No database connection available");
     try {
       conn.setAutoCommit(false);
-      try {
-        op.execute(conn);
-        conn.commit();
-      } catch (SQLException e) {
-        conn.rollback();
-        throw e;
-      }
+      op.execute(conn);
+      conn.commit();
+    } catch (SQLException e) {
+      conn.rollback();
+      throw e;
     } finally {
-      try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
-      try { conn.close(); } catch (SQLException ignored) {}
+      conn.setAutoCommit(true);
+      conn.close();
     }
+  }
+
+  @FunctionalInterface
+  private interface SqlOp {
+    void execute(Connection conn) throws SQLException;
   }
 }

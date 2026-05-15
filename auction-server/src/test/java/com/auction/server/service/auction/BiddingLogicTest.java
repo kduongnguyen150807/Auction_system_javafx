@@ -97,6 +97,26 @@ public class BiddingLogicTest extends AbstractAuctionManagerMockingTest {
   }
 
   @Test
+  @DisplayName("Bid on OPEN but upcoming auction (before start time) is rejected")
+  void bid_onUpcomingAuction_rejected() throws SQLException {
+    Item item = openItem(91, 500.0);
+    item.setStartTime(LocalDateTime.now().plusDays(2));
+    Bidder bidder = verifiedBidder(10, 10_000.0);
+
+    when(userDao.getById("10")).thenReturn(bidder);
+    when(itemDao.getById(91)).thenReturn(item);
+
+    BidTransaction bid = new BidTransaction(91, 10, 700.0);
+    Response response = manager.processBid(bid);
+
+    assertEquals(Response.ERROR, response.getStatus());
+    assertTrue(
+        response.getMessage().contains("auction_not_started"),
+        "Must reject bids before auction startTime");
+    verify(bidDao, never()).placeBidTx(any(), any());
+  }
+
+  @Test
   @DisplayName("Bid on CLOSED auction is rejected")
   void bid_onClosedAuction_rejected() {
     Item item = openItem(4, 500.0);

@@ -1,5 +1,6 @@
 package com.auction.client.ui.ItemCard;
 
+import com.auction.client.ClientSession;
 import com.auction.client.app.NodeContentLoader;
 import com.auction.client.app.NodeManager;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
@@ -8,15 +9,20 @@ import com.auction.shared.AuctionType;
 import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;
+import com.auction.shared.Request;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -33,6 +39,13 @@ public class ItemCardController {
   @FXML private Label priceMetricCaption;
   @FXML private ImageView ImageHolder;
   @FXML private Rectangle imageClip;
+
+  @FXML private HBox sellerActionsRow;
+  @FXML private Button btnEditMyItem;
+  @FXML private Button btnDeleteMyItem;
+
+  // Nút thả tim Watchlist
+  @FXML private Label heartIcon;
 
   private int id;
   private String itemname, description, timelabel, imageurl, sellername, selleravatarurl;
@@ -104,6 +117,9 @@ public class ItemCardController {
     }
     loadimageifpresent(this.imageurl);
     refreshpricemetriccaption();
+
+    // Kích hoạt UI thả tim
+    setupWatchlistUI();
   }
 
   private void refreshpricemetriccaption() {
@@ -112,6 +128,48 @@ public class ItemCardController {
     }
     boolean dutch = catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH;
     priceMetricCaption.setText(dutch ? "CURRENT PRICE" : "CURRENT BID");
+  }
+
+  /** Optional actions for seller "My Items" view. */
+  public void configureSellerItemActions(boolean showEdit, Runnable onEdit, boolean showCancel, Runnable onCancel) {
+    if (sellerActionsRow == null) {
+      return;
+    }
+    boolean any = showEdit || showCancel;
+    sellerActionsRow.setVisible(any);
+    sellerActionsRow.setManaged(any);
+    if (btnEditMyItem != null) {
+      btnEditMyItem.setVisible(showEdit);
+      btnEditMyItem.setManaged(showEdit);
+      btnEditMyItem.setOnAction(
+              ev -> {
+                ev.consume();
+                if (onEdit != null) onEdit.run();
+              });
+    }
+    if (btnDeleteMyItem != null) {
+      btnDeleteMyItem.setVisible(showCancel);
+      btnDeleteMyItem.setManaged(showCancel);
+      btnDeleteMyItem.setOnAction(
+              ev -> {
+                ev.consume();
+                if (onCancel != null) onCancel.run();
+              });
+    }
+  }
+
+  private boolean isTargetUnderSellerActions(Node target) {
+    if (sellerActionsRow == null || !sellerActionsRow.isVisible()) {
+      return false;
+    }
+    Node n = target;
+    while (n != null) {
+      if (n == sellerActionsRow) {
+        return true;
+      }
+      n = n.getParent();
+    }
+    return false;
   }
 
   private void loadimageifpresent(String url) {
@@ -236,20 +294,68 @@ public class ItemCardController {
     }
   }
 
-  public void handleItemClicked() {
+  public void handleItemClicked(MouseEvent e) {
+    if (e != null && e.getTarget() instanceof Node node && isTargetUnderSellerActions(node)) {
+      return;
+    }
+    // Ngăn click xuyên nếu bấm vào nút thả tim
+    if (e != null && e.getTarget() == heartIcon) {
+      return;
+    }
     try {
       NodeContentLoader<ScrollPane> detailloader = new NodeContentLoader<>();
       detailloader.load("/fxml/iteminformation/ItemInformation.fxml");
       ItemInformationController detailcontroller = detailloader.getController();
       if (detailcontroller != null) {
         ItemStatus status = catalogitemsnapshot != null ? catalogitemsnapshot.getStatus() : ItemStatus.OPEN;
-        detailcontroller.setData(id, itemname, currentprice, 0, description, timelabel, imageurl, sellername, selleravatarurl, status);
+        LocalDateTime start =
+                catalogitemsnapshot != null ? catalogitemsnapshot.getStartTime() : null;
+        detailcontroller.setData(id, itemname, currentprice, 0, description, timelabel, imageurl,
+                sellername, selleravatarurl, status, start);
         detailcontroller.refresh();
         KhungController.itemDetailController = detailcontroller;
       }
       NodeManager.switchNodewithNode(detailloader.getCurrentNode(), KhungController.getCurrentNode(), KhungController.getMainContentPane());
       KhungController.setMainContentNode(detailloader.getCurrentNode());
-    } catch (Exception e) {
+    } catch (Exception ex) {
     }
+  }
+
+  // --- LOGIC WATCHLIST ---
+  private void setupWatchlistUI() {
+    if (heartIcon == null || ClientSession.getCurrentUser() == null) return;
+
+    boolean isWatched = ClientSession.isWatching(this.id);
+    setHeartUI(isWatched);
+
+    heartIcon.setOnMouseClicked(e -> {
+      e.consume();
+      boolean newState = !ClientSession.isWatching(this.id);
+
+      // 1. Cập nhật RAM
+      ClientSession.toggleWatch(this.id, newState);
+
+      // 2. Báo cho KhungController đồng bộ TẤT CẢ các thẻ trên màn hình
+      KhungController.notifyWatchlistToggle(this.id, newState);
+
+      // 3. Bắn request ngầm xuống Server
+      new Thread(() -> {
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("itemId", this.id);
+        payload.put("isWatching", newState);
+        com.auction.client.network.NetworkClient.getInstance()
+                .sendRequestAndWait(new Request(Request.TOGGLE_WATCHLIST, payload));
+      }).start();
+    });
+  }
+
+  // Đổi thành public để các Controller khác có thể gọi vào
+  public void setHeartUI(boolean isWatched) {
+    if (heartIcon == null) return;
+    Platform.runLater(() -> {
+      heartIcon.setText(isWatched ? "❤" : "♡");
+      heartIcon.setStyle(isWatched ? "-fx-text-fill: #ff2a6d; -fx-font-size: 24px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 5, 0, 0, 2);"
+              : "-fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 5, 0, 0, 2);");
+    });
   }
 }

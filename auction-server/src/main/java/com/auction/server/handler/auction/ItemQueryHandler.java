@@ -45,8 +45,12 @@ public class ItemQueryHandler implements ActionHandler {
         boolean ans1 = context.getItemDao().approveItem(approveid);
         if (ans1) {
           Item res = context.getItemDao().getById(approveid);
-          if (res != null && res.getEndTime() != null) {
-            SettlementService.getInstance().schedule(approveid, res.getEndTime());
+          if (res != null) {
+            if (res.getEndTime() != null) {
+              SettlementService.getInstance().schedule(approveid, res.getEndTime());
+            }
+            // TÍNH NĂNG 5: CẬP NHẬT CÂY TRIE NGAY KHI ADMIN DUYỆT SẢN PHẨM
+            com.auction.server.service.auction.TrieManager.getInstance().insertNewItem(res.getName());
           }
         }
         Response res4 = new Response(

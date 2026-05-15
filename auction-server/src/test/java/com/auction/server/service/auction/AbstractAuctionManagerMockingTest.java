@@ -2,6 +2,7 @@ package com.auction.server.service.auction;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -24,12 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-/**
- * English bidding uses {@link DatabaseConnection#getConnection()} and {@link
- * AuctionManager#getInstance()} alongside DAO mocks. Without bytecode static mocking (which breaks
- * DAO subclasses on Java 25), tests substitute a fake pool returning {@link #jdbcConn} and bind the
- * constructed {@link AuctionManager} into the static singleton field used by the bid pipeline.
- */
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractAuctionManagerMockingTest {
 
@@ -52,7 +47,6 @@ public abstract class AbstractAuctionManagerMockingTest {
     AuctionManager.resetForTest();
   }
 
-  /** Required so {@link AuctionBidPipeline} sees the same mocked DAOs via {@link AuctionManager#getInstance()}. */
   protected final void bindAuctionManagerSingleton(AuctionManager manager) {
     try {
       AuctionManager.resetForTest();
@@ -93,18 +87,20 @@ public abstract class AbstractAuctionManagerMockingTest {
     }
   }
 
-  /** Stubs the transactional English-auction path used by {@link AuctionBidPipeline}. */
   protected void stubSuccessfulEnglishBid(int itemId, int bidderId, double bidAmount, int prevHighestBidderId) {
     try {
       when(userDao.deductBalanceTx(eq(bidderId), eq(bidAmount), eq(jdbcConn))).thenReturn(true);
       when(logDao.insertLogTx(eq(bidderId), eq("BID_HOLD"), eq(-bidAmount), eq(itemId), eq(jdbcConn))).thenReturn(true);
       when(bidDao.getCurrentHighestBidderTx(eq(itemId), eq(jdbcConn))).thenReturn(prevHighestBidderId);
       lenient().when(bidDao.placeBidTx(any(BidTransaction.class), eq(jdbcConn))).thenReturn(true);
-      when(itemDao.updatePriceTx(eq(itemId), eq(bidAmount), eq(jdbcConn))).thenReturn(true);
+
+      // FIX: Thêm anyInt() cho tham số version của Optimistic Locking
+      when(itemDao.updatePriceTx(eq(itemId), eq(bidAmount), anyInt(), eq(jdbcConn))).thenReturn(true);
+
       if (prevHighestBidderId > 0) {
         when(userDao.creditBalanceTx(eq(prevHighestBidderId), anyDouble(), eq(jdbcConn))).thenReturn(true);
         when(logDao.insertLogTx(eq(prevHighestBidderId), eq("BID_REFUND"), anyDouble(), eq(itemId), eq(jdbcConn)))
-            .thenReturn(true);
+                .thenReturn(true);
       }
     } catch (SQLException e) {
       throw new AssertionError(e);

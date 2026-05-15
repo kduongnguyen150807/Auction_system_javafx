@@ -51,7 +51,24 @@ public final class ClientSession {
     currentUser = null;
     activeRole = null;
   }
+  // Cache lưu trữ ID các item đang theo dõi (O(1) lookup)
+  private static final java.util.Set<Integer> watchedItemIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
+  public static boolean isWatching(int itemId) {
+    return watchedItemIds.contains(itemId);
+  }
+
+  public static void toggleWatch(int itemId, boolean isWatching) {
+    if (isWatching) watchedItemIds.add(itemId);
+    else watchedItemIds.remove(itemId);
+  }
+
+  public static void setWatchlist(java.util.List<Integer> ids) {
+    watchedItemIds.clear();
+    if (ids != null) watchedItemIds.addAll(ids);
+  }
+
+  // Nhớ thêm watchedItemIds.clear(); vào trong hàm clear() (lúc logout)
   private static String safe(String value) {
     return value == null ? "" : value;
   }

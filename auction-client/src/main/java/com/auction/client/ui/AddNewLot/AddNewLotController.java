@@ -3,6 +3,9 @@ package com.auction.client.ui.AddNewLot;
 import com.auction.client.ClientSession;
 import com.auction.client.service.LotSubmissionService;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.AuctionType;
+import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
 import com.auction.shared.Response;
 import java.io.File;
 import java.net.URI;
@@ -30,6 +33,8 @@ import javafx.stage.FileChooser;
 public class AddNewLotController {
   @FXML private ImageView productImageView;
   @FXML private Label lblStatus;
+  @FXML private Label formTitleLabel;
+  @FXML private Button confirmSubmitButton;
   @FXML private TextField txtName, txtPrice, txtMaxPrice;
   @FXML private TextField txtDutchReservePrice, txtDutchDecrement, txtDutchIntervalMinutes;
   @FXML private TextArea txtQuantity;
@@ -47,10 +52,124 @@ public class AddNewLotController {
   private static AddNewLotController live;
   private static final String DEFAULT_CATEGORY = "Vehicle";
   private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
+  private Integer editingItemId;
 
   private ToggleGroup auctionKindGroup;
 
-  public static void resetWhenOpening() { if (live != null) live.clearForm(); }
+  public static void resetWhenOpening() {
+    if (live != null) live.clearForm();
+  }
+
+  public void openForEdit(Item item) {
+    if (item == null) {
+      return;
+    }
+    resetFormFieldsKeepGen();
+    editingItemId = item.getId();
+    applyEditModeTitles(item);
+    populateFromExistingItem(item);
+    lblStatus.setText("");
+  }
+
+  private void resetFormFieldsKeepGen() {
+    uploadUiGen.incrementAndGet();
+    txtName.clear();
+    txtPrice.clear();
+    txtMaxPrice.clear();
+    if (txtDutchReservePrice != null) txtDutchReservePrice.clear();
+    if (txtDutchDecrement != null) txtDutchDecrement.clear();
+    if (txtDutchIntervalMinutes != null) txtDutchIntervalMinutes.clear();
+    txtQuantity.clear();
+    startDatePicker.setValue(LocalDate.now());
+    startHourCombo.setValue(0);
+    startMinuteCombo.setValue(0);
+    startSecondCombo.setValue(0);
+    endDatePicker.setValue(LocalDate.now().plusDays(1));
+    endHourCombo.setValue(23);
+    endMinuteCombo.setValue(59);
+    endSecondCombo.setValue(0);
+    classifyComboBox.getSelectionModel().clearSelection();
+    classifyComboBox.setValue(null);
+    classifyComboBox.setPromptText("CATEGORY");
+    lblStatus.setText("");
+    lotimageurl = "";
+    if (kindEnglishToggle != null) kindEnglishToggle.setSelected(true);
+    refreshAuctionKindPanels();
+    java.net.URL hutao = getClass().getResource("/images/Hutao.png");
+    productImageView.setImage(hutao != null ? new Image(hutao.toExternalForm(), false) : null);
+  }
+
+  private void populateFromExistingItem(Item item) {
+    txtName.setText(item.getName() != null ? item.getName() : "");
+    txtQuantity.setText(item.getDescription() != null ? item.getDescription() : "");
+    txtPrice.setText(Double.toString(item.getStartingPrice()));
+    AuctionType type = item.getAuctionType();
+    if (kindDutchToggle != null && type == AuctionType.DUTCH) {
+      kindDutchToggle.setSelected(true);
+      if (txtDutchReservePrice != null)
+        txtDutchReservePrice.setText(String.valueOf(item.getDutchReservePrice()));
+      if (txtDutchDecrement != null)
+        txtDutchDecrement.setText(String.valueOf(item.getDutchTickAmount()));
+      if (txtDutchIntervalMinutes != null)
+        txtDutchIntervalMinutes.setText(String.valueOf(item.getDutchTickIntervalMinutes()));
+    } else if (kindEnglishToggle != null) {
+      kindEnglishToggle.setSelected(true);
+      double mx = item.getMaxPrice();
+      txtMaxPrice.setText(mx > 0 ? Double.toString(mx) : "");
+    }
+    refreshAuctionKindPanels();
+
+    LocalDateTime st = item.getStartTime();
+    if (st != null) {
+      startDatePicker.setValue(st.toLocalDate());
+      startHourCombo.setValue(st.getHour());
+      startMinuteCombo.setValue(st.getMinute());
+      startSecondCombo.setValue(st.getSecond());
+    }
+    LocalDateTime et = item.getEndTime();
+    if (et != null) {
+      endDatePicker.setValue(et.toLocalDate());
+      endHourCombo.setValue(et.getHour());
+      endMinuteCombo.setValue(et.getMinute());
+      endSecondCombo.setValue(et.getSecond());
+    }
+
+    String cat = item.getCategory();
+    if (cat != null && !cat.isBlank()) {
+      if (!classifyComboBox.getItems().contains(cat)) {
+        classifyComboBox.getItems().add(cat);
+      }
+      classifyComboBox.setValue(cat);
+    }
+
+    lotimageurl = item.getImageUrl() != null ? item.getImageUrl() : "";
+    if (!lotimageurl.isBlank()) {
+      productImageView.setImage(new Image(lotimageurl, true));
+    }
+  }
+
+  private void applyAddModeTitles() {
+    if (formTitleLabel != null) {
+      formTitleLabel.setText("ADD NEW ITEM");
+    }
+    if (confirmSubmitButton != null) {
+      confirmSubmitButton.setText("CONFIRM UPLOAD");
+    }
+  }
+
+  private void applyEditModeTitles(Item item) {
+    boolean openBeforeStart =
+        item != null
+            && item.getStatus() == ItemStatus.OPEN
+            && item.getStartTime() != null
+            && item.getStartTime().isAfter(LocalDateTime.now());
+    if (formTitleLabel != null) {
+      formTitleLabel.setText(openBeforeStart ? "EDIT (BEFORE START)" : "EDIT PENDING ITEM");
+    }
+    if (confirmSubmitButton != null) {
+      confirmSubmitButton.setText("SAVE CHANGES");
+    }
+  }
 
   @FXML
   public void initialize() {
@@ -83,6 +202,7 @@ public class AddNewLotController {
           .addListener((obs, oldToggle, newToggle) -> refreshAuctionKindPanels());
       refreshAuctionKindPanels();
     }
+    applyAddModeTitles();
   }
 
   private void refreshAuctionKindPanels() {
@@ -181,6 +301,7 @@ public class AddNewLotController {
       }
     }
     String finalStart = startNorm, finalEnd = endNorm;
+    Integer editCopy = editingItemId;
     new Thread(() -> {
       try {
         Map<String, String> data = new HashMap<>();
@@ -200,9 +321,30 @@ public class AddNewLotController {
         } else {
           data.put("maxprice", maxPriceText.isEmpty() ? "0" : maxPriceText);
         }
-        data.put("description", desc); data.put("starttime", finalStart); data.put("endtime", finalEnd);
-        data.put("category", category); data.put("sellerusername", ClientSession.getUsername());
+        data.put("description", desc);
+        data.put("starttime", finalStart);
+        data.put("endtime", finalEnd);
+        data.put("category", category);
         data.put("imageurl", lotimageurl);
+
+        if (editCopy != null) {
+          data.put("itemid", String.valueOf(editCopy));
+          Response res = lotSubmissionService.updatePendingLot(data);
+          Platform.runLater(
+              () -> {
+                if (res != null && Response.OK.equals(res.getStatus())) {
+                  showAlert(
+                      Alert.AlertType.INFORMATION,
+                      "Đã lưu",
+                      "Đã cập nhật sản phẩm chờ duyệt.");
+                  KhungController.returnFromLotEditor(true);
+                  clearForm();
+                } else lblStatus.setText(res != null ? res.getMessage() : "fail");
+              });
+          return;
+        }
+
+        data.put("sellerusername", ClientSession.getUsername());
         Response res = lotSubmissionService.submitLot(data);
         Platform.runLater(() -> {
           if (res != null && Response.OK.equals(res.getStatus())) {
@@ -210,11 +352,22 @@ public class AddNewLotController {
             KhungController.returnFromAddLot(true); clearForm();
           } else lblStatus.setText(res != null ? res.getMessage() : "fail");
         });
-      } catch (Exception ex) { Platform.runLater(() -> lblStatus.setText("error")); }
+      } catch (Exception ex) {
+        Platform.runLater(() -> lblStatus.setText("error"));
+      }
     }).start();
   }
 
-  @FXML public void handleCancel(ActionEvent e) { KhungController.returnFromAddLot(false); clearForm(); }
+  @FXML
+  public void handleCancel(ActionEvent e) {
+    boolean editing = editingItemId != null;
+    if (editing) {
+      KhungController.returnFromLotEditor(false);
+    } else {
+      KhungController.returnFromAddLot(false);
+    }
+    clearForm();
+  }
 
   private boolean anyNull(Object... values) {
     for (Object v : values) if (v == null) return true;
@@ -225,27 +378,10 @@ public class AddNewLotController {
     Alert a = new Alert(type); a.setTitle(title); a.setHeaderText(null); a.setContentText(msg); a.showAndWait();
   }
 
-  private void clearForm() {
-    uploadUiGen.incrementAndGet();
-    txtName.clear();
-    txtPrice.clear();
-    txtMaxPrice.clear();
-    if (txtDutchReservePrice != null) txtDutchReservePrice.clear();
-    if (txtDutchDecrement != null) txtDutchDecrement.clear();
-    if (txtDutchIntervalMinutes != null) txtDutchIntervalMinutes.clear();
-    txtQuantity.clear();
-    startDatePicker.setValue(LocalDate.now()); startHourCombo.setValue(0);
-    startMinuteCombo.setValue(0); startSecondCombo.setValue(0);
-    endDatePicker.setValue(LocalDate.now().plusDays(1)); endHourCombo.setValue(23);
-    endMinuteCombo.setValue(59); endSecondCombo.setValue(0);
-    classifyComboBox.getSelectionModel().clearSelection(); classifyComboBox.setValue(null);
-    classifyComboBox.setPromptText("CATEGORY");
-    lblStatus.setText("");
-    lotimageurl = "";
-    if (kindEnglishToggle != null) kindEnglishToggle.setSelected(true);
-    refreshAuctionKindPanels();
-    java.net.URL hutao = getClass().getResource("/images/Hutao.png");
-    productImageView.setImage(hutao != null ? new Image(hutao.toExternalForm(), false) : null);
+  public void clearForm() {
+    resetFormFieldsKeepGen();
+    editingItemId = null;
+    applyAddModeTitles();
   }
 
   private String buildDateTime(LocalDate date, Integer h, Integer m, Integer s) {

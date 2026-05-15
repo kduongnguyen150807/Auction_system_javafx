@@ -2,7 +2,6 @@ package com.auction.server.handler.user;
 
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
-
 import com.auction.server.dao.user.UserDao;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -15,6 +14,11 @@ public class DepositHandler implements ActionHandler {
     Map<String, String> data = (Map<String, String>) request.getPayload();
     int userId = Integer.parseInt(data.get("userid"));
     double amount = Double.parseDouble(data.get("amount"));
+
+    // CHẶN NẠP TIỀN ÂM
+    if (amount <= 0) {
+      return new Response(request.getRequestId(), Response.ERROR, "Số tiền nạp phải lớn hơn 0!", null);
+    }
 
     UserDao userDao = new UserDao();
     if (userDao.atomicCreditBalance(userId, amount)) {

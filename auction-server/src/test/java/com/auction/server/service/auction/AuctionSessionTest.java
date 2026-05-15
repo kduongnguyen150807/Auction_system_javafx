@@ -23,6 +23,7 @@ public class AuctionSessionTest extends AbstractAuctionManagerMockingTest {
     item.setStartingPrice(startingPrice);
     item.setCurrentPrice(startingPrice);
     item.setStatus(ItemStatus.OPEN);
+    item.setStartTime(LocalDateTime.now().minusMinutes(30));
     item.setEndTime(LocalDateTime.now().plusHours(2));
     return item;
   }
@@ -119,6 +120,23 @@ public class AuctionSessionTest extends AbstractAuctionManagerMockingTest {
     assertEquals(Response.ERROR, response.getStatus());
     assertTrue(response.getMessage().toLowerCase().contains("ended") || response.getMessage().toLowerCase().contains("open"),
         "Error must mention auction ended or no longer open");
+  }
+
+  @Test
+  @DisplayName("Upcoming OPEN auction (before startTime) rejects bids")
+  void upcomingOpenAuction_rejectsBid() {
+    Item item = openItem(7, 99, 100.0);
+    item.setStartTime(LocalDateTime.now().plusDays(1));
+    Bidder bidder = validBidder(10);
+
+    when(userDao.getById("10")).thenReturn(bidder);
+    when(itemDao.getById(7)).thenReturn(item);
+
+    BidTransaction bid = new BidTransaction(7, 10, 200.0);
+    Response response = manager.processBid(bid);
+
+    assertEquals(Response.ERROR, response.getStatus());
+    assertEquals("auction_not_started", response.getMessage());
   }
 
   @Test

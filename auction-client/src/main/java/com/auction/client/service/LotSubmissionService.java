@@ -17,6 +17,20 @@ public class LotSubmissionService {
     return NetworkClient.getInstance().sendRequestAndWait(request);
   }
 
+  /** Updates a seller-owned listing before it goes live ({@code PENDING} or upcoming {@code OPEN}). */
+  public Response updatePendingLot(Map<String, String> lotData) {
+    Request request = new Request(Request.SELLER_UPDATE_PENDING_ITEM, (Serializable) lotData);
+    return NetworkClient.getInstance().sendRequestAndWait(request);
+  }
+
+  /** Cancels PENDING or OPEN listing owned by the seller. */
+  public Response cancelSellerItem(int itemId) {
+    Request request =
+        new Request(
+            Request.SELLER_CANCEL_ITEM, (Serializable) java.util.Map.of("itemid", String.valueOf(itemId)));
+    return NetworkClient.getInstance().sendRequestAndWait(request);
+  }
+
   public String uploadImage(String uploadUrl, byte[] imageBytes) {
     try {
       return NetworkClient.uploadFile(uploadUrl, imageBytes);
