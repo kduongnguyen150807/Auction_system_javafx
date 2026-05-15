@@ -12,6 +12,8 @@ import java.util.Map;
 public class UserAccountService {
 
   public boolean deposit(int userId, double amount) {
+    if (amount <= 0) return false;
+
     Map<String, String> data = new HashMap<>();
     data.put("userid", String.valueOf(userId));
     data.put("amount", String.valueOf(amount));
