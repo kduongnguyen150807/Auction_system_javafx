@@ -302,137 +302,6 @@ public class NodeContentLoader<T extends Node> {
 }
 </file>
 
-<file path="auction-client/src/main/java/com/auction/client/ui/Watchlist/WatchlistController.java">
-package com.auction.client.ui.Watchlist;
-
-import com.auction.client.ClientSession;
-import com.auction.client.app.NodeContentLoader;
-import com.auction.client.network.NetworkClient;
-import com.auction.client.ui.ItemCard.ItemCardController;
-import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javafx.application.Platform;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
-
-public class WatchlistController {
-    @FXML private FlowPane ItemContainer;
-
-    private final Map<Integer, ItemCardController> cardMap = new HashMap<>();
-    private final Map<Integer, Node> cardRootByItemId = new HashMap<>();
-
-    @FXML
-    void initialize() {
-        refreshItems();
-    }
-
-    @FXML
-    public void refreshItems() {
-        if (ClientSession.getCurrentUser() == null) return;
-        int userId = ClientSession.getCurrentUser().getId();
-
-        new Thread(() -> {
-            try {
-                Request request = new Request(Request.GET_WATCHLIST_ITEMS, userId);
-                Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-
-                if (response != null && Response.OK.equals(response.getStatus())) {
-                    List<Item> items = (List<Item>) response.getPayload();
-                    Platform.runLater(() -> render(items));
-                }
-            } catch (Exception ignored) {}
-        }).start();
-    }
-
-    public void updateWatchlistUi(int itemId, boolean isWatched) {
-        ItemCardController c = cardMap.get(itemId);
-        if (c != null) c.setHeartUI(isWatched);
-    }
-
-    private void render(List<Item> items) {
-        if (ItemContainer == null) return;
-        if (items == null) items = List.of();
-        incrementalRender(items);
-    }
-
-    private void incrementalRender(List<Item> visible) {
-        FlowPane pane = ItemContainer;
-        Map<Integer, ItemCardController> cards = cardMap;
-        Map<Integer, Node> rootByItemId = cardRootByItemId;
-
-        if (visible.isEmpty()) {
-            for (Node n : new ArrayList<>(rootByItemId.values())) pane.getChildren().remove(n);
-            cards.clear(); rootByItemId.clear(); pane.getChildren().clear();
-            Label empty = new Label("Bạn chưa theo dõi sản phẩm nào.");
-            empty.setStyle("-fx-text-fill: #888; -fx-font-size: 16px;");
-            pane.getChildren().add(empty);
-            return;
-        }
-
-        pane.getChildren().removeIf(n -> n instanceof Label); // Xóa chữ empty
-        Set<Integer> desiredIds = new HashSet<>(visible.size() * 2);
-        for (Item it : visible) desiredIds.add(it.getId());
-
-        for (int id : new ArrayList<>(cards.keySet())) {
-            if (!desiredIds.contains(id)) {
-                cards.remove(id);
-                Node removed = rootByItemId.remove(id);
-                if (removed != null) pane.getChildren().remove(removed);
-            }
-        }
-
-        for (Item item : visible) {
-            ItemCardController card = cards.get(item.getId());
-            String caption = item.getStatus() == ItemStatus.OPEN ? "Đang mở" : item.getStatus().name();
-            if (card != null) {
-                card.syncFromCatalogItemStaticTime(item, caption);
-                card.attachCatalogItem(item);
-            } else {
-                try {
-                    NodeContentLoader<VBox> cardLoader = new NodeContentLoader<>();
-                    cardLoader.load("/fxml/itemcard/ItemCard.fxml");
-                    ItemCardController newCard = cardLoader.getController();
-                    VBox root = cardLoader.getCurrentNode();
-                    if (newCard != null && root != null) {
-                        newCard.setData(item.getId(), item.getName() != null ? item.getName() : "", item.getCurrentPrice(), item.getDescription() != null ? item.getDescription() : "", caption, item.getImageUrl() != null ? item.getImageUrl() : "", item.getSellerUsername() != null ? item.getSellerUsername() : "", item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "");
-                        newCard.setEndTime(null);
-                        newCard.attachCatalogItem(item);
-                        cards.put(item.getId(), newCard);
-                        rootByItemId.put(item.getId(), root);
-                    }
-                } catch (Exception ignored) {}
-            }
-        }
-
-        List<Node> orderedNodes = new ArrayList<>(visible.size());
-        for (Item item : visible) {
-            Node n = rootByItemId.get(item.getId());
-            if (n != null) orderedNodes.add(n);
-        }
-        ObservableList<Node> children = pane.getChildren();
-        boolean sameOrder = children.size() == orderedNodes.size();
-        if (sameOrder) {
-            for (int i = 0; i < orderedNodes.size(); i++) {
-                if (children.get(i) != orderedNodes.get(i)) { sameOrder = false; break; }
-            }
-        }
-        if (!sameOrder) children.setAll(orderedNodes);
-    }
-}
-</file>
-
 <file path="auction-client/src/main/resources/css/AddNewLot.css">
 .BackGroundNewLot{
     -fx-background-color: #191919;
@@ -504,123 +373,6 @@ public class WatchlistController {
 
 .main-container {
     -fx-background-color: -color-bg;
-}
-</file>
-
-<file path="auction-client/src/main/resources/fxml/watchlist/Watchlist.fxml">
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.VBox?>
-
-<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane" stylesheets="@/css/youritem/YourItem.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.Watchlist.WatchlistController">
-    <content>
-        <VBox alignment="TOP_CENTER" style="-fx-background-color: transparent;">
-            <children>
-                <VBox maxWidth="1000.0" spacing="30.0" styleClass="glass-panel-item">
-                    <children>
-                        <HBox alignment="CENTER_LEFT" spacing="20.0">
-                            <children>
-                                <VBox spacing="5.0">
-                                    <children>
-                                        <Label styleClass="Bigtext" text="❤ My Watchlist" />
-                                        <Label styleClass="Smalltext" text="Danh sách các sản phẩm bạn đang theo dõi" />
-                                    </children>
-                                </VBox>
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Button mnemonicParsing="false" onAction="#refreshItems" styleClass="btn-refresh" text="Làm mới" />
-                            </children>
-                        </HBox>
-                        <VBox spacing="15.0">
-                            <children>
-                                <FlowPane fx:id="ItemContainer" hgap="20.0" vgap="20.0" />
-                            </children>
-                        </VBox>
-                    </children>
-                    <VBox.margin>
-                        <Insets bottom="40.0" top="40.0" />
-                    </VBox.margin>
-                </VBox>
-            </children>
-        </VBox>
-    </content>
-</ScrollPane>
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/dao/user/WatchlistDao.java">
-package com.auction.server.dao.user;
-
-import com.auction.server.dao.platform.BaseDao;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
-public class WatchlistDao extends BaseDao<Integer> {
-
-    @Override
-    protected Integer mapRow(ResultSet rs) throws SQLException {
-        return rs.getInt("item_id");
-    }
-
-    // Lấy toàn bộ ID sản phẩm mà user đang theo dõi
-    public List<Integer> getUserWatchlist(int userId) {
-        return queryList("SELECT item_id FROM watchlists WHERE user_id = ?", userId);
-    }
-
-    // Bật/Tắt theo dõi
-    public boolean toggleWatchlist(int userId, int itemId, boolean isWatching) {
-        if (isWatching) {
-            return executeUpdate("INSERT IGNORE INTO watchlists (user_id, item_id) VALUES (?, ?)", userId, itemId);
-        } else {
-            return executeUpdate("DELETE FROM watchlists WHERE user_id = ? AND item_id = ?", userId, itemId);
-        }
-    }
-}
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/handler/user/WatchlistHandler.java">
-package com.auction.server.handler.user;
-
-import com.auction.server.dao.user.WatchlistDao;
-import com.auction.server.handler.dispatch.ActionHandler;
-import com.auction.server.handler.dispatch.HandlerContext;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import java.util.List;
-import java.util.Map;
-
-public class WatchlistHandler implements ActionHandler {
-    private final WatchlistDao watchlistDao = new WatchlistDao();
-
-    @Override
-    public Response handle(Request request, HandlerContext context) {
-        int userId = context.getCurrentUser().getId();
-
-        if (Request.GET_WATCHLIST.equals(request.getAction())) {
-            List<Integer> watchedIds = watchlistDao.getUserWatchlist(userId);
-            return new Response(request.getRequestId(), Response.OK, "success", (java.io.Serializable) watchedIds);
-        }
-
-        if (Request.TOGGLE_WATCHLIST.equals(request.getAction())) {
-            Map<String, Object> payload = (Map<String, Object>) request.getPayload();
-            int itemId = ((Number) payload.get("itemId")).intValue();
-            boolean isWatching = (Boolean) payload.get("isWatching");
-
-            watchlistDao.toggleWatchlist(userId, itemId, isWatching);
-            return new Response(request.getRequestId(), Response.OK, "success", null);
-        }
-
-        return new Response(request.getRequestId(), Response.ERROR, "unknown", null);
-    }
 }
 </file>
 
@@ -2803,92 +2555,6 @@ final class RatingListRenderer {
 }
 </file>
 
-<file path="auction-client/src/main/java/com/auction/client/ui/Main/MainShellNavigator.java">
-package com.auction.client.ui.Main;
-
-import javafx.scene.Node;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-
-/** Swaps main {@link StackPane} content and sidebar menu highlight state. */
-final class MainShellNavigator {
-
-  private final StackPane contentArea;
-  private final HBox auctionMenu;
-  private final HBox watchlistMenu; // ĐÃ THÊM NÚT WATCHLIST
-  private final HBox historyMenu;
-  private final HBox myItemMenu;
-  private final HBox profileMenu;
-  private final HBox chatMenu;
-  private final HBox manageUsersMenu;
-
-  private Node currentContentNode;
-
-  MainShellNavigator(
-          StackPane contentArea,
-          HBox auctionMenu,
-          HBox watchlistMenu, // ĐÃ THÊM NÚT WATCHLIST
-          HBox historyMenu,
-          HBox myItemMenu,
-          HBox profileMenu,
-          HBox chatMenu,
-          HBox manageUsersMenu,
-          Node initialContent) {
-    this.contentArea = contentArea;
-    this.auctionMenu = auctionMenu;
-    this.watchlistMenu = watchlistMenu; // ĐÃ THÊM NÚT WATCHLIST
-    this.historyMenu = historyMenu;
-    this.myItemMenu = myItemMenu;
-    this.profileMenu = profileMenu;
-    this.chatMenu = chatMenu;
-    this.manageUsersMenu = manageUsersMenu;
-    this.currentContentNode = initialContent;
-  }
-
-  Node getCurrentContentNode() {
-    return currentContentNode;
-  }
-
-  void setCurrentContentNode(Node node) {
-    if (node != null) currentContentNode = node;
-  }
-
-  /**
-   * @return true if the visible root changed (callers may refresh remote data).
-   */
-  boolean switchPage(Node targetContent, HBox activeMenu) {
-    if (targetContent == null || currentContentNode == targetContent) return false;
-    if (contentArea != null) {
-      contentArea.getChildren().clear();
-      contentArea.getChildren().add(targetContent);
-    }
-    currentContentNode = targetContent;
-    setMenu(activeMenu);
-    return true;
-  }
-
-  /** Clears content area and shows {@code root}; clears menu highlight when {@code activeMenu} is null. */
-  void replaceContent(Node root, HBox activeMenu) {
-    if (contentArea != null && root != null) {
-      contentArea.getChildren().clear();
-      contentArea.getChildren().add(root);
-    }
-    currentContentNode = root;
-    setMenu(activeMenu);
-  }
-
-  void setMenu(HBox active) {
-    for (HBox m : menuBoxes()) if (m != null) m.getStyleClass().remove("active");
-    if (active != null && !active.getStyleClass().contains("active")) active.getStyleClass().add("active");
-  }
-
-  private HBox[] menuBoxes() {
-    // ĐÃ THÊM watchlistMenu VÀO MẢNG ĐỂ NÓ ĐỔI MÀU KHI CLICK
-    return new HBox[] {auctionMenu, watchlistMenu, historyMenu, myItemMenu, profileMenu, chatMenu, manageUsersMenu};
-  }
-}
-</file>
-
 <file path="auction-client/src/main/java/com/auction/client/ui/SearchBar/UserSearchResultsPopup.java">
 package com.auction.client.ui.SearchBar;
 
@@ -3134,6 +2800,137 @@ import java.util.List;
 
 /** Combined home catalog payload (full ongoing list + trending top-N from server). */
 public record TrangChuCatalogLoadResult(List<Item> ongoing, List<Item> trending) {}
+</file>
+
+<file path="auction-client/src/main/java/com/auction/client/ui/Watchlist/WatchlistController.java">
+package com.auction.client.ui.Watchlist;
+
+import com.auction.client.ClientSession;
+import com.auction.client.app.NodeContentLoader;
+import com.auction.client.network.NetworkClient;
+import com.auction.client.ui.ItemCard.ItemCardController;
+import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
+
+public class WatchlistController {
+    @FXML private FlowPane ItemContainer;
+
+    private final Map<Integer, ItemCardController> cardMap = new HashMap<>();
+    private final Map<Integer, Node> cardRootByItemId = new HashMap<>();
+
+    @FXML
+    void initialize() {
+        refreshItems();
+    }
+
+    @FXML
+    public void refreshItems() {
+        if (ClientSession.getCurrentUser() == null) return;
+        int userId = ClientSession.getCurrentUser().getId();
+
+        new Thread(() -> {
+            try {
+                Request request = new Request(Request.GET_WATCHLIST_ITEMS, userId);
+                Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+
+                if (response != null && Response.OK.equals(response.getStatus())) {
+                    List<Item> items = (List<Item>) response.getPayload();
+                    Platform.runLater(() -> render(items));
+                }
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
+    public void updateWatchlistUi(int itemId, boolean isWatched) {
+        ItemCardController c = cardMap.get(itemId);
+        if (c != null) c.setHeartUI(isWatched);
+    }
+
+    private void render(List<Item> items) {
+        if (ItemContainer == null) return;
+        if (items == null) items = List.of();
+        incrementalRender(items);
+    }
+
+    private void incrementalRender(List<Item> visible) {
+        FlowPane pane = ItemContainer;
+        Map<Integer, ItemCardController> cards = cardMap;
+        Map<Integer, Node> rootByItemId = cardRootByItemId;
+
+        if (visible.isEmpty()) {
+            for (Node n : new ArrayList<>(rootByItemId.values())) pane.getChildren().remove(n);
+            cards.clear(); rootByItemId.clear(); pane.getChildren().clear();
+            Label empty = new Label("Bạn chưa theo dõi sản phẩm nào.");
+            empty.setStyle("-fx-text-fill: #888; -fx-font-size: 16px;");
+            pane.getChildren().add(empty);
+            return;
+        }
+
+        pane.getChildren().removeIf(n -> n instanceof Label); // Xóa chữ empty
+        Set<Integer> desiredIds = new HashSet<>(visible.size() * 2);
+        for (Item it : visible) desiredIds.add(it.getId());
+
+        for (int id : new ArrayList<>(cards.keySet())) {
+            if (!desiredIds.contains(id)) {
+                cards.remove(id);
+                Node removed = rootByItemId.remove(id);
+                if (removed != null) pane.getChildren().remove(removed);
+            }
+        }
+
+        for (Item item : visible) {
+            ItemCardController card = cards.get(item.getId());
+            String caption = item.getStatus() == ItemStatus.OPEN ? "Đang mở" : item.getStatus().name();
+            if (card != null) {
+                card.syncFromCatalogItemStaticTime(item, caption);
+                card.attachCatalogItem(item);
+            } else {
+                try {
+                    NodeContentLoader<VBox> cardLoader = new NodeContentLoader<>();
+                    cardLoader.load("/fxml/itemcard/ItemCard.fxml");
+                    ItemCardController newCard = cardLoader.getController();
+                    VBox root = cardLoader.getCurrentNode();
+                    if (newCard != null && root != null) {
+                        newCard.setData(item.getId(), item.getName() != null ? item.getName() : "", item.getCurrentPrice(), item.getDescription() != null ? item.getDescription() : "", caption, item.getImageUrl() != null ? item.getImageUrl() : "", item.getSellerUsername() != null ? item.getSellerUsername() : "", item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "");
+                        newCard.setEndTime(null);
+                        newCard.attachCatalogItem(item);
+                        cards.put(item.getId(), newCard);
+                        rootByItemId.put(item.getId(), root);
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        List<Node> orderedNodes = new ArrayList<>(visible.size());
+        for (Item item : visible) {
+            Node n = rootByItemId.get(item.getId());
+            if (n != null) orderedNodes.add(n);
+        }
+        ObservableList<Node> children = pane.getChildren();
+        boolean sameOrder = children.size() == orderedNodes.size();
+        if (sameOrder) {
+            for (int i = 0; i < orderedNodes.size(); i++) {
+                if (children.get(i) != orderedNodes.get(i)) { sameOrder = false; break; }
+            }
+        }
+        if (!sameOrder) children.setAll(orderedNodes);
+    }
+}
 </file>
 
 <file path="auction-client/src/main/java/com/auction/client/util/ImagePresentationUtil.java">
@@ -3806,6 +3603,52 @@ public class NotificationPopup {
         </StackPane>
     </children>
 </AnchorPane>
+</file>
+
+<file path="auction-client/src/main/resources/fxml/watchlist/Watchlist.fxml">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane" stylesheets="@/css/youritem/YourItem.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.Watchlist.WatchlistController">
+    <content>
+        <VBox alignment="TOP_CENTER" style="-fx-background-color: transparent;">
+            <children>
+                <VBox maxWidth="1000.0" spacing="30.0" styleClass="glass-panel-item">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <children>
+                                <VBox spacing="5.0">
+                                    <children>
+                                        <Label styleClass="Bigtext" text="❤ My Watchlist" />
+                                        <Label styleClass="Smalltext" text="Danh sách các sản phẩm bạn đang theo dõi" />
+                                    </children>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Button mnemonicParsing="false" onAction="#refreshItems" styleClass="btn-refresh" text="Làm mới" />
+                            </children>
+                        </HBox>
+                        <VBox spacing="15.0">
+                            <children>
+                                <FlowPane fx:id="ItemContainer" hgap="20.0" vgap="20.0" />
+                            </children>
+                        </VBox>
+                    </children>
+                    <VBox.margin>
+                        <Insets bottom="40.0" top="40.0" />
+                    </VBox.margin>
+                </VBox>
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>
 </file>
 
 <file path="auction-client/src/test/java/com/auction/client/ui/TrangChu/AuctionFilterContextTest.java">
@@ -4542,6 +4385,40 @@ public interface RatingRepository {
   boolean hasRated(int itemId, int userId);
   List<Rating> getByItemId(int itemId);
   void recalcUserRating(int userId);
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/dao/user/WatchlistDao.java">
+package com.auction.server.dao.user;
+
+import com.auction.server.dao.platform.BaseDao;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class WatchlistDao extends BaseDao<Integer> {
+
+    @Override
+    protected Integer mapRow(ResultSet rs) throws SQLException {
+        return rs.getInt("item_id");
+    }
+
+    // Lấy toàn bộ ID sản phẩm mà user đang theo dõi
+    public List<Integer> getUserWatchlist(int userId) {
+        return queryList("SELECT item_id FROM watchlists WHERE user_id = ?", userId);
+    }
+
+    // Bật/Tắt theo dõi
+    public boolean toggleWatchlist(int userId, int itemId, boolean isWatching) {
+        if (isWatching) {
+            return executeUpdate("INSERT IGNORE INTO watchlists (user_id, item_id) VALUES (?, ?)", userId, itemId);
+        } else {
+            return executeUpdate("DELETE FROM watchlists WHERE user_id = ? AND item_id = ?", userId, itemId);
+        }
+    }
 }
 </file>
 
@@ -5303,6 +5180,43 @@ public class UserManagementHandler implements ActionHandler {
 
     return new Response(requestId, Response.OK, "success", null);
   }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/handler/user/WatchlistHandler.java">
+package com.auction.server.handler.user;
+
+import com.auction.server.dao.user.WatchlistDao;
+import com.auction.server.handler.dispatch.ActionHandler;
+import com.auction.server.handler.dispatch.HandlerContext;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import java.util.List;
+import java.util.Map;
+
+public class WatchlistHandler implements ActionHandler {
+    private final WatchlistDao watchlistDao = new WatchlistDao();
+
+    @Override
+    public Response handle(Request request, HandlerContext context) {
+        int userId = context.getCurrentUser().getId();
+
+        if (Request.GET_WATCHLIST.equals(request.getAction())) {
+            List<Integer> watchedIds = watchlistDao.getUserWatchlist(userId);
+            return new Response(request.getRequestId(), Response.OK, "success", (java.io.Serializable) watchedIds);
+        }
+
+        if (Request.TOGGLE_WATCHLIST.equals(request.getAction())) {
+            Map<String, Object> payload = (Map<String, Object>) request.getPayload();
+            int itemId = ((Number) payload.get("itemId")).intValue();
+            boolean isWatching = (Boolean) payload.get("isWatching");
+
+            watchlistDao.toggleWatchlist(userId, itemId, isWatching);
+            return new Response(request.getRequestId(), Response.OK, "success", null);
+        }
+
+        return new Response(request.getRequestId(), Response.ERROR, "unknown", null);
+    }
 }
 </file>
 
@@ -8031,6 +7945,92 @@ final class ItemInformationUiHelper {
 }
 </file>
 
+<file path="auction-client/src/main/java/com/auction/client/ui/Main/MainShellNavigator.java">
+package com.auction.client.ui.Main;
+
+import javafx.scene.Node;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+
+/** Swaps main {@link StackPane} content and sidebar menu highlight state. */
+final class MainShellNavigator {
+
+  private final StackPane contentArea;
+  private final HBox auctionMenu;
+  private final HBox watchlistMenu; // ĐÃ THÊM NÚT WATCHLIST
+  private final HBox historyMenu;
+  private final HBox myItemMenu;
+  private final HBox profileMenu;
+  private final HBox chatMenu;
+  private final HBox manageUsersMenu;
+
+  private Node currentContentNode;
+
+  MainShellNavigator(
+          StackPane contentArea,
+          HBox auctionMenu,
+          HBox watchlistMenu, // ĐÃ THÊM NÚT WATCHLIST
+          HBox historyMenu,
+          HBox myItemMenu,
+          HBox profileMenu,
+          HBox chatMenu,
+          HBox manageUsersMenu,
+          Node initialContent) {
+    this.contentArea = contentArea;
+    this.auctionMenu = auctionMenu;
+    this.watchlistMenu = watchlistMenu; // ĐÃ THÊM NÚT WATCHLIST
+    this.historyMenu = historyMenu;
+    this.myItemMenu = myItemMenu;
+    this.profileMenu = profileMenu;
+    this.chatMenu = chatMenu;
+    this.manageUsersMenu = manageUsersMenu;
+    this.currentContentNode = initialContent;
+  }
+
+  Node getCurrentContentNode() {
+    return currentContentNode;
+  }
+
+  void setCurrentContentNode(Node node) {
+    if (node != null) currentContentNode = node;
+  }
+
+  /**
+   * @return true if the visible root changed (callers may refresh remote data).
+   */
+  boolean switchPage(Node targetContent, HBox activeMenu) {
+    if (targetContent == null || currentContentNode == targetContent) return false;
+    if (contentArea != null) {
+      contentArea.getChildren().clear();
+      contentArea.getChildren().add(targetContent);
+    }
+    currentContentNode = targetContent;
+    setMenu(activeMenu);
+    return true;
+  }
+
+  /** Clears content area and shows {@code root}; clears menu highlight when {@code activeMenu} is null. */
+  void replaceContent(Node root, HBox activeMenu) {
+    if (contentArea != null && root != null) {
+      contentArea.getChildren().clear();
+      contentArea.getChildren().add(root);
+    }
+    currentContentNode = root;
+    setMenu(activeMenu);
+  }
+
+  void setMenu(HBox active) {
+    for (HBox m : menuBoxes()) if (m != null) m.getStyleClass().remove("active");
+    if (active != null && !active.getStyleClass().contains("active")) active.getStyleClass().add("active");
+  }
+
+  private HBox[] menuBoxes() {
+    // ĐÃ THÊM watchlistMenu VÀO MẢNG ĐỂ NÓ ĐỔI MÀU KHI CLICK
+    return new HBox[] {auctionMenu, watchlistMenu, historyMenu, myItemMenu, profileMenu, chatMenu, manageUsersMenu};
+  }
+}
+</file>
+
 <file path="auction-client/src/main/java/com/auction/client/ui/Main/MainShellNetworkBridge.java">
 package com.auction.client.ui.Main;
 
@@ -9817,96 +9817,6 @@ public interface LotRepository {
 
   /** Top-N live OPEN lots ranked by trending score for the auction type (see TrendingLotsFormula). */
   List<Item> getTrendingLiveItems(AuctionType auctionType, int limit);
-}
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/dao/platform/UserSchemaMigration.java">
-package com.auction.server.dao.platform;
-
-import java.sql.Connection;
-import java.sql.Statement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-final class UserSchemaMigration {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserSchemaMigration.class);
-
-  private UserSchemaMigration() {}
-
-  static void applyStructure(Connection conn) {
-    ensureUsersTable(conn);
-    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "fullname", "VARCHAR(255) NULL");
-    MigrationSchemaSupport.executeIfColumnAdded(
-        conn, "users", "fullname", "UPDATE users SET fullname = username WHERE fullname IS NULL OR TRIM(fullname) = ''");
-    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "avgrating", "DOUBLE DEFAULT 0");
-    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "totalratings", "INT DEFAULT 0");
-
-    MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_username", "username");
-    MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_email", "email");
-    try (Statement st = conn.createStatement()) {
-      st.executeUpdate(
-              "CREATE TABLE IF NOT EXISTS watchlists ("
-                      + "user_id INT NOT NULL, "
-                      + "item_id INT NOT NULL, "
-                      + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP, "
-                      + "PRIMARY KEY (user_id, item_id), "
-                      + "INDEX idx_watchlist_item (item_id))"); // Index để sau này truy vấn "Ai đang theo dõi item này" cực nhanh
-    } catch (Exception e) {
-      LOGGER.warn("Failed to ensure watchlists table", e);
-    }
-  }
-
-  private static void ensureUsersTable(Connection conn) {
-    try (Statement st = conn.createStatement()) {
-      st.executeUpdate(
-          "CREATE TABLE IF NOT EXISTS users ("
-              + "id INT AUTO_INCREMENT PRIMARY KEY, "
-              + "version INT NOT NULL DEFAULT 0, "
-              + "username VARCHAR(100) NOT NULL, "
-              + "fullname VARCHAR(255) NULL, "
-              + "password VARCHAR(255) NOT NULL, "
-              + "email VARCHAR(255) NOT NULL, "
-              + "age VARCHAR(32) NULL, "
-              + "phonenumber VARCHAR(64) NULL, "
-              + "role VARCHAR(20) NOT NULL, "
-              + "balance DOUBLE NOT NULL DEFAULT 0, "
-              + "moneyspent DOUBLE NOT NULL DEFAULT 0, "
-              + "itemsbought INT NOT NULL DEFAULT 0, "
-              + "moneyreceived DOUBLE NOT NULL DEFAULT 0, "
-              + "itemssold INT NOT NULL DEFAULT 0, "
-              + "isactive TINYINT(1) NOT NULL DEFAULT 1, "
-              + "islocked TINYINT(1) NOT NULL DEFAULT 0, "
-              + "avatar_url VARCHAR(2048) NULL, "
-              + "avgrating DOUBLE NOT NULL DEFAULT 0, "
-              + "totalratings INT NOT NULL DEFAULT 0, "
-              + "UNIQUE KEY uk_users_username (username), "
-              + "UNIQUE KEY uk_users_email (email)"
-              + ")");
-    } catch (Exception e) {
-      LOGGER.warn("Failed to ensure users table", e);
-    }
-  }
-
-  /**
-   * One-time migration: converts any password that is NOT already a 64-character lowercase hex string
-   * (SHA-256 output) into its SHA-256 hash using MySQL's {@code SHA2()} function.
-   */
-  static void migratePasswordsToSha256(Connection conn) {
-    String sql =
-        "UPDATE users SET password = LOWER(SHA2(password, 256)) "
-            + "WHERE LENGTH(password) <> 64 OR password REGEXP '[^0-9a-f]'";
-    try (Statement st = conn.createStatement()) {
-      int updated = st.executeUpdate(sql);
-      if (updated > 0) {
-        LOGGER.info("Password migration: hashed {} plain-text password(s) to SHA-256.", updated);
-      } else {
-        LOGGER.info("Password migration: all passwords already SHA-256 hashed, no changes needed.");
-      }
-    } catch (Exception e) {
-      LOGGER.error("Password migration failed — users with plain-text passwords cannot log in", e);
-    }
-  }
 }
 </file>
 
@@ -12006,63 +11916,6 @@ public class NotificationCenter {
 }
 </file>
 
-<file path="auction-client/src/main/resources/fxml/history/History.fxml">
-<?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.VBox?>
-
-<ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
-            styleClass="scroll-pane"
-            stylesheets="/css/history/History.css"
-            xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.auction.client.ui.History.HistoryController">
-    <content>
-        <VBox alignment="TOP_LEFT" spacing="30.0" styleClass="history-main-container">
-            <padding><Insets bottom="40.0" left="40.0" right="40.0" top="30.0" /></padding>
-            <children>
-
-                <!-- 2. KHỐI TRENDING -->
-                <VBox styleClass="history-section-glass">
-                    <children>
-                        <Label styleClass="section-header-glow" text="Trending Lots" />
-                        <FlowPane fx:id="ongoingcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
-                    </children>
-                </VBox>
-
-                <!-- 3. KHỐI UPCOMING -->
-                <VBox styleClass="history-section-glass">
-                    <children>
-                        <Label styleClass="section-header-glow" text="New Lots Coming Up!" />
-                        <FlowPane fx:id="upcomingcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
-                    </children>
-                </VBox>
-
-                <!-- 4. KHỐI CLOSED -->
-                <VBox styleClass="history-section-glass">
-                    <children>
-                        <Label styleClass="section-header-glow" text="Closed Lot" />
-                        <FlowPane fx:id="closedcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
-                    </children>
-                </VBox>
-
-                <!-- 5. KHỐI PAST BIDS -->
-                <VBox styleClass="history-section-glass">
-                    <children>
-                        <Label styleClass="section-header-glow" text="Past Bids" />
-                        <FlowPane fx:id="pastcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
-                    </children>
-                </VBox>
-
-            </children>
-        </VBox>
-    </content>
-</ScrollPane>
-</file>
-
 <file path="auction-client/src/main/resources/fxml/login.fxml">
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
@@ -12415,270 +12268,6 @@ public interface ItemRepository {
 }
 </file>
 
-<file path="auction-server/src/main/java/com/auction/server/dao/auction/LotDao.java">
-package com.auction.server.dao.auction;
-
-import com.auction.server.dao.platform.BaseDao;
-import com.auction.server.service.auction.TrendingLotsFormula;
-import com.auction.shared.AuctionType;
-import com.auction.shared.Item;
-import com.auction.shared.ItemFactory;
-import com.auction.shared.ItemStatus;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-/**
- * Queries the items table enriched with seller/winner display fields; each row is mapped directly to
- * {@link Item}.
- */
-public class LotDao extends BaseDao<Item> implements LotRepository {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(LotDao.class);
-
-  @Override
-  protected Item mapRow(ResultSet rs) throws SQLException {
-    String category = rs.getString("category");
-    Item item = ItemFactory.createItem(category);
-
-    item.setId(rs.getInt("id"));
-    item.setName(rs.getString("name"));
-    item.setDescription(rs.getString("description"));
-    item.setCurrentPrice(rs.getDouble("currentprice"));
-    item.setStartingPrice(rs.getDouble("startingprice"));
-    item.setMaxPrice(rs.getDouble("maxprice"));
-    item.setSellerId(rs.getInt("sellerid"));
-    item.setWinnerId(rs.getInt("winnerid"));
-    item.setImageUrl(rs.getString("image_url"));
-    item.setSellerUsername(rs.getString("s_name"));
-    item.setSellerAvatarUrl(rs.getString("s_avatar"));
-    Timestamp start = rs.getTimestamp("starttime");
-    if (start != null) item.setStartTime(start.toLocalDateTime());
-    Timestamp end = rs.getTimestamp("endtime");
-    if (end != null) item.setEndTime(end.toLocalDateTime());
-    item.setStatus(ItemStatus.parse(rs.getString("status")));
-    try {
-      item.setAuctionType(AuctionType.parse(rs.getString("auction_type")));
-      double dr = rs.getDouble("dutch_reserve_price");
-      if (!rs.wasNull()) item.setDutchReservePrice(dr);
-      double da = rs.getDouble("dutch_tick_amount");
-      if (!rs.wasNull()) item.setDutchTickAmount(da);
-      int im = rs.getInt("dutch_tick_interval_mins");
-      if (!rs.wasNull()) item.setDutchTickIntervalMinutes(im);
-    } catch (Exception ignored) {
-    }
-    try {
-      String winnerName = rs.getString("w_name");
-      if (winnerName != null) item.setWinnerUsername(winnerName);
-    } catch (Exception ignored) { /* w_name may not exist in some queries */ }
-    return item;
-  }
-
-  @Override
-  public List<Item> getOngoingBids(int userId) {
-    return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()");
-  }
-
-  @Override
-  public List<Item> getUpcomingBids(int userId) {
-    return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "WHERE i.status = 'OPEN' AND i.starttime > NOW()");
-  }
-
-  @Override
-  public List<Item> getClosedBids(int userId) {
-    return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "LEFT JOIN users w ON i.winnerid = w.id "
-            + "WHERE i.status = 'CLOSED'");
-  }
-
-  @Override
-  public List<Item> getPastBids(int userId) {
-    return queryItems(
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
-            + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
-            + "LEFT JOIN users w ON i.winnerid = w.id "
-            + "WHERE i.status IN ('FINISHED', 'CANCELED') "
-            + "   OR (i.status = 'OPEN' AND i.endtime <= NOW())");
-  }
-
-  @Override
-  public List<Item> getTrendingLiveItems(AuctionType auctionType, int limit) {
-    AuctionType kind = auctionType != null ? auctionType : AuctionType.ENGLISH;
-    int lim = Math.max(1, Math.min(limit, 20));
-    String typeName = kind.dbName();
-    List<TrendingAggRow> agg = fetchTrendingAggregates(typeName);
-    agg.sort(
-        (r1, r2) ->
-            Double.compare(
-                TrendingLotsFormula.computeTrendScore(r2.wLong, r2.wShort, r2.distinctBidders),
-                TrendingLotsFormula.computeTrendScore(r1.wLong, r1.wShort, r1.distinctBidders)));
-    List<Integer> orderedIds = new ArrayList<>();
-    for (TrendingAggRow row : agg) {
-      if (orderedIds.size() >= lim) {
-        break;
-      }
-      double s =
-          TrendingLotsFormula.computeTrendScore(row.wLong, row.wShort, row.distinctBidders);
-      if (s > TrendingLotsFormula.EPS) {
-        orderedIds.add(row.itemId);
-      }
-    }
-    if (orderedIds.size() < lim) {
-      orderedIds.addAll(fetchBackfillLiveItemIds(typeName, orderedIds, lim - orderedIds.size()));
-    }
-    return loadLiveItemsPreservingOrder(orderedIds);
-  }
-
-  /** Pre-sort key only — sort uses full formula fields on row. */
-  private List<TrendingAggRow> fetchTrendingAggregates(String auctionTypeName) {
-    String sql =
-        "SELECT b.itemid AS item_id, "
-            + "SUM(EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?))) AS w_long, "
-            + "SUM(CASE WHEN b.timestamp >= NOW() - INTERVAL ? MINUTE "
-            + "THEN EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?)) ELSE 0 END) AS w_short, "
-            + "COUNT(DISTINCT b.userid) AS u_cnt "
-            + "FROM bid_transactions b "
-            + "INNER JOIN items i ON i.id = b.itemid "
-            + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
-            + "AND i.auction_type = ? "
-            + "AND b.timestamp >= NOW() - INTERVAL ? HOUR "
-            + "GROUP BY b.itemid";
-    List<TrendingAggRow> out = new ArrayList<>();
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setDouble(1, TrendingLotsFormula.TAU_DECAY_HOURS);
-      ps.setInt(2, TrendingLotsFormula.SHORT_WINDOW_MINUTES);
-      ps.setDouble(3, TrendingLotsFormula.TAU_DECAY_HOURS);
-      ps.setString(4, auctionTypeName);
-      ps.setInt(5, TrendingLotsFormula.LONG_WINDOW_HOURS);
-      try (ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) {
-          out.add(
-              new TrendingAggRow(
-                  rs.getInt("item_id"),
-                  rs.getDouble("w_long"),
-                  rs.getDouble("w_short"),
-                  rs.getInt("u_cnt")));
-        }
-      }
-    } catch (SQLException e) {
-      LOGGER.warn("fetchTrendingAggregates failed", e);
-    }
-    return out;
-  }
-
-  private List<Integer> fetchBackfillLiveItemIds(
-      String auctionTypeName, List<Integer> excluded, int need) {
-    List<Integer> out = new ArrayList<>();
-    if (need <= 0) {
-      return out;
-    }
-    StringBuilder sql =
-        new StringBuilder(
-            "SELECT i.id FROM items i WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
-                + "AND i.auction_type = ? ");
-    List<Object> params = new ArrayList<>();
-    params.add(auctionTypeName);
-    if (excluded != null && !excluded.isEmpty()) {
-      sql.append("AND i.id NOT IN (");
-      for (int i = 0; i < excluded.size(); i++) {
-        if (i > 0) sql.append(",");
-        sql.append("?");
-      }
-      sql.append(") ");
-      for (Integer id : excluded) {
-        params.add(id);
-      }
-    }
-    sql.append("ORDER BY i.endtime ASC LIMIT ?");
-    params.add(need);
-    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-      for (int i = 0; i < params.size(); i++) {
-        Object p = params.get(i);
-        bindParam(ps, i + 1, p);
-      }
-      try (ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) {
-          out.add(rs.getInt(1));
-        }
-      }
-    } catch (SQLException e) {
-      LOGGER.warn("fetchBackfillLiveItemIds failed", e);
-    }
-    return out;
-  }
-
-  private static void bindParam(PreparedStatement ps, int idx, Object p) throws SQLException {
-    if (p instanceof String) {
-      ps.setString(idx, (String) p);
-    } else if (p instanceof Integer) {
-      ps.setInt(idx, (Integer) p);
-    } else if (p instanceof Double d) {
-      ps.setDouble(idx, d);
-    } else {
-      ps.setObject(idx, p);
-    }
-  }
-
-  private List<Item> loadLiveItemsPreservingOrder(List<Integer> ids) {
-    List<Item> ans = new ArrayList<>();
-    if (ids.isEmpty()) {
-      return ans;
-    }
-    StringBuilder in = new StringBuilder();
-    for (int i = 0; i < ids.size(); i++) {
-      if (i > 0) in.append(",");
-      in.append("?");
-    }
-    String sql =
-        "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar FROM items i "
-            + "LEFT JOIN users u ON i.sellerid = u.id WHERE i.id IN ("
-            + in
-            + ") AND i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
-    Object[] argv = ids.stream().map(i -> (Object) i).toArray();
-    List<Item> rows = queryList(sql, argv);
-    Map<Integer, Item> byId = new HashMap<>();
-    for (Item row : rows) {
-      byId.put(row.getId(), row);
-    }
-    for (int id : ids) {
-      Item it = byId.get(id);
-      if (it != null) ans.add(it);
-    }
-    return ans;
-  }
-
-  private List<Item> queryItems(String sql) {
-    return queryList(sql);
-  }
-
-  private record TrendingAggRow(int itemId, double wLong, double wShort, int distinctBidders) {}
-  public List<Item> getWatchlistItems(int userId) {
-    return queryItems(
-            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
-                    + "FROM items i "
-                    + "JOIN watchlists w ON i.id = w.item_id "
-                    + "LEFT JOIN users u ON i.sellerid = u.id "
-                    + "WHERE w.user_id = ? ORDER BY w.created_at DESC");
-  }
-}
-</file>
-
 <file path="auction-server/src/main/java/com/auction/server/dao/platform/ItemSchemaMigration.java">
 package com.auction.server.dao.platform;
 
@@ -12735,6 +12324,96 @@ final class ItemSchemaMigration {
               + ")");
     } catch (Exception e) {
       LOGGER.warn("Failed to ensure items table", e);
+    }
+  }
+}
+</file>
+
+<file path="auction-server/src/main/java/com/auction/server/dao/platform/UserSchemaMigration.java">
+package com.auction.server.dao.platform;
+
+import java.sql.Connection;
+import java.sql.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+final class UserSchemaMigration {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserSchemaMigration.class);
+
+  private UserSchemaMigration() {}
+
+  static void applyStructure(Connection conn) {
+    ensureUsersTable(conn);
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "fullname", "VARCHAR(255) NULL");
+    MigrationSchemaSupport.executeIfColumnAdded(
+        conn, "users", "fullname", "UPDATE users SET fullname = username WHERE fullname IS NULL OR TRIM(fullname) = ''");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "avgrating", "DOUBLE DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "totalratings", "INT DEFAULT 0");
+
+    MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_username", "username");
+    MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_email", "email");
+    try (Statement st = conn.createStatement()) {
+      st.executeUpdate(
+              "CREATE TABLE IF NOT EXISTS watchlists ("
+                      + "user_id INT NOT NULL, "
+                      + "item_id INT NOT NULL, "
+                      + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP, "
+                      + "PRIMARY KEY (user_id, item_id), "
+                      + "INDEX idx_watchlist_item (item_id))"); // Index để sau này truy vấn "Ai đang theo dõi item này" cực nhanh
+    } catch (Exception e) {
+      LOGGER.warn("Failed to ensure watchlists table", e);
+    }
+  }
+
+  private static void ensureUsersTable(Connection conn) {
+    try (Statement st = conn.createStatement()) {
+      st.executeUpdate(
+          "CREATE TABLE IF NOT EXISTS users ("
+              + "id INT AUTO_INCREMENT PRIMARY KEY, "
+              + "version INT NOT NULL DEFAULT 0, "
+              + "username VARCHAR(100) NOT NULL, "
+              + "fullname VARCHAR(255) NULL, "
+              + "password VARCHAR(255) NOT NULL, "
+              + "email VARCHAR(255) NOT NULL, "
+              + "age VARCHAR(32) NULL, "
+              + "phonenumber VARCHAR(64) NULL, "
+              + "role VARCHAR(20) NOT NULL, "
+              + "balance DOUBLE NOT NULL DEFAULT 0, "
+              + "moneyspent DOUBLE NOT NULL DEFAULT 0, "
+              + "itemsbought INT NOT NULL DEFAULT 0, "
+              + "moneyreceived DOUBLE NOT NULL DEFAULT 0, "
+              + "itemssold INT NOT NULL DEFAULT 0, "
+              + "isactive TINYINT(1) NOT NULL DEFAULT 1, "
+              + "islocked TINYINT(1) NOT NULL DEFAULT 0, "
+              + "avatar_url VARCHAR(2048) NULL, "
+              + "avgrating DOUBLE NOT NULL DEFAULT 0, "
+              + "totalratings INT NOT NULL DEFAULT 0, "
+              + "UNIQUE KEY uk_users_username (username), "
+              + "UNIQUE KEY uk_users_email (email)"
+              + ")");
+    } catch (Exception e) {
+      LOGGER.warn("Failed to ensure users table", e);
+    }
+  }
+
+  /**
+   * One-time migration: converts any password that is NOT already a 64-character lowercase hex string
+   * (SHA-256 output) into its SHA-256 hash using MySQL's {@code SHA2()} function.
+   */
+  static void migratePasswordsToSha256(Connection conn) {
+    String sql =
+        "UPDATE users SET password = LOWER(SHA2(password, 256)) "
+            + "WHERE LENGTH(password) <> 64 OR password REGEXP '[^0-9a-f]'";
+    try (Statement st = conn.createStatement()) {
+      int updated = st.executeUpdate(sql);
+      if (updated > 0) {
+        LOGGER.info("Password migration: hashed {} plain-text password(s) to SHA-256.", updated);
+      } else {
+        LOGGER.info("Password migration: all passwords already SHA-256 hashed, no changes needed.");
+      }
+    } catch (Exception e) {
+      LOGGER.error("Password migration failed — users with plain-text passwords cannot log in", e);
     }
   }
 }
@@ -12829,122 +12508,6 @@ public class RatingDao extends BaseDao<Rating> implements RatingRepository {
     } catch (Exception e) {
       logger.error("recalc_user_rating_error", e);
     }
-  }
-}
-</file>
-
-<file path="auction-server/src/main/java/com/auction/server/handler/auction/LotQueryHandler.java">
-package com.auction.server.handler.auction;
-
-import com.auction.server.handler.dispatch.ActionHandler;
-import com.auction.server.handler.dispatch.HandlerContext;
-import com.auction.server.service.auction.DutchAuctionCatalogSync;
-import com.auction.shared.AuctionType;
-import com.auction.shared.Item;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import java.util.List;
-
-public class LotQueryHandler implements ActionHandler {
-
-  private static final int TRENDING_TOP_N = 5;
-
-  @Override
-  public Response handle(Request request, HandlerContext context) {
-    String action = request.getAction();
-    String requestId = request.getRequestId();
-    Object payload = request.getPayload();
-
-    List<?> results;
-    switch (action) {
-      case Request.GET_ONGOING_BIDS:
-        results = syncedOngoing(context, parseUserId(payload));
-        break;
-      case Request.GET_TRENDING_LOTS:
-        results = syncedTrending(context, payload);
-        break;
-      case Request.GET_UPCOMING_BIDS:
-        results = syncedUpcoming(context, parseUserId(payload));
-        break;
-      case Request.GET_CLOSED_BIDS:
-        results = syncedClosed(context, parseUserId(payload));
-        break;
-      case Request.GET_PAST_BIDS:
-        results = syncedPast(context, parseUserId(payload));
-        break;
-      case Request.GET_WATCHLIST_ITEMS:
-        results = syncedWatchlist(context, parseUserId(payload));
-        break;
-      default:
-        return new Response(requestId, Response.ERROR, "unknown_action", null);
-    }
-    return new Response(requestId, Response.OK, "success", (java.io.Serializable) results);
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Item> syncedTrending(HandlerContext ctx, Object payload) {
-    AuctionType kind = parseAuctionType(payload);
-    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getTrendingLiveItems(kind, TRENDING_TOP_N);
-    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
-    return rows;
-  }
-
-  private static AuctionType parseAuctionType(Object payload) {
-    if (payload instanceof AuctionType at) {
-      return at;
-    }
-    if (payload != null) {
-      return AuctionType.parse(payload.toString());
-    }
-    return AuctionType.ENGLISH;
-  }
-
-  private static int parseUserId(Object payload) {
-    if (payload == null) {
-      return 0;
-    }
-    if (payload instanceof Number n) {
-      return n.intValue();
-    }
-    try {
-      return Integer.parseInt(payload.toString().trim());
-    } catch (NumberFormatException e) {
-      return 0;
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Item> syncedOngoing(HandlerContext ctx, int userId) {
-    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getOngoingBids(userId);
-    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
-    return rows;
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Item> syncedUpcoming(HandlerContext ctx, int userId) {
-    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getUpcomingBids(userId);
-    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
-    return rows;
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Item> syncedClosed(HandlerContext ctx, int userId) {
-    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getClosedBids(userId);
-    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
-    return rows;
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Item> syncedPast(HandlerContext ctx, int userId) {
-    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getPastBids(userId);
-    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
-    return rows;
-  }
-  @SuppressWarnings("unchecked")
-  private List<Item> syncedWatchlist(HandlerContext ctx, int userId) {
-    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getWatchlistItems(userId);
-    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
-    return rows;
   }
 }
 </file>
@@ -15060,6 +14623,63 @@ public class RatingFormController {
 }
 </file>
 
+<file path="auction-client/src/main/resources/fxml/history/History.fxml">
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
+            styleClass="scroll-pane"
+            stylesheets="/css/history/History.css"
+            xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.History.HistoryController">
+    <content>
+        <VBox alignment="TOP_LEFT" spacing="30.0" styleClass="history-main-container">
+            <padding><Insets bottom="40.0" left="40.0" right="40.0" top="30.0" /></padding>
+            <children>
+
+                <!-- 2. KHỐI TRENDING -->
+                <VBox styleClass="history-section-glass">
+                    <children>
+                        <Label styleClass="section-header-glow" text="Trending Lots" />
+                        <FlowPane fx:id="ongoingcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
+                    </children>
+                </VBox>
+
+                <!-- 3. KHỐI UPCOMING -->
+                <VBox styleClass="history-section-glass">
+                    <children>
+                        <Label styleClass="section-header-glow" text="New Lots Coming Up!" />
+                        <FlowPane fx:id="upcomingcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
+                    </children>
+                </VBox>
+
+                <!-- 4. KHỐI CLOSED -->
+                <VBox styleClass="history-section-glass">
+                    <children>
+                        <Label styleClass="section-header-glow" text="Closed Lot" />
+                        <FlowPane fx:id="closedcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
+                    </children>
+                </VBox>
+
+                <!-- 5. KHỐI PAST BIDS -->
+                <VBox styleClass="history-section-glass">
+                    <children>
+                        <Label styleClass="section-header-glow" text="Past Bids" />
+                        <FlowPane fx:id="pastcontainer" alignment="TOP_LEFT" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
+                    </children>
+                </VBox>
+
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>
+</file>
+
 <file path="auction-client/src/main/resources/fxml/trangchu/TrangChu.fxml">
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -15388,6 +15008,273 @@ public class RatingFormController {
 </project>
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/dao/auction/LotDao.java">
+package com.auction.server.dao.auction;
+
+import com.auction.server.dao.platform.BaseDao;
+import com.auction.server.service.auction.TrendingLotsFormula;
+import com.auction.shared.AuctionType;
+import com.auction.shared.Item;
+import com.auction.shared.ItemFactory;
+import com.auction.shared.ItemStatus;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Queries the items table enriched with seller/winner display fields; each row is mapped directly to
+ * {@link Item}.
+ */
+public class LotDao extends BaseDao<Item> implements LotRepository {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(LotDao.class);
+
+  @Override
+  protected Item mapRow(ResultSet rs) throws SQLException {
+    String category = rs.getString("category");
+    Item item = ItemFactory.createItem(category);
+
+    item.setId(rs.getInt("id"));
+    item.setName(rs.getString("name"));
+    item.setDescription(rs.getString("description"));
+    item.setCurrentPrice(rs.getDouble("currentprice"));
+    item.setStartingPrice(rs.getDouble("startingprice"));
+    item.setMaxPrice(rs.getDouble("maxprice"));
+    item.setSellerId(rs.getInt("sellerid"));
+    item.setWinnerId(rs.getInt("winnerid"));
+    item.setImageUrl(rs.getString("image_url"));
+    item.setSellerUsername(rs.getString("s_name"));
+    item.setSellerAvatarUrl(rs.getString("s_avatar"));
+    Timestamp start = rs.getTimestamp("starttime");
+    if (start != null) item.setStartTime(start.toLocalDateTime());
+    Timestamp end = rs.getTimestamp("endtime");
+    if (end != null) item.setEndTime(end.toLocalDateTime());
+    item.setStatus(ItemStatus.parse(rs.getString("status")));
+    try {
+      item.setAuctionType(AuctionType.parse(rs.getString("auction_type")));
+      double dr = rs.getDouble("dutch_reserve_price");
+      if (!rs.wasNull()) item.setDutchReservePrice(dr);
+      double da = rs.getDouble("dutch_tick_amount");
+      if (!rs.wasNull()) item.setDutchTickAmount(da);
+      int im = rs.getInt("dutch_tick_interval_mins");
+      if (!rs.wasNull()) item.setDutchTickIntervalMinutes(im);
+    } catch (Exception ignored) {
+    }
+    try {
+      String winnerName = rs.getString("w_name");
+      if (winnerName != null) item.setWinnerUsername(winnerName);
+    } catch (Exception ignored) { /* w_name may not exist in some queries */ }
+    return item;
+  }
+
+  @Override
+  public List<Item> getOngoingBids(int userId) {
+    return queryItems(
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()");
+  }
+
+  @Override
+  public List<Item> getUpcomingBids(int userId) {
+    return queryItems(
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE i.status = 'OPEN' AND i.starttime > NOW()");
+  }
+
+  @Override
+  public List<Item> getClosedBids(int userId) {
+    return queryItems(
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "LEFT JOIN users w ON i.winnerid = w.id "
+                    + "WHERE i.status = 'CLOSED'");
+  }
+
+  @Override
+  public List<Item> getPastBids(int userId) {
+    return queryItems(
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar, w.username as w_name "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "LEFT JOIN users w ON i.winnerid = w.id "
+                    + "WHERE i.status IN ('FINISHED', 'CANCELED') "
+                    + "   OR (i.status = 'OPEN' AND i.endtime <= NOW())");
+  }
+
+  @Override
+  public List<Item> getTrendingLiveItems(AuctionType auctionType, int limit) {
+    AuctionType kind = auctionType != null ? auctionType : AuctionType.ENGLISH;
+    int lim = Math.max(1, Math.min(limit, 20));
+    String typeName = kind.dbName();
+    List<TrendingAggRow> agg = fetchTrendingAggregates(typeName);
+    agg.sort(
+            (r1, r2) ->
+                    Double.compare(
+                            TrendingLotsFormula.computeTrendScore(r2.wLong, r2.wShort, r2.distinctBidders),
+                            TrendingLotsFormula.computeTrendScore(r1.wLong, r1.wShort, r1.distinctBidders)));
+    List<Integer> orderedIds = new ArrayList<>();
+    for (TrendingAggRow row : agg) {
+      if (orderedIds.size() >= lim) {
+        break;
+      }
+      double s =
+              TrendingLotsFormula.computeTrendScore(row.wLong, row.wShort, row.distinctBidders);
+      if (s > TrendingLotsFormula.EPS) {
+        orderedIds.add(row.itemId);
+      }
+    }
+    if (orderedIds.size() < lim) {
+      orderedIds.addAll(fetchBackfillLiveItemIds(typeName, orderedIds, lim - orderedIds.size()));
+    }
+    return loadLiveItemsPreservingOrder(orderedIds);
+  }
+
+  /** Pre-sort key only — sort uses full formula fields on row. */
+  private List<TrendingAggRow> fetchTrendingAggregates(String auctionTypeName) {
+    String sql =
+            "SELECT b.itemid AS item_id, "
+                    + "SUM(EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?))) AS w_long, "
+                    + "SUM(CASE WHEN b.timestamp >= NOW() - INTERVAL ? MINUTE "
+                    + "THEN EXP(-TIMESTAMPDIFF(MINUTE, b.timestamp, NOW()) / (60 * ?)) ELSE 0 END) AS w_short, "
+                    + "COUNT(DISTINCT b.userid) AS u_cnt "
+                    + "FROM bid_transactions b "
+                    + "INNER JOIN items i ON i.id = b.itemid "
+                    + "WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
+                    + "AND i.auction_type = ? "
+                    + "AND b.timestamp >= NOW() - INTERVAL ? HOUR "
+                    + "GROUP BY b.itemid";
+    List<TrendingAggRow> out = new ArrayList<>();
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDouble(1, TrendingLotsFormula.TAU_DECAY_HOURS);
+      ps.setInt(2, TrendingLotsFormula.SHORT_WINDOW_MINUTES);
+      ps.setDouble(3, TrendingLotsFormula.TAU_DECAY_HOURS);
+      ps.setString(4, auctionTypeName);
+      ps.setInt(5, TrendingLotsFormula.LONG_WINDOW_HOURS);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          out.add(
+                  new TrendingAggRow(
+                          rs.getInt("item_id"),
+                          rs.getDouble("w_long"),
+                          rs.getDouble("w_short"),
+                          rs.getInt("u_cnt")));
+        }
+      }
+    } catch (SQLException e) {
+      LOGGER.warn("fetchTrendingAggregates failed", e);
+    }
+    return out;
+  }
+
+  private List<Integer> fetchBackfillLiveItemIds(
+          String auctionTypeName, List<Integer> excluded, int need) {
+    List<Integer> out = new ArrayList<>();
+    if (need <= 0) {
+      return out;
+    }
+    StringBuilder sql =
+            new StringBuilder(
+                    "SELECT i.id FROM items i WHERE i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW() "
+                            + "AND i.auction_type = ? ");
+    List<Object> params = new ArrayList<>();
+    params.add(auctionTypeName);
+    if (excluded != null && !excluded.isEmpty()) {
+      sql.append("AND i.id NOT IN (");
+      for (int i = 0; i < excluded.size(); i++) {
+        if (i > 0) sql.append(",");
+        sql.append("?");
+      }
+      sql.append(") ");
+      for (Integer id : excluded) {
+        params.add(id);
+      }
+    }
+    sql.append("ORDER BY i.endtime ASC LIMIT ?");
+    params.add(need);
+    try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+      for (int i = 0; i < params.size(); i++) {
+        Object p = params.get(i);
+        bindParam(ps, i + 1, p);
+      }
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          out.add(rs.getInt(1));
+        }
+      }
+    } catch (SQLException e) {
+      LOGGER.warn("fetchBackfillLiveItemIds failed", e);
+    }
+    return out;
+  }
+
+  private static void bindParam(PreparedStatement ps, int idx, Object p) throws SQLException {
+    if (p instanceof String) {
+      ps.setString(idx, (String) p);
+    } else if (p instanceof Integer) {
+      ps.setInt(idx, (Integer) p);
+    } else if (p instanceof Double d) {
+      ps.setDouble(idx, d);
+    } else {
+      ps.setObject(idx, p);
+    }
+  }
+
+  private List<Item> loadLiveItemsPreservingOrder(List<Integer> ids) {
+    List<Item> ans = new ArrayList<>();
+    if (ids.isEmpty()) {
+      return ans;
+    }
+    StringBuilder in = new StringBuilder();
+    for (int i = 0; i < ids.size(); i++) {
+      if (i > 0) in.append(",");
+      in.append("?");
+    }
+    String sql =
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar FROM items i "
+                    + "LEFT JOIN users u ON i.sellerid = u.id WHERE i.id IN ("
+                    + in
+                    + ") AND i.status = 'OPEN' AND i.starttime <= NOW() AND i.endtime > NOW()";
+    Object[] argv = ids.stream().map(i -> (Object) i).toArray();
+    List<Item> rows = queryList(sql, argv);
+    Map<Integer, Item> byId = new HashMap<>();
+    for (Item row : rows) {
+      byId.put(row.getId(), row);
+    }
+    for (int id : ids) {
+      Item it = byId.get(id);
+      if (it != null) ans.add(it);
+    }
+    return ans;
+  }
+
+  private List<Item> queryItems(String sql) {
+    return queryList(sql);
+  }
+
+  private record TrendingAggRow(int itemId, double wLong, double wShort, int distinctBidders) {}
+
+  // ĐÃ FIX LỖI Ở ĐÂY: Dùng queryList và truyền userId vào
+  public List<Item> getWatchlistItems(int userId) {
+    return queryList(
+            "SELECT i.*, u.username as s_name, u.avatar_url as s_avatar "
+                    + "FROM items i "
+                    + "JOIN watchlists w ON i.id = w.item_id "
+                    + "LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE w.user_id = ? ORDER BY w.created_at DESC",
+            userId);
+  }
+}
+</file>
+
 <file path="auction-server/src/main/java/com/auction/server/dao/user/UserDao.java">
 package com.auction.server.dao.user;
 
@@ -15661,6 +15548,122 @@ public class ItemQueryHandler implements ActionHandler {
 }
 </file>
 
+<file path="auction-server/src/main/java/com/auction/server/handler/auction/LotQueryHandler.java">
+package com.auction.server.handler.auction;
+
+import com.auction.server.handler.dispatch.ActionHandler;
+import com.auction.server.handler.dispatch.HandlerContext;
+import com.auction.server.service.auction.DutchAuctionCatalogSync;
+import com.auction.shared.AuctionType;
+import com.auction.shared.Item;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import java.util.List;
+
+public class LotQueryHandler implements ActionHandler {
+
+  private static final int TRENDING_TOP_N = 5;
+
+  @Override
+  public Response handle(Request request, HandlerContext context) {
+    String action = request.getAction();
+    String requestId = request.getRequestId();
+    Object payload = request.getPayload();
+
+    List<?> results;
+    switch (action) {
+      case Request.GET_ONGOING_BIDS:
+        results = syncedOngoing(context, parseUserId(payload));
+        break;
+      case Request.GET_TRENDING_LOTS:
+        results = syncedTrending(context, payload);
+        break;
+      case Request.GET_UPCOMING_BIDS:
+        results = syncedUpcoming(context, parseUserId(payload));
+        break;
+      case Request.GET_CLOSED_BIDS:
+        results = syncedClosed(context, parseUserId(payload));
+        break;
+      case Request.GET_PAST_BIDS:
+        results = syncedPast(context, parseUserId(payload));
+        break;
+      case Request.GET_WATCHLIST_ITEMS:
+        results = syncedWatchlist(context, parseUserId(payload));
+        break;
+      default:
+        return new Response(requestId, Response.ERROR, "unknown_action", null);
+    }
+    return new Response(requestId, Response.OK, "success", (java.io.Serializable) results);
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedTrending(HandlerContext ctx, Object payload) {
+    AuctionType kind = parseAuctionType(payload);
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getTrendingLiveItems(kind, TRENDING_TOP_N);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+
+  private static AuctionType parseAuctionType(Object payload) {
+    if (payload instanceof AuctionType at) {
+      return at;
+    }
+    if (payload != null) {
+      return AuctionType.parse(payload.toString());
+    }
+    return AuctionType.ENGLISH;
+  }
+
+  private static int parseUserId(Object payload) {
+    if (payload == null) {
+      return 0;
+    }
+    if (payload instanceof Number n) {
+      return n.intValue();
+    }
+    try {
+      return Integer.parseInt(payload.toString().trim());
+    } catch (NumberFormatException e) {
+      return 0;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedOngoing(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getOngoingBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedUpcoming(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getUpcomingBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedClosed(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getClosedBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedPast(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getPastBids(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+  @SuppressWarnings("unchecked")
+  private List<Item> syncedWatchlist(HandlerContext ctx, int userId) {
+    List<Item> rows = (List<Item>) (List<?>) ctx.getLotDao().getWatchlistItems(userId);
+    DutchAuctionCatalogSync.syncMany(ctx.getItemDao(), rows);
+    return rows;
+  }
+}
+</file>
+
 <file path="auction-shared/pom.xml">
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -15816,346 +15819,6 @@ public class TransactionLog implements Serializable {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
-  }
-}
-</file>
-
-<file path="auction-client/src/main/java/com/auction/client/ClientSession.java">
-package com.auction.client;
-
-import com.auction.shared.User;
-import com.auction.shared.UserRole;
-
-/**
- * Holds the currently authenticated user's state for the lifetime of the
- * session. This is a pure value-holder: it contains NO network or business
- * logic. All mutations that require a server round-trip must go through
- * {@link com.auction.client.service.UserAccountService}.
- */
-public final class ClientSession {
-  private static User currentUser;
-  private static UserRole activeRole;
-
-  private ClientSession() {}
-
-  public static void setCurrentUser(User user) {
-    currentUser = user;
-    if (user != null && activeRole == null) {
-      activeRole = user.getRole() == null ? UserRole.BIDDER : user.getRole();
-    }
-  }
-
-  /** Syncs profile fields on {@link #currentUser} after a successful profile update. */
-  public static void applyProfileUpdate(String newFullName, String newEmail, String newPhone) {
-    if (currentUser == null) return;
-    currentUser.setFullName(safe(newFullName));
-    currentUser.setEmail(safe(newEmail));
-    currentUser.setPhoneNumber(safe(newPhone));
-  }
-
-  public static User getCurrentUser() {
-    return currentUser;
-  }
-
-  public static String getUsername() {
-    return currentUser == null ? "" : safe(currentUser.getUsername());
-  }
-
-  public static UserRole getActiveRole() {
-    return activeRole;
-  }
-
-  public static void toggleRole() {
-    if (activeRole == UserRole.SELLER) activeRole = UserRole.BIDDER;
-    else activeRole = UserRole.SELLER;
-  }
-
-  public static void clear() {
-    currentUser = null;
-    activeRole = null;
-  }
-  // Cache lưu trữ ID các item đang theo dõi (O(1) lookup)
-  private static final java.util.Set<Integer> watchedItemIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
-
-  public static boolean isWatching(int itemId) {
-    return watchedItemIds.contains(itemId);
-  }
-
-  public static void toggleWatch(int itemId, boolean isWatching) {
-    if (isWatching) watchedItemIds.add(itemId);
-    else watchedItemIds.remove(itemId);
-  }
-
-  public static void setWatchlist(java.util.List<Integer> ids) {
-    watchedItemIds.clear();
-    if (ids != null) watchedItemIds.addAll(ids);
-  }
-
-  // Nhớ thêm watchedItemIds.clear(); vào trong hàm clear() (lúc logout)
-  private static String safe(String value) {
-    return value == null ? "" : value;
-  }
-}
-</file>
-
-<file path="auction-client/src/main/java/com/auction/client/ui/History/HistoryController.java">
-package com.auction.client.ui.History;
-
-import com.auction.client.ClientSession;
-import com.auction.client.app.NodeContentLoader;
-import com.auction.client.network.NetworkClient;
-import com.auction.client.ui.ItemCard.ItemCardController;
-import com.auction.client.ui.Main.KhungController;
-import com.auction.shared.AuctionType;
-import com.auction.shared.Item;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
-import javafx.application.Platform;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
-
-public class HistoryController {
-  private static final Object emptyplaceholder = new Object();
-  @FXML private FlowPane ongoingcontainer;
-  @FXML private FlowPane upcomingcontainer;
-  @FXML private FlowPane closedcontainer;
-  @FXML private FlowPane pastcontainer;
-  @FXML private FlowPane watchlistcontainer;
-  private final PaneCards watchlistmodel = new PaneCards();
-  private final PaneCards trendingSectionCards = new PaneCards();
-  private final PaneCards upcomingmodel = new PaneCards();
-  private final PaneCards closedmodel = new PaneCards();
-  private final PaneCards pastmodel = new PaneCards();
-  private final AtomicLong fetchgen = new AtomicLong(0);
-
-  private static final class PaneCards {
-    final Map<Integer, ItemCardController> cards = new HashMap<>();
-    final Map<Integer, Node> roots = new HashMap<>();
-  }
-
-  @FXML
-  public void initialize() {
-    refreshHistory();
-  }
-
-  public void refreshHistory() {
-    if (ClientSession.getCurrentUser() == null) {
-      return;
-    }
-    int userid = ClientSession.getCurrentUser().getId();
-    long currentgen = fetchgen.incrementAndGet();
-    Thread thread = new Thread(() -> {
-      List<Item> watchlist = fetchitems(Request.GET_WATCHLIST_ITEMS, userid); // Lấy Watchlist
-      List<Item> trending = fetchTrendingLotsForCatalogType();
-      List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
-      List<Item> closed = fetchitems("getclosedbids", userid);
-      List<Item> past = fetchitems("getpastbids", userid);
-
-      Platform.runLater(() -> {
-        if (currentgen != fetchgen.get()) return;
-
-        // Render Watchlist
-        if (watchlistcontainer != null && watchlist != null) {
-          incrementalrender(watchlistcontainer, watchlist, watchlistmodel, this::timecaptionscheduled);
-        }
-
-        if (ongoingcontainer != null && trending != null) {
-          incrementalrender(ongoingcontainer, trending, trendingSectionCards, this::timecaptionongoing);
-        }
-        if (upcomingcontainer != null && upcoming != null) {
-          incrementalrender(upcomingcontainer, upcoming, upcomingmodel, this::timecaptionscheduled);
-        }
-        if (closedcontainer != null && closed != null) {
-          incrementalrender(closedcontainer, closed, closedmodel, this::timecaptionscheduled);
-        }
-        if (pastcontainer != null && past != null) {
-          incrementalrender(pastcontainer, past, pastmodel, this::timecaptionscheduled);
-        }
-      });
-    });
-    thread.setDaemon(true);
-    thread.start();
-  }
-
-  private String timecaptionongoing(Item item) {
-    String ans = buildhistorycaption(item, true);
-    return ans;
-  }
-
-  private String timecaptionscheduled(Item item) {
-    String ans = buildhistorycaption(item, false);
-    return ans;
-  }
-
-  private String buildhistorycaption(Item item, boolean isongoing) {
-    String timelabel = formattime(isongoing ? item.getEndTime() : item.getStartTime());
-    if (item.getWinnerUsername() != null && !item.getWinnerUsername().isEmpty()) {
-      timelabel = "Winner: " + item.getWinnerUsername();
-    }
-    return timelabel;
-  }
-
-  /**
-   * Cùng nguồn với hàng Trending trên Trang chủ — theo kiểu English / Dutch đang chọn trên sidebar.
-   */
-  @SuppressWarnings("unchecked")
-  private List<Item> fetchTrendingLotsForCatalogType() {
-    AuctionType kind = KhungController.getCatalogAuctionType();
-    if (kind == null) {
-      kind = AuctionType.ENGLISH;
-    }
-    Request req = new Request(Request.GET_TRENDING_LOTS, kind.dbName());
-    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
-    if (res != null && Response.OK.equals(res.getStatus())) {
-      Object payload = res.getPayload();
-      if (payload instanceof List) {
-        return (List<Item>) payload;
-      }
-    }
-    return new ArrayList<>();
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Item> fetchitems(String action, int userid) {
-    Request req = new Request(action, userid);
-    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
-    if (res != null && Response.OK.equals(res.getStatus())) {
-      Object payload = res.getPayload();
-      if (payload instanceof List) {
-        List<Item> ans = (List<Item>) payload;
-        return ans;
-      }
-    }
-    return null;
-  }
-
-  private void incrementalrender(FlowPane pane, List<Item> items, PaneCards model, Function<Item, String> captionfn) {
-    if (pane == null) {
-      return;
-    }
-    Map<Integer, ItemCardController> cardmap = model.cards;
-    Map<Integer, Node> rootbyitemid = model.roots;
-    if (items.isEmpty()) {
-      for (Node n : new ArrayList<>(rootbyitemid.values())) {
-        pane.getChildren().remove(n);
-      }
-      cardmap.clear();
-      rootbyitemid.clear();
-      pane.getChildren().clear();
-      Label empty = new Label("Empty");
-      empty.getStyleClass().add("card-text");
-      empty.setUserData(emptyplaceholder);
-      pane.getChildren().add(empty);
-      return;
-    }
-    pane.getChildren().removeIf(n -> emptyplaceholder.equals(n.getUserData()));
-    List<Item> ordered = new ArrayList<>(items);
-    Set<Integer> desiredids = new HashSet<>(ordered.size() * 2);
-    for (Item it : ordered) {
-      desiredids.add(it.getId());
-    }
-    for (int id : new ArrayList<>(cardmap.keySet())) {
-      if (!desiredids.contains(id)) {
-        cardmap.remove(id);
-        Node removed = rootbyitemid.remove(id);
-        if (removed != null) {
-          pane.getChildren().remove(removed);
-        }
-      }
-    }
-    for (Item item : ordered) {
-      ItemCardController card = cardmap.get(item.getId());
-      String caption = captionfn.apply(item);
-      if (card != null) {
-        card.syncFromCatalogItemStaticTime(item, caption);
-        card.attachCatalogItem(item);
-      } else {
-        try {
-          NodeContentLoader<VBox> cardloader = new NodeContentLoader<>();
-          cardloader.load("/fxml/itemcard/ItemCard.fxml");
-          ItemCardController newcard = cardloader.getController();
-          VBox root = cardloader.getCurrentNode();
-          if (newcard != null && root != null) {
-            newcard.setData(item.getId(), safe(item.getName()), item.getCurrentPrice(), safe(item.getDescription()), caption, safe(item.getImageUrl()), safe(item.getSellerUsername()), safe(item.getSellerAvatarUrl()));
-            newcard.setEndTime(null);
-            newcard.attachCatalogItem(item);
-            cardmap.put(item.getId(), newcard);
-            rootbyitemid.put(item.getId(), root);
-          }
-        } catch (Exception e) {
-        }
-      }
-    }
-    List<Node> orderednodes = new ArrayList<>(ordered.size());
-    for (Item item : ordered) {
-      Node n = rootbyitemid.get(item.getId());
-      if (n != null) {
-        orderednodes.add(n);
-      }
-    }
-    ObservableList<Node> children = pane.getChildren();
-    boolean sameorder = children.size() == orderednodes.size();
-    if (sameorder) {
-      for (int i = 0; i < orderednodes.size(); i++) {
-        if (children.get(i) != orderednodes.get(i)) {
-          sameorder = false;
-          break;
-        }
-      }
-    }
-    if (!sameorder) {
-      children.setAll(orderednodes);
-    }
-  }
-
-  private String safe(String value) {
-    String ans = value == null ? "" : value;
-    return ans;
-  }
-
-  private String formattime(LocalDateTime time) {
-    if (time == null) {
-      return "N/A";
-    }
-    Duration remaining = Duration.between(LocalDateTime.now(), time);
-    if (remaining.isNegative() || remaining.isZero()) {
-      return "closed";
-    }
-    long hours = remaining.toHours();
-    if (hours / 24 > 0) {
-      String ans = (hours / 24) + "d " + (hours % 24) + "h";
-      return ans;
-    }
-    String ans = (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
-    return ans;
-  }
-  public void updateWatchlistUi(int itemId, boolean isWatched) {
-    updateCardHeart(trendingSectionCards, itemId, isWatched);
-    updateCardHeart(upcomingmodel, itemId, isWatched);
-    updateCardHeart(closedmodel, itemId, isWatched);
-    updateCardHeart(pastmodel, itemId, isWatched);
-    // Riêng thẻ trong mục Watchlist, nếu bỏ tim thì ta vẫn giữ nguyên trên màn hình (chỉ đổi icon thành trắng)
-    // để tránh việc UI bị giật/biến mất đột ngột. Lần sau user ấn Refresh nó mới biến mất.
-    updateCardHeart(watchlistmodel, itemId, isWatched);
-  }
-
-  private void updateCardHeart(PaneCards model, int itemId, boolean isWatched) {
-    ItemCardController card = model.cards.get(itemId);
-    if (card != null) card.setHeartUI(isWatched);
   }
 }
 </file>
@@ -16363,229 +16026,6 @@ public class AdminDashboardController {
     Alert a = new Alert(type); a.setTitle(title); a.setHeaderText(null); a.setContentText(content); a.showAndWait();
   }
 }
-</file>
-
-<file path="auction-client/src/main/resources/fxml/itemcard/ItemCard.fxml">
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Rectangle?>
-
-<VBox fx:id="itemRoot" alignment="TOP_CENTER" onMouseClicked="#handleItemClicked"
-      spacing="0.0" styleClass="glass-card-item"
-      stylesheets="/css/itemcard/ItemCard.css"
-      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.ui.ItemCard.ItemCardController">
-    <children>
-        <StackPane styleClass="image-container-mac">
-            <children>
-                <ImageView fx:id="ImageHolder" fitHeight="240.0" fitWidth="270.0" pickOnBounds="true" preserveRatio="true">
-                    <clip>
-                        <Rectangle fx:id="imageClip" arcHeight="30.0" arcWidth="30.0" height="240.0" width="270.0" />
-                    </clip>
-                </ImageView>
-
-                <!-- TÍNH NĂNG WATCHLIST: Nút thả tim góc trên bên phải ảnh -->
-                <Label fx:id="heartIcon" text="🤍" StackPane.alignment="TOP_RIGHT"
-                       style="-fx-font-size: 24px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 5, 0, 0, 2);">
-                    <StackPane.margin>
-                        <Insets top="10.0" right="10.0" />
-                    </StackPane.margin>
-                </Label>
-            </children>
-            <VBox.margin><Insets bottom="15.0" left="10.0" right="10.0" top="10.0" /></VBox.margin>
-        </StackPane>
-
-        <VBox spacing="12.0">
-            <children>
-                <VBox spacing="4.0">
-                    <children>
-                        <Label fx:id="ItemName" styleClass="item-name-mac" text="Product Name" wrapText="true" />
-                        <Label fx:id="ItemDescription" styleClass="item-desc-mac" text="Minimalist description..." wrapText="false" />
-                    </children>
-                </VBox>
-
-                <HBox alignment="CENTER_LEFT" spacing="0.0">
-                    <children>
-                        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                            <children>
-                                <Label fx:id="priceMetricCaption" styleClass="label-sm-gray" text="CURRENT BID" />
-                                <Label fx:id="Price" styleClass="price-val-cyan" text="0$" />
-                            </children>
-                        </VBox>
-                        <VBox alignment="TOP_RIGHT" spacing="2.0" HBox.hgrow="ALWAYS">
-                            <children>
-                                <Label styleClass="label-sm-gray" text="TIME LEFT" />
-                                <Label fx:id="TimeRemain" styleClass="timer-val-orange" text="00:00:00" />
-                            </children>
-                        </VBox>
-                    </children>
-                </HBox>
-
-                <HBox fx:id="sellerActionsRow" alignment="CENTER" spacing="8.0" managed="false" visible="false">
-                    <children>
-                        <Button fx:id="btnEditMyItem" mnemonicParsing="false" styleClass="btn-seller-item" text="Chỉnh sửa" />
-                        <Button fx:id="btnDeleteMyItem" mnemonicParsing="false" styleClass="btn-seller-item" text="Hủy / Xóa" />
-                    </children>
-                </HBox>
-            </children>
-            <padding>
-                <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
-            </padding>
-        </VBox>
-    </children>
-</VBox>
-</file>
-
-<file path="auction-client/src/main/resources/fxml/main/Khung.fxml">
-<?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Circle?>
-<?import javafx.scene.shape.SVGPath?>
-
-<HBox prefHeight="1024.0" prefWidth="1280.0" minWidth="1024.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.Main.KhungController" styleClass="main-container" fx:id="MainKhung" stylesheets="/css/main/MucLuc.css">
-    <children>
-        <VBox prefWidth="256.0" minWidth="256.0" styleClass="sidebar" spacing="30.0">
-            <children>
-                <VBox styleClass="logo-container">
-                    <children>
-                        <Label text="Bidding88" styleClass="logo-text"/>
-                        <Label text="Auction Online" styleClass="logo-subtext"/>
-                    </children>
-                </VBox>
-                <VBox VBox.vgrow="ALWAYS" spacing="10.0" styleClass="menu-container">
-                    <children>
-                        <HBox fx:id="AuctionMenu" styleClass="menu-item, menu-item-auction, active" onMouseClicked="#openAuction" maxWidth="Infinity">
-                            <children>
-                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
-                                    <children>
-                                        <SVGPath content="M0 19V17H12V19H0ZM5.65 14.15L0 8.5L2.1 6.35L7.8 12L5.65 14.15ZM12 7.8L6.35 2.1L8.5 0L14.15 5.65L12 7.8ZM16.6 18L3.55 4.95L4.95 3.55L18 16.6L16.6 18Z" styleClass="icon"/>
-                                    </children>
-                                </StackPane>
-                                <Label text="Auction" styleClass="menu-text" minWidth="120.0"/>
-                            </children>
-                        </HBox>
-
-                        <!-- NÚT WATCHLIST MỚI THÊM -->
-                        <HBox fx:id="WatchlistMenu" styleClass="menu-item" onMouseClicked="#openWatchlist" maxWidth="Infinity">
-                            <children>
-                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
-                                    <children>
-                                        <SVGPath content="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" styleClass="icon"/>
-                                    </children>
-                                </StackPane>
-                                <Label text="Watchlist" styleClass="menu-text" minWidth="120.0"/>
-                            </children>
-                        </HBox>
-
-                        <HBox fx:id="MyItemMenu" styleClass="menu-item" onMouseClicked="#openMyItems" maxWidth="Infinity">
-                            <children>
-                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
-                                    <children>
-                                        <SVGPath content="M3 20C2.45 20 1.97917 19.8042 1.5875 19.4125C1.19583 19.0208 1 18.55 1 18V6.725C0.7 6.54167 0.458333 6.30417 0.275 6.0125C0.0916667 5.72083 0 5.38333 0 5V2C0 1.45 0.195833 0.979167 0.5875 0.5875C0.979167 0.195833 1.45 0 2 0H18C18.55 0 19.0208 0.195833 19.4125 0.5875C19.8042 0.979167 20 1.45 20 2V5C20 5.38333 19.9083 5.72083 19.725 6.0125C19.5417 6.30417 19.3 6.54167 19 6.725V18C19 18.55 18.8042 19.0208 18.4125 19.4125C18.0208 19.8042 17.55 20 17 20H3V20M2 5H18V5V5V2V2V2H2V2V2V5V5V5V5M7 12H13V10H7V12V12" styleClass="icon"/>
-                                    </children>
-                                </StackPane>
-                                <Label text="My Item" styleClass="menu-text" minWidth="120.0"/>
-                            </children>
-                        </HBox>
-                        <HBox fx:id="HistoryMenu" styleClass="menu-item" onMouseClicked="#openHistory" maxWidth="Infinity">
-                            <children>
-                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
-                                    <children>
-                                        <SVGPath content="M9 18C6.7 18 4.69583 17.2375 2.9875 15.7125C1.27917 14.1875 0.3 12.2833 0.05 10H2.1C2.33333 11.7333 3.10417 13.1667 4.4125 14.3C5.72083 15.4333 7.25 16 9 16C10.95 16 12.6042 15.3208 13.9625 13.9625C15.3208 12.6042 16 10.95 16 9C16 7.05 15.3208 5.39583 13.9625 4.0375C12.6042 2.67917 10.95 2 9 2C7.85 2 6.775 2.26667 5.775 2.8C4.775 3.33333 3.93333 4.06667 3.25 5H6V7H0V1H2V3.35C2.85 2.28333 3.8875 1.45833 5.1125 0.875C6.3375 0.291667 7.63333 0 9 0C10.25 0 11.4208 0.2375 12.5125 0.7125C13.6042 1.1875 14.5542 1.82917 15.3625 2.6375C16.1708 3.44583 16.8125 4.39583 17.2875 5.4875C17.7625 6.57917 18 7.75 18 9C18 10.25 17.7625 11.4208 17.2875 12.5125C16.8125 13.6042 16.1708 14.5542 15.3625 15.3625C14.5542 16.1708 13.6042 16.8125 12.5125 17.2875C11.4208 17.7625 10.25 18 9 18ZM11.8 13.2L8 9.4V4H10V8.6L13.2 11.8L11.8 13.2Z" styleClass="icon"/>
-                                    </children>
-                                </StackPane>
-                                <Label text="History" styleClass="menu-text" minWidth="120.0"/>
-                            </children>
-                        </HBox>
-                        <HBox fx:id="ProfileMenu" styleClass="menu-item" onMouseClicked="#openProfile" maxWidth="Infinity">
-                            <children>
-                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
-                                    <children>
-                                        <SVGPath content="M8 8C6.9 8 5.95833 7.60833 5.175 6.825C4.39167 6.04167 4 5.1 4 4C4 2.9 4.39167 1.95833 5.175 1.175C5.95833 0.391667 6.9 0 8 0C9.1 0 10.0417 0.391667 10.825 1.175C11.6083 1.95833 12 2.9 12 4C12 5.1 11.6083 6.04167 10.825 6.825C10.0417 7.60833 9.1 8 8 8ZM0 16V13.2C0 12.6333 0.145833 12.1125 0.4375 11.6375C0.729167 11.1625 1.11667 10.8 1.6 10.55C2.63333 10.0333 3.68333 9.64583 4.75 9.3875C5.81667 9.12917 6.9 9 8 9C9.1 9 10.1833 9.12917 11.25 9.3875C12.3167 9.64583 13.3667 10.0333 14.4 10.55C14.8833 10.8 15.2708 11.1625 15.5625 11.6375C15.8542 12.1125 16 12.6333 16 13.2V16H0ZM2 14H14V13.2C14 13.0167 13.9542 12.85 13.8625 12.7C13.7708 12.55 13.65 12.4333 13.5 12.35C12.6 11.9 11.6917 11.5625 10.775 11.3375C9.85833 11.1125 8.93333 11 8 11C7.06667 11 6.14167 11.1125 5.225 11.3375C4.30833 11.5625 3.4 11.9 2.5 12.35C2.35 12.4333 2.22917 12.55 2.1375 12.7C2.04583 12.85 2 13.0167 2 13.2V14ZM8 6C8.55 6 9.02083 5.80417 9.4125 5.4125C9.80417 5.02083 10 4.55 10 4C10 3.45 9.80417 2.97917 9.4125 2.5875C9.02083 2.19583 8.55 2 8 2C7.45 2 6.97917 2.19583 6.5875 2.5875C6.19583 2.97917 6 3.45 6 4C6 4.55 6.19583 5.02083 6.5875 5.4125C6.97917 5.80417 7.45 6 8 6Z" styleClass="icon"/>
-                                    </children>
-                                </StackPane>
-                                <Label text="My Profile" styleClass="menu-text" minWidth="120.0"/>
-                            </children>
-                        </HBox>
-                        <HBox fx:id="ChatMenu" styleClass="menu-item" onMouseClicked="#openChat" maxWidth="Infinity">
-                            <children>
-                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
-                                    <children>
-                                        <SVGPath content="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.2L4 17.2V4H20V16ZM7 9H9V11H7V9ZM11 9H13V11H11V9ZM15 9H17V11H15V9Z" styleClass="icon"/>
-                                    </children>
-                                </StackPane>
-                                <Label text="Chat" styleClass="menu-text" minWidth="120.0"/>
-                            </children>
-                        </HBox>
-                        <HBox fx:id="ManageUsersMenu" styleClass="menu-item" onMouseClicked="#openManageUsers" maxWidth="Infinity" visible="false" managed="false">
-                            <children>
-                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
-                                    <children>
-                                        <SVGPath content="M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11ZM8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13ZM16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15.02 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z" styleClass="icon"/>
-                                    </children>
-                                </StackPane>
-                                <Label text="Manage Users" styleClass="menu-text" minWidth="120.0"/>
-                            </children>
-                        </HBox>
-                    </children>
-                </VBox>
-                <VBox styleClass="profile-card-bo" spacing="15.0" alignment="CENTER">
-                    <children>
-                        <HBox spacing="12.0" alignment="CENTER_LEFT">
-                            <children>
-                                <StackPane prefWidth="48.0" prefHeight="48.0" minWidth="48.0" minHeight="48.0" alignment="CENTER">
-                                    <children>
-                                        <Circle radius="24.0" styleClass="avatar-circle"/>
-                                        <ImageView fx:id="sidebaravatar" fitWidth="48.0" fitHeight="48.0" preserveRatio="false"/>
-                                    </children>
-                                </StackPane>
-                                <VBox>
-                                    <children>
-                                        <Label fx:id="UserName" text="username" styleClass="user-name"/>
-                                        <Label fx:id="Rank" text="Bidder" styleClass="user-rank"/>
-                                    </children>
-                                </VBox>
-                            </children>
-                        </HBox>
-                        <VBox spacing="8.0" maxWidth="Infinity">
-                            <children>
-                                <Button fx:id="primaryactionbutton" onAction="#handlePrimaryAction" text="Place a Bid" styleClass="btn-primary" maxWidth="Infinity"/>
-                                <Button onAction="#handleSignout" text="Sign Out" styleClass="btn-signout" maxWidth="Infinity"/>
-                            </children>
-                        </VBox>
-                    </children>
-                </VBox>
-            </children>
-            <padding><Insets top="30.0" bottom="30.0" left="20.0" right="20.0"/></padding>
-        </VBox>
-        <VBox HBox.hgrow="ALWAYS" styleClass="main-content">
-            <children>
-                <HBox fx:id="SearchContainer" prefHeight="70.0" minHeight="70.0" alignment="CENTER_LEFT" styleClass="search-bar-glass" spacing="15.0">
-                    <children>
-                        <Button text="Refresh" onAction="#handleRefresh" styleClass="btn-primary"/>
-                    </children>
-                    <VBox.margin><Insets top="20.0" left="20.0" right="20.0" bottom="10.0"/></VBox.margin>
-                    <padding><Insets left="20.0" right="20.0"/></padding>
-                </HBox>
-                <StackPane fx:id="ContentArea" VBox.vgrow="ALWAYS" alignment="TOP_LEFT" styleClass="content-area"/>
-            </children>
-        </VBox>
-    </children>
-</HBox>
 </file>
 
 <file path="auction-server/src/main/java/com/auction/server/dao/platform/DatabaseConnection.java">
@@ -16904,113 +16344,80 @@ public class Response implements Serializable {
 }
 </file>
 
-<file path="auction-client/src/main/java/com/auction/client/controller/LoginController.java">
-package com.auction.client.controller;
+<file path="auction-client/src/main/java/com/auction/client/ClientSession.java">
+package com.auction.client;
 
-import com.auction.client.ClientSession;
-import com.auction.client.SceneManager;
-import com.auction.client.network.NetworkClient;
-import com.auction.shared.*;
-import com.auction.shared.PasswordEncoder;
-import java.util.HashMap;
-import java.util.Map;
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
+import com.auction.shared.User;
+import com.auction.shared.UserRole;
 
-public class LoginController {
+/**
+ * Holds the currently authenticated user's state for the lifetime of the
+ * session. This is a pure value-holder: it contains NO network or business
+ * logic. All mutations that require a server round-trip must go through
+ * {@link com.auction.client.service.UserAccountService}.
+ */
+public final class ClientSession {
+  private static User currentUser;
+  private static UserRole activeRole;
 
-  @FXML private AnchorPane rootPane;
-  @FXML private TextField usernameField;
-  @FXML private PasswordField passwordField;
-  @FXML private Label messageLabel;
+  private ClientSession() {}
 
-  @FXML
-  private void initialize() {
-    Platform.runLater(() -> rootPane.requestFocus());
-  }
-  //Hàm xử lí login bên giao diện
-  @FXML
-  public void handleLogin(ActionEvent event) {
-    String username = this.usernameField.getText().trim();
-    String rawPassword = this.passwordField.getText();
-
-    if (username.isBlank() || rawPassword.isBlank()) {
-      this.messageLabel.setText("Please enter username and password.");
-      return;
+  public static void setCurrentUser(User user) {
+    currentUser = user;
+    if (user != null && activeRole == null) {
+      activeRole = user.getRole() == null ? UserRole.BIDDER : user.getRole();
     }
-
-    this.messageLabel.setText("Đang kết nối...");
-    this.rootPane.setDisable(true);
-
-    String hashedPassword = PasswordEncoder.hash(rawPassword);
-    Map<String, String> credentials = new HashMap<>();
-    credentials.put("username", username);
-    credentials.put("password", hashedPassword);
-    Request request = new Request(Request.LOGIN, credentials);
-
-    NetworkClient client;
-    try {
-      client = NetworkClient.getInstance();
-    } catch (Exception e) {
-      this.rootPane.setDisable(false);
-      this.messageLabel.setText("Cannot initialize network client.");
-      return;
-    }
-
-    new Thread(() -> {
-      Response res = client.sendRequestAndWait(request);
-
-      Platform.runLater(() -> {
-        this.rootPane.setDisable(false);
-
-        if (res == null) {
-          this.messageLabel.setText("Cannot reach server — check IP and server status.");
-          return;
-        }
-
-        if (res.getStatus().equals(Response.OK)) {
-          if (res.getPayload() instanceof User loggedInUser) {
-            ClientSession.setCurrentUser(loggedInUser);
-
-            // TẢI WATCHLIST VÀO RAM NGAY KHI LOGIN
-            new Thread(() -> {
-              Response watchRes = client.sendRequestAndWait(new Request(Request.GET_WATCHLIST, null));
-              if (watchRes != null && Response.OK.equals(watchRes.getStatus())) {
-                ClientSession.setWatchlist((java.util.List<Integer>) watchRes.getPayload());
-              }
-            }).start();
-          }
-          this.messageLabel.setText("Login successful!");
-          try {
-            SceneManager.switchScene("/fxml/main/Khung.fxml");
-          } catch (Exception ex) {
-            this.messageLabel.setText("Logged in but failed to open main window.");
-          }
-        } else if ("account_banned".equals(res.getMessage())) {
-          this.messageLabel.setText("Your account has been suspended.");
-        } else {
-          this.messageLabel.setText("Incorrect username or password.");
-        }
-      });
-    }).start();
-  }
-  @FXML
-  public void toForgotPassword(ActionEvent event) throws Exception {
-    SceneManager.switchScene("/fxml/forgot_password.fxml");
-  }
-  @FXML
-  public void back(ActionEvent event) throws Exception {
-    SceneManager.switchScene("/fxml/welcome.fxml");
   }
 
-  @FXML
-  public void toRegister(ActionEvent event) throws Exception {
-    SceneManager.switchScene("/fxml/register.fxml");
+  /** Syncs profile fields on {@link #currentUser} after a successful profile update. */
+  public static void applyProfileUpdate(String newFullName, String newEmail, String newPhone) {
+    if (currentUser == null) return;
+    currentUser.setFullName(safe(newFullName));
+    currentUser.setEmail(safe(newEmail));
+    currentUser.setPhoneNumber(safe(newPhone));
+  }
+
+  public static User getCurrentUser() {
+    return currentUser;
+  }
+
+  public static String getUsername() {
+    return currentUser == null ? "" : safe(currentUser.getUsername());
+  }
+
+  public static UserRole getActiveRole() {
+    return activeRole;
+  }
+
+  public static void toggleRole() {
+    if (activeRole == UserRole.SELLER) activeRole = UserRole.BIDDER;
+    else activeRole = UserRole.SELLER;
+  }
+
+  public static void clear() {
+    currentUser = null;
+    activeRole = null;
+  }
+  // Cache lưu trữ ID các item đang theo dõi (O(1) lookup)
+  private static final java.util.Set<Integer> watchedItemIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+  public static boolean isWatching(int itemId) {
+    return watchedItemIds.contains(itemId);
+  }
+
+  public static void toggleWatch(int itemId, boolean isWatching) {
+    if (isWatching) watchedItemIds.add(itemId);
+    else watchedItemIds.remove(itemId);
+  }
+
+  public static void setWatchlist(java.util.List<Integer> ids) {
+    watchedItemIds.clear();
+    if (ids != null) watchedItemIds.addAll(ids);
+  }
+
+  // Nhớ thêm watchedItemIds.clear(); vào trong hàm clear() (lúc logout)
+  private static String safe(String value) {
+    return value == null ? "" : value;
   }
 }
 </file>
@@ -17887,6 +17294,268 @@ public class ChatPageController implements ChatLeftListHost {
 }
 </file>
 
+<file path="auction-client/src/main/java/com/auction/client/ui/History/HistoryController.java">
+package com.auction.client.ui.History;
+
+import com.auction.client.ClientSession;
+import com.auction.client.app.NodeContentLoader;
+import com.auction.client.network.NetworkClient;
+import com.auction.client.ui.ItemCard.ItemCardController;
+import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.AuctionType;
+import com.auction.shared.Item;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
+
+public class HistoryController {
+  private static final Object emptyplaceholder = new Object();
+  @FXML private FlowPane ongoingcontainer;
+  @FXML private FlowPane upcomingcontainer;
+  @FXML private FlowPane closedcontainer;
+  @FXML private FlowPane pastcontainer;
+  @FXML private FlowPane watchlistcontainer;
+  private final PaneCards watchlistmodel = new PaneCards();
+  private final PaneCards trendingSectionCards = new PaneCards();
+  private final PaneCards upcomingmodel = new PaneCards();
+  private final PaneCards closedmodel = new PaneCards();
+  private final PaneCards pastmodel = new PaneCards();
+  private final AtomicLong fetchgen = new AtomicLong(0);
+
+  private static final class PaneCards {
+    final Map<Integer, ItemCardController> cards = new HashMap<>();
+    final Map<Integer, Node> roots = new HashMap<>();
+  }
+
+  @FXML
+  public void initialize() {
+    refreshHistory();
+  }
+
+  public void refreshHistory() {
+    if (ClientSession.getCurrentUser() == null) {
+      return;
+    }
+    int userid = ClientSession.getCurrentUser().getId();
+    long currentgen = fetchgen.incrementAndGet();
+    Thread thread = new Thread(() -> {
+      List<Item> watchlist = fetchitems(Request.GET_WATCHLIST_ITEMS, userid); // Lấy Watchlist
+      List<Item> trending = fetchTrendingLotsForCatalogType();
+      List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
+      List<Item> closed = fetchitems("getclosedbids", userid);
+      List<Item> past = fetchitems("getpastbids", userid);
+
+      Platform.runLater(() -> {
+        if (currentgen != fetchgen.get()) return;
+
+        // Render Watchlist
+        if (watchlistcontainer != null && watchlist != null) {
+          incrementalrender(watchlistcontainer, watchlist, watchlistmodel, this::timecaptionscheduled);
+        }
+
+        if (ongoingcontainer != null && trending != null) {
+          incrementalrender(ongoingcontainer, trending, trendingSectionCards, this::timecaptionongoing);
+        }
+        if (upcomingcontainer != null && upcoming != null) {
+          incrementalrender(upcomingcontainer, upcoming, upcomingmodel, this::timecaptionscheduled);
+        }
+        if (closedcontainer != null && closed != null) {
+          incrementalrender(closedcontainer, closed, closedmodel, this::timecaptionscheduled);
+        }
+        if (pastcontainer != null && past != null) {
+          incrementalrender(pastcontainer, past, pastmodel, this::timecaptionscheduled);
+        }
+      });
+    });
+    thread.setDaemon(true);
+    thread.start();
+  }
+
+  private String timecaptionongoing(Item item) {
+    String ans = buildhistorycaption(item, true);
+    return ans;
+  }
+
+  private String timecaptionscheduled(Item item) {
+    String ans = buildhistorycaption(item, false);
+    return ans;
+  }
+
+  private String buildhistorycaption(Item item, boolean isongoing) {
+    String timelabel = formattime(isongoing ? item.getEndTime() : item.getStartTime());
+    if (item.getWinnerUsername() != null && !item.getWinnerUsername().isEmpty()) {
+      timelabel = "Winner: " + item.getWinnerUsername();
+    }
+    return timelabel;
+  }
+
+  /**
+   * Cùng nguồn với hàng Trending trên Trang chủ — theo kiểu English / Dutch đang chọn trên sidebar.
+   */
+  @SuppressWarnings("unchecked")
+  private List<Item> fetchTrendingLotsForCatalogType() {
+    AuctionType kind = KhungController.getCatalogAuctionType();
+    if (kind == null) {
+      kind = AuctionType.ENGLISH;
+    }
+    Request req = new Request(Request.GET_TRENDING_LOTS, kind.dbName());
+    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+    if (res != null && Response.OK.equals(res.getStatus())) {
+      Object payload = res.getPayload();
+      if (payload instanceof List) {
+        return (List<Item>) payload;
+      }
+    }
+    return new ArrayList<>();
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Item> fetchitems(String action, int userid) {
+    Request req = new Request(action, userid);
+    Response res = NetworkClient.getInstance().sendRequestAndWait(req);
+    if (res != null && Response.OK.equals(res.getStatus())) {
+      Object payload = res.getPayload();
+      if (payload instanceof List) {
+        List<Item> ans = (List<Item>) payload;
+        return ans;
+      }
+    }
+    return null;
+  }
+
+  private void incrementalrender(FlowPane pane, List<Item> items, PaneCards model, Function<Item, String> captionfn) {
+    if (pane == null) {
+      return;
+    }
+    Map<Integer, ItemCardController> cardmap = model.cards;
+    Map<Integer, Node> rootbyitemid = model.roots;
+    if (items.isEmpty()) {
+      for (Node n : new ArrayList<>(rootbyitemid.values())) {
+        pane.getChildren().remove(n);
+      }
+      cardmap.clear();
+      rootbyitemid.clear();
+      pane.getChildren().clear();
+      Label empty = new Label("Empty");
+      empty.getStyleClass().add("card-text");
+      empty.setUserData(emptyplaceholder);
+      pane.getChildren().add(empty);
+      return;
+    }
+    pane.getChildren().removeIf(n -> emptyplaceholder.equals(n.getUserData()));
+    List<Item> ordered = new ArrayList<>(items);
+    Set<Integer> desiredids = new HashSet<>(ordered.size() * 2);
+    for (Item it : ordered) {
+      desiredids.add(it.getId());
+    }
+    for (int id : new ArrayList<>(cardmap.keySet())) {
+      if (!desiredids.contains(id)) {
+        cardmap.remove(id);
+        Node removed = rootbyitemid.remove(id);
+        if (removed != null) {
+          pane.getChildren().remove(removed);
+        }
+      }
+    }
+    for (Item item : ordered) {
+      ItemCardController card = cardmap.get(item.getId());
+      String caption = captionfn.apply(item);
+      if (card != null) {
+        card.syncFromCatalogItemStaticTime(item, caption);
+        card.attachCatalogItem(item);
+      } else {
+        try {
+          NodeContentLoader<VBox> cardloader = new NodeContentLoader<>();
+          cardloader.load("/fxml/itemcard/ItemCard.fxml");
+          ItemCardController newcard = cardloader.getController();
+          VBox root = cardloader.getCurrentNode();
+          if (newcard != null && root != null) {
+            newcard.setData(item.getId(), safe(item.getName()), item.getCurrentPrice(), safe(item.getDescription()), caption, safe(item.getImageUrl()), safe(item.getSellerUsername()), safe(item.getSellerAvatarUrl()));
+            newcard.setEndTime(null);
+            newcard.attachCatalogItem(item);
+            cardmap.put(item.getId(), newcard);
+            rootbyitemid.put(item.getId(), root);
+          }
+        } catch (Exception e) {
+        }
+      }
+    }
+    List<Node> orderednodes = new ArrayList<>(ordered.size());
+    for (Item item : ordered) {
+      Node n = rootbyitemid.get(item.getId());
+      if (n != null) {
+        orderednodes.add(n);
+      }
+    }
+    ObservableList<Node> children = pane.getChildren();
+    boolean sameorder = children.size() == orderednodes.size();
+    if (sameorder) {
+      for (int i = 0; i < orderednodes.size(); i++) {
+        if (children.get(i) != orderednodes.get(i)) {
+          sameorder = false;
+          break;
+        }
+      }
+    }
+    if (!sameorder) {
+      children.setAll(orderednodes);
+    }
+  }
+
+  private String safe(String value) {
+    String ans = value == null ? "" : value;
+    return ans;
+  }
+
+  private String formattime(LocalDateTime time) {
+    if (time == null) {
+      return "N/A";
+    }
+    Duration remaining = Duration.between(LocalDateTime.now(), time);
+    if (remaining.isNegative() || remaining.isZero()) {
+      return "closed";
+    }
+    long hours = remaining.toHours();
+    if (hours / 24 > 0) {
+      String ans = (hours / 24) + "d " + (hours % 24) + "h";
+      return ans;
+    }
+    String ans = (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
+    return ans;
+  }
+  public void updateWatchlistUi(int itemId, boolean isWatched) {
+    updateCardHeart(trendingSectionCards, itemId, isWatched);
+    updateCardHeart(upcomingmodel, itemId, isWatched);
+    updateCardHeart(closedmodel, itemId, isWatched);
+    updateCardHeart(pastmodel, itemId, isWatched);
+    // Riêng thẻ trong mục Watchlist, nếu bỏ tim thì ta vẫn giữ nguyên trên màn hình (chỉ đổi icon thành trắng)
+    // để tránh việc UI bị giật/biến mất đột ngột. Lần sau user ấn Refresh nó mới biến mất.
+    updateCardHeart(watchlistmodel, itemId, isWatched);
+  }
+
+  private void updateCardHeart(PaneCards model, int itemId, boolean isWatched) {
+    ItemCardController card = model.cards.get(itemId);
+    if (card != null) card.setHeartUI(isWatched);
+  }
+}
+</file>
+
 <file path="auction-client/src/main/resources/css/addnewlot/AddNewLot.css">
 @import url("../shared/AppScrollbar.css");
 
@@ -18198,6 +17867,229 @@ public class ChatPageController implements ChatLeftListHost {
         </ScrollPane>
     </children>
 </AnchorPane>
+</file>
+
+<file path="auction-client/src/main/resources/fxml/itemcard/ItemCard.fxml">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+
+<VBox fx:id="itemRoot" alignment="TOP_CENTER" onMouseClicked="#handleItemClicked"
+      spacing="0.0" styleClass="glass-card-item"
+      stylesheets="/css/itemcard/ItemCard.css"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.ui.ItemCard.ItemCardController">
+    <children>
+        <StackPane styleClass="image-container-mac">
+            <children>
+                <ImageView fx:id="ImageHolder" fitHeight="240.0" fitWidth="270.0" pickOnBounds="true" preserveRatio="true">
+                    <clip>
+                        <Rectangle fx:id="imageClip" arcHeight="30.0" arcWidth="30.0" height="240.0" width="270.0" />
+                    </clip>
+                </ImageView>
+
+                <!-- TÍNH NĂNG WATCHLIST: Nút thả tim góc trên bên phải ảnh -->
+                <Label fx:id="heartIcon" text="🤍" StackPane.alignment="TOP_RIGHT"
+                       style="-fx-font-size: 24px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 5, 0, 0, 2);">
+                    <StackPane.margin>
+                        <Insets top="10.0" right="10.0" />
+                    </StackPane.margin>
+                </Label>
+            </children>
+            <VBox.margin><Insets bottom="15.0" left="10.0" right="10.0" top="10.0" /></VBox.margin>
+        </StackPane>
+
+        <VBox spacing="12.0">
+            <children>
+                <VBox spacing="4.0">
+                    <children>
+                        <Label fx:id="ItemName" styleClass="item-name-mac" text="Product Name" wrapText="true" />
+                        <Label fx:id="ItemDescription" styleClass="item-desc-mac" text="Minimalist description..." wrapText="false" />
+                    </children>
+                </VBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="0.0">
+                    <children>
+                        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label fx:id="priceMetricCaption" styleClass="label-sm-gray" text="CURRENT BID" />
+                                <Label fx:id="Price" styleClass="price-val-cyan" text="0$" />
+                            </children>
+                        </VBox>
+                        <VBox alignment="TOP_RIGHT" spacing="2.0" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label styleClass="label-sm-gray" text="TIME LEFT" />
+                                <Label fx:id="TimeRemain" styleClass="timer-val-orange" text="00:00:00" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+
+                <HBox fx:id="sellerActionsRow" alignment="CENTER" spacing="8.0" managed="false" visible="false">
+                    <children>
+                        <Button fx:id="btnEditMyItem" mnemonicParsing="false" styleClass="btn-seller-item" text="Chỉnh sửa" />
+                        <Button fx:id="btnDeleteMyItem" mnemonicParsing="false" styleClass="btn-seller-item" text="Hủy / Xóa" />
+                    </children>
+                </HBox>
+            </children>
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
+            </padding>
+        </VBox>
+    </children>
+</VBox>
+</file>
+
+<file path="auction-client/src/main/resources/fxml/main/Khung.fxml">
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+
+<HBox prefHeight="1024.0" prefWidth="1280.0" minWidth="1024.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.Main.KhungController" styleClass="main-container" fx:id="MainKhung" stylesheets="/css/main/MucLuc.css">
+    <children>
+        <VBox prefWidth="256.0" minWidth="256.0" styleClass="sidebar" spacing="30.0">
+            <children>
+                <VBox styleClass="logo-container">
+                    <children>
+                        <Label text="Bidding88" styleClass="logo-text"/>
+                        <Label text="Auction Online" styleClass="logo-subtext"/>
+                    </children>
+                </VBox>
+                <VBox VBox.vgrow="ALWAYS" spacing="10.0" styleClass="menu-container">
+                    <children>
+                        <HBox fx:id="AuctionMenu" styleClass="menu-item, menu-item-auction, active" onMouseClicked="#openAuction" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M0 19V17H12V19H0ZM5.65 14.15L0 8.5L2.1 6.35L7.8 12L5.65 14.15ZM12 7.8L6.35 2.1L8.5 0L14.15 5.65L12 7.8ZM16.6 18L3.55 4.95L4.95 3.55L18 16.6L16.6 18Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="Auction" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+
+                        <!-- NÚT WATCHLIST MỚI THÊM -->
+                        <HBox fx:id="WatchlistMenu" styleClass="menu-item" onMouseClicked="#openWatchlist" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="Watchlist" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+
+                        <HBox fx:id="MyItemMenu" styleClass="menu-item" onMouseClicked="#openMyItems" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M3 20C2.45 20 1.97917 19.8042 1.5875 19.4125C1.19583 19.0208 1 18.55 1 18V6.725C0.7 6.54167 0.458333 6.30417 0.275 6.0125C0.0916667 5.72083 0 5.38333 0 5V2C0 1.45 0.195833 0.979167 0.5875 0.5875C0.979167 0.195833 1.45 0 2 0H18C18.55 0 19.0208 0.195833 19.4125 0.5875C19.8042 0.979167 20 1.45 20 2V5C20 5.38333 19.9083 5.72083 19.725 6.0125C19.5417 6.30417 19.3 6.54167 19 6.725V18C19 18.55 18.8042 19.0208 18.4125 19.4125C18.0208 19.8042 17.55 20 17 20H3V20M2 5H18V5V5V2V2V2H2V2V2V5V5V5V5M7 12H13V10H7V12V12" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="My Item" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+                        <HBox fx:id="HistoryMenu" styleClass="menu-item" onMouseClicked="#openHistory" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M9 18C6.7 18 4.69583 17.2375 2.9875 15.7125C1.27917 14.1875 0.3 12.2833 0.05 10H2.1C2.33333 11.7333 3.10417 13.1667 4.4125 14.3C5.72083 15.4333 7.25 16 9 16C10.95 16 12.6042 15.3208 13.9625 13.9625C15.3208 12.6042 16 10.95 16 9C16 7.05 15.3208 5.39583 13.9625 4.0375C12.6042 2.67917 10.95 2 9 2C7.85 2 6.775 2.26667 5.775 2.8C4.775 3.33333 3.93333 4.06667 3.25 5H6V7H0V1H2V3.35C2.85 2.28333 3.8875 1.45833 5.1125 0.875C6.3375 0.291667 7.63333 0 9 0C10.25 0 11.4208 0.2375 12.5125 0.7125C13.6042 1.1875 14.5542 1.82917 15.3625 2.6375C16.1708 3.44583 16.8125 4.39583 17.2875 5.4875C17.7625 6.57917 18 7.75 18 9C18 10.25 17.7625 11.4208 17.2875 12.5125C16.8125 13.6042 16.1708 14.5542 15.3625 15.3625C14.5542 16.1708 13.6042 16.8125 12.5125 17.2875C11.4208 17.7625 10.25 18 9 18ZM11.8 13.2L8 9.4V4H10V8.6L13.2 11.8L11.8 13.2Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="History" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+                        <HBox fx:id="ProfileMenu" styleClass="menu-item" onMouseClicked="#openProfile" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M8 8C6.9 8 5.95833 7.60833 5.175 6.825C4.39167 6.04167 4 5.1 4 4C4 2.9 4.39167 1.95833 5.175 1.175C5.95833 0.391667 6.9 0 8 0C9.1 0 10.0417 0.391667 10.825 1.175C11.6083 1.95833 12 2.9 12 4C12 5.1 11.6083 6.04167 10.825 6.825C10.0417 7.60833 9.1 8 8 8ZM0 16V13.2C0 12.6333 0.145833 12.1125 0.4375 11.6375C0.729167 11.1625 1.11667 10.8 1.6 10.55C2.63333 10.0333 3.68333 9.64583 4.75 9.3875C5.81667 9.12917 6.9 9 8 9C9.1 9 10.1833 9.12917 11.25 9.3875C12.3167 9.64583 13.3667 10.0333 14.4 10.55C14.8833 10.8 15.2708 11.1625 15.5625 11.6375C15.8542 12.1125 16 12.6333 16 13.2V16H0ZM2 14H14V13.2C14 13.0167 13.9542 12.85 13.8625 12.7C13.7708 12.55 13.65 12.4333 13.5 12.35C12.6 11.9 11.6917 11.5625 10.775 11.3375C9.85833 11.1125 8.93333 11 8 11C7.06667 11 6.14167 11.1125 5.225 11.3375C4.30833 11.5625 3.4 11.9 2.5 12.35C2.35 12.4333 2.22917 12.55 2.1375 12.7C2.04583 12.85 2 13.0167 2 13.2V14ZM8 6C8.55 6 9.02083 5.80417 9.4125 5.4125C9.80417 5.02083 10 4.55 10 4C10 3.45 9.80417 2.97917 9.4125 2.5875C9.02083 2.19583 8.55 2 8 2C7.45 2 6.97917 2.19583 6.5875 2.5875C6.19583 2.97917 6 3.45 6 4C6 4.55 6.19583 5.02083 6.5875 5.4125C6.97917 5.80417 7.45 6 8 6Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="My Profile" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+                        <HBox fx:id="ChatMenu" styleClass="menu-item" onMouseClicked="#openChat" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.2L4 17.2V4H20V16ZM7 9H9V11H7V9ZM11 9H13V11H11V9ZM15 9H17V11H15V9Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="Chat" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+                        <HBox fx:id="ManageUsersMenu" styleClass="menu-item" onMouseClicked="#openManageUsers" maxWidth="Infinity" visible="false" managed="false">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11ZM8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13ZM16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15.02 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="Manage Users" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox styleClass="profile-card-bo" spacing="15.0" alignment="CENTER">
+                    <children>
+                        <HBox spacing="12.0" alignment="CENTER_LEFT">
+                            <children>
+                                <StackPane prefWidth="48.0" prefHeight="48.0" minWidth="48.0" minHeight="48.0" alignment="CENTER">
+                                    <children>
+                                        <Circle radius="24.0" styleClass="avatar-circle"/>
+                                        <ImageView fx:id="sidebaravatar" fitWidth="48.0" fitHeight="48.0" preserveRatio="false"/>
+                                    </children>
+                                </StackPane>
+                                <VBox>
+                                    <children>
+                                        <Label fx:id="UserName" text="username" styleClass="user-name"/>
+                                        <Label fx:id="Rank" text="Bidder" styleClass="user-rank"/>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <VBox spacing="8.0" maxWidth="Infinity">
+                            <children>
+                                <Button fx:id="primaryactionbutton" onAction="#handlePrimaryAction" text="Place a Bid" styleClass="btn-primary" maxWidth="Infinity"/>
+                                <Button onAction="#handleSignout" text="Sign Out" styleClass="btn-signout" maxWidth="Infinity"/>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </children>
+            <padding><Insets top="30.0" bottom="30.0" left="20.0" right="20.0"/></padding>
+        </VBox>
+        <VBox HBox.hgrow="ALWAYS" styleClass="main-content">
+            <children>
+                <HBox fx:id="SearchContainer" prefHeight="70.0" minHeight="70.0" alignment="CENTER_LEFT" styleClass="search-bar-glass" spacing="15.0">
+                    <children>
+                        <Button text="Refresh" onAction="#handleRefresh" styleClass="btn-primary"/>
+                    </children>
+                    <VBox.margin><Insets top="20.0" left="20.0" right="20.0" bottom="10.0"/></VBox.margin>
+                    <padding><Insets left="20.0" right="20.0"/></padding>
+                </HBox>
+                <StackPane fx:id="ContentArea" VBox.vgrow="ALWAYS" alignment="TOP_LEFT" styleClass="content-area"/>
+            </children>
+        </VBox>
+    </children>
+</HBox>
 </file>
 
 <file path="auction-client/src/main/resources/fxml/searchbar/ThanhTimKiem.fxml">
@@ -18805,6 +18697,117 @@ repomix-output.xml
 repomix-output.xml
 </file>
 
+<file path="auction-client/src/main/java/com/auction/client/controller/LoginController.java">
+package com.auction.client.controller;
+
+import com.auction.client.ClientSession;
+import com.auction.client.SceneManager;
+import com.auction.client.network.NetworkClient;
+import com.auction.shared.*;
+import com.auction.shared.PasswordEncoder;
+import java.util.HashMap;
+import java.util.Map;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
+
+public class LoginController {
+
+  @FXML private AnchorPane rootPane;
+  @FXML private TextField usernameField;
+  @FXML private PasswordField passwordField;
+  @FXML private Label messageLabel;
+
+  @FXML
+  private void initialize() {
+    Platform.runLater(() -> rootPane.requestFocus());
+  }
+  //Hàm xử lí login bên giao diện
+  @FXML
+  public void handleLogin(ActionEvent event) {
+    String username = this.usernameField.getText().trim();
+    String rawPassword = this.passwordField.getText();
+
+    if (username.isBlank() || rawPassword.isBlank()) {
+      this.messageLabel.setText("Please enter username and password.");
+      return;
+    }
+
+    this.messageLabel.setText("Đang kết nối...");
+    this.rootPane.setDisable(true);
+
+    String hashedPassword = PasswordEncoder.hash(rawPassword);
+    Map<String, String> credentials = new HashMap<>();
+    credentials.put("username", username);
+    credentials.put("password", hashedPassword);
+    Request request = new Request(Request.LOGIN, credentials);
+
+    NetworkClient client;
+    try {
+      client = NetworkClient.getInstance();
+    } catch (Exception e) {
+      this.rootPane.setDisable(false);
+      this.messageLabel.setText("Cannot initialize network client.");
+      return;
+    }
+
+    new Thread(() -> {
+      Response res = client.sendRequestAndWait(request);
+
+      Platform.runLater(() -> {
+        this.rootPane.setDisable(false);
+
+        if (res == null) {
+          this.messageLabel.setText("Cannot reach server — check IP and server status.");
+          return;
+        }
+
+        if (res.getStatus().equals(Response.OK)) {
+          if (res.getPayload() instanceof User loggedInUser) {
+            ClientSession.setCurrentUser(loggedInUser);
+
+            // TẢI WATCHLIST VÀO RAM NGAY KHI LOGIN
+            new Thread(() -> {
+              Response watchRes = client.sendRequestAndWait(new Request(Request.GET_WATCHLIST, null));
+              if (watchRes != null && Response.OK.equals(watchRes.getStatus())) {
+                ClientSession.setWatchlist((java.util.List<Integer>) watchRes.getPayload());
+              }
+            }).start();
+          }
+          this.messageLabel.setText("Login successful!");
+          try {
+            SceneManager.switchScene("/fxml/main/Khung.fxml");
+          } catch (Exception ex) {
+            this.messageLabel.setText("Logged in but failed to open main window.");
+          }
+        } else if ("account_banned".equals(res.getMessage())) {
+          this.messageLabel.setText("Your account has been suspended.");
+        } else {
+          this.messageLabel.setText("Incorrect username or password.");
+        }
+      });
+    }).start();
+  }
+  @FXML
+  public void toForgotPassword(ActionEvent event) throws Exception {
+    SceneManager.switchScene("/fxml/forgot_password.fxml");
+  }
+  @FXML
+  public void back(ActionEvent event) throws Exception {
+    SceneManager.switchScene("/fxml/welcome.fxml");
+  }
+
+  @FXML
+  public void toRegister(ActionEvent event) throws Exception {
+    SceneManager.switchScene("/fxml/register.fxml");
+  }
+}
+</file>
+
 <file path="auction-client/src/main/java/com/auction/client/controller/RegisterController.java">
 package com.auction.client.controller;
 
@@ -18896,291 +18899,6 @@ public class RegisterController {
   @FXML
   public void goWelcome(ActionEvent event) throws Exception {
     SceneManager.switchScene("/fxml/welcome.fxml");
-  }
-}
-</file>
-
-<file path="auction-client/src/main/java/com/auction/client/ui/YourItem/YourItemController.java">
-package com.auction.client.ui.YourItem;
-
-import com.auction.client.ClientSession;
-import com.auction.client.app.NodeContentLoader;
-import com.auction.client.network.NetworkClient;
-import com.auction.client.service.LotSubmissionService;
-import com.auction.client.ui.ItemCard.ItemCardController;
-import com.auction.client.ui.Main.KhungController;
-import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javafx.application.Platform;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
-
-public class YourItemController {
-  @FXML private FlowPane ItemContainer;
-  @FXML private Label ActiveItemsValue, InventoryValue;
-
-  private final Map<Integer, ItemCardController> cardMap = new HashMap<>();
-  private final Map<Integer, Node> cardRootByItemId = new HashMap<>();
-  private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
-
-  @FXML
-  void initialize() {
-    refreshItems();
-  }
-
-  @FXML
-  public void refreshItems() {
-    if (ClientSession.getCurrentUser() == null) return;
-    int userId = ClientSession.getCurrentUser().getId();
-
-    new Thread(
-            () -> {
-              try {
-                Request request = new Request("get_my_items", userId);
-                Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-
-                if (response != null && Response.OK.equals(response.getStatus())) {
-                  List<Item> items = (List<Item>) response.getPayload();
-                  Platform.runLater(() -> render(items));
-                }
-              } catch (Exception ignored) {
-              }
-            })
-        .start();
-  }
-
-  private void render(List<Item> items) {
-    if (ItemContainer == null) return;
-    if (items == null) items = List.of();
-
-    List<Item> visible = new ArrayList<>();
-    int openCount = 0;
-    double inventoryTotal = 0;
-
-    for (Item item : items) {
-      if (!match(item)) continue;
-      visible.add(item);
-      if (isOpenLiveWindow(item)) openCount++;
-      inventoryTotal += item.getCurrentPrice();
-    }
-
-    incrementalRender(visible);
-    if (ActiveItemsValue != null) ActiveItemsValue.setText(String.valueOf(openCount));
-    if (InventoryValue != null) InventoryValue.setText(String.format("%,.0f$", inventoryTotal));
-  }
-
-  private static boolean isOpenUpcomingNotStarted(Item item) {
-    if (item == null || item.getStatus() != ItemStatus.OPEN) {
-      return false;
-    }
-    LocalDateTime st = item.getStartTime();
-    return st != null && st.isAfter(LocalDateTime.now());
-  }
-
-  /** OPEN nhưng đã tới giờ bắt đầu (không còn “chờ mở sàn”). */
-  private static boolean isOpenLiveWindow(Item item) {
-    return item != null
-        && item.getStatus() == ItemStatus.OPEN
-        && !isOpenUpcomingNotStarted(item);
-  }
-
-  private String statusCaption(Item item) {
-    if (item.getStatus() == null) {
-      return "N/A";
-    }
-    if (item.getStatus() == ItemStatus.PENDING) {
-      return "\u23F3 Chờ duyệt";
-    }
-    if (isOpenUpcomingNotStarted(item)) {
-      return "\uD83D\uDCC5 Chưa mở sàn (đã duyệt)";
-    }
-    if (item.getStatus() == ItemStatus.OPEN) {
-      return "\u25B6 \u0110ang \u0111\u1EA5u gi\u00E1";
-    }
-    return item.getStatus().name();
-  }
-
-  private static boolean sellerMayEditListing(Item item) {
-    if (item.getStatus() == ItemStatus.PENDING) {
-      return true;
-    }
-    return isOpenUpcomingNotStarted(item);
-  }
-
-  private void configureSellerTools(ItemCardController card, Item item) {
-    ItemStatus st = item.getStatus();
-    boolean showEdit = sellerMayEditListing(item);
-    boolean showCancel = st == ItemStatus.PENDING || st == ItemStatus.OPEN;
-    if (!showCancel && !showEdit) {
-      card.configureSellerItemActions(false, null, false, null);
-      return;
-    }
-    card.configureSellerItemActions(
-        showEdit,
-        () -> KhungController.openEditPendingItem(item),
-        showCancel,
-        () -> promptCancelSellerItem(item));
-  }
-
-  private void promptCancelSellerItem(Item item) {
-    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-    confirm.setTitle("Xác nhận");
-    confirm.setHeaderText(null);
-    if (item.getStatus() == ItemStatus.OPEN) {
-      if (isOpenUpcomingNotStarted(item)) {
-        confirm.setContentText(
-            "Hủy phiên chưa mở sàn? (Nếu đã có đặt giá, người cao nhất sẽ được hoàn cọc.)");
-      } else {
-        confirm.setContentText(
-            "Hủy phiên đang mở? Người trả giá cao nhất (nếu có) sẽ được hoàn tiền đặt cọc.");
-      }
-    } else {
-      confirm.setContentText("Thu hồi sản phẩm đang chờ duyệt?");
-    }
-    confirm
-        .showAndWait()
-        .ifPresent(
-            btn -> {
-              if (btn != ButtonType.OK) {
-                return;
-              }
-              new Thread(
-                      () -> {
-                        try {
-                          Response res =
-                              lotSubmissionService.cancelSellerItem(item.getId());
-                          Platform.runLater(
-                              () -> {
-                                if (res != null && Response.OK.equals(res.getStatus())) {
-                                  refreshItems();
-                                } else {
-                                  Alert err = new Alert(Alert.AlertType.ERROR);
-                                  err.setHeaderText(null);
-                                  err.setContentText(
-                                      res != null ? res.getMessage() : "Không hủy được.");
-                                  err.showAndWait();
-                                }
-                              });
-                        } catch (Exception ignored) {
-                        }
-                      })
-                  .start();
-            });
-  }
-
-  private void incrementalRender(List<Item> visible) {
-    FlowPane pane = ItemContainer;
-    Map<Integer, ItemCardController> cards = cardMap;
-    Map<Integer, Node> rootByItemId = cardRootByItemId;
-
-    if (visible.isEmpty()) {
-      for (Node n : new ArrayList<>(rootByItemId.values())) {
-        pane.getChildren().remove(n);
-      }
-      cards.clear();
-      rootByItemId.clear();
-      pane.getChildren().clear();
-      return;
-    }
-
-    Set<Integer> desiredIds = new HashSet<>(visible.size() * 2);
-    for (Item it : visible) desiredIds.add(it.getId());
-
-    for (int id : new ArrayList<>(cards.keySet())) {
-      if (!desiredIds.contains(id)) {
-        cards.remove(id);
-        Node removed = rootByItemId.remove(id);
-        if (removed != null) pane.getChildren().remove(removed);
-      }
-    }
-
-    for (Item item : visible) {
-      ItemCardController card = cards.get(item.getId());
-      String caption = statusCaption(item);
-      if (card != null) {
-        card.syncFromCatalogItemStaticTime(item, caption);
-        card.attachCatalogItem(item);
-        configureSellerTools(card, item);
-      } else {
-        try {
-          NodeContentLoader<VBox> cardLoader = new NodeContentLoader<>();
-          cardLoader.load("/fxml/itemcard/ItemCard.fxml");
-          ItemCardController newCard = cardLoader.getController();
-          VBox root = cardLoader.getCurrentNode();
-          if (newCard != null && root != null) {
-            newCard.setData(
-                item.getId(),
-                item.getName() != null ? item.getName() : "",
-                item.getCurrentPrice(),
-                item.getDescription() != null ? item.getDescription() : "",
-                caption,
-                item.getImageUrl() != null ? item.getImageUrl() : "",
-                item.getSellerUsername() != null ? item.getSellerUsername() : "",
-                item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "");
-            newCard.setEndTime(null);
-            newCard.attachCatalogItem(item);
-            configureSellerTools(newCard, item);
-            cards.put(item.getId(), newCard);
-            rootByItemId.put(item.getId(), root);
-          }
-        } catch (Exception ignored) {
-        }
-      }
-    }
-
-    List<Node> orderedNodes = new ArrayList<>(visible.size());
-    for (Item item : visible) {
-      Node n = rootByItemId.get(item.getId());
-      if (n != null) orderedNodes.add(n);
-    }
-    ObservableList<Node> children = pane.getChildren();
-    boolean sameOrder = children.size() == orderedNodes.size();
-    if (sameOrder) {
-      for (int i = 0; i < orderedNodes.size(); i++) {
-        if (children.get(i) != orderedNodes.get(i)) {
-          sameOrder = false;
-          break;
-        }
-      }
-    }
-    if (!sameOrder) children.setAll(orderedNodes);
-  }
-
-  private boolean match(Item item) {
-    String keyword = com.auction.client.ui.Main.KhungController.getSearchKeyword();
-    String category = com.auction.client.ui.Main.KhungController.getCategoryFilter();
-    double minPrice = com.auction.client.ui.Main.KhungController.getMinPrice();
-    double maxPrice = com.auction.client.ui.Main.KhungController.getMaxPrice();
-
-    if (keyword != null
-        && !keyword.isBlank()
-        && item.getName() != null
-        && !item.getName().toLowerCase().contains(keyword.toLowerCase())) return false;
-    if (category != null
-        && !category.equalsIgnoreCase("All")
-        && item.getCategory() != null
-        && !item.getCategory().equalsIgnoreCase(category)) return false;
-    if (item.getCurrentPrice() < minPrice || item.getCurrentPrice() > maxPrice) return false;
-    return true;
-  }
-  public void updateWatchlistUi(int itemId, boolean isWatched) {
-    ItemCardController c = cardMap.get(itemId);
-    if (c != null) c.setHeartUI(isWatched);
   }
 }
 </file>
@@ -19730,6 +19448,291 @@ public class ThanhTimKiemController {
 }
 </file>
 
+<file path="auction-client/src/main/java/com/auction/client/ui/YourItem/YourItemController.java">
+package com.auction.client.ui.YourItem;
+
+import com.auction.client.ClientSession;
+import com.auction.client.app.NodeContentLoader;
+import com.auction.client.network.NetworkClient;
+import com.auction.client.service.LotSubmissionService;
+import com.auction.client.ui.ItemCard.ItemCardController;
+import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
+import com.auction.shared.Request;
+import com.auction.shared.Response;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
+
+public class YourItemController {
+  @FXML private FlowPane ItemContainer;
+  @FXML private Label ActiveItemsValue, InventoryValue;
+
+  private final Map<Integer, ItemCardController> cardMap = new HashMap<>();
+  private final Map<Integer, Node> cardRootByItemId = new HashMap<>();
+  private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
+
+  @FXML
+  void initialize() {
+    refreshItems();
+  }
+
+  @FXML
+  public void refreshItems() {
+    if (ClientSession.getCurrentUser() == null) return;
+    int userId = ClientSession.getCurrentUser().getId();
+
+    new Thread(
+            () -> {
+              try {
+                Request request = new Request("get_my_items", userId);
+                Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+
+                if (response != null && Response.OK.equals(response.getStatus())) {
+                  List<Item> items = (List<Item>) response.getPayload();
+                  Platform.runLater(() -> render(items));
+                }
+              } catch (Exception ignored) {
+              }
+            })
+        .start();
+  }
+
+  private void render(List<Item> items) {
+    if (ItemContainer == null) return;
+    if (items == null) items = List.of();
+
+    List<Item> visible = new ArrayList<>();
+    int openCount = 0;
+    double inventoryTotal = 0;
+
+    for (Item item : items) {
+      if (!match(item)) continue;
+      visible.add(item);
+      if (isOpenLiveWindow(item)) openCount++;
+      inventoryTotal += item.getCurrentPrice();
+    }
+
+    incrementalRender(visible);
+    if (ActiveItemsValue != null) ActiveItemsValue.setText(String.valueOf(openCount));
+    if (InventoryValue != null) InventoryValue.setText(String.format("%,.0f$", inventoryTotal));
+  }
+
+  private static boolean isOpenUpcomingNotStarted(Item item) {
+    if (item == null || item.getStatus() != ItemStatus.OPEN) {
+      return false;
+    }
+    LocalDateTime st = item.getStartTime();
+    return st != null && st.isAfter(LocalDateTime.now());
+  }
+
+  /** OPEN nhưng đã tới giờ bắt đầu (không còn “chờ mở sàn”). */
+  private static boolean isOpenLiveWindow(Item item) {
+    return item != null
+        && item.getStatus() == ItemStatus.OPEN
+        && !isOpenUpcomingNotStarted(item);
+  }
+
+  private String statusCaption(Item item) {
+    if (item.getStatus() == null) {
+      return "N/A";
+    }
+    if (item.getStatus() == ItemStatus.PENDING) {
+      return "\u23F3 Chờ duyệt";
+    }
+    if (isOpenUpcomingNotStarted(item)) {
+      return "\uD83D\uDCC5 Chưa mở sàn (đã duyệt)";
+    }
+    if (item.getStatus() == ItemStatus.OPEN) {
+      return "\u25B6 \u0110ang \u0111\u1EA5u gi\u00E1";
+    }
+    return item.getStatus().name();
+  }
+
+  private static boolean sellerMayEditListing(Item item) {
+    if (item.getStatus() == ItemStatus.PENDING) {
+      return true;
+    }
+    return isOpenUpcomingNotStarted(item);
+  }
+
+  private void configureSellerTools(ItemCardController card, Item item) {
+    ItemStatus st = item.getStatus();
+    boolean showEdit = sellerMayEditListing(item);
+    boolean showCancel = st == ItemStatus.PENDING || st == ItemStatus.OPEN;
+    if (!showCancel && !showEdit) {
+      card.configureSellerItemActions(false, null, false, null);
+      return;
+    }
+    card.configureSellerItemActions(
+        showEdit,
+        () -> KhungController.openEditPendingItem(item),
+        showCancel,
+        () -> promptCancelSellerItem(item));
+  }
+
+  private void promptCancelSellerItem(Item item) {
+    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+    confirm.setTitle("Xác nhận");
+    confirm.setHeaderText(null);
+    if (item.getStatus() == ItemStatus.OPEN) {
+      if (isOpenUpcomingNotStarted(item)) {
+        confirm.setContentText(
+            "Hủy phiên chưa mở sàn? (Nếu đã có đặt giá, người cao nhất sẽ được hoàn cọc.)");
+      } else {
+        confirm.setContentText(
+            "Hủy phiên đang mở? Người trả giá cao nhất (nếu có) sẽ được hoàn tiền đặt cọc.");
+      }
+    } else {
+      confirm.setContentText("Thu hồi sản phẩm đang chờ duyệt?");
+    }
+    confirm
+        .showAndWait()
+        .ifPresent(
+            btn -> {
+              if (btn != ButtonType.OK) {
+                return;
+              }
+              new Thread(
+                      () -> {
+                        try {
+                          Response res =
+                              lotSubmissionService.cancelSellerItem(item.getId());
+                          Platform.runLater(
+                              () -> {
+                                if (res != null && Response.OK.equals(res.getStatus())) {
+                                  refreshItems();
+                                } else {
+                                  Alert err = new Alert(Alert.AlertType.ERROR);
+                                  err.setHeaderText(null);
+                                  err.setContentText(
+                                      res != null ? res.getMessage() : "Không hủy được.");
+                                  err.showAndWait();
+                                }
+                              });
+                        } catch (Exception ignored) {
+                        }
+                      })
+                  .start();
+            });
+  }
+
+  private void incrementalRender(List<Item> visible) {
+    FlowPane pane = ItemContainer;
+    Map<Integer, ItemCardController> cards = cardMap;
+    Map<Integer, Node> rootByItemId = cardRootByItemId;
+
+    if (visible.isEmpty()) {
+      for (Node n : new ArrayList<>(rootByItemId.values())) {
+        pane.getChildren().remove(n);
+      }
+      cards.clear();
+      rootByItemId.clear();
+      pane.getChildren().clear();
+      return;
+    }
+
+    Set<Integer> desiredIds = new HashSet<>(visible.size() * 2);
+    for (Item it : visible) desiredIds.add(it.getId());
+
+    for (int id : new ArrayList<>(cards.keySet())) {
+      if (!desiredIds.contains(id)) {
+        cards.remove(id);
+        Node removed = rootByItemId.remove(id);
+        if (removed != null) pane.getChildren().remove(removed);
+      }
+    }
+
+    for (Item item : visible) {
+      ItemCardController card = cards.get(item.getId());
+      String caption = statusCaption(item);
+      if (card != null) {
+        card.syncFromCatalogItemStaticTime(item, caption);
+        card.attachCatalogItem(item);
+        configureSellerTools(card, item);
+      } else {
+        try {
+          NodeContentLoader<VBox> cardLoader = new NodeContentLoader<>();
+          cardLoader.load("/fxml/itemcard/ItemCard.fxml");
+          ItemCardController newCard = cardLoader.getController();
+          VBox root = cardLoader.getCurrentNode();
+          if (newCard != null && root != null) {
+            newCard.setData(
+                item.getId(),
+                item.getName() != null ? item.getName() : "",
+                item.getCurrentPrice(),
+                item.getDescription() != null ? item.getDescription() : "",
+                caption,
+                item.getImageUrl() != null ? item.getImageUrl() : "",
+                item.getSellerUsername() != null ? item.getSellerUsername() : "",
+                item.getSellerAvatarUrl() != null ? item.getSellerAvatarUrl() : "");
+            newCard.setEndTime(null);
+            newCard.attachCatalogItem(item);
+            configureSellerTools(newCard, item);
+            cards.put(item.getId(), newCard);
+            rootByItemId.put(item.getId(), root);
+          }
+        } catch (Exception ignored) {
+        }
+      }
+    }
+
+    List<Node> orderedNodes = new ArrayList<>(visible.size());
+    for (Item item : visible) {
+      Node n = rootByItemId.get(item.getId());
+      if (n != null) orderedNodes.add(n);
+    }
+    ObservableList<Node> children = pane.getChildren();
+    boolean sameOrder = children.size() == orderedNodes.size();
+    if (sameOrder) {
+      for (int i = 0; i < orderedNodes.size(); i++) {
+        if (children.get(i) != orderedNodes.get(i)) {
+          sameOrder = false;
+          break;
+        }
+      }
+    }
+    if (!sameOrder) children.setAll(orderedNodes);
+  }
+
+  private boolean match(Item item) {
+    String keyword = com.auction.client.ui.Main.KhungController.getSearchKeyword();
+    String category = com.auction.client.ui.Main.KhungController.getCategoryFilter();
+    double minPrice = com.auction.client.ui.Main.KhungController.getMinPrice();
+    double maxPrice = com.auction.client.ui.Main.KhungController.getMaxPrice();
+
+    if (keyword != null
+        && !keyword.isBlank()
+        && item.getName() != null
+        && !item.getName().toLowerCase().contains(keyword.toLowerCase())) return false;
+    if (category != null
+        && !category.equalsIgnoreCase("All")
+        && item.getCategory() != null
+        && !item.getCategory().equalsIgnoreCase(category)) return false;
+    if (item.getCurrentPrice() < minPrice || item.getCurrentPrice() > maxPrice) return false;
+    return true;
+  }
+  public void updateWatchlistUi(int itemId, boolean isWatched) {
+    ItemCardController c = cardMap.get(itemId);
+    if (c != null) c.setHeartUI(isWatched);
+  }
+}
+</file>
+
 <file path="README.md">
 ***
 
@@ -20211,6 +20214,179 @@ public abstract class Item extends Entity {
 }
 </file>
 
+<file path="auction-client/src/main/resources/fxml/profile/Profile.fxml">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+
+<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" maxHeight="Infinity" maxWidth="Infinity"
+            styleClass="scroll-pane"
+            stylesheets="/css/profile/Profile.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.Profile.ProfileController">
+    <content>
+        <VBox alignment="TOP_CENTER" styleClass="profile-root">
+            <children>
+                <VBox maxWidth="850.0" spacing="25.0" styleClass="glass-panel">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="25.0">
+                            <children>
+                                <VBox alignment="CENTER" spacing="12.0">
+                                    <children>
+                                        <StackPane prefHeight="100.0" prefWidth="100.0">
+                                            <children>
+                                                <Circle radius="45.0" stroke="WHITE" strokeType="INSIDE" strokeWidth="2.0" style="-fx-fill: rgba(255,255,255,0.1); -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 5);" />
+                                                <ImageView fx:id="avatarimageview" fitHeight="86.0" fitWidth="86.0" pickOnBounds="true" preserveRatio="true" />
+                                            </children>
+                                        </StackPane>
+                                        <HBox spacing="10.0">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#handleChangeAvatar" styleClass="btn-mac-rounded" text="Đổi Avatar" />
+                                                <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="btn-mac-rounded" text="Làm mới" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                            <children>
+                                                <Label fx:id="usernameLabel" text="username" textFill="WHITE">
+                                                    <font><Font name="System Bold" size="32.0" /></font>
+                                                </Label>
+                                                <Label fx:id="verifiedLabel" styleClass="badge-verified" text="Verified" />
+                                            </children>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                            <children>
+                                                <Label fx:id="ratingStarsLabel" styleClass="stars-glow" text="★★★★★" />
+                                                <Label fx:id="ratingCountLabel" style="-fx-text-fill: #cccccc;" text="(0 đánh giá)" />
+                                            </children>
+                                        </HBox>
+                                        <Label fx:id="reputationWarning" managed="false" style="-fx-text-fill: #ff4d4d; -fx-font-weight: bold; -fx-font-size: 14px;" text="Cảnh báo uy tín!" visible="false" />
+                                    </children>
+                                </VBox>
+
+                                <VBox alignment="TOP_RIGHT" spacing="12.0">
+                                    <children>
+                                        <Button fx:id="editButton" mnemonicParsing="false" onAction="#handleEditProfile" prefWidth="130.0" styleClass="btn-primary-gold" text="Sửa hồ sơ" />
+                                        <Button mnemonicParsing="false" onAction="#handleLogout" prefWidth="130.0" styleClass="btn-logout-red" text="Đăng xuất" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <Region style="-fx-background-color: rgba(255,255,255,0.1); -fx-pref-height: 1;" />
+
+                        <HBox fx:id="bidderMetricsRow" spacing="20.0">
+                            <children>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label styleClass="label-sm-gray" text="TIỀN ĐÃ TIÊU" />
+                                        <Label fx:id="moneySpentLabel" styleClass="metric-value-number metric-money-spent" text="0$" />
+                                    </children>
+                                </VBox>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label styleClass="label-sm-gray" text="SẢN PHẨM ĐÃ MUA" />
+                                        <Label fx:id="itemsBoughtLabel" styleClass="metric-value-number metric-count" text="0" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <HBox fx:id="sellerMetricsRow" managed="false" spacing="20.0" visible="false">
+                            <children>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label styleClass="label-sm-gray" text="DOANH THU" />
+                                        <Label fx:id="moneyReceivedLabel" styleClass="metric-value-number metric-money-received" text="0$" />
+                                    </children>
+                                </VBox>
+                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label styleClass="label-sm-gray" text="SẢN PHẨM ĐÃ BÁN" />
+                                        <Label fx:id="itemsSoldLabel" styleClass="metric-value-number metric-count" text="0" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <VBox spacing="20.0">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <Label text="Thông tin cá nhân" textFill="WHITE">
+                                            <font><Font name="System Bold" size="22.0" /></font>
+                                        </Label>
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <Label style="-fx-text-fill: #cccccc;" text="Vai trò hiện tại:" />
+                                        <Label fx:id="roleLabel" styleClass="badge-role" text="Bidder" />
+                                        <Button fx:id="toggleRoleButton" mnemonicParsing="false" onAction="#handleToggleRole" styleClass="btn-mac-rounded" text="Đổi sang Seller" />
+                                    </children>
+                                </HBox>
+
+                                <HBox spacing="25.0">
+                                    <children>
+                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label styleClass="label-sm-gray" text="HỌ VÀ TÊN" />
+                                                <Label fx:id="fullNameLabel" maxWidth="Infinity" styleClass="field-display-box" text="username" />
+                                                <TextField fx:id="fullNameInput" managed="false" styleClass="clean-input" visible="false" />
+
+                                                <Label styleClass="label-sm-gray" text="SỐ ĐIỆN THOẠI" />
+                                                <Label fx:id="phoneLabel" maxWidth="Infinity" styleClass="field-display-box" text="N/A" />
+                                                <TextField fx:id="phoneInput" managed="false" styleClass="clean-input" visible="false" />
+                                            </children>
+                                        </VBox>
+                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label styleClass="label-sm-gray" text="ĐỊA CHỈ EMAIL" />
+                                                <Label fx:id="emailLabel" maxWidth="Infinity" styleClass="field-display-box" text="username@mail.com" />
+                                                <TextField fx:id="emailInput" managed="false" styleClass="clean-input" visible="false" />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <Region style="-fx-background-color: rgba(255,255,255,0.1); -fx-pref-height: 1;" />
+
+                        <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="wallet-bar-glass">
+                            <children>
+                                <Label text="VÍ TIỀN:" textFill="WHITE">
+                                    <font><Font name="System Bold" size="20.0" /></font>
+                                </Label>
+                                <Label fx:id="balanceLabel" styleClass="balance-text" text="0$" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <TextField fx:id="DepositAmountField" prefWidth="180.0" promptText="Nhập số tiền..." styleClass="clean-input" />
+                                <Button mnemonicParsing="false" onAction="#handleDeposit" styleClass="btn-primary-gold" text="Nạp Tiền" />
+                                <Button mnemonicParsing="false" onAction="#handleShowHistory" styleClass="btn-mac-rounded" text="Xem Lịch Sử" />
+                            </children>
+                        </HBox>
+
+                    </children>
+                    <padding><Insets bottom="40.0" left="40.0" right="40.0" top="40.0" /></padding>
+                    <VBox.margin><Insets bottom="40.0" top="40.0" /></VBox.margin>
+                </VBox>
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>
+</file>
+
 <file path="auction-client/src/main/java/com/auction/client/ui/ItemCard/ItemCardController.java">
 package com.auction.client.ui.ItemCard;
 
@@ -20573,179 +20749,6 @@ public class ItemCardController {
     });
   }
 }
-</file>
-
-<file path="auction-client/src/main/resources/fxml/profile/Profile.fxml">
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Circle?>
-<?import javafx.scene.text.Font?>
-
-<ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" maxHeight="Infinity" maxWidth="Infinity"
-            styleClass="scroll-pane"
-            stylesheets="/css/profile/Profile.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.auction.client.ui.Profile.ProfileController">
-    <content>
-        <VBox alignment="TOP_CENTER" styleClass="profile-root">
-            <children>
-                <VBox maxWidth="850.0" spacing="25.0" styleClass="glass-panel">
-                    <children>
-                        <HBox alignment="CENTER_LEFT" spacing="25.0">
-                            <children>
-                                <VBox alignment="CENTER" spacing="12.0">
-                                    <children>
-                                        <StackPane prefHeight="100.0" prefWidth="100.0">
-                                            <children>
-                                                <Circle radius="45.0" stroke="WHITE" strokeType="INSIDE" strokeWidth="2.0" style="-fx-fill: rgba(255,255,255,0.1); -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 5);" />
-                                                <ImageView fx:id="avatarimageview" fitHeight="86.0" fitWidth="86.0" pickOnBounds="true" preserveRatio="true" />
-                                            </children>
-                                        </StackPane>
-                                        <HBox spacing="10.0">
-                                            <children>
-                                                <Button mnemonicParsing="false" onAction="#handleChangeAvatar" styleClass="btn-mac-rounded" text="Đổi Avatar" />
-                                                <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="btn-mac-rounded" text="Làm mới" />
-                                            </children>
-                                        </HBox>
-                                    </children>
-                                </VBox>
-
-                                <VBox alignment="CENTER_LEFT" spacing="8.0" HBox.hgrow="ALWAYS">
-                                    <children>
-                                        <HBox alignment="CENTER_LEFT" spacing="12.0">
-                                            <children>
-                                                <Label fx:id="usernameLabel" text="username" textFill="WHITE">
-                                                    <font><Font name="System Bold" size="32.0" /></font>
-                                                </Label>
-                                                <Label fx:id="verifiedLabel" styleClass="badge-verified" text="Verified" />
-                                            </children>
-                                        </HBox>
-                                        <HBox alignment="CENTER_LEFT" spacing="8.0">
-                                            <children>
-                                                <Label fx:id="ratingStarsLabel" styleClass="stars-glow" text="★★★★★" />
-                                                <Label fx:id="ratingCountLabel" style="-fx-text-fill: #cccccc;" text="(0 đánh giá)" />
-                                            </children>
-                                        </HBox>
-                                        <Label fx:id="reputationWarning" managed="false" style="-fx-text-fill: #ff4d4d; -fx-font-weight: bold; -fx-font-size: 14px;" text="Cảnh báo uy tín!" visible="false" />
-                                    </children>
-                                </VBox>
-
-                                <VBox alignment="TOP_RIGHT" spacing="12.0">
-                                    <children>
-                                        <Button fx:id="editButton" mnemonicParsing="false" onAction="#handleEditProfile" prefWidth="130.0" styleClass="btn-primary-gold" text="Sửa hồ sơ" />
-                                        <Button mnemonicParsing="false" onAction="#handleLogout" prefWidth="130.0" styleClass="btn-logout-red" text="Đăng xuất" />
-                                    </children>
-                                </VBox>
-                            </children>
-                        </HBox>
-
-                        <Region style="-fx-background-color: rgba(255,255,255,0.1); -fx-pref-height: 1;" />
-
-                        <HBox fx:id="bidderMetricsRow" spacing="20.0">
-                            <children>
-                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
-                                    <children>
-                                        <Label styleClass="label-sm-gray" text="TIỀN ĐÃ TIÊU" />
-                                        <Label fx:id="moneySpentLabel" styleClass="metric-value-number metric-money-spent" text="0$" />
-                                    </children>
-                                </VBox>
-                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
-                                    <children>
-                                        <Label styleClass="label-sm-gray" text="SẢN PHẨM ĐÃ MUA" />
-                                        <Label fx:id="itemsBoughtLabel" styleClass="metric-value-number metric-count" text="0" />
-                                    </children>
-                                </VBox>
-                            </children>
-                        </HBox>
-
-                        <HBox fx:id="sellerMetricsRow" managed="false" spacing="20.0" visible="false">
-                            <children>
-                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
-                                    <children>
-                                        <Label styleClass="label-sm-gray" text="DOANH THU" />
-                                        <Label fx:id="moneyReceivedLabel" styleClass="metric-value-number metric-money-received" text="0$" />
-                                    </children>
-                                </VBox>
-                                <VBox alignment="CENTER_LEFT" spacing="8.0" styleClass="metric-card-glass" HBox.hgrow="ALWAYS">
-                                    <children>
-                                        <Label styleClass="label-sm-gray" text="SẢN PHẨM ĐÃ BÁN" />
-                                        <Label fx:id="itemsSoldLabel" styleClass="metric-value-number metric-count" text="0" />
-                                    </children>
-                                </VBox>
-                            </children>
-                        </HBox>
-
-                        <VBox spacing="20.0">
-                            <children>
-                                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                                    <children>
-                                        <Label text="Thông tin cá nhân" textFill="WHITE">
-                                            <font><Font name="System Bold" size="22.0" /></font>
-                                        </Label>
-                                        <Region HBox.hgrow="ALWAYS" />
-                                        <Label style="-fx-text-fill: #cccccc;" text="Vai trò hiện tại:" />
-                                        <Label fx:id="roleLabel" styleClass="badge-role" text="Bidder" />
-                                        <Button fx:id="toggleRoleButton" mnemonicParsing="false" onAction="#handleToggleRole" styleClass="btn-mac-rounded" text="Đổi sang Seller" />
-                                    </children>
-                                </HBox>
-
-                                <HBox spacing="25.0">
-                                    <children>
-                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
-                                            <children>
-                                                <Label styleClass="label-sm-gray" text="HỌ VÀ TÊN" />
-                                                <Label fx:id="fullNameLabel" maxWidth="Infinity" styleClass="field-display-box" text="username" />
-                                                <TextField fx:id="fullNameInput" managed="false" styleClass="clean-input" visible="false" />
-
-                                                <Label styleClass="label-sm-gray" text="SỐ ĐIỆN THOẠI" />
-                                                <Label fx:id="phoneLabel" maxWidth="Infinity" styleClass="field-display-box" text="N/A" />
-                                                <TextField fx:id="phoneInput" managed="false" styleClass="clean-input" visible="false" />
-                                            </children>
-                                        </VBox>
-                                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
-                                            <children>
-                                                <Label styleClass="label-sm-gray" text="ĐỊA CHỈ EMAIL" />
-                                                <Label fx:id="emailLabel" maxWidth="Infinity" styleClass="field-display-box" text="username@mail.com" />
-                                                <TextField fx:id="emailInput" managed="false" styleClass="clean-input" visible="false" />
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </HBox>
-                            </children>
-                        </VBox>
-
-                        <Region style="-fx-background-color: rgba(255,255,255,0.1); -fx-pref-height: 1;" />
-
-                        <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="wallet-bar-glass">
-                            <children>
-                                <Label text="VÍ TIỀN:" textFill="WHITE">
-                                    <font><Font name="System Bold" size="20.0" /></font>
-                                </Label>
-                                <Label fx:id="balanceLabel" styleClass="balance-text" text="0$" />
-                                <Region HBox.hgrow="ALWAYS" />
-                                <TextField fx:id="DepositAmountField" prefWidth="180.0" promptText="Nhập số tiền..." styleClass="clean-input" />
-                                <Button mnemonicParsing="false" onAction="#handleDeposit" styleClass="btn-primary-gold" text="Nạp Tiền" />
-                                <Button mnemonicParsing="false" onAction="#handleShowHistory" styleClass="btn-mac-rounded" text="Xem Lịch Sử" />
-                            </children>
-                        </HBox>
-
-                    </children>
-                    <padding><Insets bottom="40.0" left="40.0" right="40.0" top="40.0" /></padding>
-                    <VBox.margin><Insets bottom="40.0" top="40.0" /></VBox.margin>
-                </VBox>
-            </children>
-        </VBox>
-    </content>
-</ScrollPane>
 </file>
 
 <file path="auction-client/src/main/java/com/auction/client/ui/Profile/ProfileController.java">
