@@ -6,9 +6,7 @@ import javafx.stage.Stage;
 public class Main extends Application {
   @Override
   public void start(Stage primaryStage) throws Exception {
-    SceneManager.setStage(primaryStage);
-    primaryStage.setTitle("hệ thống đấu giá online");
-    SceneManager.switchScene("/fxml/welcome.fxml");
+    AppBootstrap.run(primaryStage);
   }
 
   public static void main(String[] args) {
