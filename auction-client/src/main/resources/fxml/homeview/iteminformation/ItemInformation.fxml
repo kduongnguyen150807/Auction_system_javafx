@@ -1,16 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.NumberAxis?>
@@ -44,7 +39,7 @@
                                 <VBox spacing="10.0">
                                     <children>
                                         <Label text="REAL-TIME PRICE CURVE" styleClass="label-sm-gray" />
-                                        <LineChart fx:id="pricechart" prefHeight="220.0" animated="false" styleClass="chart-glass">
+                                        <LineChart fx:id="priceChart" prefHeight="220.0" animated="false" styleClass="chart-glass">
                                             <xAxis><CategoryAxis side="BOTTOM" tickLabelFill="WHITE" /></xAxis>
                                             <yAxis><NumberAxis side="LEFT" tickLabelFill="WHITE" /></yAxis>
                                         </LineChart>

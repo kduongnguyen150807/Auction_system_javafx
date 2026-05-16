@@ -1,0 +1,8 @@
+.label-sm-gray { -fx-text-fill: #888888; -fx-font-size: 12px; -fx-font-weight: bold; -fx-letter-spacing: 1px; }
+.btn-rounded-gold-sm {
+    -fx-background-color: #ffaa00;
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+}

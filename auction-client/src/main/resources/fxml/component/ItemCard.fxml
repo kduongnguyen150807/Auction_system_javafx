@@ -9,9 +9,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Rectangle?>
 
-<fx:root type="VBox" fx:id="itemRoot" alignment="TOP_CENTER" onMouseClicked="#handleItemClicked"
+<fx:root type="VBox" fx:id="itemRoot" alignment="TOP_CENTER"
       spacing="0.0" styleClass="glass-card-item"
-      stylesheets="@../../css/itemcard/ItemCard.css" maxHeight="200" maxWidth="200"
+      stylesheets="@../../css/itemcard/ItemCard.css" maxHeight="150" maxWidth="100"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <StackPane styleClass="image-container-mac">

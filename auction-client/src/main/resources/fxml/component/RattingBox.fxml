@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root type="VBox" xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         spacing="10">
+    <children>
+        <Button fx:id="rateButton" maxWidth="Infinity" onAction="#showRatingForm" prefHeight="50.0" text="RATE THIS TRANSACTION" styleClass="btn-rounded-gold-sm" />
+
+        <VBox fx:id="ratingsContainer" spacing="8.0">
+            <children>
+                <HBox spacing="12.0" alignment="CENTER_LEFT">
+                    <children>
+                        <Label text="RATINGS" styleClass="label-sm-gray" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="RatingFilterCombo" onAction="#handleRatingFilter" prefWidth="130" styleClass="combo-mac-sm" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</fx:root>
