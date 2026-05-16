@@ -2,6 +2,8 @@ package com.auction.client;
 
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
+import com.auction.client.network.NetworkClient;
+import com.auction.client.network.NotificationDispatcher;
 import com.auction.client.ui.homeview.HomeView;
 import com.auction.client.ui.loginview.LoginView;
 import javafx.scene.Scene;
@@ -19,5 +21,11 @@ public class AppBootstrap {
     sceneManager.registerScene(SceneType.LOGIN_VIEW, loginViewScene);
 
     sceneManager.switchScene(SceneType.LOGIN_VIEW);
+
+    /* khoi tao NotificationDispatcher */
+    NotificationDispatcher notificationDispatcher = new NotificationDispatcher();
+
+    /* add NotificationDispatcher */
+    NetworkClient.getInstance().addListener(notificationDispatcher);
   }
 }
