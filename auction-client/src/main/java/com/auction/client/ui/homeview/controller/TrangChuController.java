@@ -2,9 +2,12 @@ package com.auction.client.ui.homeview.controller;
 
 import com.auction.client.service.AuctionService;
 import com.auction.client.store.AuctionStore;
+import com.auction.client.store.ClientItem;
+import com.auction.client.store.SelectedItem;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;
+import com.auction.client.ui.homeview.homeviewcomponent.ItemCard;
 import com.auction.client.ui.homeview.homeviewcomponent.ListPane;
 import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar;
 import com.auction.client.ui.homeview.homeviewcomponent.TrendingBind;
@@ -24,7 +27,7 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
   private final ToggleGroup toggleGroup = new ToggleGroup();
 
   @FXML private TrendingBind trendingBind;
-  @FXML private ListPane artLots;
+  @FXML private ListPane<ClientItem> artLots;
 
   @FXML
   public void initialize() {
@@ -45,16 +48,24 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
   private void categoryCarouselNext() {}
 
   private void initLotsRow() {
-    artLots.setItems(AuctionStore.AUCTION_STORE.filterStatus(ItemStatus.OPEN));
+    artLots.setTitle("ART LOTS");
+
+    artLots.setItems(
+      AuctionStore.AUCTION_STORE.getFilteredStatusItems(ItemStatus.OPEN),
+      clientItem -> new ItemCard(clientItem),
+      clientItem -> {
+        AuctionService.setSelectedItem(clientItem);
+        switchNode.accept(HomeViewType.ITEM_INFORMATION);
+      });
   }
 
   @Override
   public void refreshData() {
+    AuctionService.refreshItems();
   }
 
   @Override
   public void setSwitchNode(Consumer<HomeViewType> switchNode) {
     this.switchNode = switchNode;
-    artLots.setSwitchNode(switchNode);
   }
 }

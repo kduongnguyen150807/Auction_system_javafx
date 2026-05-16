@@ -1,15 +1,21 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
+import com.auction.client.store.ClientItem;
 import com.auction.client.ui.base.CanRefresh;
+import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.StringFormat;
 import com.auction.client.util.TimeFormat;
 import com.auction.shared.Item;
+import javafx.beans.binding.Binding;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 
-public class InfoLayoutController implements CanRefresh {
-  private Item selectedItem;
+public class InfoLayoutController {
+  private ClientItem selectedItem;
 
   @FXML private Label itemName;
   @FXML private ImageView sellerAvatar;
@@ -19,27 +25,46 @@ public class InfoLayoutController implements CanRefresh {
   @FXML private Label maxPriceValue;
   @FXML private Label endsInValue;
 
-  public void setSelectedItem(Item item) {
-    selectedItem = item;
-    refreshData();
+  public void setSelectedItem(ClientItem clientItem) {
+    unbind();
+    this.selectedItem = clientItem;
+    loadSellerAvatar(clientItem.getItem().getSellerAvatarUrl());
+    bind();
   }
 
-  private void setData() {
+  private void unbind() {
+    itemName.textProperty().unbind();
+    itemDescription.textProperty().unbind();
+    currentHighestBidValue.textProperty().unbind();
+    endsInValue.textProperty().unbind();
+  }
+
+  private void bind() {
     if (selectedItem == null) {
       return;
     }
 
-    itemName.setText(selectedItem.getName());
-    itemDescription.setText(selectedItem.getDescription());
-    sellerName.setText(selectedItem.getSellerUsername());
-    itemDescription.setText(selectedItem.getDescription());
-    currentHighestBidValue.setText(StringFormat.formatMoney(selectedItem.getCurrentPrice()));
-    maxPriceValue.setText(StringFormat.formatMoney(selectedItem.getMaxPrice()));
-    endsInValue.setText(TimeFormat.getRemainingTime(selectedItem.getEndTime()));
+    itemName.textProperty().bind(selectedItem.nameProperty());
+    itemDescription.textProperty().bind(selectedItem.descriptionProperty());
+    currentHighestBidValue.textProperty().bind(selectedItem.currentPriceProperty().asString("$ %.2f"));
+    maxPriceValue.setText(StringFormat.formatMoney(selectedItem.getItem().getMaxPrice()));
+    endsInValue.textProperty().bind(Bindings.createStringBinding(
+      () -> TimeFormat.getRemainingTime(selectedItem.getItem().getEndTime()),
+      selectedItem.endTimeProperty()
+    ));
+
+    sellerName.setText(selectedItem.getItem().getSellerUsername());
   }
 
-  @Override
-  public void refreshData() {
-    setData();
+  private void loadSellerAvatar(String url) {
+    if (sellerAvatar == null) {
+      return;
+    }
+
+    if (url.isBlank() || url == null || url.isEmpty()) {
+      sellerAvatar.setImage(null);
+    }
+
+    ImageViewUtils.setImageToImageView(sellerAvatar, url);
   }
 }

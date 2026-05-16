@@ -1,11 +1,14 @@
 package com.auction.client.ui.homeview.homeviewcomponent;
 
-import com.auction.client.util.StringFormat;
+import com.auction.client.store.ClientItem;
+import com.auction.client.util.FXThread;
+import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.TimeFormat;
-import com.auction.shared.Item;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
@@ -14,8 +17,6 @@ import java.io.IOException;
 public class ItemCard extends VBox {
   private static final String BASE_FXML_PATH = "/fxml/component/ItemCard.fxml";
 
-  private final Item item;
-
   @FXML private ImageView imageHolder;
   @FXML private Label heartIcon;
   @FXML private Label itemName;
@@ -23,33 +24,38 @@ public class ItemCard extends VBox {
   @FXML private Label price;
   @FXML private Label timeRemain;
 
-  public ItemCard(Item item) {
+  public ItemCard(ClientItem clientItem) {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(BASE_FXML_PATH));
     fxmlLoader.setController(this);
     fxmlLoader.setRoot(this);
 
-    this.item = item;
     try {
       fxmlLoader.load();
-      setData(item);
+      setData(clientItem);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void setData(Item item) {
-    itemName.setText(item.getName());
-    itemDescription.setText(item.getDescription());
-    price.setText(StringFormat.formatMoney(item.getCurrentPrice()));
-    timeRemain.setText(TimeFormat.getRemainingTime(item.getEndTime()));
+  private void setData(ClientItem clientItem) {
+    itemName.textProperty().bind(clientItem.nameProperty());
+    itemDescription.textProperty().bind(clientItem.descriptionProperty());
+    price.textProperty().bind(clientItem.currentPriceProperty().asString("$ %.2f"));
+    timeRemain.textProperty().bind(
+      Bindings.createStringBinding(() -> {
+        String remainingTime = TimeFormat.getRemainingTime(clientItem.endTimeProperty().get());
+        return String.format(remainingTime);
+      }, clientItem.endTimeProperty())
+      );
+
+    loadImageIfPresent(clientItem.getItem().getImageUrl());
   }
 
-  @FXML
-  private void handleItemClicked() {
+  private void loadImageIfPresent(String imageUrl) {
+    if (imageHolder == null || imageUrl == null || imageUrl.isBlank()) {
+      return;
+    }
 
-  }
-
-  public Item getItem() {
-    return item;
+    ImageViewUtils.setImageToImageView(imageHolder, imageUrl);
   }
 }
