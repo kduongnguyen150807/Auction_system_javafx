@@ -1,37 +1,64 @@
 package com.auction.client.store;
 
+import com.auction.client.util.FXThread;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class AuctionStore {
   public static AuctionStore AUCTION_STORE = new AuctionStore();
 
-  private final ObservableList<Item> items = FXCollections.observableArrayList();
+  private final ObservableList<ClientItem> items = FXCollections.observableArrayList();
 
-  public FilteredList<Item> filterStatus(ItemStatus status) {
-    return filter(item -> item.getStatus().equals(status));
-  }
+  private final Map<Integer, ClientItem> clientItemMap = new HashMap<>();
 
-  public FilteredList<Item> filterCategory(String category) {
-    return filter(item -> item.getCategory().equalsIgnoreCase(category));
-  }
-
-  public ObservableList<Item> getItems() {
+  public ObservableList<ClientItem> getClientItems() {
     return items;
   }
 
-  public void refreshItems(List<Item> items) {
-    this.items.clear();
-    this.items.setAll(items);
+  public void loadItems(List<Item> items) {
+    FXThread.run(() -> {
+      for (Item item : items) {
+        addItemIfMissing(item);
+        updateClientItem(item);
+      }
+    });
   }
 
-  public FilteredList<Item> filter(Predicate<Item> predicate) {
-    return new FilteredList<Item>(this.items, predicate);
+  public void updateClientItem(Item item) {
+    FXThread.run(() -> {
+      ClientItem clientItem = clientItemMap.get(item.getId());
+      if (clientItem != null) {
+        clientItem.update(item);
+      } else {
+        addItemIfMissing(item);
+      }
+    });
+  }
+
+  public void addItemIfMissing(Item item) {
+    FXThread.run(() -> {
+      ClientItem clientItem = clientItemMap.get(item.getId());
+      if (clientItem == null) {
+        clientItem = new ClientItem(item);
+        items.add(clientItem);
+        clientItemMap.put(item.getId(), clientItem);
+      }
+    });
+  }
+
+  public FilteredList<ClientItem> getFilteredStatusItems(ItemStatus status) {
+    return getFilteredItems(clientItem -> clientItem.getStatus().equals(status));
+  }
+
+  public FilteredList<ClientItem> getFilteredItems(Predicate<ClientItem> predicate) {
+    return new FilteredList<>(items, predicate);
   }
 }

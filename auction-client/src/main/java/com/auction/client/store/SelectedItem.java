@@ -7,17 +7,17 @@ import javafx.beans.property.SimpleObjectProperty;
 public class SelectedItem {
   public static final SelectedItem SELECTED_ITEM = new SelectedItem();
 
-  private final ObjectProperty<Item> selectedItem = new SimpleObjectProperty<>();
+  private final ObjectProperty<ClientItem> selectedItem = new SimpleObjectProperty<>();
 
-  public Item getSelectedItem() {
-    return selectedItem.get();
-  }
-
-  public void setSelectedItem(Item item) {
+  public void setSelectedItem(ClientItem item) {
     selectedItem.set(item);
   }
 
-  public ObjectProperty<Item> selectedItemProperty() {
+  public ClientItem getSelectedItem() {
+    return selectedItem.get();
+  }
+
+  public ObjectProperty<ClientItem> selectedItemProperty() {
     return selectedItem;
   }
 }
