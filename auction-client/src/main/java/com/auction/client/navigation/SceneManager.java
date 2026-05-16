@@ -4,6 +4,7 @@ import com.auction.client.ui.homeview.HomeView;
 import com.auction.client.ui.homeview.HomeViewType;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,5 +48,9 @@ public class SceneManager {
   public void buildHomeView() {
     Scene homeViewScene = new Scene(new HomeView());
     registerScene(SceneType.HOME_VIEW, homeViewScene);
+  }
+
+  public Window getWindow() {
+    return rootStage.getScene().getWindow();
   }
 }
