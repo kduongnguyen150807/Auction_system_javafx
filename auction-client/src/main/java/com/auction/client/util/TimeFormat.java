@@ -2,9 +2,15 @@ package com.auction.client.util;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class TimeFormat {
   private TimeFormat() {}
+
+  public static DateTimeFormatter DMY_HM =
+    DateTimeFormatter.ofPattern(
+      "dd/MM/yyyy HH:mm"
+    );
 
   public static String getRemainingTime(LocalDateTime time) {
     Duration duration = Duration.between(LocalDateTime.now(), time);
