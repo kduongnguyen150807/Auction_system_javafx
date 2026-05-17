@@ -18,4 +18,9 @@ public enum AuctionType {
   public String dbName() {
     return name();
   }
+
+  @Override
+  public String toString() {
+    return name();
+  }
 }
