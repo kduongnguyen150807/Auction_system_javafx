@@ -1,13 +1,27 @@
 package com.auction.client.ui.homeview.homeviewcomponent;
 
+import com.auction.client.store.ClientItem;
+import javafx.collections.FXCollections;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
 
-public class SearchBar extends HBox {
+public class SearchBar<T> extends HBox {
   private static final String BASE_FXML_PATH = "/fxml/homeview/SearchBar.fxml";
+
+  @FXML private TextField searchField;
+  @FXML private Button applyButton;
+
+  private Consumer<String> onSearch;
 
   public SearchBar() {
     FXMLLoader loader = new FXMLLoader(getClass().getResource(BASE_FXML_PATH));
@@ -22,17 +36,21 @@ public class SearchBar extends HBox {
   }
 
   @FXML
-  private void toggleNotifications() {
+  private void handleApply() {
+    if (onSearch == null) {
+      return;
+    }
 
+    String query = searchField.getText();
+
+    if (query.isEmpty()) {
+      return;
+    }
+
+    onSearch.accept(query.trim());
   }
 
-  @FXML
-  private void onSearchModeChanged() {
-
-  }
-
-  @FXML
-  private void applyFilter() {
-
+  public void setOnSearch(Consumer<String> onSearch) {
+    this.onSearch = onSearch;
   }
 }

@@ -1,0 +1,18 @@
+.btn-rounded-gold-sm {
+    -fx-background-color: #ffaa00;
+    -fx-text-fill: black;
+    -fx-font-weight: 800;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+}
+
+
+.glass-panel-item {
+    -fx-background-color: rgba(30, 30, 30, 0.65);
+    -fx-background-radius: 15;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 20, 0, 0, 10);
+    -fx-padding: 30;
+}

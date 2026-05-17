@@ -61,8 +61,9 @@ public class InfoLayoutController {
       return;
     }
 
-    if (url.isBlank() || url == null || url.isEmpty()) {
+    if (url == null || url.isBlank()) {
       sellerAvatar.setImage(null);
+      return;
     }
 
     ImageViewUtils.setImageToImageView(sellerAvatar, url);

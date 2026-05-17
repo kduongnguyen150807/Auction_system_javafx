@@ -10,6 +10,7 @@
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.NumberAxis?>
 
+<?import com.auction.client.ui.homeview.homeviewcomponent.BidChart?>
 <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER"
             style="-fx-background-color: transparent; -fx-background: transparent;"
             stylesheets="/css/iteminformation/ItemInformation.css"
@@ -36,15 +37,7 @@
                                 <fx:include source="InfoLayout.fxml" fx:id="infoLayout"/>
                                 <fx:include source="ButtonLayout.fxml" fx:id="buttonLayout"/>
 
-                                <VBox spacing="10.0">
-                                    <children>
-                                        <Label text="REAL-TIME PRICE CURVE" styleClass="label-sm-gray" />
-                                        <LineChart fx:id="priceChart" prefHeight="220.0" animated="false" styleClass="chart-glass">
-                                            <xAxis><CategoryAxis side="BOTTOM" tickLabelFill="WHITE" /></xAxis>
-                                            <yAxis><NumberAxis side="LEFT" tickLabelFill="WHITE" /></yAxis>
-                                        </LineChart>
-                                    </children>
-                                </VBox>
+                                <BidChart fx:id="bidChart"/>
                             </children>
                         </VBox>
                     </children>

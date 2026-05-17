@@ -36,6 +36,10 @@ public class AuctionStore {
     FXThread.run(() -> {
       ClientItem clientItem = clientItemMap.get(item.getId());
       if (clientItem != null) {
+        if (clientItem.getStatus().equals(ItemStatus.CLOSED)) {
+          items.remove(clientItem);
+          return;
+        }
         clientItem.update(item);
       } else {
         addItemIfMissing(item);

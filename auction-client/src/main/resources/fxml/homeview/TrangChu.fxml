@@ -77,70 +77,8 @@
                           maxWidth="Infinity">
                         <children>
                             <ListPane fx:id="artLots"/>
-                            <VBox spacing="10.0" styleClass="category-block">
-                                <children>
-                                    <Label styleClass="category-heading" text="Electronics Lots"/>
-                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
-                                        <children>
-                                            <Button fx:id="categoryElectronicsPrev"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselPrev"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
-                                                <children>
-                                                    <HBox fx:id="categoryElectronicsRow" spacing="16.0" styleClass="category-row"/>
-                                                </children>
-                                            </HBox>
-                                            <Button fx:id="categoryElectronicsNext"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselNext"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                        </children>
-                                    </HBox>
-                                </children>
-                            </VBox>
-                            <VBox spacing="10.0" styleClass="category-block">
-                                <children>
-                                    <Label styleClass="category-heading" text="Vehicle Lots"/>
-                                    <HBox styleClass="category-shelf" alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12.0">
-                                        <children>
-                                            <Button fx:id="categoryVehiclesPrev"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselPrev"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M15 6 L9 12 L15 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                            <HBox alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="category-carousel-track-wrap">
-                                                <children>
-                                                    <HBox fx:id="categoryVehiclesRow" spacing="16.0" styleClass="category-row"/>
-                                                </children>
-                                            </HBox>
-                                            <Button fx:id="categoryVehiclesNext"
-                                                    contentDisplay="GRAPHIC_ONLY"
-                                                    mnemonicParsing="false"
-                                                    onAction="#categoryCarouselNext"
-                                                    styleClass="carousel-nav-btn">
-                                                <graphic>
-                                                    <SVGPath styleClass="carousel-nav-path" content="M9 6 L15 12 L9 18 Z"/>
-                                                </graphic>
-                                            </Button>
-                                        </children>
-                                    </HBox>
-                                </children>
-                            </VBox>
+                            <ListPane fx:id="electronicsLots" />
+                            <ListPane fx:id="vehiclesLots" />
                         </children>
                     </VBox>
                 </content>

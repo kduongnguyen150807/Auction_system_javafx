@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<fx:root type="VBox" xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml" spacing="10">
+    <children>
+        <Label text="REAL-TIME PRICE CURVE" styleClass="label-sm-gray" />
+        <LineChart fx:id="priceChart" prefHeight="220.0" animated="false" styleClass="chart-glass">
+            <xAxis><CategoryAxis side="BOTTOM" tickLabelFill="WHITE" /></xAxis>
+            <yAxis><NumberAxis side="LEFT" tickLabelFill="WHITE" /></yAxis>
+        </LineChart>
+    </children>
+</fx:root>

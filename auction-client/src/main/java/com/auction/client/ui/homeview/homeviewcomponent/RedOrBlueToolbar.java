@@ -9,7 +9,7 @@ import javafx.scene.layout.HBox;
 
 import java.io.IOException;
 
-public class RedOrBlueToolbar extends HBox {
+public class RedOrBlueToolbar<T> extends HBox {
   private static final String BASE_FXML_PATH = "/fxml/component/RedOrBlueToolbar.fxml";
 
   @FXML private Label titleLabel;
@@ -36,9 +36,12 @@ public class RedOrBlueToolbar extends HBox {
     red.setSelected(true);
   }
 
-  public void setData(String title, String red, String blue) {
+  public void setData(String title, T red, T blue) {
     titleLabel.setText(title);
-    this.red.setText(red);
-    this.blue.setText(blue);
+    this.red.setText(red.toString());
+    this.blue.setText(blue.toString());
+
+    this.red.setUserData(red);
+    this.blue.setUserData(blue);
   }
 }

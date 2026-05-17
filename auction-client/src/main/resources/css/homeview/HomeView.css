@@ -1,3 +1,5 @@
+
+
 /* Đặt background ảnh rừng tuyết cho toàn bộ khung main */
 .main-container {
     -fx-font-family: "Consolas";
@@ -210,4 +212,12 @@
     -fx-background-radius: 20; /* Bo tròn nền 20px */
     -fx-border-color: rgba(255, 255, 255, 0.15);
     -fx-border-radius: 20; /* FIX LỖI VIỀN VUÔNG: Ép cái viền bo cong theo nền */
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
 }

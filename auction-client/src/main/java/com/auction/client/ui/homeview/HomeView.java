@@ -1,6 +1,8 @@
 package com.auction.client.ui.homeview;
 
 import com.auction.client.app.NodeContentLoader;
+import com.auction.client.store.ClientItem;
+import com.auction.client.store.ResultStore;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.homeviewcomponent.ContentTable;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -66,12 +69,17 @@ public class HomeView extends HBox {
    * Khởi tạo các sub-view tương ứng với từng enum.
    */
   private void initNodes() {
-    ContentTable contentTable = new  ContentTable();
+    ContentTable contentTable = new ContentTable();
     contentTable.setSwitchNode(this::switchNode);
     sideBar.getChildren().add(contentTable);
 
-    SearchBar searchBar = new  SearchBar();
+    SearchBar<ClientItem> searchBar = new SearchBar<>();
     searchContainer.getChildren().add(searchBar);
+    searchBar.setOnSearch(query -> {
+        ResultStore.RESULT_STORE.filterWords(Arrays.asList(query));
+        switchNode(HomeViewType.RESULT_PAGE);
+      }
+    );
   }
 
   /**
@@ -82,7 +90,7 @@ public class HomeView extends HBox {
    * @throws IOException Nếu không thể nạp file FXML
    */
   private void registerSubView(HomeViewType type, String fxmlPath) throws IOException {
-    NodeContentLoader loader = new  NodeContentLoader();
+    NodeContentLoader loader = new NodeContentLoader();
     loader.load(fxmlPath);
 
     Node node = loader.getCurrentNode();
@@ -122,5 +130,6 @@ public class HomeView extends HBox {
   }
 
   @FXML
-  private void handleRefresh() {}
+  private void handleRefresh() {
+  }
 }

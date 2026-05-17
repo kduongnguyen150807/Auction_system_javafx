@@ -6,6 +6,7 @@ public enum HomeViewType {
   ADD_NEW_LOT("/fxml/homeview/AddNewLot.fxml"),
   ADMIN_DASHBOARD("/fxml/homeview/AdminDashboard.fxml"),
   ITEM_INFORMATION("/fxml/homeview/iteminformation/ItemInformation.fxml"),
+  RESULT_PAGE("/fxml/homeview/ResultPage.fxml"),
   ;
 
   private String fxmlPath;
