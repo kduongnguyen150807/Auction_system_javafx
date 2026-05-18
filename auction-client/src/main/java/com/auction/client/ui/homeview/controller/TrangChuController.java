@@ -3,7 +3,6 @@ package com.auction.client.ui.homeview.controller;
 import com.auction.client.service.AuctionService;
 import com.auction.client.store.AuctionStore;
 import com.auction.client.store.ClientItem;
-import com.auction.client.store.SelectedItem;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;
@@ -12,7 +11,6 @@ import com.auction.client.ui.homeview.homeviewcomponent.ListPane;
 import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar;
 import com.auction.client.ui.homeview.homeviewcomponent.TrendingBind;
 import com.auction.shared.AuctionType;
-import com.auction.shared.ItemStatus;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ToggleGroup;
@@ -22,16 +20,7 @@ import java.util.function.Consumer;
 public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewType> {
   private Consumer<HomeViewType> switchNode;
 
-  FilteredList<ClientItem> filteredList = new FilteredList<>(AuctionStore.AUCTION_STORE.getClientItems());
-  FilteredList<ClientItem> artRows =
-    new FilteredList<>(filteredList,
-      clientItem -> clientItem.getItem().getCategory().equalsIgnoreCase("ART"));
-  FilteredList<ClientItem> electronicsRows =
-    new FilteredList<>(filteredList,
-      clientItem -> clientItem.getItem().getCategory().equalsIgnoreCase("ELECTRONICS"));
-  FilteredList<ClientItem> vehiclesRows =
-    new FilteredList<>(filteredList,
-      clientItem -> clientItem.getItem().getCategory().equalsIgnoreCase("VEHICLE"));
+  FilteredList<ClientItem> filteredList = new FilteredList<>(AuctionStore.AUCTION_STORE.getOngoingClientItemList());
 
   @FXML private RedOrBlueToolbar<AuctionType> auctionTypeToggle;
   private final ToggleGroup toggleGroup = new ToggleGroup();
@@ -68,37 +57,29 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
   private void categoryCarouselNext() {}
 
   private void initLotsRow() {
-    artLots.setTitle("ART LOTS");
-    artLots.setItems(
-      artRows,
-      ItemCard::new,
-      clientItem -> {
-        AuctionService.setSelectedItem(clientItem);
-        switchNode.accept(HomeViewType.ITEM_INFORMATION);
-      });
-
-    electronicsLots.setTitle("ELECTRONICS LOTS");
-    electronicsLots.setItems(
-      electronicsRows,
-      ItemCard::new,
-      clientItem -> {
-        AuctionService.setSelectedItem(clientItem);
-        switchNode.accept(HomeViewType.ITEM_INFORMATION);
-      });
-
-    vehiclesLots.setTitle("VEHICLES LOTS");
-    vehiclesLots.setItems(
-      vehiclesRows,
-      ItemCard::new,
-      clientItem -> {
-        AuctionService.setSelectedItem(clientItem);
-        switchNode.accept(HomeViewType.ITEM_INFORMATION);
-      });
+    registerLotsRow("ARTS LOTS", "ART", artLots);
+    registerLotsRow("VEHICLES LOTS", "VEHICLE", vehiclesLots);
+    registerLotsRow("ELECTRONICS LOTS", "ELECTRONICS", electronicsLots);
   }
 
   private void filterAuctionType() {
     AuctionType selectedAuctionType = (AuctionType) toggleGroup.getSelectedToggle().getUserData();
     filteredList.setPredicate(clientItem -> clientItem.getItem().getAuctionType().equals(selectedAuctionType));
+  }
+
+  private void registerLotsRow(String rowName, String category, ListPane<ClientItem> lots) {
+    FilteredList<ClientItem> row =
+      new FilteredList<>(filteredList,
+        clientItem -> clientItem.getItem().getCategory().equalsIgnoreCase(category));
+    lots.setTitle(rowName);
+    lots.setItems(
+      row,
+      ItemCard::new,
+      clientItem -> {
+        AuctionService.setSelectedItem(clientItem);
+        switchNode.accept(HomeViewType.ITEM_INFORMATION);
+      }
+    );
   }
 
   @Override

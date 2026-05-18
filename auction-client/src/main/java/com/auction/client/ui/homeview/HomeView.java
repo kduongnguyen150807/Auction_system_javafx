@@ -5,7 +5,7 @@ import com.auction.client.store.ClientItem;
 import com.auction.client.store.ResultStore;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
-import com.auction.client.ui.homeview.homeviewcomponent.ContentTable;
+import com.auction.client.ui.homeview.controller.ContentTable;
 import com.auction.client.ui.homeview.homeviewcomponent.SearchBar;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

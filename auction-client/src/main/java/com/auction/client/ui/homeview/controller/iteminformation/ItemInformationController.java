@@ -49,6 +49,7 @@ public class ItemInformationController {
     }
     if (item.getImageUrl() == null || item.getImageUrl().isBlank()) {
       itemImageHolder.setImage(null);
+      return;
     }
     ImageViewUtils.setImageToImageView(itemImageHolder, item.getImageUrl());
   }

@@ -22,7 +22,6 @@ public class ResultPageController implements CanSwitchNode<HomeViewType> {
   @FXML
   public void initialize() {
     renderItems();
-
     filteredItems.addListener((ListChangeListener<? super ClientItem>)  change -> {
       renderItems();
     });
