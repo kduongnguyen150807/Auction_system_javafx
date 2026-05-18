@@ -26,7 +26,7 @@ public class AuctionService {
     return RequestHelper.sendRequest(Request.GET_ONGOING_LOTS, null)
       .thenApply(response -> {
         if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof List<?> ongoingLots) {
-          AuctionStore.AUCTION_STORE.loadItems((List<Item>) ongoingLots);
+          AuctionStore.AUCTION_STORE.loadOngoingItems((List<Item>) ongoingLots);
           return (List<Item>) ongoingLots;
         } else {
           return null;

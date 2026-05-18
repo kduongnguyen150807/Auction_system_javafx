@@ -1,9 +1,8 @@
 package com.auction.client.service;
 
-import com.auction.client.ClientSession;
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
-import com.auction.client.network.NetworkClient;
+import com.auction.client.store.ClientSession;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -29,7 +28,7 @@ public class AuthService {
         }
         if (response.getStatus().equals(Response.OK)) {
           if (response.getPayload() instanceof User u) {
-            ClientSession.setCurrentUser(u);
+            ClientSession.CURRENT_SESSION.setUser(u);
             switchHomeScene();
           }
         }
@@ -46,7 +45,7 @@ public class AuthService {
         }
         if (response.getStatus().equals(Response.OK)) {
           if (response.getPayload() instanceof User u) {
-            ClientSession.setCurrentUser(u);
+            ClientSession.CURRENT_SESSION.setUser(u);
             switchHomeScene();
           }
         }
@@ -56,7 +55,7 @@ public class AuthService {
   }
 
   public void signOut() {
-    ClientSession.clear();
+    ClientSession.CURRENT_SESSION.clear();
     switchLoginScene();
   }
 
