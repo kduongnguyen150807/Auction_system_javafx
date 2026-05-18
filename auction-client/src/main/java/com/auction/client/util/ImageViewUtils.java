@@ -3,6 +3,7 @@ package com.auction.client.util;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.shape.Circle;
 
 public class ImageViewUtils {
   private ImageViewUtils() {}
@@ -18,6 +19,7 @@ public class ImageViewUtils {
     });
     imageView.setImage(img);
   }
+
 
   public static void apply(ImageView imageView, Image img) {
     if (imageView == null || img == null) {
