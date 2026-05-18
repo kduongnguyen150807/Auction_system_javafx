@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.homeview.controller.profile.IdentityLayoutController"
+      spacing="20">
+    <children>
+
+        <HBox spacing="25.0">
+            <children>
+                <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label styleClass="label-sm-gray" text="HỌ VÀ TÊN"/>
+                        <Label fx:id="fullNameLabel" maxWidth="Infinity"
+                               styleClass="field-display-box" text="username"/>
+                        <TextField fx:id="fullNameInput" managed="false"
+                                   styleClass="clean-input" visible="false"/>
+                        <Label styleClass="label-sm-gray" text="SỐ ĐIỆN THOẠI"/>
+                        <Label fx:id="phoneLabel" maxWidth="Infinity"
+                               styleClass="field-display-box" text="N/A"/>
+                        <TextField fx:id="phoneInput" managed="false" styleClass="clean-input"
+                                   visible="false"/>
+                    </children>
+                </VBox>
+                <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label styleClass="label-sm-gray" text="ĐỊA CHỈ EMAIL"/>
+                        <Label fx:id="emailLabel" maxWidth="Infinity"
+                               styleClass="field-display-box" text="username@mail.com"/>
+                        <TextField fx:id="emailInput" managed="false" styleClass="clean-input"
+                                   visible="false"/>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+        <HBox>
+            <children>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="editButton" mnemonicParsing="false" onAction="#handleEditProfile"
+                        prefWidth="130.0" styleClass="btn-primary-gold" text="Sửa hồ sơ"/>
+            </children>
+        </HBox>
+
+    </children>
+</VBox>
