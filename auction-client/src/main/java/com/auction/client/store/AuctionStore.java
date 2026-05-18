@@ -15,15 +15,15 @@ import java.util.function.Predicate;
 public class AuctionStore {
   public static AuctionStore AUCTION_STORE = new AuctionStore();
 
-  private final ObservableList<ClientItem> items = FXCollections.observableArrayList();
+  private final ObservableList<ClientItem> ongoingItemsList = FXCollections.observableArrayList();
 
   private final Map<Integer, ClientItem> clientItemMap = new HashMap<>();
 
-  public ObservableList<ClientItem> getClientItems() {
-    return items;
+  public ObservableList<ClientItem> getOngoingClientItemList() {
+    return ongoingItemsList;
   }
 
-  public void loadItems(List<Item> items) {
+  public void loadOngoingItems(List<Item> items) {
     FXThread.run(() -> {
       for (Item item : items) {
         addItemIfMissing(item);
@@ -36,11 +36,10 @@ public class AuctionStore {
     FXThread.run(() -> {
       ClientItem clientItem = clientItemMap.get(item.getId());
       if (clientItem != null) {
-        if (clientItem.getStatus().equals(ItemStatus.CLOSED)) {
-          items.remove(clientItem);
-          return;
-        }
         clientItem.update(item);
+        if (item.getStatus().equals(ItemStatus.CLOSED)) {
+          ongoingItemsList.remove(clientItem);
+        }
       } else {
         addItemIfMissing(item);
       }
@@ -52,7 +51,7 @@ public class AuctionStore {
       ClientItem clientItem = clientItemMap.get(item.getId());
       if (clientItem == null) {
         clientItem = new ClientItem(item);
-        items.add(clientItem);
+        ongoingItemsList.add(clientItem);
         clientItemMap.put(item.getId(), clientItem);
       }
     });
@@ -63,6 +62,6 @@ public class AuctionStore {
   }
 
   public FilteredList<ClientItem> getFilteredItems(Predicate<ClientItem> predicate) {
-    return new FilteredList<>(items, predicate);
+    return new FilteredList<>(ongoingItemsList, predicate);
   }
 }

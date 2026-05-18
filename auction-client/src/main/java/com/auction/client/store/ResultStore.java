@@ -4,7 +4,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 public class ResultStore {
   public static ResultStore RESULT_STORE = new ResultStore();
@@ -12,7 +11,7 @@ public class ResultStore {
   private ResultStore() {
   }
 
-  private final ObservableList<ClientItem> resultItem = AuctionStore.AUCTION_STORE.getClientItems();
+  private final ObservableList<ClientItem> resultItem = AuctionStore.AUCTION_STORE.getOngoingClientItemList();
 
   private final FilteredList<ClientItem> filteredItems = new FilteredList<>(resultItem);
 
