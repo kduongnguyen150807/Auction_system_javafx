@@ -1,8 +1,6 @@
 package com.auction.client.ui.homeview.homeviewcomponent;
 
-import com.auction.client.store.SelectedItemBidHistory;
 import com.auction.client.util.FXThread;
-import com.auction.client.util.TimeFormat;
 import com.auction.shared.BidTransaction;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;

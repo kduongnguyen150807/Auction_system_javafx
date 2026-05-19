@@ -1,4 +1,4 @@
-package com.auction.client.store;
+package com.auction.client.store.selectediteminformation;
 
 import com.auction.client.util.FXThread;
 import com.auction.shared.BidTransaction;

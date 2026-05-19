@@ -1,8 +1,8 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
-import com.auction.client.store.ClientItem;
-import com.auction.client.store.SelectedItem;
-import com.auction.client.store.SelectedItemBidHistory;
+import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.selectediteminformation.SelectedItem;
+import com.auction.client.store.selectediteminformation.SelectedItemBidHistory;
 import com.auction.client.ui.homeview.homeviewcomponent.BidChart;
 import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.TimeFormat;

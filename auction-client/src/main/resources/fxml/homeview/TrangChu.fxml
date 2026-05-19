@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ContentDisplay?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.text.Font?>
 
 <?import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar?>
@@ -24,7 +20,7 @@
       styleClass="trangchu-page"
       stylesheets="/css/trangchu/TrangChu.css">
     <children>
-        <RedOrBlueToolbar fx:id="auctionTypeToggle" />
+        <RedOrBlueToolbar fx:id="auctionTypeToggle"/>
         <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="260.0" percentWidth="35.0"/>
@@ -53,36 +49,28 @@
                         <content>
                             <VBox spacing="20.0" alignment="TOP_CENTER" maxWidth="Infinity">
                                 <TrendingBind fx:id="trendingBind"/>
-                                <VBox spacing="15.0" styleClass="TrendingBind" alignment="TOP_CENTER" maxWidth="Infinity">
-                                    <Label styleClass="TopLabel" text="Top Đại Gia" />
-                                    <VBox fx:id="leaderboardcontainer" spacing="10.0" />
+                                <VBox spacing="15.0" styleClass="TrendingBind" alignment="TOP_CENTER"
+                                      maxWidth="Infinity">
+                                    <Label styleClass="TopLabel" text="Top Đại Gia"/>
+                                    <VBox fx:id="leaderboardcontainer" spacing="10.0"/>
                                 </VBox>
                             </VBox>
                         </content>
                     </ScrollPane>
                 </children>
             </VBox>
-            <ScrollPane GridPane.columnIndex="1"
-                        GridPane.rowIndex="0"
-                        GridPane.hgrow="ALWAYS"
-                        GridPane.vgrow="ALWAYS"
-                        fitToWidth="true"
-                        hbarPolicy="NEVER"
-                        minHeight="0.0"
-                        styleClass="scroll-pane auction-categories-scroll"
-                        vbarPolicy="AS_NEEDED">
-                <content>
-                    <VBox spacing="28.0"
-                          styleClass="col-categories"
-                          maxWidth="Infinity">
-                        <children>
-                            <ListPane fx:id="artLots"/>
-                            <ListPane fx:id="electronicsLots" />
-                            <ListPane fx:id="vehiclesLots" />
-                        </children>
-                    </VBox>
-                </content>
-            </ScrollPane>
+            <VBox GridPane.columnIndex="1"
+                  GridPane.rowIndex="0"
+                  GridPane.hgrow="ALWAYS"
+                  GridPane.vgrow="ALWAYS"
+                  minHeight="0.0"
+                  styleClass="scroll-pane auction-categories-scroll">
+                <children>
+                    <ListPane fx:id="artLots"/>
+                    <ListPane fx:id="electronicsLots"/>
+                    <ListPane fx:id="vehiclesLots"/>
+                </children>
+            </VBox>
         </GridPane>
     </children>
     <padding>

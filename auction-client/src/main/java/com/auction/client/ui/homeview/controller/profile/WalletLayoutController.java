@@ -1,12 +1,15 @@
 package com.auction.client.ui.homeview.controller.profile;
 
+import com.auction.client.navigation.SceneManager;
 import com.auction.client.service.UserService;
-import com.auction.client.store.ClientSession;
+import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.store.userinformation.UserTransactionHistory;
 import com.auction.client.ui.component.IntegerField;
+import com.auction.client.ui.homeview.homeviewcomponent.TransactionHistory;
 import com.auction.client.util.AlertUtil;
+import com.auction.client.util.StageUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 
 public class WalletLayoutController {
   private ClientSession clientSession;
@@ -44,6 +47,8 @@ public class WalletLayoutController {
 
   @FXML
   private void handleShowHistory() {
-
+    TransactionHistory transactionHistory = new TransactionHistory();
+    transactionHistory.setTransactionHistory(UserTransactionHistory.USER_TRANSACTION_HISTORY.getHistory());
+    StageUtil.autoCloseModalStage(transactionHistory, SceneManager.getInstance().getWindow());
   }
 }

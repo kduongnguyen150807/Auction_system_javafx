@@ -16,6 +16,9 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
+<?import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar?>
+<?import com.auction.client.ui.component.YearMonthDayHourMinuteSecond?>
+<?import com.sun.javafx.scene.control.IntegerField?>
 <AnchorPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: transparent;" stylesheets="/css/addnewlot/AddNewLot.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.homeview.controller.AddNewLotController">
     <children>
         <ScrollPane
@@ -64,20 +67,14 @@
 
                                         <VBox prefWidth="480.0" maxWidth="Infinity" spacing="10.0">
                                             <children>
-                                                <TextField fx:id="txtName" promptText="PRODUCT NAME" styleClass="input-mac-blue" />
+                                                <TextField fx:id="nameField" promptText="PRODUCT NAME" styleClass="input-mac-blue" />
 
-                                                <Label styleClass="label-sm" text="AUCTION FORMAT" />
-                                                <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="10.0" styleClass="auction-type-segments">
-                                                    <children>
-                                                        <ToggleButton fx:id="kindEnglishToggle" maxWidth="Infinity" mnemonicParsing="false" styleClass="segment-toggle-auction" text="English auction" HBox.hgrow="ALWAYS" />
-                                                        <ToggleButton fx:id="kindDutchToggle" maxWidth="Infinity" mnemonicParsing="false" styleClass="segment-toggle-auction" text="Dutch auction" HBox.hgrow="ALWAYS" />
-                                                    </children>
-                                                </HBox>
+                                                <RedOrBlueToolbar fx:id="auctionToggle"/>
 
                                                 <HBox spacing="10.0">
                                                     <children>
-                                                        <TextField fx:id="txtPrice" promptText="START PRICE ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
-                                                        <TextField fx:id="txtMaxPrice" promptText="BUY NOW ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
+                                                        <TextField fx:id="priceField" promptText="START PRICE ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
+                                                        <TextField fx:id="maxPriceField" promptText="BUY NOW ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
                                                     </children>
                                                 </HBox>
 
@@ -95,27 +92,13 @@
                                                     </children>
                                                 </VBox>
 
-                                                <TextArea fx:id="txtQuantity" prefRowCount="2" promptText="DESCRIPTION" styleClass="input-mac-blue" wrapText="true" />
+                                                <TextArea fx:id="descriptionField" prefRowCount="2" promptText="DESCRIPTION" styleClass="input-mac-blue" wrapText="true" />
 
-                                                <Label styleClass="label-sm" text="AUCTION START" />
-                                                <DatePicker fx:id="startDatePicker" maxWidth="Infinity" promptText="START DATE" styleClass="date-mac" />
-                                                <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="8.0">
-                                                    <children>
-                                                        <ComboBox fx:id="startHourCombo" minWidth="70.0" promptText="HH" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
-                                                        <ComboBox fx:id="startMinuteCombo" minWidth="70.0" promptText="MM" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
-                                                        <ComboBox fx:id="startSecondCombo" minWidth="70.0" promptText="SS" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
-                                                    </children>
-                                                </HBox>
+                                                <YearMonthDayHourMinuteSecond spacing="4" fx:id="startTimeChooser"
+                                                                              title="AUCTION START"/>
 
-                                                <Label styleClass="label-sm" text="AUCTION END" />
-                                                <DatePicker fx:id="endDatePicker" maxWidth="Infinity" promptText="END DATE" styleClass="date-mac" />
-                                                <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="8.0">
-                                                    <children>
-                                                        <ComboBox fx:id="endHourCombo" minWidth="70.0" promptText="HH" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
-                                                        <ComboBox fx:id="endMinuteCombo" minWidth="70.0" promptText="MM" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
-                                                        <ComboBox fx:id="endSecondCombo" minWidth="70.0" promptText="SS" styleClass="combo-mac" HBox.hgrow="ALWAYS" />
-                                                    </children>
-                                                </HBox>
+                                                <YearMonthDayHourMinuteSecond spacing="4" fx:id="endTimeChooser"
+                                                                              title="AUCTION END"/>
 
                                                 <ComboBox fx:id="classifyComboBox" maxWidth="Infinity" promptText="SELECT CATEGORY" styleClass="combo-mac" />
 

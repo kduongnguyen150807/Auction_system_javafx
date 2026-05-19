@@ -1,6 +1,6 @@
-package com.auction.client.store;
+package com.auction.client.store.selectediteminformation;
 
-import com.auction.shared.Item;
+import com.auction.client.store.lotsinformation.ClientItem;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 

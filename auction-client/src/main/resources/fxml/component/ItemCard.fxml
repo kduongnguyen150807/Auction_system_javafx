@@ -9,66 +9,196 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Rectangle?>
 
-<fx:root type="VBox" fx:id="itemRoot" alignment="TOP_CENTER"
-      spacing="0.0" styleClass="glass-card-item"
-      stylesheets="@../../css/itemcard/ItemCard.css" maxHeight="150" maxWidth="100"
-      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root
+        type="VBox"
+        fx:id="itemRoot"
+        xmlns="http://javafx.com/javafx/25"
+        xmlns:fx="http://javafx.com/fxml/1"
+
+        alignment="TOP_CENTER"
+        spacing="0.0"
+
+        prefWidth="300.0"
+        minWidth="300.0"
+        maxWidth="300.0"
+
+        styleClass="glass-card-item"
+        stylesheets="@../../css/itemcard/ItemCard.css">
+
     <children>
+
+        <!-- IMAGE -->
         <StackPane styleClass="image-container-mac">
+
             <children>
-                <ImageView fx:id="imageHolder" fitHeight="240.0" fitWidth="270.0" pickOnBounds="true" preserveRatio="true">
+
+                <ImageView
+                        fx:id="imageHolder"
+                        fitHeight="240.0"
+                        fitWidth="270.0"
+                        pickOnBounds="true"
+                        preserveRatio="false">
+
                     <clip>
-                        <Rectangle fx:id="imageClip" arcHeight="30.0" arcWidth="30.0" height="240.0" width="270.0" />
+                        <Rectangle
+                                fx:id="imageClip"
+                                width="270.0"
+                                height="240.0"
+                                arcWidth="30.0"
+                                arcHeight="30.0"/>
                     </clip>
+
                 </ImageView>
 
-                <!-- TÍNH NĂNG WATCHLIST: Nút thả tim góc trên bên phải ảnh -->
-                <Label fx:id="heartIcon" text="🤍" StackPane.alignment="TOP_RIGHT"
-                       style="-fx-font-size: 24px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 5, 0, 0, 2);">
+                <!-- HEART -->
+                <Label
+                        fx:id="heartIcon"
+                        text="🤍"
+                        StackPane.alignment="TOP_RIGHT"
+
+                        style="
+                            -fx-font-size: 24px;
+                            -fx-cursor: hand;
+                            -fx-effect: dropshadow(
+                                gaussian,
+                                rgba(0,0,0,0.8),
+                                5,
+                                0,
+                                0,
+                                2
+                            );
+                        ">
+
                     <StackPane.margin>
-                        <Insets top="10.0" right="10.0" />
+                        <Insets top="10.0" right="10.0"/>
                     </StackPane.margin>
+
                 </Label>
+
             </children>
-            <VBox.margin><Insets bottom="15.0" left="10.0" right="10.0" top="10.0" /></VBox.margin>
+
+            <VBox.margin>
+                <Insets
+                        top="10.0"
+                        right="10.0"
+                        bottom="15.0"
+                        left="10.0"/>
+            </VBox.margin>
+
         </StackPane>
 
+        <!-- CONTENT -->
         <VBox spacing="12.0">
+
             <children>
+
+                <!-- NAME + DESC -->
                 <VBox spacing="4.0">
+
                     <children>
-                        <Label fx:id="itemName" styleClass="item-name-mac" text="Product Name" wrapText="true" />
-                        <Label fx:id="itemDescription" styleClass="item-desc-mac" text="Minimalist description..." wrapText="false" />
+
+                        <Label
+                                fx:id="itemName"
+                                text="Product Name"
+                                wrapText="true"
+                                styleClass="item-name-mac"/>
+
+                        <Label
+                                fx:id="itemDescription"
+                                text="Minimalist description..."
+                                wrapText="false"
+                                styleClass="item-desc-mac"/>
+
                     </children>
+
                 </VBox>
 
-                <HBox alignment="CENTER_LEFT" spacing="0.0">
+                <!-- PRICE + TIMER -->
+                <HBox alignment="CENTER_LEFT">
+
                     <children>
-                        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+
+                        <VBox
+                                spacing="2.0"
+                                HBox.hgrow="ALWAYS">
+
                             <children>
-                                <Label fx:id="priceMetricCaption" styleClass="label-sm-gray" text="CURRENT BID" />
-                                <Label fx:id="price" styleClass="price-val-cyan" text="0$" />
+
+                                <Label
+                                        text="CURRENT BID"
+                                        styleClass="label-sm-gray"/>
+
+                                <Label
+                                        fx:id="price"
+                                        text="0$"
+                                        styleClass="price-val-cyan"/>
+
                             </children>
+
                         </VBox>
-                        <VBox alignment="TOP_RIGHT" spacing="2.0" HBox.hgrow="ALWAYS">
+
+                        <VBox
+                                alignment="TOP_RIGHT"
+                                spacing="2.0"
+                                HBox.hgrow="ALWAYS">
+
                             <children>
-                                <Label styleClass="label-sm-gray" text="TIME LEFT" />
-                                <Label fx:id="timeRemain" styleClass="timer-val-orange" text="00:00:00" />
+
+                                <Label
+                                        text="TIME LEFT"
+                                        styleClass="label-sm-gray"/>
+
+                                <Label
+                                        fx:id="timeRemain"
+                                        text="00:00:00"
+                                        styleClass="timer-val-orange"/>
+
                             </children>
+
                         </VBox>
+
                     </children>
+
                 </HBox>
 
-                <HBox fx:id="sellerActionsRow" alignment="CENTER" spacing="8.0" managed="false" visible="false">
+                <!-- SELLER ACTIONS -->
+                <HBox
+                        fx:id="sellerActionsRow"
+                        alignment="CENTER"
+                        spacing="8.0"
+                        managed="false"
+                        visible="false">
+
                     <children>
-                        <Button fx:id="btnEditMyItem" mnemonicParsing="false" styleClass="btn-seller-item" text="Chỉnh sửa" />
-                        <Button fx:id="btnDeleteMyItem" mnemonicParsing="false" styleClass="btn-seller-item" text="Hủy / Xóa" />
+
+                        <Button
+                                fx:id="btnEditMyItem"
+                                text="Chỉnh sửa"
+                                mnemonicParsing="false"
+                                styleClass="btn-seller-item"/>
+
+                        <Button
+                                fx:id="btnDeleteMyItem"
+                                text="Hủy / Xóa"
+                                mnemonicParsing="false"
+                                styleClass="btn-seller-item"/>
+
                     </children>
+
                 </HBox>
+
             </children>
+
             <padding>
-                <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
+                <Insets
+                        top="5.0"
+                        right="20.0"
+                        bottom="20.0"
+                        left="20.0"/>
             </padding>
+
         </VBox>
+
     </children>
+
 </fx:root>

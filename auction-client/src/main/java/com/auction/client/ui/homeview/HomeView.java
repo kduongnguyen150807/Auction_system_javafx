@@ -1,8 +1,8 @@
 package com.auction.client.ui.homeview;
 
 import com.auction.client.app.NodeContentLoader;
-import com.auction.client.store.ClientItem;
-import com.auction.client.store.ResultStore;
+import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.lotsinformation.ResultStore;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.controller.ContentTable;

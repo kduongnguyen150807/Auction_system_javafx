@@ -50,6 +50,7 @@
 
                         <HBox alignment="TOP_CENTER" spacing="35.0" VBox.vgrow="ALWAYS">
                             <children>
+
                                 <VBox alignment="TOP_CENTER" prefWidth="300.0" spacing="15.0">
                                     <children>
                                         <StackPane prefHeight="200.0" prefWidth="300.0" styleClass="image-frame-mac">

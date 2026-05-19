@@ -2,7 +2,7 @@ package com.auction.client.ui.homeview.controller;
 
 import com.auction.client.service.AuctionService;
 import com.auction.client.store.AuctionStore;
-import com.auction.client.store.ClientItem;
+import com.auction.client.store.lotsinformation.ClientItem;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;

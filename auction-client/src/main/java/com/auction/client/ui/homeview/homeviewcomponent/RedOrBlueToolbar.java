@@ -1,8 +1,11 @@
 package com.auction.client.ui.homeview.homeviewcomponent;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
@@ -43,5 +46,13 @@ public class RedOrBlueToolbar<T> extends HBox {
 
     this.red.setUserData(red);
     this.blue.setUserData(blue);
+  }
+
+  public Toggle getRedToggle() {
+    return red;
+  }
+
+  public Toggle getBlueToggle() {
+    return blue;
   }
 }

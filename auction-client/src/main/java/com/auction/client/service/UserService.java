@@ -1,14 +1,16 @@
 package com.auction.client.service;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.client.store.ClientSession;
+import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.store.userinformation.UserTransactionHistory;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.TransactionLog;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class UserService {
@@ -61,5 +63,21 @@ public class UserService {
     } catch (Exception e) {
       return null;
     }
+  }
+
+  public static String getUserTransaction() {
+    return RequestHelper.sendRequest("get_transactions", ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+      .thenApply(response ->  {
+        if (response != null && response.getStatus().equals(Response.OK)) {
+          List<TransactionLog> list = (List<TransactionLog>) response.getPayload();
+          UserTransactionHistory.USER_TRANSACTION_HISTORY.setHistory(list);
+          return null;
+        }
+        return "failed to get user transaction";
+      }).join();
+  }
+
+  public static void refreshUserTransaction() {
+    getUserTransaction();
   }
 }

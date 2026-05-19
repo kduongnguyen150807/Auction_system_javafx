@@ -1,7 +1,7 @@
 package com.auction.client.ui.homeview.controller;
 
-import com.auction.client.store.ClientItem;
-import com.auction.client.store.ResultStore;
+import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.lotsinformation.ResultStore;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;
 import com.auction.client.ui.homeview.homeviewcomponent.ItemCard;

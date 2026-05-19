@@ -23,7 +23,7 @@ public class SceneManager {
     return instance;
   }
 
-  private static Map<SceneType, Scene> sceneMap = new HashMap<SceneType, Scene>();
+  private final Map<SceneType, Scene> sceneMap = new HashMap<SceneType, Scene>();
 
   private Stage rootStage;
 
@@ -41,13 +41,18 @@ public class SceneManager {
       rootStage.setScene(scene);
       rootStage.show();
     } else {
-      LOGGER.info("scene {} does not exist!",  sceneType);
+      LOGGER.warn("scene {} does not exist!",  sceneType);
     }
   }
 
   public void buildHomeView() {
     Scene homeViewScene = new Scene(new HomeView());
     registerScene(SceneType.HOME_VIEW, homeViewScene);
+  }
+
+  public void deleteHomeView() {
+    Scene homeViewSCene =  sceneMap.get(SceneType.HOME_VIEW);
+    sceneMap.remove(SceneType.HOME_VIEW);
   }
 
   public Window getWindow() {

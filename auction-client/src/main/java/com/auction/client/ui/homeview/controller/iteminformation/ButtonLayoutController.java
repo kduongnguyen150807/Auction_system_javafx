@@ -1,9 +1,9 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
-import com.auction.client.ClientSession;
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.service.BiddingService;
-import com.auction.client.store.ClientItem;
+import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.userinformation.ClientSession;
 import com.auction.client.ui.component.IntegerField;
 import com.auction.client.ui.homeview.homeviewcomponent.BiddingForm;
 import com.auction.client.ui.homeview.homeviewcomponent.RatingBox;
@@ -43,7 +43,7 @@ public class ButtonLayoutController {
       BiddingForm biddingForm = new BiddingForm(item);
       biddingForm.setOnConfirm(() -> {
         double bidAmount = biddingForm.collectData();
-        User currentUser = ClientSession.getCurrentUser();
+        User currentUser = ClientSession.CURRENT_SESSION.getCurrentUser();
         if (!validate(currentUser, bidAmount)) {
           return;
         }
@@ -56,7 +56,7 @@ public class ButtonLayoutController {
   @FXML
   private void handleAutoBid() {
     double autoBidAmount = autoBidField.getValue();
-    User currentUser = ClientSession.getCurrentUser();
+    User currentUser = ClientSession.CURRENT_SESSION.getCurrentUser();
     if (!validate(currentUser, autoBidAmount)) {
       return;
     }
@@ -107,7 +107,7 @@ public class ButtonLayoutController {
   private void placeBid(double bidAmount, User user) {
     BidTransaction res = new BidTransaction(
       item.getId(),
-      ClientSession.getCurrentUser().getId(),
+      ClientSession.CURRENT_SESSION.getCurrentUser().getId(),
       bidAmount);
     String message = BiddingService.placeBid(res);
     AlertUtil.showInfoAlert("Bidding result", message);
@@ -116,7 +116,7 @@ public class ButtonLayoutController {
   private void placeAutoBid(double autoBidAmount, User user) {
     BidTransaction bid = new BidTransaction(
       item.getId(),
-      ClientSession.getCurrentUser().getId(),
+      ClientSession.CURRENT_SESSION.getCurrentUser().getId(),
       0
     );
     bid.setMaxAutoBid(autoBidAmount);

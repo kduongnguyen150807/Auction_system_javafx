@@ -1,5 +1,6 @@
-package com.auction.client.store;
+package com.auction.client.store.lotsinformation;
 
+import com.auction.client.store.AuctionStore;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 

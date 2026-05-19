@@ -2,7 +2,7 @@ package com.auction.client.service;
 
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
-import com.auction.client.store.ClientSession;
+import com.auction.client.store.userinformation.ClientSession;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -56,15 +56,12 @@ public class AuthService {
 
   public void signOut() {
     ClientSession.CURRENT_SESSION.clear();
-    switchLoginScene();
+    SceneManager.getInstance().deleteHomeView();
+    SceneManager.getInstance().switchScene(SceneType.LOGIN_VIEW);
   }
 
   public void switchHomeScene() {
     SceneManager.getInstance().buildHomeView();
     SceneManager.getInstance().switchScene(SceneType.HOME_VIEW);
-  }
-
-  public void switchLoginScene() {
-    SceneManager.getInstance().switchScene(SceneType.LOGIN_VIEW);
   }
 }

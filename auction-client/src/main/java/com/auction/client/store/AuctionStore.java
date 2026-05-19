@@ -1,5 +1,6 @@
 package com.auction.client.store;
 
+import com.auction.client.store.lotsinformation.ClientItem;
 import com.auction.client.util.FXThread;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;

@@ -7,8 +7,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.geometry.Insets?>
 
-<VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.ui.TransactionHistory.TransactionHistoryController"
+<fx:root type="VBox" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       alignment="TOP_CENTER" styleClass="history-root" stylesheets="/css/history/TransactionHistory.css">
 
     <padding><Insets top="40" right="40" bottom="40" left="40"/></padding>
@@ -34,4 +33,4 @@
             <padding><Insets top="30" right="30" bottom="30" left="30"/></padding>
         </VBox>
     </children>
-</VBox>
+</fx:root>

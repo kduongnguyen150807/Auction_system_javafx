@@ -1,5 +1,27 @@
 @import url("../shared/AppScrollbar.css");
 
+.category-shelf {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 10;
+}
+
+.category-shelf > .viewport {
+    -fx-background-color: transparent;
+}
+
+.category-row {
+    -fx-alignment: center-left;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
 .catalog-auction-toolbar {
     -fx-padding: 0 0 12 0;
     -fx-alignment: center-left;

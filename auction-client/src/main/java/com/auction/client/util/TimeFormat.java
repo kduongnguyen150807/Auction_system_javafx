@@ -1,15 +1,24 @@
 package com.auction.client.util;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class TimeFormat {
-  private TimeFormat() {}
+  private TimeFormat() {
+  }
 
   public static DateTimeFormatter DMY_HM =
     DateTimeFormatter.ofPattern(
       "dd/MM/yyyy HH:mm"
+    );
+
+  public static final DateTimeFormatter DMY_HMS =
+    DateTimeFormatter.ofPattern(
+      "dd/MM/yyyy HH:mm:ss"
     );
 
   public static String getRemainingTime(LocalDateTime time) {
@@ -25,5 +34,23 @@ public class TimeFormat {
       minutes
     );
     return text;
+  }
+
+  public static String buildDateTime(LocalDate date, Integer h, Integer m, Integer s) {
+    if (date == null || h == null || m == null || s == null) return null;
+    try {
+      return LocalDateTime.of(date, LocalTime.of(h, m, s)).format(DMY_HMS);
+    } catch (DateTimeParseException e) {
+      return null;
+    }
+  }
+
+  public static LocalDateTime parseDateTime(String value) {
+    if (value == null || value.isBlank()) return null;
+    try {
+      return LocalDateTime.parse(value, DMY_HMS);
+    } catch (DateTimeParseException e) {
+      return null;
+    }
   }
 }

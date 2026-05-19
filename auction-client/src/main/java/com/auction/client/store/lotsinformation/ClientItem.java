@@ -1,4 +1,4 @@
-package com.auction.client.store;
+package com.auction.client.store.lotsinformation;
 
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;

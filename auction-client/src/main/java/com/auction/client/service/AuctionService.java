@@ -1,16 +1,27 @@
 package com.auction.client.service;
 
 import com.auction.client.store.AuctionStore;
-import com.auction.client.store.ClientItem;
-import com.auction.client.store.SelectedItem;
-import com.auction.client.store.SelectedItemBidHistory;
+import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.selectediteminformation.SelectedItem;
+import com.auction.client.store.selectediteminformation.SelectedItemBidHistory;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.*;
-import javafx.collections.ObservableList;
 
 import java.util.List;
+import java.util.Map;
 
 public class AuctionService {
+  public static String registerLot(Map<String, String> lotForm) {
+    return RequestHelper.sendRequest(Request.ADD_LOT, lotForm)
+      .thenApply(response -> {
+        if (response.getStatus().equals(Response.OK)) {
+          return null;
+        } else {
+          return response.getMessage();
+        }
+      }).join();
+  }
+
   public static List<LeaderboardEntry> getLeaderboard() {
     return RequestHelper.sendRequest(Request.GET_LEADERBOARD, null)
       .thenApply(response -> {

@@ -1,15 +1,10 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
-import com.auction.client.store.ClientItem;
-import com.auction.client.ui.base.CanRefresh;
+import com.auction.client.store.lotsinformation.ClientItem;
 import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.StringFormat;
 import com.auction.client.util.TimeFormat;
-import com.auction.shared.Item;
-import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;

@@ -3,10 +3,9 @@ package com.auction.client.ui.homeview.controller.profile;
 import com.auction.client.network.NetworkEventListener;
 import com.auction.client.service.AuthService;
 import com.auction.client.service.UserService;
-import com.auction.client.store.ClientSession;
+import com.auction.client.store.userinformation.ClientSession;
 import com.auction.client.ui.component.UserCard;
 import com.auction.client.util.AlertUtil;
-import com.auction.client.util.ImagePresentationUtil;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import org.slf4j.Logger;
@@ -32,6 +31,7 @@ public class ProfileController implements NetworkEventListener {
       apply(currentSession);
     });
     apply(currentSession);
+    UserService.refreshUserTransaction();
   }
 
   private void apply(ClientSession session) {

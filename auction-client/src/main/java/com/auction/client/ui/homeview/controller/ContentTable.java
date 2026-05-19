@@ -1,7 +1,7 @@
 package com.auction.client.ui.homeview.controller;
 
 import com.auction.client.service.AuthService;
-import com.auction.client.store.ClientSession;
+import com.auction.client.store.userinformation.ClientSession;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;
 import com.auction.client.ui.homeview.homeviewcomponent.ContentHBox;

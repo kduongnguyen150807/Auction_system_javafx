@@ -1,4 +1,4 @@
-package com.auction.client.store;
+package com.auction.client.store.userinformation;
 
 import com.auction.shared.User;
 import com.auction.shared.UserRole;

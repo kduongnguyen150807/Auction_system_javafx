@@ -1,14 +1,12 @@
 package com.auction.client.ui.homeview.homeviewcomponent;
 
-import com.auction.client.store.ClientItem;
-import com.auction.client.util.FXThread;
+import com.auction.client.store.lotsinformation.ClientItem;
 import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.TimeFormat;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 

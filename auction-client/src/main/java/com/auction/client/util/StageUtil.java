@@ -32,4 +32,14 @@ public class StageUtil {
   public static void showModalStage(Parent node, Window owner) {
     construcModalStage(node, owner).showAndWait();
   }
+
+  public static void autoCloseModalStage(Parent node, Window owner) {
+    Stage stage = construcModalStage(node, owner);
+    stage.focusedProperty().addListener((obs, oldValue, newValue) -> {
+      if (!newValue) {
+        stage.close();
+      }
+    });
+    stage.showAndWait();
+  }
 }
