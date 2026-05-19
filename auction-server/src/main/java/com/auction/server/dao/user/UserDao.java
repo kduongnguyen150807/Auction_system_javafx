@@ -4,6 +4,7 @@ import com.auction.server.dao.platform.BaseDao;
 import com.auction.shared.*;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,6 +56,11 @@ public class UserDao extends BaseDao<User> implements UserRepository {
 
     user.setSessionToken(rs.getString("session_token"));
 
+    Timestamp lastLoginAt = rs.getTimestamp("last_login_at");
+    if (lastLoginAt != null) {
+      user.setLastLogin(lastLoginAt.toLocalDateTime());
+    }
+
     return user;
   }
 
@@ -86,12 +92,12 @@ public class UserDao extends BaseDao<User> implements UserRepository {
       return null;
     }
     String sessionToken = UUID.randomUUID().toString();
+    LocalDateTime loginAt = LocalDateTime.now();
 
-    updateSessionToken(
-            user.getId(),
-            sessionToken);
+    applySuccessfulLogin(user.getId(), sessionToken, loginAt);
 
     user.setSessionToken(sessionToken);
+    user.setLastLogin(loginAt);
 
     return user;
   }
@@ -194,6 +200,18 @@ public class UserDao extends BaseDao<User> implements UserRepository {
             WHERE id = ?
             """,
             sessionToken,
+            userId);
+  }
+
+  private boolean applySuccessfulLogin(int userId, String sessionToken, LocalDateTime loginAt) {
+    return executeUpdate(
+            """
+            UPDATE users
+            SET session_token = ?, last_login_at = ?
+            WHERE id = ?
+            """,
+            sessionToken,
+            Timestamp.valueOf(loginAt),
             userId);
   }
 

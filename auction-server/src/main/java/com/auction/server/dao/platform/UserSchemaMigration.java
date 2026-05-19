@@ -13,11 +13,21 @@ final class UserSchemaMigration {
 
   static void applyStructure(Connection conn) {
     ensureUsersTable(conn);
+    alignUsersColumnNames(conn);
     MigrationSchemaSupport.addColumnIfMissing(conn, "users", "fullname", "VARCHAR(255) NULL");
     MigrationSchemaSupport.executeIfColumnAdded(
         conn, "users", "fullname", "UPDATE users SET fullname = username WHERE fullname IS NULL OR TRIM(fullname) = ''");
-    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "avgrating", "DOUBLE DEFAULT 0");
-    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "totalratings", "INT DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "phone_number", "VARCHAR(64) NULL");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "is_locked", "TINYINT(1) NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "money_spent", "DOUBLE NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "items_bought", "INT NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "money_received", "DOUBLE NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "items_sold", "INT NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "avg_rating", "DOUBLE NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "total_ratings", "INT NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "last_login_at", "DATETIME NULL");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "session_token", "VARCHAR(64) NULL");
 
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_username", "username");
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_email", "email");
@@ -45,24 +55,48 @@ final class UserSchemaMigration {
               + "password VARCHAR(255) NOT NULL, "
               + "email VARCHAR(255) NOT NULL, "
               + "age VARCHAR(32) NULL, "
-              + "phonenumber VARCHAR(64) NULL, "
+              + "phone_number VARCHAR(64) NULL, "
               + "role VARCHAR(20) NOT NULL, "
               + "balance DOUBLE NOT NULL DEFAULT 0, "
-              + "moneyspent DOUBLE NOT NULL DEFAULT 0, "
-              + "itemsbought INT NOT NULL DEFAULT 0, "
-              + "moneyreceived DOUBLE NOT NULL DEFAULT 0, "
-              + "itemssold INT NOT NULL DEFAULT 0, "
-              + "isactive TINYINT(1) NOT NULL DEFAULT 1, "
-              + "islocked TINYINT(1) NOT NULL DEFAULT 0, "
+              + "money_spent DOUBLE NOT NULL DEFAULT 0, "
+              + "items_bought INT NOT NULL DEFAULT 0, "
+              + "money_received DOUBLE NOT NULL DEFAULT 0, "
+              + "items_sold INT NOT NULL DEFAULT 0, "
+              + "is_active TINYINT(1) NOT NULL DEFAULT 1, "
+              + "is_locked TINYINT(1) NOT NULL DEFAULT 0, "
               + "avatar_url VARCHAR(2048) NULL, "
-              + "avgrating DOUBLE NOT NULL DEFAULT 0, "
-              + "totalratings INT NOT NULL DEFAULT 0, "
+              + "avg_rating DOUBLE NOT NULL DEFAULT 0, "
+              + "total_ratings INT NOT NULL DEFAULT 0, "
+              + "last_login_at DATETIME NULL, "
+              + "session_token VARCHAR(64) NULL, "
               + "UNIQUE KEY uk_users_username (username), "
               + "UNIQUE KEY uk_users_email (email)"
               + ")");
     } catch (Exception e) {
       LOGGER.warn("Failed to ensure users table", e);
     }
+  }
+
+  /** Renames legacy users columns to names expected by {@link com.auction.server.dao.user.UserDao}. */
+  private static void alignUsersColumnNames(Connection conn) {
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "phonenumber", "phone_number", "VARCHAR(64) NULL");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "moneyspent", "money_spent", "DOUBLE NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "itemsbought", "items_bought", "INT NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "moneyreceived", "money_received", "DOUBLE NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "itemssold", "items_sold", "INT NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "isactive", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "islocked", "is_locked", "TINYINT(1) NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "avgrating", "avg_rating", "DOUBLE NOT NULL DEFAULT 0");
+    MigrationSchemaSupport.renameColumnIfExists(
+        conn, "users", "totalratings", "total_ratings", "INT NOT NULL DEFAULT 0");
   }
 
   /**
