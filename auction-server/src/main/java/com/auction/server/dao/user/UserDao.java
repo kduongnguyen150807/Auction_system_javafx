@@ -394,6 +394,126 @@ public class UserDao extends BaseDao<User> implements UserRepository {
             amount,
             userId);
   }
+  public boolean atomicDeductBalance(
+          int userId,
+          double amount) {
+
+    if (amount <= 0) {
+      return false;
+    }
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET balance = balance - ?
+            WHERE id = ?
+            AND balance >= ?
+            """,
+            amount,
+            userId,
+            amount);
+  }
+
+  public boolean atomicCreditBalance(
+          int userId,
+          double amount) {
+
+    if (amount <= 0) {
+      return false;
+    }
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET balance = balance + ?
+            WHERE id = ?
+            """,
+            amount,
+            userId);
+  }
+
+  public boolean deductBalanceTx(
+          int userId,
+          double amount,
+          Connection conn)
+          throws SQLException {
+
+    if (amount <= 0) {
+      return false;
+    }
+
+    String sql =
+            """
+            UPDATE users
+            SET balance = balance - ?
+            WHERE id = ?
+            AND balance >= ?
+            """;
+
+    try (PreparedStatement ps =
+                 conn.prepareStatement(sql)) {
+
+      ps.setDouble(1, amount);
+      ps.setInt(2, userId);
+      ps.setDouble(3, amount);
+
+      return ps.executeUpdate() > 0;
+    }
+  }
+
+  public boolean creditBalanceTx(
+          int userId,
+          double amount,
+          Connection conn)
+          throws SQLException {
+
+    if (amount <= 0) {
+      return false;
+    }
+
+    String sql =
+            """
+            UPDATE users
+            SET balance = balance + ?
+            WHERE id = ?
+            """;
+
+    try (PreparedStatement ps =
+                 conn.prepareStatement(sql)) {
+
+      ps.setDouble(1, amount);
+      ps.setInt(2, userId);
+
+      return ps.executeUpdate() > 0;
+    }
+  }
+  public boolean isEmailExists(String email) {
+
+    User user = querySingle(
+            """
+            SELECT *
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+            """,
+            email);
+
+    return user != null;
+  }
+
+  public boolean updatePasswordByEmail(
+          String email,
+          String newPassword) {
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET password = ?
+            WHERE email = ?
+            """,
+            newPassword,
+            email);
+  }
 
   private boolean existsDuplicateUser(
           Connection conn,
