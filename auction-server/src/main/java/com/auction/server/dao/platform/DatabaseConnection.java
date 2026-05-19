@@ -30,8 +30,8 @@ public class DatabaseConnection {
       String dbpass = System.getenv("DB_PASS") != null ? System.getenv("DB_PASS") : props.getProperty("db.password");
       HikariConfig config = new HikariConfig();
       config.setJdbcUrl(dburl);
-      config.setUsername("root");
-      config.setPassword("Tuan792007");
+      config.setUsername(dbuser);
+      config.setPassword(dbpass);
       config.setDriverClassName("com.mysql.cj.jdbc.Driver");
       config.setMaximumPoolSize(50);
       config.setMinimumIdle(10);
