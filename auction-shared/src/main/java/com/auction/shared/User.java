@@ -1,6 +1,7 @@
 package com.auction.shared;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 public abstract class User extends Entity implements Serializable {
 
@@ -17,10 +18,15 @@ public abstract class User extends Entity implements Serializable {
 
   protected boolean active;
   protected boolean locked;
+  protected boolean verified;
 
   protected String avatarUrl;
 
-  // Statistics
+  protected String sessionToken;
+  protected boolean online;
+  protected LocalDateTime lastLogin;
+  protected String deviceId;
+
   protected double moneySpent;
   protected int itemsBought;
 
@@ -30,9 +36,8 @@ public abstract class User extends Entity implements Serializable {
   protected double avgRating;
   protected int totalRatings;
 
-  protected String sessiontoken;
-
   public User() {
+
     this.balance = 0.0;
 
     this.moneySpent = 0.0;
@@ -46,13 +51,17 @@ public abstract class User extends Entity implements Serializable {
 
     this.active = true;
     this.locked = false;
+    this.verified = false;
+
+    this.online = false;
   }
 
-  public User(String username,
-              String password,
-              String email,
-              String age,
-              String phoneNumber) {
+  public User(
+          String username,
+          String password,
+          String email,
+          String age,
+          String phoneNumber) {
 
     this.username = username;
     this.fullName = username;
@@ -75,13 +84,13 @@ public abstract class User extends Entity implements Serializable {
 
     this.active = true;
     this.locked = false;
+    this.verified = false;
+
+    this.online = false;
   }
 
   public abstract UserRole getRole();
 
-  // =========================
-  // Getter & Setter
-  // =========================
 
   public String getUsername() {
     return this.username;
@@ -155,12 +164,52 @@ public abstract class User extends Entity implements Serializable {
     this.locked = locked;
   }
 
+  public boolean isVerified() {
+    return this.verified;
+  }
+
+  public void setVerified(boolean verified) {
+    this.verified = verified;
+  }
+
   public String getAvatarUrl() {
     return this.avatarUrl;
   }
 
   public void setAvatarUrl(String avatarUrl) {
     this.avatarUrl = avatarUrl;
+  }
+
+  public String getSessionToken() {
+    return this.sessionToken;
+  }
+
+  public void setSessionToken(String sessionToken) {
+    this.sessionToken = sessionToken;
+  }
+
+  public boolean isOnline() {
+    return this.online;
+  }
+
+  public void setOnline(boolean online) {
+    this.online = online;
+  }
+
+  public LocalDateTime getLastLogin() {
+    return this.lastLogin;
+  }
+
+  public void setLastLogin(LocalDateTime lastLogin) {
+    this.lastLogin = lastLogin;
+  }
+
+  public String getDeviceId() {
+    return this.deviceId;
+  }
+
+  public void setDeviceId(String deviceId) {
+    this.deviceId = deviceId;
   }
 
   public double getMoneySpent() {
@@ -211,14 +260,6 @@ public abstract class User extends Entity implements Serializable {
     this.totalRatings = totalRatings;
   }
 
-  public String getSessiontoken() {
-    return this.sessiontoken;
-  }
-
-  public void setSessiontoken(String sessiontoken) {
-    this.sessiontoken = sessiontoken;
-  }
-
   public void deposit(double amount) {
     this.balance += amount;
   }
@@ -244,10 +285,12 @@ public abstract class User extends Entity implements Serializable {
   }
 
   public void updateRating(double newRating) {
+
     double totalScore = this.avgRating * this.totalRatings;
 
     this.totalRatings++;
 
-    this.avgRating = (totalScore + newRating) / this.totalRatings;
+    this.avgRating =
+            (totalScore + newRating) / this.totalRatings;
   }
 }
