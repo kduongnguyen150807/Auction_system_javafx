@@ -101,7 +101,7 @@ public class BidDao extends BaseDao<BidTransaction> {
     String sql =
         "SELECT b.* FROM bid_transactions b "
             + "JOIN users u ON u.id = b.userid "
-            + "WHERE b.itemid = ? AND u.islocked = false AND u.isactive = true "
+            + "WHERE b.itemid = ? AND u.is_locked = false AND u.is_active = true "
             + "ORDER BY b.bidvalue DESC, b.timestamp ASC LIMIT 1";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setInt(1, itemId);

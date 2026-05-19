@@ -19,7 +19,7 @@ public class SignupHandler implements ActionHandler {
       boolean success = context.getUserService().signup(user);
       return new Response(request.getRequestId(),
           success ? Response.OK : Response.ERROR,
-          success ? "success" : "duplicate", null);
+          success ? "success" : "duplicate_username_or_email", null);
     } catch (ClassCastException e) {
       LOGGER.warn("Signup payload cast failed: {}", e.getMessage());
       return new Response(request.getRequestId(), Response.ERROR, "class_cast_error", null);
