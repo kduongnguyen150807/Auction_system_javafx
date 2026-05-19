@@ -26,7 +26,7 @@ public class UserDao extends BaseDao<User> implements UserRepository {
                     : new Bidder();
 
     user.setId(rs.getInt("id"));
-    user.setVersion(rs.getInt("version"));
+    //user.setVersion(rs.getInt("version"));
 
     user.setUsername(rs.getString("username"));
     user.setFullName(rs.getString("fullname"));
@@ -61,24 +61,21 @@ public class UserDao extends BaseDao<User> implements UserRepository {
   @Override
   public User login(String username, String password) {
 
-    User user =
-            querySingle(
-                    """
-                    SELECT *
-                    FROM users
-                    WHERE
-                        username = ?
-                        AND password = ?
-                        AND is_active = true
-                        AND is_locked = false
-                    """,
-                    username,
-                    password);
+    User user = querySingle(
+            """
+            SELECT *
+            FROM users
+            WHERE username = ?
+            AND password = ?
+            AND is_active = true
+            AND is_locked = false
+            """,
+            username,
+            password);
 
     if (user == null) {
       return null;
     }
-
     if (user.getSessionToken() != null
             && !user.getSessionToken().isBlank()) {
 
@@ -88,10 +85,11 @@ public class UserDao extends BaseDao<User> implements UserRepository {
 
       return null;
     }
-
     String sessionToken = UUID.randomUUID().toString();
 
-    updateSessionToken(user.getId(), sessionToken);
+    updateSessionToken(
+            user.getId(),
+            sessionToken);
 
     user.setSessionToken(sessionToken);
 

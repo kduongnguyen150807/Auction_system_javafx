@@ -8,6 +8,7 @@ public class Request implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static final String LOGIN = "LOGIN";
+  public static final String LOGOUT = "LOGOUT";
   public static final String SIGNUP = "SIGNUP";
   public static final String BID = "BID";
   public static final String ADD = "ADD";

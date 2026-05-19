@@ -38,4 +38,7 @@ public class UserService {
   public boolean setUserRole(String username, String role) {
     return this.userDao.setUserRole(username, role);
   }
+  public boolean clearSessionToken(int userId) {
+    return userDao.clearSessionToken(userId);
+  }
 }

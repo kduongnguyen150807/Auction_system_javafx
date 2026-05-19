@@ -156,6 +156,11 @@ public class ClientHandler implements Runnable {
 
     reg.register(Request.GET_LEADERBOARD, new com.auction.server.handler.misc.LeaderboardHandler());
 
+    reg.register(Request.LOGIN, new LoginHandler());
+    reg.register(Request.SIGNUP, new SignupHandler());
+    reg.register(Request.RECONNECT, new ReconnectHandler());
+    reg.register(Request.LOGOUT, new LogoutHandler());
+
     return reg;
   }
 
