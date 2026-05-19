@@ -230,6 +230,11 @@ public class ClientHandler implements Runnable {
   }
 
   private void cleanup() {
+    User user = getCurrentUser();
+    if (user != null) {
+      AuctionManager.getInstance().releaseUserSession(user.getId());
+      context.setCurrentUser(null);
+    }
     AuctionManager.getInstance().removeClient(this);
     try {
       if (!socket.isClosed()) {

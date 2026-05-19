@@ -17,8 +17,7 @@ public class LoginHandler implements ActionHandler {
 
     User user = context.getUserService().login(username, password);
     if (user != null) {
-      String token = java.util.UUID.randomUUID().toString();
-      user.setSessionToken(token);
+      String token = user.getSessionToken();
       context.getAuctionManager().registersession(token, user);
       context.setCurrentUser(user);
       Response ans = new Response(request.getRequestId(), Response.OK, "success", user);

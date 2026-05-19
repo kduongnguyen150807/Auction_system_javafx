@@ -23,24 +23,12 @@ public class LogoutHandler implements ActionHandler {
                     null);
         }
 
-        boolean ok =
-                context
-                        .getUserService()
-                        .clearSessionToken(currentUser.getId());
-
-        if (!ok) {
-            return new Response(
-                    request.getRequestId(),
-                    Response.ERROR,
-                    "logout_failed",
-                    null);
-        }
-
+        context.getAuctionManager().releaseUserSession(currentUser.getId());
         context.setCurrentUser(null);
 
         return new Response(
                 request.getRequestId(),
-                Response.SUCCESS,
+                Response.OK,
                 "logout_success",
                 null);
     }

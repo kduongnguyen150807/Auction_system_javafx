@@ -209,6 +209,16 @@ public class UserDao extends BaseDao<User> implements UserRepository {
             userId);
   }
 
+  /** Clears every persisted login slot (e.g. after server restart). */
+  public void clearAllSessionTokens() {
+    executeUpdate(
+            """
+            UPDATE users
+            SET session_token = NULL
+            WHERE session_token IS NOT NULL
+            """);
+  }
+
   @Override
   public User getBySessionToken(
           String sessionToken) {

@@ -79,6 +79,18 @@ public class AuctionManager {
     User ans = sessions.get(token);
     return ans;
   }
+
+  /** Drops DB session_token and in-memory reconnect entries for this user. */
+  public void releaseUserSession(int userId) {
+    userdao.clearSessionToken(userId);
+    sessions.entrySet().removeIf(
+        e -> e.getValue() != null && e.getValue().getId() == userId);
+  }
+
+  /** Wipes reconnect map; call with {@link UserDao#clearAllSessionTokens()} on startup. */
+  public void clearInMemorySessions() {
+    sessions.clear();
+  }
   public static AuctionManager getInstance() {
     if (instance == null) {
       synchronized (AuctionManager.class) {
