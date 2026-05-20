@@ -8,6 +8,7 @@ import com.auction.client.service.admin.AdminService;
 import com.auction.client.service.auction.AuctionDetailService;
 import com.auction.client.service.auction.AuctionDiscoveryService;
 import com.auction.client.service.auction.BiddingService;
+import com.auction.client.service.auction.LotManagementService;
 import com.auction.client.service.item.ItemService;
 import com.auction.client.service.user.AuthService;
 import com.auction.client.service.user.ClientService;
@@ -38,6 +39,7 @@ public class AppBootstrap {
     AuctionDiscoveryService auctionDiscoveryService = new AuctionDiscoveryService();
     AuctionDetailService auctionDetailService = new AuctionDetailService();
     AuthService authService = new AuthService();
+    LotManagementService lotManagementService = new LotManagementService();
 
     /* khoi tao NotificationDispatcher */
     NotificationDispatcher notificationDispatcher =
@@ -58,5 +60,7 @@ public class AppBootstrap {
     AppContainer.registerService(UserService.class, new UserService());
     AppContainer.registerService(ClientService.class, new ClientService());
     AppContainer.registerService(ItemService.class, new ItemService());
+
+    AppContainer.registerService(LotManagementService.class, lotManagementService);
   }
 }

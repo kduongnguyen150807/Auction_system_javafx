@@ -8,8 +8,11 @@ import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.auction.shared.User;
 
+import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+
 public class AdminService {
-  public boolean lockUser(User user) {
+  public CompletableFuture<Boolean> lockUser(User user) {
     return RequestHelper.sendRequest(Request.LOCK_USER, user.getUsername())
       .thenApply(response -> {
         if (response.getStatus().equals(Response.OK)) {
@@ -19,10 +22,10 @@ public class AdminService {
         } else {
           return false;
         }
-      }).join();
+      });
   }
 
-  public boolean unlockUser(User user) {
+  public CompletableFuture<Boolean> unlockUser(User user) {
     return RequestHelper.sendRequest(Request.UNLOCK_USER, user.getUsername())
       .thenApply(response ->  {
         if (response.getStatus().equals(Response.OK)) {
@@ -32,10 +35,10 @@ public class AdminService {
         } else {
           return false;
         }
-      }).join();
+      });
   }
 
-  public boolean toggleAdmin(User user, String newRole) {
+  public CompletableFuture<Boolean> toggleAdmin(User user, String newRole) {
     return RequestHelper.sendRequest(Request.PROMOTE_ADMIN, user.getUsername() + ":" + newRole)
       .thenApply(response ->  {
         if (response.getStatus().equals(Response.OK)) {
@@ -43,10 +46,10 @@ public class AdminService {
         } else  {
           return false;
         }
-      }).join();
+      });
   }
 
-  public boolean approveItem(Item item) {
+  public CompletableFuture<Boolean> approveItem(Item item) {
     return RequestHelper.sendRequest(Request.APPROVE_ITEM, item.getId())
       .thenApply(response -> {
         if (response.getStatus().equals(Response.OK)) {
@@ -55,10 +58,10 @@ public class AdminService {
         } else {
           return false;
         }
-      }).join();
+      });
   }
 
-  public boolean rejectItem(Item item) {
+  public CompletableFuture<Boolean> rejectItem(Item item) {
     return RequestHelper.sendRequest(Request.REJECT_ITEM, item.getId())
       .thenApply(response -> {
         if (response.getStatus().equals(Response.OK)) {
@@ -67,6 +70,28 @@ public class AdminService {
         } else {
           return false;
         }
-      }).join();
+      });
+  }
+
+  @SuppressWarnings("unchecked")
+  public CompletableFuture<HashMap<String, Integer>> getStatusStats() {
+    return RequestHelper.sendRequest("get_status_stats", null)
+      .thenApply(response -> {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          return (HashMap<String, Integer>) response.getPayload();
+        }
+        throw new RuntimeException(response != null ? response.getMessage() : "Failed to fetch status stats");
+      });
+  }
+
+  @SuppressWarnings("unchecked")
+  public CompletableFuture<HashMap<String, Double>> getCategoryStats() {
+    return RequestHelper.sendRequest("get_category_stats", null)
+      .thenApply(response -> {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          return (HashMap<String, Double>) response.getPayload();
+        }
+        throw new RuntimeException(response != null ? response.getMessage() : "Failed to fetch category stats");
+      });
   }
 }

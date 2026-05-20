@@ -95,35 +95,35 @@ public class AdminDashboardController {
     });
   }
 
-  private void loadStats() {
-    asyncRequest(new Request("get_status_stats", null), res -> {
-      if (Response.OK.equals(res.getStatus())) {
-        java.util.HashMap<String, Integer> map = (java.util.HashMap<String, Integer>) res.getPayload();
-        Platform.runLater(() -> {
-          if (statuschart != null) {
-            statuschart.getData().clear();
-            for (java.util.Map.Entry<String, Integer> e : map.entrySet())
-              statuschart.getData().add(new javafx.scene.chart.PieChart.Data(e.getKey() + " (" + e.getValue() + ")", e.getValue()));
-          }
-        });
-      }
-    });
-    asyncRequest(new Request("get_category_stats", null), res -> {
-      if (Response.OK.equals(res.getStatus())) {
-        java.util.HashMap<String, Double> map = (java.util.HashMap<String, Double>) res.getPayload();
-        Platform.runLater(() -> {
-          if (categorychart != null) {
-            categorychart.getData().clear();
-            javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
-            series.setName("Revenue");
-            for (java.util.Map.Entry<String, Double> e : map.entrySet())
-              series.getData().add(new javafx.scene.chart.XYChart.Data<>(e.getKey(), e.getValue()));
-            categorychart.getData().add(series);
-          }
-        });
-      }
-    });
-  }
+    private void loadStats() {
+      asyncRequest(new Request("get_status_stats", null), res -> {
+        if (Response.OK.equals(res.getStatus())) {
+          java.util.HashMap<String, Integer> map = (java.util.HashMap<String, Integer>) res.getPayload();
+          Platform.runLater(() -> {
+            if (statuschart != null) {
+              statuschart.getData().clear();
+              for (java.util.Map.Entry<String, Integer> e : map.entrySet())
+                statuschart.getData().add(new javafx.scene.chart.PieChart.Data(e.getKey() + " (" + e.getValue() + ")", e.getValue()));
+            }
+          });
+        }
+      });
+      asyncRequest(new Request("get_category_stats", null), res -> {
+        if (Response.OK.equals(res.getStatus())) {
+          java.util.HashMap<String, Double> map = (java.util.HashMap<String, Double>) res.getPayload();
+          Platform.runLater(() -> {
+            if (categorychart != null) {
+              categorychart.getData().clear();
+              javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
+              series.setName("Revenue");
+              for (java.util.Map.Entry<String, Double> e : map.entrySet())
+                series.getData().add(new javafx.scene.chart.XYChart.Data<>(e.getKey(), e.getValue()));
+              categorychart.getData().add(series);
+            }
+          });
+        }
+      });
+    }
 
   @FXML
   private void handleBan(ActionEvent event) {

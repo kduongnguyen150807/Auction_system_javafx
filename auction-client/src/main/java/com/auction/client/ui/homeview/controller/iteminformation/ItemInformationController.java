@@ -40,8 +40,6 @@ public class ItemInformationController {
       TimeFormat.DMY_HM,
       20
     );
-
-    applyService();
   }
 
   private void applyItem(ItemModel item) {
@@ -52,10 +50,6 @@ public class ItemInformationController {
     infoLayoutController.setSelectedItem(item);
     buttonLayoutController.setSelectedItem(item);
     loadImage(item.getItem());
-  }
-
-  private void applyService() {
-    buttonLayoutController.setService(biddingService);
   }
 
   private void loadImage(Item item) {

@@ -12,72 +12,77 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class ClientService {
-  public String updateProfile(String fullName, String email, String phone) {
+
+  /**
+   * Cập nhật thông tin cá nhân bất đồng bộ
+   */
+  public CompletableFuture<Response> updateProfile(String fullName, String email, String phone) {
     Map<String, String> data = new HashMap<>();
     data.put("userid", String.valueOf(ClientSession.CURRENT_SESSION.getCurrentUser().getId()));
     data.put("fullname", fullName);
     data.put("email", email);
     data.put("phone", phone);
+
     return RequestHelper.sendRequest(Request.UPDATE_PROFILE, (Serializable) data)
       .thenApply(response -> {
-        if (response != null && response.getStatus().equals(Response.OK)) {
+        if (response != null && Response.OK.equals(response.getStatus())) {
           ClientSession.CURRENT_SESSION.applyProfileUpdate(fullName, email, phone);
-          return null;
-        } else {
-          return "Fail to update profile";
         }
-      }).join();
+        return response;
+      });
   }
 
-  public String deposit(double amount) {
+  public CompletableFuture<Response> deposit(double amount) {
     Map<String, String> data = new HashMap<>();
     data.put("userid", String.valueOf(ClientSession.CURRENT_SESSION.getCurrentUser().getId()));
     data.put("amount", String.valueOf(amount));
+
     return RequestHelper.sendRequest(Request.DEPOSIT, (Serializable) data)
       .thenApply(response -> {
-        if (response != null && response.getStatus().equals(Response.OK)) {
+        if (response != null && Response.OK.equals(response.getStatus())) {
           ClientSession.CURRENT_SESSION.deposit(amount);
-          return null;
-        } else {
-          return "Fail to deposit amount";
         }
-      }).join();
+        return response;
+      });
   }
 
-  public String updateAvatar(String username, String avatarUrl) {
-    Request request = new Request(Request.UPDATE_AVATAR, username + " " + avatarUrl);
-    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
-    if (response != null && Response.OK.equals(response.getStatus())) {
-      ClientSession.CURRENT_SESSION.avatarUrlProperty().set(avatarUrl);
-      return null;
-    }
-    return "fail to update avatar";
+  public CompletableFuture<Response> updateAvatar(String username, String avatarUrl) {
+    return RequestHelper.sendRequest(Request.UPDATE_AVATAR, username + " " + avatarUrl)
+      .thenApply(response -> {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          ClientSession.CURRENT_SESSION.avatarUrlProperty().set(avatarUrl);
+        }
+        return response;
+      });
   }
 
-  public String uploadImage(String uploadUrl, byte[] imageBytes) {
-    try {
-      String url = NetworkClient.uploadFile(uploadUrl, imageBytes);
-      return updateAvatar(ClientSession.CURRENT_SESSION.getCurrentUser().getUsername(), url);
-    } catch (Exception e) {
-      return null;
-    }
+  public CompletableFuture<Response> uploadImage(String uploadUrl, byte[] imageBytes) {
+    return CompletableFuture.supplyAsync(() -> {
+      try {
+        return NetworkClient.uploadFile(uploadUrl, imageBytes);
+      } catch (Exception e) {
+        throw new RuntimeException("Lỗi tải tệp tin lên máy chủ", e);
+      }
+    }).thenCompose(url -> updateAvatar(ClientSession.CURRENT_SESSION.getCurrentUser().getUsername(), url));
   }
 
-  public String getUserTransaction() {
+  @SuppressWarnings("unchecked")
+  public CompletableFuture<Void> getUserTransaction() {
+    // BỎ .join()
     return RequestHelper.sendRequest("get_transactions", ClientSession.CURRENT_SESSION.getCurrentUser().getId())
-      .thenApply(response ->  {
-        if (response != null && response.getStatus().equals(Response.OK)) {
-          List<TransactionLog> list = (List<TransactionLog>) response.getPayload();
-          UserTransactionHistory.USER_TRANSACTION_HISTORY.setHistory(list);
-          return null;
+      .thenAccept(response -> {
+        if (response != null && Response.OK.equals(response.getStatus()) && response.getPayload() instanceof List<?> list) {
+          UserTransactionHistory.USER_TRANSACTION_HISTORY.setHistory((List<TransactionLog>) list);
+        } else {
+          throw new RuntimeException(response.getMessage() != null ? response.getMessage() : "Failed to get user transaction");
         }
-        return "failed to get user transaction";
-      }).join();
+      });
   }
 
-  public void refreshUserTransaction() {
-    getUserTransaction();
+  public CompletableFuture<Void> refreshUserTransaction() {
+    return getUserTransaction();
   }
 }

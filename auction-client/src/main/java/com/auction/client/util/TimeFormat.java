@@ -21,7 +21,24 @@ public class TimeFormat {
       "dd/MM/yyyy HH:mm:ss"
     );
 
-  public static String getRemainingTime(LocalDateTime time) {
+  public static String getDHMS(LocalDateTime time) {
+    Duration duration = Duration.between(LocalDateTime.now(), time);
+    long days = duration.toDays();
+    long hours = duration.toHours() % 24;
+    long minutes = duration.toMinutes() % 60;
+    long seconds = duration.getSeconds() % 60;
+
+    String text = String.format(
+      "%dd %dh %dm %s",
+      days,
+      hours,
+      minutes,
+      seconds
+    );
+    return text;
+  }
+
+  public static String getDHM(LocalDateTime time) {
     Duration duration = Duration.between(LocalDateTime.now(), time);
     long days = duration.toDays();
     long hours = duration.toHours() % 24;

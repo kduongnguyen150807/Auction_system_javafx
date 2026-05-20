@@ -7,17 +7,20 @@ import com.auction.shared.Response;
 import com.auction.shared.User;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class UserService {
-  public boolean getAllUsers() {
+
+  @SuppressWarnings("unchecked")
+  public CompletableFuture<Void> getAllUsers() {
     return RequestHelper.sendRequest(Request.GET_ALL_USERS, null)
-      .thenApply(response -> {
-        if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof List<?> list) {
-          UsersList.USER_LIST.setUsers((List<User>) list);
-          return true;
+      .thenAccept(response -> {
+        if (Response.OK.equals(response.getStatus()) && response.getPayload() instanceof List<?> rawList) {
+          List<User> users = (List<User>) rawList;
+          UsersList.USER_LIST.setUsers(users);
         } else {
-          return false;
+          throw new RuntimeException(response.getMessage() != null ? response.getMessage() : "Failed to fetch all users");
         }
-      }).join();
+      });
   }
 }

@@ -41,7 +41,7 @@ public class ItemCard extends VBox {
     price.textProperty().bind(clientItem.currentPriceProperty().asString("$ %.2f"));
     timeRemain.textProperty().bind(
       Bindings.createStringBinding(() -> {
-        String remainingTime = TimeFormat.getRemainingTime(clientItem.endTimeProperty().get());
+        String remainingTime = TimeFormat.getDHM(clientItem.endTimeProperty().get());
         return String.format(remainingTime);
       }, clientItem.endTimeProperty())
       );

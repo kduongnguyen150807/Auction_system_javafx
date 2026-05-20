@@ -1,9 +1,11 @@
 package com.auction.client.ui.homeview.controller.admin;
 
+import com.auction.client.app.AutoInject;
 import com.auction.client.service.admin.AdminService;
 import com.auction.client.store.userinformation.UserModel;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.util.AlertUtil;
+import com.auction.client.util.FXThread;
 import com.auction.client.util.StarUtils;
 import com.auction.shared.User;
 import javafx.collections.ObservableList;
@@ -17,7 +19,7 @@ import javafx.scene.control.TableView;
 public class UserManagementController implements CanRefresh {
   private FilteredList<UserModel> filteredUsers;
 
-  private AdminService adminService;
+  private final AdminService adminService;
 
   @FXML private TableView<UserModel> userTable;
   @FXML private TableColumn<UserModel, String> colUsername;
@@ -30,14 +32,15 @@ public class UserManagementController implements CanRefresh {
 
   private Runnable onRefresh;
 
+  @AutoInject
+  public UserManagementController(AdminService adminService) {
+    this.adminService = adminService;
+  }
+
   @FXML
   private void initialize() {
     setUpTable();
     setUpFilter();
-  }
-
-  public void setAdminService(AdminService adminService) {
-    this.adminService = adminService;
   }
 
   private void setUpTable() {
@@ -76,29 +79,52 @@ public class UserManagementController implements CanRefresh {
 
   @FXML
   private void handleBan() {
+    UserModel selectedModel = userTable.getSelectionModel().getSelectedItem();
+    if (selectedModel == null || selectedModel.getUser() == null) {
+      AlertUtil.showWarningAlert("WARNING", "SELECT AN USER");
+      return;
+    }
+
     User user = userTable.getSelectionModel().getSelectedItem().getUser();
     if (user != null) {
-      boolean success = adminService.lockUser(user);
-      if (!success) {
-        AlertUtil.showErrorAlert("ERROR", "FAILED TO BAN USER: " +  user.getUsername());
-      }
+      adminService.lockUser(user)
+        .thenAccept(success -> {
+          if (!success) {
+            FXThread.run(() -> AlertUtil.showErrorAlert("Error", "failed to lock user"));
+          }
+      });
     }
   }
 
   @FXML
   private void handleUnban() {
+    UserModel selectedModel = userTable.getSelectionModel().getSelectedItem();
+    if (selectedModel == null || selectedModel.getUser() == null) {
+      AlertUtil.showWarningAlert("WARNING", "SELECT AN USER");
+      return;
+    }
+
     User user = userTable.getSelectionModel().getSelectedItem().getUser();
     if (user != null) {
-      boolean success = adminService.unlockUser(user);
-      if (!success) {
-        AlertUtil.showErrorAlert("ERROR", "FAILED TO UNBAN USER: " +  user.getUsername());
-      }
+      adminService.unlockUser(user)
+        .thenAccept(success -> {
+          if (!success) {
+            FXThread.run(() -> AlertUtil.showErrorAlert("Error", "failed to unlock user"));
+          }
+        });
     }
   }
 
   @FXML
   private void handlePromoteAdmin() {
+    UserModel selectedModel = userTable.getSelectionModel().getSelectedItem();
+    if (selectedModel == null || selectedModel.getUser() == null) {
+      AlertUtil.showWarningAlert("WARNING", "SELECT AN USER");
+      return;
+    }
+
     User user = userTable.getSelectionModel().getSelectedItem().getUser();
+
     if (user == null) return;
     boolean isAdmin = user.getRole() == com.auction.shared.UserRole.ADMIN;
     String title = isAdmin ? "Demote from Admin" : "Promote to Admin";
@@ -109,12 +135,14 @@ public class UserManagementController implements CanRefresh {
     confirm.setContentText("Are you sure you want to " + question);
     if (confirm.showAndWait().filter(b -> b == javafx.scene.control.ButtonType.OK).isPresent()) {
       String newRole = isAdmin ? com.auction.shared.UserRole.BIDDER.name() : com.auction.shared.UserRole.ADMIN.name();
-      boolean success = adminService.toggleAdmin(user, newRole);
-      if (!success) {
-        AlertUtil.showErrorAlert("ERROR", "FAILED TO PROMOTE ADMIN");
-      } else {
-        refreshData();
-      }
+      adminService.toggleAdmin(user, newRole)
+        .thenAccept(success -> {
+          if (!success) {
+            FXThread.run(() -> AlertUtil.showErrorAlert("Error", "failed to toggle admin"));
+          } else {
+            FXThread.run(() -> refreshData());
+          }
+        });
     }
   }
 

@@ -49,7 +49,7 @@ public class NodeContentLoader<T extends Node> {
 
       } catch (Exception e) {
         LOGGER.error("Auto-inject failed for: {}", controllerClass.getName(), e);
-        throw new RuntimeException("Lỗi nghiêm trọng khi khởi tạo Controller qua DI Factory: " + controllerClass.getName(), e);
+        throw new RuntimeException("ERROR CONSTRUCTING CONTROLLER: " + controllerClass.getName(), e);
       }
     });
 

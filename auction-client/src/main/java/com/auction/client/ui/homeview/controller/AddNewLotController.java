@@ -7,7 +7,9 @@ import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.component.YearMonthDayHourMinuteSecond;
 import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar;
 import com.auction.client.util.AlertUtil;
+import com.auction.client.util.FXThread;
 import com.auction.shared.AuctionType;
+import com.auction.shared.Response;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -25,9 +27,12 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AddNewLotController implements CanRefresh {
+  @FXML private Button confirmSubmitButton;
+
   /* basic field */
   @FXML private ImageView productImageView;
   @FXML private TextField nameField;
@@ -52,7 +57,7 @@ public class AddNewLotController implements CanRefresh {
   private String lotimageurl;
   private final AtomicLong uploadUiGen = new AtomicLong(0L);
 
-  private LotManagementService lotManagementService;
+  private final LotManagementService lotManagementService;
 
   @AutoInject
   public AddNewLotController(LotManagementService lotManagementService) {
@@ -88,7 +93,8 @@ public class AddNewLotController implements CanRefresh {
     File file = new FileChooser().showOpenDialog(null);
     if (file == null) return;
     final long gen = uploadUiGen.incrementAndGet();
-    new Thread(() -> {
+
+    CompletableFuture.runAsync(() -> {
       try {
         String boundary = "boundary123";
         byte[] head = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"item.png\"\r\n\r\n").getBytes();
@@ -98,33 +104,38 @@ public class AddNewLotController implements CanRefresh {
         System.arraycopy(head, 0, body, 0, head.length);
         System.arraycopy(fileBytes, 0, body, head.length, fileBytes.length);
         System.arraycopy(tail, 0, body, head.length + fileBytes.length, tail.length);
+
         HttpRequest req = HttpRequest.newBuilder()
           .uri(URI.create("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload"))
           .header("Content-Type", "multipart/form-data; boundary=" + boundary)
           .POST(HttpRequest.BodyPublishers.ofByteArray(body)).build();
+
         HttpResponse<String> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
         String responseBody = response.body();
+
         if (!responseBody.contains("\"secure_url\"")) {
-          Platform.runLater(() -> {
+          FXThread.run(() -> {
             if (gen == uploadUiGen.get()) AlertUtil.showErrorAlert("upload fail", "failed to upload");
           });
           return;
         }
+
         String url = responseBody.split("\"secure_url\":\"")[1].split("\"")[0];
         if (url.contains(".webp")) url = url.replace(".webp", ".jpg");
         lotimageurl = url;
         String finalUrl = url;
-        Platform.runLater(() -> {
+
+        FXThread.run(() -> {
           if (gen == uploadUiGen.get()) {
             productImageView.setImage(new Image(finalUrl, true));
           }
         });
       } catch (Exception ex) {
-        Platform.runLater(() -> {
+        FXThread.run(() -> {
           if (gen == uploadUiGen.get()) AlertUtil.showErrorAlert("upload fail", "failed to upload");
         });
       }
-    }).start();
+    });
   }
 
   @FXML
@@ -132,13 +143,26 @@ public class AddNewLotController implements CanRefresh {
     Map<String, String> lotForm = collectData();
     if (lotForm == null) return;
 
-    String message = lotManagementService.registerLot(lotForm);
-    if (message != null) {
-      AlertUtil.showInfoAlert("ADD NEW LOT", message);
-    } else {
-      AlertUtil.showInfoAlert("ADD NEW LOT", "Item is waiting for approvement");
-      clear();
-    }
+    if (confirmSubmitButton != null) confirmSubmitButton.setDisable(true);
+
+    lotManagementService.registerLot(lotForm)
+      .thenAccept(response -> FXThread.run(() -> {
+        if (confirmSubmitButton != null) confirmSubmitButton.setDisable(false);
+
+        if (Response.OK.equals(response.getStatus())) {
+          AlertUtil.showInfoAlert("ADD NEW LOT", "Item is waiting for approval");
+          clear();
+        } else {
+          AlertUtil.showWarningAlert("ADD NEW LOT FAILED", response.getMessage());
+        }
+      }))
+      .exceptionally(ex -> {
+        FXThread.run(() -> {
+          if (confirmSubmitButton != null) confirmSubmitButton.setDisable(false);
+          AlertUtil.showErrorAlert("CONNECTION ERROR", "Failed to communicate with auction server.");
+        });
+        return null;
+      });
   }
 
   @FXML
@@ -164,6 +188,13 @@ public class AddNewLotController implements CanRefresh {
       AlertUtil.showErrorAlert("ADD NEW LOT FAILED", "Please fill all the fields");
       return null;
     }
+    if (!maxPrice.isEmpty()) {
+      if (Integer.parseInt(maxPrice) < Integer.parseInt(price)) {
+        AlertUtil.showErrorAlert("ADD NEW LOT FAILED", "MAX PRICE CAN NOT BE BELOW STARTING PRICE");
+        return null;
+      }
+    }
+
     /* time */
     if (startTimeChooser.collectDataInLocalDateTime().isAfter(endTimeChooser.collectDataInLocalDateTime())) {
       AlertUtil.showErrorAlert("ADD NEW LOT FAILED", "Start time can not be after end time");

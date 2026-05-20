@@ -1,5 +1,6 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
+import com.auction.client.app.AutoInject;
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.service.auction.BiddingService;
 import com.auction.client.store.lotsinformation.ItemModel;
@@ -8,10 +9,12 @@ import com.auction.client.ui.component.IntegerField;
 import com.auction.client.ui.homeview.homeviewcomponent.BiddingForm;
 import com.auction.client.ui.homeview.homeviewcomponent.RatingBox;
 import com.auction.client.util.AlertUtil;
+import com.auction.client.util.FXThread;
 import com.auction.client.util.StageUtil;
 import com.auction.shared.BidTransaction;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;
+import com.auction.shared.Response;
 import com.auction.shared.User;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -25,38 +28,38 @@ public class ButtonLayoutController {
   @FXML private RatingBox ratingBox;
   @FXML private IntegerField autoBidField;
 
-  private BiddingService biddingService;
+  private final BiddingService biddingService;
+
+  @AutoInject
+  public ButtonLayoutController(BiddingService biddingService) {
+    this.biddingService = biddingService;
+  }
 
   public void setSelectedItem(ItemModel selectedItem) {
     this.selectedItem = selectedItem;
     this.item = selectedItem.getItem();
 
-    /* add listener to item status, which help disable or enable button */
     selectedItem.statusProperty().addListener((observable, oldValue, newStatus) -> {
-      adjustButton(newStatus);
+      FXThread.run(() -> adjustButton(newStatus));
     });
 
     adjustButton(selectedItem.getStatus());
   }
 
-  public void setService(BiddingService biddingService) {
-    this.biddingService = biddingService;
-  }
-
   @FXML
   private void showBiddingForm() {
-    if (item != null) {
-      BiddingForm biddingForm = new BiddingForm(item);
-      biddingForm.setOnConfirm(() -> {
-        double bidAmount = biddingForm.collectData();
-        User currentUser = ClientSession.CURRENT_SESSION.getCurrentUser();
-        if (!validate(currentUser, bidAmount)) {
-          return;
-        }
-        placeBid(bidAmount, currentUser);
-      });
-      StageUtil.showModalStage(biddingForm, SceneManager.getInstance().getWindow());
-    }
+    if (item == null) return;
+
+    BiddingForm biddingForm = new BiddingForm(item);
+    biddingForm.setOnConfirm(() -> {
+      double bidAmount = biddingForm.collectData();
+      User currentUser = ClientSession.CURRENT_SESSION.getCurrentUser();
+      if (!validate(currentUser, bidAmount)) {
+        return;
+      }
+      placeBid(bidAmount);
+    });
+    StageUtil.showModalStage(biddingForm, SceneManager.getInstance().getWindow());
   }
 
   @FXML
@@ -66,13 +69,13 @@ public class ButtonLayoutController {
     if (!validate(currentUser, autoBidAmount)) {
       return;
     }
-    placeAutoBid(autoBidAmount, currentUser);
+    placeAutoBid(autoBidAmount);
   }
 
   private void adjustButton(ItemStatus itemStatus) {
-    if (itemStatus.equals(ItemStatus.OPEN)) {
+    if (ItemStatus.OPEN.equals(itemStatus)) {
       enableButton();
-    } else if (itemStatus.equals(ItemStatus.CLOSED)) {
+    } else if (ItemStatus.CLOSED.equals(itemStatus)) {
       disableButton();
     }
   }
@@ -110,16 +113,30 @@ public class ButtonLayoutController {
     return true;
   }
 
-  private void placeBid(double bidAmount, User user) {
-    BidTransaction res = new BidTransaction(
+  private void placeBid(double bidAmount) {
+    BidTransaction tx = new BidTransaction(
       item.getId(),
       ClientSession.CURRENT_SESSION.getCurrentUser().getId(),
-      bidAmount);
-    String message = biddingService.placeBid(res);
-    AlertUtil.showInfoAlert("Bidding result", message);
+      bidAmount
+    );
+
+    setFormDisabled(true);
+
+    biddingService.placeBid(tx)
+      .thenAccept(response -> FXThread.run(() -> {
+        setFormDisabled(false);
+        handleResponseAlert(response);
+      }))
+      .exceptionally(ex -> {
+        FXThread.run(() -> {
+          setFormDisabled(false);
+          AlertUtil.showErrorAlert("Connection Error", "Failed to send bid request.");
+        });
+        return null;
+      });
   }
 
-  private void placeAutoBid(double autoBidAmount, User user) {
+  private void placeAutoBid(double autoBidAmount) {
     BidTransaction bid = new BidTransaction(
       item.getId(),
       ClientSession.CURRENT_SESSION.getCurrentUser().getId(),
@@ -127,7 +144,34 @@ public class ButtonLayoutController {
     );
     bid.setMaxAutoBid(autoBidAmount);
     bid.setAutoBid(true);
-    String message = biddingService.placeBid(bid);
-    AlertUtil.showInfoAlert("Bidding result", message);
+
+    setFormDisabled(true);
+
+    biddingService.placeBid(bid)
+      .thenAccept(response -> FXThread.run(() -> {
+        setFormDisabled(false);
+        handleResponseAlert(response);
+      }))
+      .exceptionally(ex -> {
+        FXThread.run(() -> {
+          setFormDisabled(false);
+          AlertUtil.showErrorAlert("Connection Error", "Failed to send auto-bid request.");
+        });
+        return null;
+      });
+  }
+
+  private void setFormDisabled(boolean disabled) {
+    bidButton.setDisable(disabled);
+    autoBidButton.setDisable(disabled);
+    autoBidField.setDisable(disabled);
+  }
+
+  private void handleResponseAlert(Response response) {
+    if (Response.OK.equals(response.getStatus())) {
+      AlertUtil.showInfoAlert("Bidding Success", response.getMessage());
+    } else {
+      AlertUtil.showWarningAlert("Bidding Refused", response.getMessage());
+    }
   }
 }

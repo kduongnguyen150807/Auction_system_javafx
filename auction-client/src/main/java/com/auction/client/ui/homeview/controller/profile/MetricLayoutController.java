@@ -24,13 +24,15 @@ public class MetricLayoutController {
   @FXML private MetricCard moneyReceivedMetric;
   @FXML private MetricCard itemsSoldMetric;
 
-  public void  setClientSession(ClientSession clientSession) {
+  public void setClientSession(ClientSession clientSession) {
     unbind();
     this.clientSession = clientSession;
     bind();
   }
 
   private void unbind() {
+    toggleRoleButton.setVisible(true);
+
     moneySpentMetric.unbind();
     itemsBoughtMetric.unbind();
     itemsSoldMetric.unbind();
@@ -40,6 +42,10 @@ public class MetricLayoutController {
   }
 
   private void bind() {
+    if (clientSession.currentRoleProperty().get().equals(UserRole.ADMIN)) {
+      toggleRoleButton.setVisible(false);
+    }
+
     moneySpentMetric.bind(clientSession.moneySpentProperty().asString("$ %.2f"));
     itemsBoughtMetric.bind(clientSession.itemsBoughtProperty().asString());
     itemsSoldMetric.bind(clientSession.itemsSoldProperty().asString());
