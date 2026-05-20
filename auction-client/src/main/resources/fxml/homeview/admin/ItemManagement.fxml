@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.auction.client.ui.homeview.controller.admin.ItemManagementController"
+            prefHeight="400.0" prefWidth="600.0" >
+    <children>
+        <Label text="PENDING ITEMS (Awaiting Approval)"
+               style="-fx-font-size: 16; -fx-font-weight: bold; -fx-padding: 15 0 0 0;"/>
+        <TableView fx:id="pendingItem" prefHeight="200.0" VBox.vgrow="SOMETIMES">
+            <columns>
+                <TableColumn fx:id="colItemName" text="Name" prefWidth="150.0"/>
+                <TableColumn fx:id="colItemSeller" text="Seller" prefWidth="120.0"/>
+                <TableColumn fx:id="colItemPrice" text="Starting Price" prefWidth="100.0"/>
+                <TableColumn fx:id="colItemCategory" text="Category" prefWidth="100.0"/>
+            </columns>
+        </TableView>
+        <HBox alignment="CENTER" spacing="20.0">
+            <Button fx:id="btnapprove" mnemonicParsing="false" onAction="#handleApprove"
+                    style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="Approve"/>
+            <Button fx:id="btnreject" mnemonicParsing="false" onAction="#handleReject"
+                    style="-fx-background-color: #FF5722; -fx-text-fill: white;" text="Reject"/>
+        </HBox>
+    </children>
+</VBox>

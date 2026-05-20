@@ -1,6 +1,5 @@
 package com.auction.client.store.lotsinformation;
 
-import com.auction.client.store.AuctionStore;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
@@ -12,9 +11,9 @@ public class ResultStore {
   private ResultStore() {
   }
 
-  private final ObservableList<ClientItem> resultItem = AuctionStore.AUCTION_STORE.getOngoingClientItemList();
+  private final ObservableList<ItemModel> resultItem = OngoingLots.AUCTION_STORE.getOngoingClientItemList();
 
-  private final FilteredList<ClientItem> filteredItems = new FilteredList<>(resultItem);
+  private final FilteredList<ItemModel> filteredItems = new FilteredList<>(resultItem);
 
   public void filterWords(List<String> words) {
     filteredItems.setPredicate(clientItem -> {
@@ -29,7 +28,7 @@ public class ResultStore {
     });
   }
 
-  public FilteredList<ClientItem> getClientItems() {
+  public FilteredList<ItemModel> getClientItems() {
     return filteredItems;
   }
 

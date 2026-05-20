@@ -1,7 +1,7 @@
 package com.auction.client.ui.homeview.controller;
 
-import com.auction.client.service.AuthService;
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.service.user.AuthService;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;
 import com.auction.client.ui.homeview.homeviewcomponent.ContentHBox;
@@ -25,10 +25,13 @@ public class ContentTable extends HBox implements CanSwitchNode<HomeViewType> {
 
   @FXML private VBox contentTable;
 
-  public ContentTable() {
+  private final AuthService authService;
+
+  public ContentTable(AuthService authService) {
     initBaseLayout();
     initContentHBox();
     activateContentHBox(HomeViewType.TRANG_CHU);
+    this.authService = authService;
   }
 
   public void setSwitchNode(Consumer<HomeViewType> switchNode) {
@@ -87,7 +90,7 @@ public class ContentTable extends HBox implements CanSwitchNode<HomeViewType> {
 
   @FXML
   private void handleSignout() {
-    AuthService.getInstance().signOut();
+    authService.signOut();
     System.out.println("Signed out successfully");
   }
 }

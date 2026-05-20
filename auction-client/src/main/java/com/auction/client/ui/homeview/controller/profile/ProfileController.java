@@ -1,9 +1,10 @@
 package com.auction.client.ui.homeview.controller.profile;
 
+import com.auction.client.app.AutoInject;
 import com.auction.client.network.NetworkEventListener;
-import com.auction.client.service.AuthService;
-import com.auction.client.service.UserService;
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.service.user.AuthService;
+import com.auction.client.service.user.ClientService;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.component.UserCard;
 import com.auction.client.util.AlertUtil;
 import javafx.event.ActionEvent;
@@ -24,17 +25,32 @@ public class ProfileController implements NetworkEventListener {
 
   @FXML private UserCard userCard;
 
+  private final ClientService clientService;
+  private final AuthService authService;
+
+  @AutoInject
+  public  ProfileController(ClientService clientService,  AuthService authService) {
+    this.clientService = clientService;
+    this.authService = authService;
+  }
+
   @FXML
   private void initialize() {
     currentSession = ClientSession.CURRENT_SESSION.getCurrentSession();
     currentSession.currentUserProperty().addListener((observable, oldValue, newValue) -> {
-      apply(currentSession);
+      applySession(currentSession);
     });
-    apply(currentSession);
-    UserService.refreshUserTransaction();
+    applySession(currentSession);
+    applyService();
+    clientService.refreshUserTransaction();
   }
 
-  private void apply(ClientSession session) {
+  private void applyService() {
+    walletLayoutController.setService(clientService);
+    identityLayoutController.setService(clientService);
+  }
+
+  private void applySession(ClientSession session) {
     identityLayoutController.setClientSession(session);
     walletLayoutController.setClientSession(session);
     metricLayoutController.setClientSession(session);
@@ -42,7 +58,7 @@ public class ProfileController implements NetworkEventListener {
   }
 
   public void handleLogout(ActionEvent actionEvent) {
-    AuthService.getInstance().signOut();
+    authService.signOut();
   }
 
   public void handleChangeAvatar(ActionEvent actionEvent) throws IOException {
@@ -50,7 +66,7 @@ public class ProfileController implements NetworkEventListener {
     java.io.File file = fc.showOpenDialog(null);
     if (file != null) {
       byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
-      String message = UserService.uploadImage("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload", bytes);
+      String message = clientService.uploadImage("https://api.cloudinary.com/v1_1/khanhdn-tk/image/upload", bytes);
       if (message != null) {
         AlertUtil.showErrorAlert("Update Avatar", message);
       }

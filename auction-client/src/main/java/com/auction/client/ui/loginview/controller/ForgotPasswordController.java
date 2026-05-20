@@ -1,6 +1,8 @@
 package com.auction.client.ui.loginview.controller;
 
+import com.auction.client.app.AutoInject;
 import com.auction.client.network.NetworkClient;
+import com.auction.client.service.user.AuthService;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.loginview.LoginViewType;
 import com.auction.shared.PasswordEncoder;
@@ -30,6 +32,13 @@ public class ForgotPasswordController implements CanSwitchNode<LoginViewType> {
     @FXML private Label messageLabel;
 
     private String currentEmail = "";
+
+    private final AuthService authService;
+
+    @AutoInject
+    public ForgotPasswordController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @FXML
     public void handleSendOtp(ActionEvent event) {

@@ -1,9 +1,9 @@
 package com.auction.client.ui.homeview.controller.profile;
 
 import com.auction.client.navigation.SceneManager;
-import com.auction.client.service.UserService;
-import com.auction.client.store.userinformation.ClientSession;
-import com.auction.client.store.userinformation.UserTransactionHistory;
+import com.auction.client.service.user.ClientService;
+import com.auction.client.store.clientinformation.ClientSession;
+import com.auction.client.store.clientinformation.UserTransactionHistory;
 import com.auction.client.ui.component.IntegerField;
 import com.auction.client.ui.homeview.homeviewcomponent.TransactionHistory;
 import com.auction.client.util.AlertUtil;
@@ -17,10 +17,16 @@ public class WalletLayoutController {
   @FXML private Label balanceLabel;
   @FXML private IntegerField depositAmountField;
 
+  private ClientService clientService;
+
   public void setClientSession(ClientSession session) {
     unbind();
     this.clientSession = session;
     bind();
+  }
+
+  public void setService(ClientService clientService) {
+    this.clientService = clientService;
   }
 
   private void unbind() {
@@ -38,7 +44,7 @@ public class WalletLayoutController {
       return;
     }
 
-    String message = UserService.deposit(balance);
+    String message = clientService.deposit(balance);
     System.out.println(message);
     if (message != null) {
       AlertUtil.showErrorAlert("Deposit failed", message);

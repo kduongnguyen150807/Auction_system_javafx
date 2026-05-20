@@ -1,7 +1,7 @@
 package com.auction.client.ui.homeview.controller.profile;
 
-import com.auction.client.service.UserService;
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.service.user.ClientService;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.util.AlertUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -20,11 +20,17 @@ public class IdentityLayoutController {
   boolean isEditing = false;
 
   private ClientSession clientSession;
+
+  private ClientService clientService;
   
   public void setClientSession(ClientSession session) {
     unbind();
     clientSession = session;
     bind();
+  }
+
+  public void setService(ClientService clientService) {
+    this.clientService = clientService;
   }
 
   private void unbind() {
@@ -64,7 +70,7 @@ public class IdentityLayoutController {
       return;
     }
 
-    String message = UserService.updateProfile(fullName, phone, email);
+    String message = clientService.updateProfile(fullName, phone, email);
     if (message != null) {
       AlertUtil.showErrorAlert("Update failed", message);
     }

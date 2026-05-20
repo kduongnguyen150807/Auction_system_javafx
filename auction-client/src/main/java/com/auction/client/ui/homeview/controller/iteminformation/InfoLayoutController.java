@@ -1,6 +1,6 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
-import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.StringFormat;
 import com.auction.client.util.TimeFormat;
@@ -10,7 +10,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 
 public class InfoLayoutController {
-  private ClientItem selectedItem;
+  private ItemModel selectedItem;
 
   @FXML private Label itemName;
   @FXML private ImageView sellerAvatar;
@@ -20,7 +20,7 @@ public class InfoLayoutController {
   @FXML private Label maxPriceValue;
   @FXML private Label endsInValue;
 
-  public void setSelectedItem(ClientItem clientItem) {
+  public void setSelectedItem(ItemModel clientItem) {
     unbind();
     this.selectedItem = clientItem;
     loadSellerAvatar(clientItem.getItem().getSellerAvatarUrl());

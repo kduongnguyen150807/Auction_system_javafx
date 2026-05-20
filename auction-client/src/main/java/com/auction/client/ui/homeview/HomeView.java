@@ -1,7 +1,9 @@
 package com.auction.client.ui.homeview;
 
+import com.auction.client.AppContainer;
 import com.auction.client.app.NodeContentLoader;
-import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.service.user.AuthService;
+import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.store.lotsinformation.ResultStore;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
@@ -69,11 +71,11 @@ public class HomeView extends HBox {
    * Khởi tạo các sub-view tương ứng với từng enum.
    */
   private void initNodes() {
-    ContentTable contentTable = new ContentTable();
+    ContentTable contentTable = new ContentTable(AppContainer.getService(AuthService.class));
     contentTable.setSwitchNode(this::switchNode);
     sideBar.getChildren().add(contentTable);
 
-    SearchBar<ClientItem> searchBar = new SearchBar<>();
+    SearchBar<ItemModel> searchBar = new SearchBar<>();
     searchContainer.getChildren().add(searchBar);
     searchBar.setOnSearch(query -> {
         ResultStore.RESULT_STORE.filterWords(Arrays.asList(query));

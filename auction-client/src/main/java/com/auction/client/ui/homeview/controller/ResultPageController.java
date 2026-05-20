@@ -1,6 +1,6 @@
 package com.auction.client.ui.homeview.controller;
 
-import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.store.lotsinformation.ResultStore;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;
@@ -17,19 +17,19 @@ public class ResultPageController implements CanSwitchNode<HomeViewType> {
 
   private Consumer<HomeViewType> switchNode;
 
-  private final FilteredList<ClientItem> filteredItems = ResultStore.RESULT_STORE.getClientItems();
+  private final FilteredList<ItemModel> filteredItems = ResultStore.RESULT_STORE.getClientItems();
 
   @FXML
   public void initialize() {
     renderItems();
-    filteredItems.addListener((ListChangeListener<? super ClientItem>)  change -> {
+    filteredItems.addListener((ListChangeListener<? super ItemModel>) change -> {
       renderItems();
     });
   }
 
   private void renderItems() {
     itemContainer.getChildren().clear();
-    for (ClientItem item : filteredItems) {
+    for (ItemModel item : filteredItems) {
       ItemCard itemCard = new ItemCard(item);
       itemContainer.getChildren().add(itemCard);
     }

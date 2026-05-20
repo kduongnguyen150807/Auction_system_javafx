@@ -1,6 +1,8 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
-import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.app.AutoInject;
+import com.auction.client.service.auction.BiddingService;
+import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.store.selectediteminformation.SelectedItem;
 import com.auction.client.store.selectediteminformation.SelectedItemBidHistory;
 import com.auction.client.ui.homeview.homeviewcomponent.BidChart;
@@ -18,6 +20,13 @@ public class ItemInformationController {
 
   @FXML private ImageView itemImageHolder;
 
+  private final BiddingService biddingService;
+
+  @AutoInject
+  public ItemInformationController(BiddingService biddingService) {
+    this.biddingService = biddingService;
+  }
+
   @FXML
   public void initialize() {
     SelectedItem.SELECTED_ITEM.selectedItemProperty()
@@ -31,9 +40,11 @@ public class ItemInformationController {
       TimeFormat.DMY_HM,
       20
     );
+
+    applyService();
   }
 
-  private void applyItem(ClientItem item) {
+  private void applyItem(ItemModel item) {
     if (item == null) {
       System.out.println("null");
       return;
@@ -41,6 +52,10 @@ public class ItemInformationController {
     infoLayoutController.setSelectedItem(item);
     buttonLayoutController.setSelectedItem(item);
     loadImage(item.getItem());
+  }
+
+  private void applyService() {
+    buttonLayoutController.setService(biddingService);
   }
 
   private void loadImage(Item item) {

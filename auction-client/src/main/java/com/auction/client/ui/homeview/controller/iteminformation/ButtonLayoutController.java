@@ -1,9 +1,9 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
 import com.auction.client.navigation.SceneManager;
-import com.auction.client.service.BiddingService;
-import com.auction.client.store.lotsinformation.ClientItem;
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.service.auction.BiddingService;
+import com.auction.client.store.lotsinformation.ItemModel;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.component.IntegerField;
 import com.auction.client.ui.homeview.homeviewcomponent.BiddingForm;
 import com.auction.client.ui.homeview.homeviewcomponent.RatingBox;
@@ -17,7 +17,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 
 public class ButtonLayoutController {
-  private ClientItem selectedItem;
+  private ItemModel selectedItem;
   private Item item;
 
   @FXML private Button bidButton;
@@ -25,7 +25,9 @@ public class ButtonLayoutController {
   @FXML private RatingBox ratingBox;
   @FXML private IntegerField autoBidField;
 
-  public void setSelectedItem(ClientItem selectedItem) {
+  private BiddingService biddingService;
+
+  public void setSelectedItem(ItemModel selectedItem) {
     this.selectedItem = selectedItem;
     this.item = selectedItem.getItem();
 
@@ -35,6 +37,10 @@ public class ButtonLayoutController {
     });
 
     adjustButton(selectedItem.getStatus());
+  }
+
+  public void setService(BiddingService biddingService) {
+    this.biddingService = biddingService;
   }
 
   @FXML
@@ -109,7 +115,7 @@ public class ButtonLayoutController {
       item.getId(),
       ClientSession.CURRENT_SESSION.getCurrentUser().getId(),
       bidAmount);
-    String message = BiddingService.placeBid(res);
+    String message = biddingService.placeBid(res);
     AlertUtil.showInfoAlert("Bidding result", message);
   }
 
@@ -121,7 +127,7 @@ public class ButtonLayoutController {
     );
     bid.setMaxAutoBid(autoBidAmount);
     bid.setAutoBid(true);
-    String message = BiddingService.placeBid(bid);
+    String message = biddingService.placeBid(bid);
     AlertUtil.showInfoAlert("Bidding result", message);
   }
 }

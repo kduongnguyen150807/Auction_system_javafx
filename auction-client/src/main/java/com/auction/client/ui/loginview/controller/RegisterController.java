@@ -1,6 +1,7 @@
 package com.auction.client.ui.loginview.controller;
 
-import com.auction.client.service.AuthService;
+import com.auction.client.app.AutoInject;
+import com.auction.client.service.user.AuthService;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.loginview.LoginViewType;
 import com.auction.client.util.InputValidators;
@@ -19,6 +20,13 @@ import java.util.function.Consumer;
 
 public class RegisterController implements CanSwitchNode<LoginViewType> {
   private static final Logger LOGGER = LoggerFactory.getLogger(RegisterController.class);
+
+  private final AuthService authService;
+
+  @AutoInject
+  public RegisterController(AuthService authService) {
+    this.authService = authService;
+  }
 
   private Consumer<LoginViewType> switchNode;
 
@@ -43,7 +51,7 @@ public class RegisterController implements CanSwitchNode<LoginViewType> {
   public void handleRegister(ActionEvent event) {
     User newUser = collectData();
     if (newUser != null) {
-      String message = AuthService.getInstance().register(newUser);
+      String message = authService.register(newUser);
       setMessage(message);
     }
   }

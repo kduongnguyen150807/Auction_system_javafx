@@ -1,6 +1,6 @@
 package com.auction.client.ui.component;
 
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.util.ImagePresentationUtil;
 import com.auction.client.util.StarUtils;
 import javafx.beans.binding.Bindings;

@@ -1,6 +1,7 @@
 package com.auction.client.ui.loginview.controller;
 
-import com.auction.client.service.AuthService;
+import com.auction.client.app.AutoInject;
+import com.auction.client.service.user.AuthService;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.loginview.LoginViewType;
 import com.auction.shared.PasswordEncoder;
@@ -24,6 +25,13 @@ public class LoginController implements CanSwitchNode<LoginViewType> {
   @FXML private PasswordField passwordField;
   @FXML private Label messageLabel;
 
+  private final AuthService authService;
+
+  @AutoInject
+  public LoginController(AuthService authService) {
+    this.authService = authService;
+  }
+
   public void setSwitchNode(Consumer<LoginViewType> switchNode) {
     this.switchNode = switchNode;
   }
@@ -36,7 +44,7 @@ public class LoginController implements CanSwitchNode<LoginViewType> {
   @FXML
   public void handleLogin(ActionEvent event) {
     Map<String,String> credentials = collectData();
-    String loginMessage = AuthService.getInstance().login(credentials);
+    String loginMessage = authService.login(credentials);
     setMessage(loginMessage);
   }
 

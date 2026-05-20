@@ -1,8 +1,8 @@
-package com.auction.client.service;
+package com.auction.client.service.user;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.client.store.userinformation.ClientSession;
-import com.auction.client.store.userinformation.UserTransactionHistory;
+import com.auction.client.store.clientinformation.ClientSession;
+import com.auction.client.store.clientinformation.UserTransactionHistory;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class UserService {
-  public static String updateProfile(String fullName, String email, String phone) {
+public class ClientService {
+  public String updateProfile(String fullName, String email, String phone) {
     Map<String, String> data = new HashMap<>();
     data.put("userid", String.valueOf(ClientSession.CURRENT_SESSION.getCurrentUser().getId()));
     data.put("fullname", fullName);
@@ -31,7 +31,7 @@ public class UserService {
       }).join();
   }
 
-  public static String deposit(double amount) {
+  public String deposit(double amount) {
     Map<String, String> data = new HashMap<>();
     data.put("userid", String.valueOf(ClientSession.CURRENT_SESSION.getCurrentUser().getId()));
     data.put("amount", String.valueOf(amount));
@@ -46,7 +46,7 @@ public class UserService {
       }).join();
   }
 
-  public static String updateAvatar(String username, String avatarUrl) {
+  public String updateAvatar(String username, String avatarUrl) {
     Request request = new Request(Request.UPDATE_AVATAR, username + " " + avatarUrl);
     Response response = NetworkClient.getInstance().sendRequestAndWait(request);
     if (response != null && Response.OK.equals(response.getStatus())) {
@@ -56,7 +56,7 @@ public class UserService {
     return "fail to update avatar";
   }
 
-  public static String uploadImage(String uploadUrl, byte[] imageBytes) {
+  public String uploadImage(String uploadUrl, byte[] imageBytes) {
     try {
       String url = NetworkClient.uploadFile(uploadUrl, imageBytes);
       return updateAvatar(ClientSession.CURRENT_SESSION.getCurrentUser().getUsername(), url);
@@ -65,7 +65,7 @@ public class UserService {
     }
   }
 
-  public static String getUserTransaction() {
+  public String getUserTransaction() {
     return RequestHelper.sendRequest("get_transactions", ClientSession.CURRENT_SESSION.getCurrentUser().getId())
       .thenApply(response ->  {
         if (response != null && response.getStatus().equals(Response.OK)) {
@@ -77,7 +77,7 @@ public class UserService {
       }).join();
   }
 
-  public static void refreshUserTransaction() {
+  public void refreshUserTransaction() {
     getUserTransaction();
   }
 }

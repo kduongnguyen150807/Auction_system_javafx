@@ -1,7 +1,8 @@
 package com.auction.client.ui.homeview.controller;
 
-import com.auction.client.service.AuctionService;
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.app.AutoInject;
+import com.auction.client.service.auction.LotManagementService;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.component.YearMonthDayHourMinuteSecond;
 import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar;
@@ -50,6 +51,13 @@ public class AddNewLotController implements CanRefresh {
   private final String DEFAULT_CATEGORY = "VEHICLE";
   private String lotimageurl;
   private final AtomicLong uploadUiGen = new AtomicLong(0L);
+
+  private LotManagementService lotManagementService;
+
+  @AutoInject
+  public AddNewLotController(LotManagementService lotManagementService) {
+    this.lotManagementService = lotManagementService;
+  }
 
   @FXML
   public void initialize() {
@@ -124,11 +132,11 @@ public class AddNewLotController implements CanRefresh {
     Map<String, String> lotForm = collectData();
     if (lotForm == null) return;
 
-    String message = AuctionService.registerLot(lotForm);
+    String message = lotManagementService.registerLot(lotForm);
     if (message != null) {
       AlertUtil.showInfoAlert("ADD NEW LOT", message);
     } else {
-      AlertUtil.showInfoAlert("ADD NEW LOT", "Successfully added lot");
+      AlertUtil.showInfoAlert("ADD NEW LOT", "Item is waiting for approvement");
       clear();
     }
   }
@@ -206,11 +214,16 @@ public class AddNewLotController implements CanRefresh {
 
     result.put("name", name);
     result.put("startingprice", price);
-    result.put("maxprice", maxPrice);
+    if (auctionType.equals(AuctionType.ENGLISH)) {
+      result.put("maxprice", maxPrice);
+    } else {
+      result.put("maxprice", "0");
+    }
     result.put("description", description);
     result.put("category", category);
     result.put("starttime", startTime);
     result.put("endtime", endTime);
+    result.put("auctiontype", auctionType.name());
     result.put("sellerusername", ClientSession.CURRENT_SESSION.getCurrentUser().getUsername());
     result.put("imageurl", lotimageurl);
     return result;

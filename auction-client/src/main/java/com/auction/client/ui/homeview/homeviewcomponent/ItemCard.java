@@ -1,6 +1,6 @@
 package com.auction.client.ui.homeview.homeviewcomponent;
 
-import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.TimeFormat;
 import javafx.beans.binding.Bindings;
@@ -22,7 +22,7 @@ public class ItemCard extends VBox {
   @FXML private Label price;
   @FXML private Label timeRemain;
 
-  public ItemCard(ClientItem clientItem) {
+  public ItemCard(ItemModel clientItem) {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(BASE_FXML_PATH));
     fxmlLoader.setController(this);
     fxmlLoader.setRoot(this);
@@ -35,7 +35,7 @@ public class ItemCard extends VBox {
     }
   }
 
-  private void setData(ClientItem clientItem) {
+  private void setData(ItemModel clientItem) {
     itemName.textProperty().bind(clientItem.nameProperty());
     itemDescription.textProperty().bind(clientItem.descriptionProperty());
     price.textProperty().bind(clientItem.currentPriceProperty().asString("$ %.2f"));

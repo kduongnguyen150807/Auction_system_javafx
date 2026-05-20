@@ -1,6 +1,6 @@
 package com.auction.client.ui.homeview.controller.profile;
 
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.component.MetricCard;
 import com.auction.shared.UserRole;
 import javafx.event.ActionEvent;

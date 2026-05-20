@@ -6,7 +6,7 @@ import javafx.beans.property.*;
 
 import java.time.LocalDateTime;
 
-public class ClientItem {
+public class ItemModel {
   private final LongProperty id = new SimpleLongProperty();
   private final StringProperty name = new SimpleStringProperty();
   private final StringProperty description = new SimpleStringProperty();
@@ -18,7 +18,7 @@ public class ClientItem {
 
   private final String category;
 
-  public ClientItem(Item item) {
+  public ItemModel(Item item) {
     id.set(item.getId());
     name.set(item.getName());
     currentPrice.set(item.getCurrentPrice());

@@ -1,6 +1,5 @@
-package com.auction.client.store;
+package com.auction.client.store.lotsinformation;
 
-import com.auction.client.store.lotsinformation.ClientItem;
 import com.auction.client.util.FXThread;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;
@@ -13,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-public class AuctionStore {
-  public static AuctionStore AUCTION_STORE = new AuctionStore();
+public class OngoingLots {
+  public static OngoingLots AUCTION_STORE = new OngoingLots();
 
-  private final ObservableList<ClientItem> ongoingItemsList = FXCollections.observableArrayList();
+  private final ObservableList<ItemModel> ongoingItemsList = FXCollections.observableArrayList();
 
-  private final Map<Integer, ClientItem> clientItemMap = new HashMap<>();
+  private final Map<Integer, ItemModel> clientItemMap = new HashMap<>();
 
-  public ObservableList<ClientItem> getOngoingClientItemList() {
+  public ObservableList<ItemModel> getOngoingClientItemList() {
     return ongoingItemsList;
   }
 
@@ -35,7 +34,7 @@ public class AuctionStore {
 
   public void updateClientItem(Item item) {
     FXThread.run(() -> {
-      ClientItem clientItem = clientItemMap.get(item.getId());
+      ItemModel clientItem = clientItemMap.get(item.getId());
       if (clientItem != null) {
         clientItem.update(item);
         if (item.getStatus().equals(ItemStatus.CLOSED)) {
@@ -49,20 +48,20 @@ public class AuctionStore {
 
   public void addItemIfMissing(Item item) {
     FXThread.run(() -> {
-      ClientItem clientItem = clientItemMap.get(item.getId());
+      ItemModel clientItem = clientItemMap.get(item.getId());
       if (clientItem == null) {
-        clientItem = new ClientItem(item);
+        clientItem = new ItemModel(item);
         ongoingItemsList.add(clientItem);
         clientItemMap.put(item.getId(), clientItem);
       }
     });
   }
 
-  public FilteredList<ClientItem> getFilteredStatusItems(ItemStatus status) {
+  public FilteredList<ItemModel> getFilteredStatusItems(ItemStatus status) {
     return getFilteredItems(clientItem -> clientItem.getStatus().equals(status));
   }
 
-  public FilteredList<ClientItem> getFilteredItems(Predicate<ClientItem> predicate) {
+  public FilteredList<ItemModel> getFilteredItems(Predicate<ItemModel> predicate) {
     return new FilteredList<>(ongoingItemsList, predicate);
   }
 }

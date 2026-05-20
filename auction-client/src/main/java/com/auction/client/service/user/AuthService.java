@@ -1,8 +1,8 @@
-package com.auction.client.service;
+package com.auction.client.service.user;
 
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
-import com.auction.client.store.userinformation.ClientSession;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
@@ -11,15 +11,6 @@ import com.auction.shared.User;
 import java.util.Map;
 
 public class AuthService {
-  private static AuthService instance;
-
-  public static AuthService getInstance() {
-    if (instance == null) {
-      instance = new AuthService();
-    }
-    return instance;
-  }
-
   public String login(Map<?, ?> credentials) {
     return RequestHelper.sendRequest(Request.LOGIN, credentials).thenApply(
       response -> {

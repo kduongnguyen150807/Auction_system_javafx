@@ -1,8 +1,10 @@
 package com.auction.client.ui.homeview.controller;
 
-import com.auction.client.service.AuctionService;
-import com.auction.client.store.AuctionStore;
-import com.auction.client.store.lotsinformation.ClientItem;
+import com.auction.client.app.AutoInject;
+import com.auction.client.service.auction.AuctionDetailService;
+import com.auction.client.service.auction.AuctionDiscoveryService;
+import com.auction.client.store.lotsinformation.OngoingLots;
+import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.HomeViewType;
@@ -20,19 +22,28 @@ import java.util.function.Consumer;
 public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewType> {
   private Consumer<HomeViewType> switchNode;
 
-  FilteredList<ClientItem> filteredList = new FilteredList<>(AuctionStore.AUCTION_STORE.getOngoingClientItemList());
+  FilteredList<ItemModel> filteredList = new FilteredList<>(OngoingLots.AUCTION_STORE.getOngoingClientItemList());
 
   @FXML private RedOrBlueToolbar<AuctionType> auctionTypeToggle;
   private final ToggleGroup toggleGroup = new ToggleGroup();
 
   @FXML private TrendingBind trendingBind;
-  @FXML private ListPane<ClientItem> artLots;
-  @FXML private ListPane<ClientItem> electronicsLots;
-  @FXML private ListPane<ClientItem> vehiclesLots;
+  @FXML private ListPane<ItemModel> artLots;
+  @FXML private ListPane<ItemModel> electronicsLots;
+  @FXML private ListPane<ItemModel> vehiclesLots;
+
+  private final AuctionDiscoveryService discoveryService;
+  private final AuctionDetailService detailService;
+
+  @AutoInject
+  public TrangChuController(AuctionDiscoveryService discoveryService, AuctionDetailService detailService) {
+    this.discoveryService = discoveryService;
+    this.detailService = detailService;
+  }
 
   @FXML
   public void initialize() {
-    AuctionService.refreshItems();
+    discoveryService.refreshItems();
     setToggleToolbar();
     initLotsRow();
   }
@@ -67,8 +78,8 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
     filteredList.setPredicate(clientItem -> clientItem.getItem().getAuctionType().equals(selectedAuctionType));
   }
 
-  private void registerLotsRow(String rowName, String category, ListPane<ClientItem> lots) {
-    FilteredList<ClientItem> row =
+  private void registerLotsRow(String rowName, String category, ListPane<ItemModel> lots) {
+    FilteredList<ItemModel> row =
       new FilteredList<>(filteredList,
         clientItem -> clientItem.getItem().getCategory().equalsIgnoreCase(category));
     lots.setTitle(rowName);
@@ -76,7 +87,7 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
       row,
       ItemCard::new,
       clientItem -> {
-        AuctionService.setSelectedItem(clientItem);
+        detailService.setSelectedItem(clientItem);
         switchNode.accept(HomeViewType.ITEM_INFORMATION);
       }
     );
@@ -84,7 +95,7 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
 
   @Override
   public void refreshData() {
-    AuctionService.refreshItems();
+    discoveryService.refreshItems();
   }
 
   @Override
