@@ -10,6 +10,8 @@ public class DatabaseMigration {
   private DatabaseMigration() {}
 
   public static void runAll() {
+    long startTime = System.currentTimeMillis();
+
     try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
       LOGGER.info("Running database migrations...");
 
@@ -22,7 +24,8 @@ public class DatabaseMigration {
       FriendshipSchemaMigration.apply(conn);
       UserSchemaMigration.migratePasswordsToSha256(conn);
 
-      LOGGER.info("Database migrations completed.");
+      long elapsed = System.currentTimeMillis() - startTime;
+      LOGGER.info("Database migrations completed in {} ms.", elapsed);
     } catch (Exception e) {
       LOGGER.error("Migration failed", e);
     }

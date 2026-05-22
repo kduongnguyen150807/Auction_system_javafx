@@ -110,6 +110,15 @@ public class DatabaseConnection {
     }
   }
 
+  public boolean isHealthy() {
+    try (Connection conn = getConnection()) {
+      return conn != null && conn.isValid(2);
+    } catch (Exception e) {
+      logger.warn("Database health check failed", e);
+      return false;
+    }
+  }
+
   public void closePool() {
     if (datasource != null && !datasource.isClosed()) {
       datasource.close();
