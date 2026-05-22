@@ -5,6 +5,7 @@ import com.auction.shared.Friendship;
 import com.auction.shared.Item;
 import com.auction.shared.ItemFactory;
 import com.auction.shared.LeaderboardEntry;
+import com.auction.shared.LiveParticipantEvent;
 import com.auction.shared.Response;
 import com.auction.shared.User;
 import java.util.ArrayList;
@@ -89,6 +90,12 @@ final class IncomingResponseRouter {
       }
       case "LEADERBOARD_UPDATE" -> {
         handleLeaderboard(payload);
+        return;
+      }
+      case "LIVE_PARTICIPANT" -> {
+        if (payload instanceof LiveParticipantEvent event) {
+          forListeners(l -> l.onLiveParticipantUpdate(event));
+        }
         return;
       }
       default -> {

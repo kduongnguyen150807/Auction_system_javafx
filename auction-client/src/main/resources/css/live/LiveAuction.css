@@ -1,0 +1,268 @@
+@import url("../shared/AppScrollbar.css");
+
+.live-page-root {
+    -fx-background-color: transparent;
+    -fx-font-family: "Consolas";
+}
+
+.live-scroll {
+    -fx-padding: 0 2 0 0;
+}
+
+.live-glass-panel {
+    -fx-background-color: rgba(25, 25, 25, 0.85);
+    -fx-background-radius: 30;
+    -fx-border-color: rgba(0, 122, 255, 0.3);
+    -fx-border-radius: 30;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 30, 0, 0, 10);
+    -fx-padding: 30;
+}
+
+.live-title {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 36;
+    -fx-font-weight: 800;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.35), 10, 0, 0, 0);
+}
+
+.live-subtitle {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 16;
+    -fx-text-fill: #cccccc;
+}
+
+.live-sidebar {
+    -fx-background-color: rgba(0, 0, 0, 0.35);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 20;
+    -fx-spacing: 12;
+}
+
+.live-main-panel {
+    -fx-background-color: rgba(0, 0, 0, 0.28);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 20;
+    -fx-spacing: 14;
+}
+
+.section-label {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+
+.live-item-title {
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+}
+
+.live-price {
+    -fx-text-fill: #007aff;
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.45), 8, 0, 0, 0);
+}
+
+.status-muted {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 12px;
+    -fx-wrap-text: true;
+}
+
+.bid-status {
+    -fx-text-fill: #00ff88;
+    -fx-font-size: 13px;
+    -fx-wrap-text: true;
+}
+
+.live-list {
+    -fx-background-color: rgba(0, 0, 0, 0.25);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 12;
+    -fx-padding: 4;
+}
+
+.live-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.9);
+    -fx-font-size: 13px;
+    -fx-padding: 10 12;
+}
+
+.live-list .list-cell:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-background-radius: 8;
+}
+
+.live-list .list-cell:selected {
+    -fx-background-color: linear-gradient(to right, rgba(0, 122, 255, 0.55), rgba(0, 229, 255, 0.25));
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+}
+
+.live-list .list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+.video-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 4;
+}
+
+.video-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.video-grid {
+    -fx-background-color: transparent;
+    -fx-padding: 4;
+}
+
+.live-participant-tile {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(0, 122, 255, 0.25);
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-padding: 10;
+    -fx-spacing: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.35), 12, 0, 0, 4);
+}
+
+.live-video-frame {
+    -fx-background-color: rgba(15, 15, 25, 0.95);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 10;
+}
+
+.participant-name {
+    -fx-text-fill: #00d4ff;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.btn-refresh {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1.5;
+    -fx-cursor: hand;
+    -fx-padding: 10 16;
+    -fx-font-family: "Consolas";
+}
+
+.btn-refresh:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-border-color: rgba(255, 255, 255, 0.35);
+}
+
+.btn-primary-mac {
+    -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-padding: 10 18;
+}
+
+.btn-primary-mac:hover {
+    -fx-background-color: linear-gradient(to right, #00d4ff, #007aff);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.5), 12, 0, 0, 0);
+}
+
+.btn-primary-mac:disabled {
+    -fx-opacity: 0.45;
+}
+
+.btn-cancel-mac {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-padding: 10 18;
+}
+
+.btn-cancel-mac:hover:!disabled {
+    -fx-text-fill: #ff2a6d;
+    -fx-border-color: #ff2a6d;
+}
+
+.btn-tier {
+    -fx-background-color: rgba(255, 170, 0, 0.18);
+    -fx-text-fill: #ffcc00;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 170, 0, 0.35);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-padding: 10 8;
+}
+
+.btn-tier:hover:!disabled {
+    -fx-background-color: rgba(255, 170, 0, 0.32);
+    -fx-text-fill: white;
+}
+
+.btn-tier:disabled {
+    -fx-opacity: 0.4;
+}
+
+.btn-bid-main {
+    -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-font-size: 14px;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+    -fx-padding: 10 22;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.45), 10, 0, 0, 0);
+}
+
+.btn-bid-main:disabled {
+    -fx-opacity: 0.45;
+}
+
+.input-mac-blue {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-control-inner-background: rgba(0, 0, 0, 0.4);
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-border-radius: 10;
+    -fx-prompt-text-fill: #666666;
+    -fx-padding: 10 14;
+}
+
+.input-mac-blue:focused {
+    -fx-border-color: #007aff;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.35), 8, 0, 0, 0);
+}
+
+.bid-panel {
+    -fx-background-color: rgba(0, 0, 0, 0.32);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.06);
+    -fx-border-radius: 16;
+    -fx-padding: 16;
+    -fx-spacing: 12;
+}

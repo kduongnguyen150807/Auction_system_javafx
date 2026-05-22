@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane live-scroll"
+            stylesheets="@/css/live/LiveAuction.css"
+            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.Live.LiveAuctionController">
+    <content>
+        <VBox alignment="TOP_CENTER" styleClass="live-page-root">
+            <children>
+                <VBox maxWidth="1200.0" spacing="24.0" styleClass="live-glass-panel">
+                    <children>
+                        <!-- Header -->
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <children>
+                                <VBox spacing="6.0">
+                                    <children>
+                                        <Label styleClass="live-title" text="📡 Live Auction"/>
+                                        <Label styleClass="live-subtitle"
+                                               text="Tham gia phiên trực tiếp, xem bidder và đặt giá realtime"/>
+                                    </children>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="refreshButton" mnemonicParsing="false"
+                                        onAction="#handleRefreshList" styleClass="btn-refresh" text="Làm mới"/>
+                            </children>
+                        </HBox>
+
+                        <!-- Body -->
+                        <HBox spacing="20.0" VBox.vgrow="ALWAYS">
+                            <children>
+                                <!-- Sidebar: danh sách phiên -->
+                                <VBox minWidth="260.0" prefWidth="280.0" spacing="12.0" styleClass="live-sidebar">
+                                    <children>
+                                        <Label styleClass="section-label" text="PHIÊN LIVE ĐANG MỞ"/>
+                                        <ListView fx:id="liveItemList" prefHeight="280.0"
+                                                  styleClass="live-list" VBox.vgrow="ALWAYS"/>
+                                        <Button fx:id="joinButton" maxWidth="Infinity" mnemonicParsing="false"
+                                                onAction="#handleJoin" styleClass="btn-primary-mac"
+                                                text="Tham gia phiên"/>
+                                        <Button fx:id="leaveButton" disable="true" maxWidth="Infinity"
+                                                mnemonicParsing="false" onAction="#handleLeave"
+                                                styleClass="btn-cancel-mac" text="Rời phiên"/>
+                                        <Label fx:id="sessionStatusLabel" styleClass="status-muted" wrapText="true"
+                                               text="Chọn lot LIVE và bấm Tham gia"/>
+                                    </children>
+                                </VBox>
+
+                                <!-- Main: video + đặt giá -->
+                                <VBox spacing="16.0" HBox.hgrow="ALWAYS" styleClass="live-main-panel">
+                                    <children>
+                                        <VBox spacing="6.0">
+                                            <children>
+                                                <Label fx:id="itemTitleLabel" styleClass="live-item-title"
+                                                       text="Chưa chọn phiên"/>
+                                                <Label fx:id="currentPriceLabel" styleClass="live-price"
+                                                       text="Giá hiện tại: —"/>
+                                            </children>
+                                        </VBox>
+
+                                        <Label styleClass="section-label" text="NGƯỜI THAM GIA (VIDEO)"/>
+                                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="320.0"
+                                                    styleClass="video-scroll" VBox.vgrow="ALWAYS">
+                                            <content>
+                                                <FlowPane fx:id="videoGrid" hgap="14.0" styleClass="video-grid"
+                                                          vgap="14.0" prefWrapLength="680.0"/>
+                                            </content>
+                                        </ScrollPane>
+
+                                        <VBox spacing="12.0" styleClass="bid-panel">
+                                            <children>
+                                                <Label styleClass="section-label" text="ĐẶT GIÁ NHANH"/>
+                                                <HBox spacing="10.0">
+                                                    <children>
+                                                        <Button fx:id="tier1Button" disable="true"
+                                                                maxWidth="Infinity" mnemonicParsing="false"
+                                                                onAction="#handleTier1" styleClass="btn-tier"
+                                                                text="Tier 1" HBox.hgrow="ALWAYS"/>
+                                                        <Button fx:id="tier2Button" disable="true"
+                                                                maxWidth="Infinity" mnemonicParsing="false"
+                                                                onAction="#handleTier2" styleClass="btn-tier"
+                                                                text="Tier 2" HBox.hgrow="ALWAYS"/>
+                                                        <Button fx:id="tier3Button" disable="true"
+                                                                maxWidth="Infinity" mnemonicParsing="false"
+                                                                onAction="#handleTier3" styleClass="btn-tier"
+                                                                text="Tier 3" HBox.hgrow="ALWAYS"/>
+                                                    </children>
+                                                </HBox>
+                                                <HBox spacing="10.0">
+                                                    <children>
+                                                        <TextField fx:id="customBidField" disable="true"
+                                                                   promptText="Giá tùy chỉnh ($)"
+                                                                   styleClass="input-mac-blue" HBox.hgrow="ALWAYS"/>
+                                                        <Button fx:id="placeBidButton" disable="true"
+                                                                mnemonicParsing="false" onAction="#handlePlaceBid"
+                                                                styleClass="btn-bid-main" text="Đặt giá"/>
+                                                    </children>
+                                                </HBox>
+                                                <Label fx:id="bidStatusLabel" styleClass="bid-status" wrapText="true"/>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                    <VBox.margin>
+                        <Insets bottom="40.0" top="24.0"/>
+                    </VBox.margin>
+                </VBox>
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>

@@ -7,6 +7,7 @@ import com.auction.server.dao.wallet.TransactionLogDao;
 import com.auction.server.handler.auction.*;
 import com.auction.server.handler.auth.*;
 import com.auction.server.handler.chat.*;
+import com.auction.server.handler.live.*;
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.ActionRegistry;
 import com.auction.server.handler.dispatch.HandlerContext;
@@ -155,6 +156,12 @@ public class ClientHandler implements Runnable {
     reg.register(Request.GET_CATEGORY_STATS, ActionHandler.requireAdmin(miscHandler));
 
     reg.register(Request.GET_LEADERBOARD, new com.auction.server.handler.misc.LeaderboardHandler());
+
+    LiveSessionHandlers liveHandlers = new LiveSessionHandlers();
+    reg.register(Request.JOIN_LIVE_SESSION, ActionHandler.requireAuth(liveHandlers.join()));
+    reg.register(Request.LEAVE_LIVE_SESSION, ActionHandler.requireAuth(liveHandlers.leave()));
+    reg.register(Request.GET_LIVE_BID_TIERS, ActionHandler.requireAuth(liveHandlers.tiers()));
+    reg.register(Request.GET_LIVE_AUCTIONS, liveHandlers.list());
 
     reg.register(Request.LOGIN, new LoginHandler());
     reg.register(Request.SIGNUP, new SignupHandler());

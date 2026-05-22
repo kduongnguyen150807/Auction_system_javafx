@@ -30,4 +30,6 @@ public interface NetworkEventListener {
    * lifted. The UI may show an informational toast or alert.
    */
   default void onAccountUnbanned() {}
+
+  default void onLiveParticipantUpdate(com.auction.shared.LiveParticipantEvent event) {}
 }

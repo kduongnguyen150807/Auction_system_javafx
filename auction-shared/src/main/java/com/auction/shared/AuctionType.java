@@ -3,7 +3,8 @@ package com.auction.shared;
 /** Canonical auction mechanism for a listing. */
 public enum AuctionType {
   ENGLISH,
-  DUTCH;
+  DUTCH,
+  LIVE;
 
   public static AuctionType parse(String raw) {
     if (raw == null || raw.isBlank()) return ENGLISH;

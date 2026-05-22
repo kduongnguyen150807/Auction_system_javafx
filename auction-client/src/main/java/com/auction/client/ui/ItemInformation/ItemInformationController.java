@@ -2,6 +2,7 @@ package com.auction.client.ui.ItemInformation;
 
 import com.auction.client.ClientSession;
 import com.auction.client.service.BiddingClientService;
+import com.auction.client.ui.Main.KhungController;
 import com.auction.client.util.ImagePresentationUtil;
 import com.auction.shared.AuctionType;
 import com.auction.shared.BidTransaction;
@@ -37,6 +38,7 @@ public class ItemInformationController {
     @FXML private ImageView SellerAvatar;
     @FXML private Label SellerName;
     @FXML private Button BidButton;
+    @FXML private Button JoinLiveButton;
     @FXML private Button RateButton;
     @FXML private VBox RatingsContainer;
     @FXML private VBox buyItNowVBox;
@@ -88,7 +90,7 @@ public class ItemInformationController {
         LocalDateTime hint = src == null ? auctionStartHint : null;
         boolean upcoming = ItemInformationUiHelper.isAuctionUpcoming(src, hint);
         ItemInformationUiHelper.setBidButtonClosed(
-            listingkind, BidButton, autobidfield, autobidbutton, closed, upcoming);
+            listingkind, BidButton, autobidfield, autobidbutton, JoinLiveButton, closed, upcoming);
     }
 
     private void setendsinsource(Item item) {
@@ -138,7 +140,8 @@ public class ItemInformationController {
         if (EndsInValue != null) {
             EndsInValue.setText(endsin == null ? "" : endsin);
         }
-        ItemInformationUiHelper.applyAuctionPresentation(listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
+        ItemInformationUiHelper.applyAuctionPresentation(
+            listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton, JoinLiveButton);
         refreshBidControls();
         if (ItemImageHolder != null && imageurl != null && !imageurl.isBlank()) {
             ItemImageHolder.setImage(new Image(ImagePresentationUtil.safeImageUrl(imageurl), true));
@@ -167,7 +170,8 @@ public class ItemInformationController {
                         if (MaxPriceValue != null) {
                             MaxPriceValue.setText(ItemInformationUiHelper.formatBuyItNowLine(buyitnowprice));
                         }
-                        ItemInformationUiHelper.applyAuctionPresentation(listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
+                        ItemInformationUiHelper.applyAuctionPresentation(
+                            listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton, JoinLiveButton);
                         ItemInformationUiHelper.applyEndsIn(EndsInValue, item);
                         refreshBidControls();
                         setupratingui(item);
@@ -234,6 +238,14 @@ public class ItemInformationController {
     }
 
     @FXML
+    private void handleJoinLive() {
+        if (itemid <= 0) {
+            return;
+        }
+        KhungController.openLiveAuctionForItem(itemid);
+    }
+
+    @FXML
     private void showBiddingForm() {
         ItemInformationOverlayLoader.addToMainContent("/fxml/biddingform/BiddingForm.fxml", o -> {
             com.auction.client.ui.BiddingForm.BiddingFormController c = (com.auction.client.ui.BiddingForm.BiddingFormController) o;
@@ -289,7 +301,8 @@ public class ItemInformationController {
         if (MaxPriceValue != null) {
             MaxPriceValue.setText(ItemInformationUiHelper.formatBuyItNowLine(buyitnowprice));
         }
-        ItemInformationUiHelper.applyAuctionPresentation(listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton);
+        ItemInformationUiHelper.applyAuctionPresentation(
+            listingkind, BidMetricCaption, buyItNowVBox, autoBidHBox, BidButton, JoinLiveButton);
         ItemInformationUiHelper.applyEndsIn(EndsInValue, item);
         refreshBidControls();
         appendpricetochart(item.getCurrentPrice());
@@ -308,7 +321,8 @@ public class ItemInformationController {
         }
         Platform.runLater(() -> {
             setendsinsource(null);
-            ItemInformationUiHelper.setBidButtonClosed(listingkind, BidButton, autobidfield, autobidbutton, true, false);
+            ItemInformationUiHelper.setBidButtonClosed(
+                listingkind, BidButton, autobidfield, autobidbutton, JoinLiveButton, true, false);
             if (EndsInValue != null) {
                 EndsInValue.setText("Auction Closed");
             }
@@ -324,7 +338,8 @@ public class ItemInformationController {
             if (MaxPriceValue != null) {
                 MaxPriceValue.setText("SELLED");
             }
-            ItemInformationUiHelper.setBidButtonClosed(listingkind, BidButton, autobidfield, autobidbutton, true, false);
+            ItemInformationUiHelper.setBidButtonClosed(
+                listingkind, BidButton, autobidfield, autobidbutton, JoinLiveButton, true, false);
             if (EndsInValue != null) {
                 EndsInValue.setText("Winner: " + ClientSession.getUsername());
             }

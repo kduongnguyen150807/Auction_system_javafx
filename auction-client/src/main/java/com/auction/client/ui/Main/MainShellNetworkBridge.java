@@ -4,12 +4,14 @@ import com.auction.client.ClientSession;
 import com.auction.client.network.NetworkEventListener;
 import com.auction.client.ui.Chat.ChatPageController;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
+import com.auction.client.ui.Live.LiveAuctionController;
 import com.auction.client.ui.TrangChu.TrangChuController;
 import com.auction.client.util.ItemNotificationText;
 import com.auction.client.util.NotificationCenter;
 import com.auction.shared.ChatMessage;
 import com.auction.shared.Friendship;
 import com.auction.shared.Item;
+import com.auction.shared.LiveParticipantEvent;
 import com.auction.shared.User;
 import java.util.function.Supplier;
 import javafx.application.Platform;
@@ -51,6 +53,18 @@ final class MainShellNetworkBridge implements NetworkEventListener {
     if (d != null) d.updatePriceUi(item);
     TrangChuController h = home();
     if (h != null) h.updatePriceUi(item);
+    LiveAuctionController live = LiveAuctionController.getInstance();
+    if (live != null) {
+      live.onPriceUpdate(item);
+    }
+  }
+
+  @Override
+  public void onLiveParticipantUpdate(LiveParticipantEvent event) {
+    LiveAuctionController live = LiveAuctionController.getInstance();
+    if (live != null) {
+      live.onLiveParticipantUpdate(event);
+    }
   }
 
   @Override

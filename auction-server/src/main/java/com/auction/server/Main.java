@@ -3,6 +3,7 @@ package com.auction.server;
 import com.auction.server.controller.SocketServer;
 import com.auction.server.dao.platform.DatabaseConnection;
 import com.auction.server.dao.platform.DatabaseMigration;
+import com.auction.server.live.VideoRelayServer;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import org.slf4j.Logger;
@@ -16,11 +17,14 @@ public class Main {
     int port = (portstr != null && !portstr.trim().isEmpty()) ? Integer.parseInt(portstr) : 8080;
 
     killport(port);
+    int udpPort = resolveUdpPort();
+    killport(udpPort);
     DatabaseMigration.runAll();
 
     // TÍNH NĂNG 4: GRACEFUL SHUTDOWN HOOK
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       logger.info("=== HỆ THỐNG ĐANG TẮT (GRACEFUL SHUTDOWN) ===");
+      VideoRelayServer.getInstance().stop();
       try {
         DatabaseConnection.getInstance().closePool();
       } catch (Exception e) {
@@ -30,7 +34,13 @@ public class Main {
     }));
 
     SocketServer server = new SocketServer(port);
+    VideoRelayServer.getInstance().start();
     server.startServer();
+  }
+
+  private static int resolveUdpPort() {
+    String env = System.getenv("UDP_VIDEO_PORT");
+    return (env != null && !env.isBlank()) ? Integer.parseInt(env.trim()) : 9090;
   }
 
   private static void killport(int port) {

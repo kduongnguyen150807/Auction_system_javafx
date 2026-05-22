@@ -45,7 +45,7 @@ public class KhungController {
   private MainShellNetworkBridge networkBridge;
 
   // ĐÃ THÊM watchlistNode
-  private Node auctionHomeNode, watchlistNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
+  private Node auctionHomeNode, watchlistNode, liveAuctionNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
   private TrangChuController homeController;
   private YourItemController myItemsController;
   private HistoryController historyController;
@@ -56,12 +56,12 @@ public class KhungController {
 
   // ĐÃ THÊM watchlistController
   private com.auction.client.ui.Watchlist.WatchlistController watchlistController;
+  private com.auction.client.ui.Live.LiveAuctionController liveAuctionController;
 
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
 
-  // ĐÃ THÊM WatchlistMenu
-  @FXML private HBox AuctionMenu, WatchlistMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
+  @FXML private HBox AuctionMenu, WatchlistMenu, LiveMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
   @FXML private Label UserName, Rank;
   @FXML private ImageView sidebaravatar;
 
@@ -81,6 +81,7 @@ public class KhungController {
 
       // ĐÃ THÊM LOAD WATCHLIST FXML
       NodeContentLoader<Pane> watchlist = loadFxml("/fxml/watchlist/Watchlist.fxml");
+      NodeContentLoader<Pane> liveAuction = loadFxml("/fxml/live/LiveAuction.fxml");
 
       NodeContentLoader<Pane> hist = loadFxml("/fxml/history/History.fxml");
       NodeContentLoader<Pane> myItem = loadFxml("/fxml/youritem/YourItem.fxml");
@@ -93,7 +94,8 @@ public class KhungController {
       if (SearchContainer != null) SearchContainer.getChildren().add(search.getCurrentNode());
 
       auctionHomeNode = auction.getCurrentNode();
-      watchlistNode = watchlist.getCurrentNode(); // Gán Node
+      watchlistNode = watchlist.getCurrentNode();
+      liveAuctionNode = liveAuction.getCurrentNode();
       historyNode = hist.getCurrentNode();
       myItemsNode = myItem.getCurrentNode();
       profileNode = profile.getCurrentNode();
@@ -102,7 +104,8 @@ public class KhungController {
       chatNode = chat.getCurrentNode();
 
       homeController = auction.getController();
-      watchlistController = watchlist.getController(); // Gán Controller
+      watchlistController = watchlist.getController();
+      liveAuctionController = liveAuction.getController();
       myItemsController = myItem.getController();
       historyController = hist.getController();
       profileController = profile.getController();
@@ -116,6 +119,7 @@ public class KhungController {
                       ContentArea,
                       AuctionMenu,
                       WatchlistMenu,
+                      LiveMenu,
                       HistoryMenu,
                       MyItemMenu,
                       ProfileMenu,
@@ -171,6 +175,13 @@ public class KhungController {
   }
 
   @FXML
+  public void openLiveAuction(MouseEvent event) {
+    if (switchPage(liveAuctionNode, LiveMenu) && liveAuctionController != null) {
+      liveAuctionController.refreshOnNavigate();
+    }
+  }
+
+  @FXML
   public void openHistory(MouseEvent event) {
     if (switchPage(historyNode, HistoryMenu) && historyController != null) historyController.refreshHistory();
   }
@@ -200,7 +211,8 @@ public class KhungController {
   public void handleRefresh(ActionEvent event) {
     Node current = navigator != null ? navigator.getCurrentContentNode() : null;
     if (current == auctionHomeNode) refreshAuctionHome();
-    else if (current == watchlistNode && watchlistController != null) watchlistController.refreshItems(); // ĐÃ THÊM REFRESH WATCHLIST
+    else if (current == watchlistNode && watchlistController != null) watchlistController.refreshItems();
+    else if (current == liveAuctionNode && liveAuctionController != null) liveAuctionController.refreshOnNavigate();
     else if (current == historyNode && historyController != null) historyController.refreshHistory();
     else if (current == myItemsNode && myItemsController != null) myItemsController.refreshItems();
     else if (current == profileNode && profileController != null) profileController.refreshFromServer();
@@ -400,6 +412,20 @@ public class KhungController {
               if (instance.navigator.switchPage(instance.auctionHomeNode, instance.AuctionMenu))
                 instance.refreshAuctionHome();
             });
+  }
+
+  /** Opens Live Auction screen and joins the given lot if available. */
+  public static void openLiveAuctionForItem(int itemId) {
+    if (instance == null || instance.navigator == null || itemId <= 0) {
+      return;
+    }
+    Platform.runLater(
+        () -> {
+          instance.navigator.switchPage(instance.liveAuctionNode, instance.LiveMenu);
+          if (instance.liveAuctionController != null) {
+            instance.liveAuctionController.openForItem(itemId);
+          }
+        });
   }
 
   /** Holds auction home / my-items filter criteria for the main shell (no UI). */

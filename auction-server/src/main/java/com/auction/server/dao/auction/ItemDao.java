@@ -98,6 +98,17 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
     return queryList(SELECT_ITEM_WITH_SELLER + " WHERE i.status = 'PENDING' ORDER BY i.id DESC");
   }
 
+  /** OPEN live auctions that have started and not yet ended. */
+  public List<Item> getLiveOpenItems() {
+    String sql =
+        SELECT_ITEM_WITH_SELLER
+            + " WHERE i.status = 'OPEN' AND i.auction_type = 'LIVE'"
+            + " AND (i.starttime IS NULL OR i.starttime <= NOW())"
+            + " AND (i.endtime IS NULL OR i.endtime > NOW())"
+            + " ORDER BY i.endtime ASC";
+    return queryList(sql);
+  }
+
   /**
    * Updates price using Optimistic Locking.
    */

@@ -18,11 +18,11 @@ final class ItemInformationAutoBidCoordinator {
       AuctionType listingKind,
       TextField autobidfield,
       BiddingClientService biddingClientService) {
-    if (listingKind == AuctionType.DUTCH) {
+    if (listingKind == AuctionType.DUTCH || listingKind == AuctionType.LIVE) {
       ItemInformationDialogs.show(
           Alert.AlertType.WARNING,
           "Not supported",
-          "Automatic bidding is not available for Dutch auctions.");
+          "Automatic bidding is not available for this auction type.");
       return;
     }
     if (ClientSession.getCurrentUser() == null) {

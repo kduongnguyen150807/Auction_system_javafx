@@ -40,7 +40,7 @@ final class AutoBidCoordinator {
     if (ans != null) {
       return ans;
     }
-    if (item.getAuctionType() == AuctionType.DUTCH) {
+    if (item.getAuctionType() == AuctionType.DUTCH || item.getAuctionType() == AuctionType.LIVE) {
       return BidAuctionValidator.error("error");
     }
     if (bid.getMaxAutoBid() <= item.getCurrentPrice()) {

@@ -71,6 +71,7 @@
                                             <children>
                                                 <ToggleButton fx:id="kindEnglishToggle" maxWidth="Infinity" mnemonicParsing="false" styleClass="segment-toggle-auction" text="English auction" HBox.hgrow="ALWAYS" />
                                                 <ToggleButton fx:id="kindDutchToggle" maxWidth="Infinity" mnemonicParsing="false" styleClass="segment-toggle-auction" text="Dutch auction" HBox.hgrow="ALWAYS" />
+                                                <ToggleButton fx:id="kindLiveToggle" maxWidth="Infinity" mnemonicParsing="false" styleClass="segment-toggle-auction" text="Live auction" HBox.hgrow="ALWAYS" />
                                             </children>
                                         </HBox>
 

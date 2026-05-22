@@ -90,6 +90,10 @@ public class NetworkClient {
     return instance;
   }
 
+  public String getServerHost() {
+    return serverIp != null && !serverIp.isBlank() ? serverIp : "localhost";
+  }
+
   public void addListener(NetworkEventListener l) {
     if (!listeners.contains(l)) {
       listeners.add(l);

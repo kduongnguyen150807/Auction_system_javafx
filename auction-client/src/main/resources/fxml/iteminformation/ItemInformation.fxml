@@ -87,6 +87,8 @@
 
                                 <Button fx:id="BidButton" maxWidth="Infinity" onAction="#showBiddingForm" prefHeight="60.0" styleClass="btn-bid-main" text="PLACE BID NOW" />
 
+                                <Button fx:id="JoinLiveButton" maxWidth="Infinity" onAction="#handleJoinLive" prefHeight="60.0" styleClass="btn-bid-main" text="VÀO LIVE" visible="false" managed="false" />
+
                                 <HBox fx:id="autoBidHBox" spacing="10" alignment="CENTER">
                                     <children>
                                         <TextField fx:id="autobidfield" promptText="Max Auto-Bid $" styleClass="input-mac-blue" prefHeight="45.0" HBox.hgrow="ALWAYS" />

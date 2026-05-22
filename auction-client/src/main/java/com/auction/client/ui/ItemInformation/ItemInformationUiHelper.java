@@ -54,7 +54,8 @@ final class ItemInformationUiHelper {
       Label bidMetricCaption,
       VBox buyItNowVBox,
       HBox autoBidHBox,
-      Button bidButton) {
+      Button bidButton,
+      Button joinLiveButton) {
     if (bidMetricCaption != null) {
       bidMetricCaption.setText(
           listingKind == AuctionType.DUTCH ? "CURRENT PRICE" : "CURRENT BID");
@@ -65,14 +66,33 @@ final class ItemInformationUiHelper {
       buyItNowVBox.setManaged(!hideBin);
     }
     if (autoBidHBox != null) {
-      boolean hideAuto = listingKind == AuctionType.DUTCH;
+      boolean hideAuto = listingKind == AuctionType.DUTCH || listingKind == AuctionType.LIVE;
       autoBidHBox.setVisible(!hideAuto);
       autoBidHBox.setManaged(!hideAuto);
     }
+    boolean isLive = listingKind == AuctionType.LIVE;
     if (bidButton != null && !bidButton.isDisable()) {
-      bidButton.setText(
-          listingKind == AuctionType.DUTCH ? "BUY AT CURRENT PRICE" : "PLACE BID NOW");
+      bidButton.setVisible(!isLive);
+      bidButton.setManaged(!isLive);
+      if (!isLive) {
+        bidButton.setText(
+            listingKind == AuctionType.DUTCH ? "BUY AT CURRENT PRICE" : "PLACE BID NOW");
+      }
     }
+    if (joinLiveButton != null) {
+      joinLiveButton.setVisible(isLive);
+      joinLiveButton.setManaged(isLive);
+      joinLiveButton.setText("VÀO LIVE");
+    }
+  }
+
+  static void applyAuctionPresentation(
+      AuctionType listingKind,
+      Label bidMetricCaption,
+      VBox buyItNowVBox,
+      HBox autoBidHBox,
+      Button bidButton) {
+    applyAuctionPresentation(listingKind, bidMetricCaption, buyItNowVBox, autoBidHBox, bidButton, null);
   }
 
   /**
@@ -86,10 +106,40 @@ final class ItemInformationUiHelper {
       Button autobidbutton,
       boolean auctionClosed,
       boolean biddingNotYetStarted) {
-    if (bidButton == null) {
+    setBidButtonClosed(
+        listingKind, bidButton, autobidfield, autobidbutton, null, auctionClosed, biddingNotYetStarted);
+  }
+
+  static void setBidButtonClosed(
+      AuctionType listingKind,
+      Button bidButton,
+      TextField autobidfield,
+      Button autobidbutton,
+      Button joinLiveButton,
+      boolean auctionClosed,
+      boolean biddingNotYetStarted) {
+    boolean isLive = listingKind == AuctionType.LIVE;
+    boolean disabled = auctionClosed || biddingNotYetStarted;
+
+    if (joinLiveButton != null && isLive) {
+      joinLiveButton.setDisable(disabled);
+      joinLiveButton.setText(
+          auctionClosed ? "LIVE ĐÃ KẾT THÚC" : biddingNotYetStarted ? "CHƯA BẮT ĐẦU" : "VÀO LIVE");
+      joinLiveButton.setStyle(
+          disabled
+              ? "-fx-background-color: #555555; -fx-text-fill: #999999; -fx-cursor: default;"
+              : "");
+    }
+
+    if (bidButton == null || isLive) {
+      if (autobidbutton != null) {
+        autobidbutton.setDisable(disabled);
+      }
+      if (autobidfield != null) {
+        autobidfield.setDisable(disabled);
+      }
       return;
     }
-    boolean disabled = auctionClosed || biddingNotYetStarted;
     String openCaption =
         listingKind == AuctionType.DUTCH ? "BUY AT CURRENT PRICE" : "PLACE BID NOW";
     String caption =

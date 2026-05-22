@@ -82,6 +82,7 @@ public class AuctionManager {
 
   /** Drops DB session_token and in-memory reconnect entries for this user. */
   public void releaseUserSession(int userId) {
+    com.auction.server.live.LiveSessionManager.getInstance().leave(userId);
     userdao.clearSessionToken(userId);
     sessions.entrySet().removeIf(
         e -> e.getValue() != null && e.getValue().getId() == userId);
@@ -104,6 +105,10 @@ public class AuctionManager {
 
   public LeaderboardService getLeaderboardservice() {
     return leaderboardservice;
+  }
+
+  public UserDao getUserDao() {
+    return userdao;
   }
 
   public void broadcastleaderboard() {

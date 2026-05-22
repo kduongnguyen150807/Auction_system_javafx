@@ -67,6 +67,12 @@ public class Request implements Serializable {
   public static final String SELLER_CANCEL_ITEM = "SELLER_CANCEL_ITEM";
   public static final String SELLER_UPDATE_PENDING_ITEM = "SELLER_UPDATE_PENDING_ITEM";
 
+  // --- Live Auction ---
+  public static final String JOIN_LIVE_SESSION = "JOIN_LIVE_SESSION";
+  public static final String LEAVE_LIVE_SESSION = "LEAVE_LIVE_SESSION";
+  public static final String GET_LIVE_BID_TIERS = "GET_LIVE_BID_TIERS";
+  public static final String GET_LIVE_AUCTIONS = "GET_LIVE_AUCTIONS";
+
   protected String requestId;
   protected String action;
   protected Object payload;

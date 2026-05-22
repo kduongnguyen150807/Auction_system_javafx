@@ -41,6 +41,7 @@ public class AddNewLotController {
   @FXML private VBox dutchExtrasVBox;
   @FXML private ToggleButton kindEnglishToggle;
   @FXML private ToggleButton kindDutchToggle;
+  @FXML private ToggleButton kindLiveToggle;
   @FXML private DatePicker startDatePicker, endDatePicker;
   @FXML private ComboBox<Integer> startHourCombo, startMinuteCombo, startSecondCombo;
   @FXML private ComboBox<Integer> endHourCombo, endMinuteCombo, endSecondCombo;
@@ -112,6 +113,10 @@ public class AddNewLotController {
         txtDutchDecrement.setText(String.valueOf(item.getDutchTickAmount()));
       if (txtDutchIntervalMinutes != null)
         txtDutchIntervalMinutes.setText(String.valueOf(item.getDutchTickIntervalMinutes()));
+    } else if (kindLiveToggle != null && type == AuctionType.LIVE) {
+      kindLiveToggle.setSelected(true);
+      double mx = item.getMaxPrice();
+      txtMaxPrice.setText(mx > 0 ? Double.toString(mx) : "");
     } else if (kindEnglishToggle != null) {
       kindEnglishToggle.setSelected(true);
       double mx = item.getMaxPrice();
@@ -192,10 +197,11 @@ public class AddNewLotController {
     startDatePicker.setValue(LocalDate.now());
     endDatePicker.setValue(LocalDate.now().plusDays(1));
 
-    if (kindEnglishToggle != null && kindDutchToggle != null) {
+    if (kindEnglishToggle != null && kindDutchToggle != null && kindLiveToggle != null) {
       auctionKindGroup = new ToggleGroup();
       kindEnglishToggle.setToggleGroup(auctionKindGroup);
       kindDutchToggle.setToggleGroup(auctionKindGroup);
+      kindLiveToggle.setToggleGroup(auctionKindGroup);
       kindEnglishToggle.setSelected(true);
       auctionKindGroup
           .selectedToggleProperty()
@@ -210,11 +216,13 @@ public class AddNewLotController {
       return;
     }
     boolean english = kindEnglishToggle.isSelected();
-    txtMaxPrice.setVisible(english);
-    txtMaxPrice.setManaged(english);
-    txtPrice.setPromptText(english ? "START PRICE ($)" : "STARTING PRICE ($)");
-    dutchExtrasVBox.setVisible(!english);
-    dutchExtrasVBox.setManaged(!english);
+    boolean live = kindLiveToggle != null && kindLiveToggle.isSelected();
+    boolean showEnglishFields = english || live;
+    txtMaxPrice.setVisible(showEnglishFields);
+    txtMaxPrice.setManaged(showEnglishFields);
+    txtPrice.setPromptText(showEnglishFields ? "START PRICE ($)" : "STARTING PRICE ($)");
+    dutchExtrasVBox.setVisible(!showEnglishFields);
+    dutchExtrasVBox.setManaged(!showEnglishFields);
   }
 
   @FXML
@@ -308,7 +316,10 @@ public class AddNewLotController {
         data.put("name", name);
         data.put("startingprice", price);
         boolean dutchAuction = kindDutchToggle != null && kindDutchToggle.isSelected();
-        data.put("auctiontype", dutchAuction ? "DUTCH" : "ENGLISH");
+        boolean liveAuction = kindLiveToggle != null && kindLiveToggle.isSelected();
+        data.put(
+            "auctiontype",
+            dutchAuction ? "DUTCH" : liveAuction ? "LIVE" : "ENGLISH");
         if (dutchAuction) {
           data.put("maxprice", "0");
           data.put(
