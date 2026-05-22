@@ -12,6 +12,13 @@ import org.slf4j.LoggerFactory;
 public class DatabaseConnection {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
 
+  private static final int MAX_POOL_SIZE = 50;
+  private static final int MIN_IDLE_CONNECTIONS = 10;
+  private static final long CONNECTION_TIMEOUT_MS = 30000;
+
+  private static final String DB_PROPERTIES_FILE = "db.properties";
+  private static final String MYSQL_DRIVER = "com.mysql.cj.jdbc.Driver";
+
   private static final class Holder {
     static final DatabaseConnection instance = new DatabaseConnection();
   }
@@ -20,25 +27,69 @@ public class DatabaseConnection {
 
   private DatabaseConnection() {
     try {
-      Properties props = new Properties();
-      InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties");
-      if (input != null) {
-        props.load(input);
-      }
-      String dburl = System.getenv("DB_URL") != null ? System.getenv("DB_URL") : props.getProperty("db.url");
-      String dbuser = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : props.getProperty("db.user");
-      String dbpass = System.getenv("DB_PASS") != null ? System.getenv("DB_PASS") : props.getProperty("db.password");
+      Properties props = loadDatabaseProperties();
+
+      String dbUrl = getConfigValue("DB_URL", props, "db.url");
+      String dbUser = getConfigValue("DB_USER", props, "db.user");
+      String dbPassword = getConfigValue("DB_PASS", props, "db.password");
+
+      validateDatabaseConfig(dbUrl, dbUser, dbPassword);
+
       HikariConfig config = new HikariConfig();
-      config.setJdbcUrl(dburl);
-      config.setUsername(dbuser);
-      config.setPassword(dbpass);
-      config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-      config.setMaximumPoolSize(50);
-      config.setMinimumIdle(10);
-      config.setConnectionTimeout(30000);
+      config.setJdbcUrl(dbUrl);
+      config.setUsername(dbUser);
+      config.setPassword(dbPassword);
+      config.setDriverClassName(MYSQL_DRIVER);
+      config.setMaximumPoolSize(MAX_POOL_SIZE);
+      config.setMinimumIdle(MIN_IDLE_CONNECTIONS);
+      config.setConnectionTimeout(CONNECTION_TIMEOUT_MS);
+
       this.datasource = new HikariDataSource(config);
+      logger.info("Database connection pool initialized successfully.");
     } catch (Exception e) {
       logger.error("db_init_error", e);
+      throw new IllegalStateException("Cannot initialize database connection pool", e);
+    }
+  }
+
+  private Properties loadDatabaseProperties() {
+    Properties props = new Properties();
+
+    try (InputStream input =
+                 getClass().getClassLoader().getResourceAsStream(DB_PROPERTIES_FILE)) {
+
+      if (input != null) {
+        props.load(input);
+      } else {
+        logger.warn("{} not found, environment variables will be used instead.", DB_PROPERTIES_FILE);
+      }
+    } catch (Exception e) {
+      logger.warn("Failed to load {}", DB_PROPERTIES_FILE, e);
+    }
+
+    return props;
+  }
+
+  private String getConfigValue(String envKey, Properties props, String propertyKey) {
+    String envValue = System.getenv(envKey);
+    if (envValue != null && !envValue.isBlank()) {
+      return envValue;
+    }
+
+    return props.getProperty(propertyKey);
+  }
+
+  private void validateDatabaseConfig(String dbUrl, String dbUser, String dbPassword) {
+    if (dbUrl == null || dbUrl.isBlank()) {
+      throw new IllegalStateException("Missing database URL. Please set DB_URL or db.url.");
+    }
+
+    if (dbUser == null || dbUser.isBlank()) {
+      throw new IllegalStateException("Missing database user. Please set DB_USER or db.user.");
+    }
+
+    if (dbPassword == null) {
+      throw new IllegalStateException("Missing database password. Please set DB_PASS or db.password.");
     }
   }
 
@@ -47,19 +98,22 @@ public class DatabaseConnection {
   }
 
   public Connection getConnection() {
+    if (datasource == null) {
+      throw new IllegalStateException("Database datasource has not been initialized.");
+    }
+
     try {
       return datasource.getConnection();
     } catch (SQLException e) {
       logger.error("pool_error", e);
-      return null;
+      throw new IllegalStateException("Cannot get database connection from pool", e);
     }
   }
 
-  // TÍNH NĂNG 4: HÀM ĐÓNG POOL KHI SHUTDOWN SERVER
   public void closePool() {
     if (datasource != null && !datasource.isClosed()) {
       datasource.close();
-      logger.info("Đã đóng HikariCP Database Connection Pool an toàn.");
+      logger.info("Database connection pool closed safely.");
     }
   }
 }
