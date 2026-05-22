@@ -77,6 +77,11 @@ public class Request implements Serializable {
   public static final String PURCHASE_VIP = "PURCHASE_VIP";
   public static final String GET_VIP_PLANS = "GET_VIP_PLANS";
 
+  // --- Daily spin wheel ---
+  public static final String GET_SPIN_WHEEL_STATE = "GET_SPIN_WHEEL_STATE";
+  public static final String SPIN_WHEEL = "SPIN_WHEEL";
+  public static final String BUY_SPIN_CREDITS = "BUY_SPIN_CREDITS";
+
   protected String requestId;
   protected String action;
   protected Object payload;

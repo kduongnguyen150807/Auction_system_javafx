@@ -1,0 +1,182 @@
+@import url("../shared/AppScrollbar.css");
+
+.spin-page-root {
+    -fx-background-color: transparent;
+    -fx-font-family: "Consolas";
+}
+
+.spin-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.spin-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.spin-glass-panel {
+    -fx-background-color: rgba(25, 25, 25, 0.88);
+    -fx-background-radius: 30;
+    -fx-border-color: rgba(0, 122, 255, 0.28);
+    -fx-border-radius: 30;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 30, 0, 0, 10);
+}
+
+.spin-title {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 34px;
+    -fx-font-weight: 900;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 170, 0, 0.45), 12, 0, 0, 0);
+}
+
+.spin-subtitle {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 13px;
+    -fx-text-fill: #bbbbbb;
+}
+
+.spin-balance {
+    -fx-text-fill: #00d4ff;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.spin-countdown {
+    -fx-text-fill: #ffd700;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-wrap-text: true;
+}
+
+.spin-credits {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 13px;
+}
+
+.spin-status {
+    -fx-text-fill: #00ff88;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-wrap-text: true;
+}
+
+.spin-legend-title {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+
+.spin-legend {
+    -fx-text-fill: #999999;
+    -fx-font-size: 12px;
+}
+
+.wheel-host {
+    -fx-background-color: rgba(0, 0, 0, 0.42);
+    -fx-background-radius: 190;
+    -fx-border-color: rgba(0, 122, 255, 0.35);
+    -fx-border-radius: 190;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 215, 0, 0.22), 24, 0, 0, 0);
+}
+
+.spin-wheel-container {
+    -fx-pref-width: 360;
+    -fx-pref-height: 360;
+}
+
+.wheel-pointer {
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 215, 0, 0.65), 10, 0, 0, 2);
+}
+
+.wheel-segment-label {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 12px;
+    -fx-font-weight: 900;
+    -fx-text-fill: white;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.85), 4, 0, 1, 1);
+}
+
+.wheel-label-vip {
+    -fx-text-fill: #ffd700;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 215, 0, 0.55), 6, 0, 0, 0);
+}
+
+.wheel-label-cash {
+    -fx-text-fill: #00d4ff;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.55), 6, 0, 0, 0);
+}
+
+.wheel-label-jackpot {
+    -fx-text-fill: #ff6b9d;
+    -fx-font-size: 13px;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 42, 109, 0.65), 8, 0, 0, 0);
+}
+
+.wheel-label-luck {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+}
+
+.btn-spin-main {
+    -fx-background-color: linear-gradient(to right, #007aff, #00d4ff);
+    -fx-text-fill: white;
+    -fx-font-family: "Consolas";
+    -fx-font-weight: 900;
+    -fx-font-size: 16px;
+    -fx-background-radius: 14;
+    -fx-padding: 14 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.4), 10, 0, 0, 0);
+}
+
+.btn-spin-main:hover:!disabled {
+    -fx-background-color: linear-gradient(to right, #00d4ff, #007aff);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 255, 0.65), 14, 0, 0, 0);
+}
+
+.btn-spin-main:disabled {
+    -fx-opacity: 0.45;
+}
+
+.btn-spin-buy {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: #ffcc44;
+    -fx-font-family: "Consolas";
+    -fx-font-weight: bold;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 170, 0, 0.35);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 12 16;
+    -fx-cursor: hand;
+}
+
+.btn-spin-buy:hover {
+    -fx-background-color: rgba(255, 170, 0, 0.2);
+    -fx-border-color: rgba(255, 170, 0, 0.55);
+    -fx-text-fill: white;
+}
+
+.btn-spin-refresh {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-text-fill: white;
+    -fx-font-family: "Consolas";
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 1;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+
+.btn-spin-refresh:hover {
+    -fx-background-color: rgba(0, 122, 255, 0.25);
+    -fx-border-color: rgba(0, 122, 255, 0.45);
+}

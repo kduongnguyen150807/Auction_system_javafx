@@ -117,6 +117,17 @@
                                 <Label text="Manage Users" styleClass="menu-text" minWidth="120.0"/>
                             </children>
                         </HBox>
+
+                        <HBox fx:id="SpinMenu" styleClass="menu-item" onMouseClicked="#openSpinWheel" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM12 5C12.55 5 13 5.45 13 6V12C13 12.28 12.89 12.55 12.7 12.75L9.7 15.75C9.31 16.14 8.68 16.14 8.29 15.75C7.9 15.36 7.9 14.73 8.29 14.34L11 11.63V6C11 5.45 11.45 5 12 5ZM7 3.5L8.5 5L7 6.5L5.5 5L7 3.5ZM17 3.5L18.5 5L17 6.5L15.5 5L17 3.5Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="Vòng Quay" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
                     </children>
                 </VBox>
                 <VBox styleClass="profile-card-bo" spacing="15.0" alignment="CENTER">

@@ -13,6 +13,7 @@ import com.auction.server.handler.dispatch.ActionRegistry;
 import com.auction.server.handler.dispatch.HandlerContext;
 import com.auction.server.handler.misc.MiscHandler;
 import com.auction.server.handler.rating.RatingHandler;
+import com.auction.server.handler.spin.SpinWheelHandler;
 import com.auction.server.handler.user.*;
 import com.auction.server.service.auction.AuctionManager;
 import com.auction.server.service.user.UserService;
@@ -140,6 +141,10 @@ public class ClientHandler implements Runnable {
     reg.register(Request.DEPOSIT, ActionHandler.requireAuth(new DepositHandler()));
     reg.register(Request.PURCHASE_VIP, ActionHandler.requireAuth(new PurchaseVipHandler()));
     reg.register(Request.GET_VIP_PLANS, new GetVipPlansHandler());
+    SpinWheelHandler spinWheelHandler = new SpinWheelHandler();
+    reg.register(Request.GET_SPIN_WHEEL_STATE, ActionHandler.requireAuth(spinWheelHandler));
+    reg.register(Request.SPIN_WHEEL, ActionHandler.requireAuth(spinWheelHandler));
+    reg.register(Request.BUY_SPIN_CREDITS, ActionHandler.requireAuth(spinWheelHandler));
     reg.register(Request.SUBMIT_RATING, ActionHandler.requireAuth(ratingHandler));
     reg.register(Request.SEND_CHAT, ActionHandler.requireAuth(chatHandler));
 

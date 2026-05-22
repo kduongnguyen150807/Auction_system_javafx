@@ -45,7 +45,7 @@ public class KhungController {
   private MainShellNetworkBridge networkBridge;
 
   // ĐÃ THÊM watchlistNode
-  private Node auctionHomeNode, watchlistNode, liveAuctionNode, vipMembershipNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
+  private Node auctionHomeNode, watchlistNode, liveAuctionNode, vipMembershipNode, spinWheelNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
   private TrangChuController homeController;
   private YourItemController myItemsController;
   private HistoryController historyController;
@@ -58,11 +58,12 @@ public class KhungController {
   private com.auction.client.ui.Watchlist.WatchlistController watchlistController;
   private com.auction.client.ui.Live.LiveAuctionController liveAuctionController;
   private com.auction.client.ui.Vip.VipMembershipController vipMembershipController;
+  private com.auction.client.ui.Spin.SpinWheelController spinWheelController;
 
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
 
-  @FXML private HBox AuctionMenu, WatchlistMenu, LiveMenu, VipMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
+  @FXML private HBox AuctionMenu, WatchlistMenu, LiveMenu, VipMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu, SpinMenu;
   @FXML private Label UserName, Rank;
   @FXML private ImageView sidebaravatar;
 
@@ -84,6 +85,7 @@ public class KhungController {
       NodeContentLoader<Pane> watchlist = loadFxml("/fxml/watchlist/Watchlist.fxml");
       NodeContentLoader<Pane> liveAuction = loadFxml("/fxml/live/LiveAuction.fxml");
       NodeContentLoader<Pane> vipMembership = loadFxml("/fxml/vip/VipMembership.fxml");
+      NodeContentLoader<Pane> spinWheel = loadFxml("/fxml/spin/SpinWheel.fxml");
 
       NodeContentLoader<Pane> hist = loadFxml("/fxml/history/History.fxml");
       NodeContentLoader<Pane> myItem = loadFxml("/fxml/youritem/YourItem.fxml");
@@ -99,6 +101,7 @@ public class KhungController {
       watchlistNode = watchlist.getCurrentNode();
       liveAuctionNode = liveAuction.getCurrentNode();
       vipMembershipNode = vipMembership.getCurrentNode();
+      spinWheelNode = spinWheel.getCurrentNode();
       historyNode = hist.getCurrentNode();
       myItemsNode = myItem.getCurrentNode();
       profileNode = profile.getCurrentNode();
@@ -110,6 +113,7 @@ public class KhungController {
       watchlistController = watchlist.getController();
       liveAuctionController = liveAuction.getController();
       vipMembershipController = vipMembership.getController();
+      spinWheelController = spinWheel.getController();
       myItemsController = myItem.getController();
       historyController = hist.getController();
       profileController = profile.getController();
@@ -130,6 +134,7 @@ public class KhungController {
                       ProfileMenu,
                       ChatMenu,
                       ManageUsersMenu,
+                      SpinMenu,
                       auctionHomeNode);
       navigator.setMenu(AuctionMenu);
 
@@ -194,6 +199,13 @@ public class KhungController {
   }
 
   @FXML
+  public void openSpinWheel(MouseEvent event) {
+    if (switchPage(spinWheelNode, SpinMenu) && spinWheelController != null) {
+      spinWheelController.refreshOnNavigate();
+    }
+  }
+
+  @FXML
   public void openHistory(MouseEvent event) {
     if (switchPage(historyNode, HistoryMenu) && historyController != null) historyController.refreshHistory();
   }
@@ -226,6 +238,7 @@ public class KhungController {
     else if (current == watchlistNode && watchlistController != null) watchlistController.refreshItems();
     else if (current == liveAuctionNode && liveAuctionController != null) liveAuctionController.refreshOnNavigate();
     else if (current == vipMembershipNode && vipMembershipController != null) vipMembershipController.refreshOnNavigate();
+    else if (current == spinWheelNode && spinWheelController != null) spinWheelController.refreshOnNavigate();
     else if (current == historyNode && historyController != null) historyController.refreshHistory();
     else if (current == myItemsNode && myItemsController != null) myItemsController.refreshItems();
     else if (current == profileNode && profileController != null) profileController.refreshFromServer();

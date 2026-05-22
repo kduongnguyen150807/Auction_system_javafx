@@ -66,6 +66,12 @@ public class UserDao extends BaseDao<User> implements UserRepository {
       user.setVipUntil(vipUntil.toLocalDateTime());
     }
 
+    Timestamp lastDailySpin = rs.getTimestamp("last_daily_spin_at");
+    if (lastDailySpin != null) {
+      user.setLastDailySpinAt(lastDailySpin.toLocalDateTime());
+    }
+    user.setPaidSpinCredits(rs.getInt("paid_spin_credits"));
+
     return user;
   }
 
@@ -574,6 +580,81 @@ public class UserDao extends BaseDao<User> implements UserRepository {
         return rs.next();
       }
     }
+  }
+
+  /** Extends VIP without charging balance (e.g. spin wheel prize). */
+  public boolean extendVipDays(int userId, int days) {
+    if (days <= 0) {
+      return false;
+    }
+    User user = getById(String.valueOf(userId));
+    if (user == null) {
+      return false;
+    }
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime base =
+        user.getVipUntil() != null && user.getVipUntil().isAfter(now) ? user.getVipUntil() : now;
+    return executeUpdate(
+            """
+            UPDATE users
+            SET vip_until = ?
+            WHERE id = ?
+            """,
+            Timestamp.valueOf(base.plusDays(days)),
+            userId);
+  }
+
+  public boolean markDailySpinUsed(int userId, LocalDateTime spinAt) {
+    return executeUpdate(
+            """
+            UPDATE users
+            SET last_daily_spin_at = ?
+            WHERE id = ?
+            """,
+            Timestamp.valueOf(spinAt),
+            userId);
+  }
+
+  public boolean decrementPaidSpinCredits(int userId) {
+    return executeUpdate(
+            """
+            UPDATE users
+            SET paid_spin_credits = paid_spin_credits - 1
+            WHERE id = ?
+            AND paid_spin_credits > 0
+            """,
+            userId);
+  }
+
+  public boolean addPaidSpinCredits(int userId, int count) {
+    if (count <= 0) {
+      return false;
+    }
+    return executeUpdate(
+            """
+            UPDATE users
+            SET paid_spin_credits = paid_spin_credits + ?
+            WHERE id = ?
+            """,
+            count,
+            userId);
+  }
+
+  public boolean purchaseSpinCredits(int userId, int count, double totalPrice) {
+    if (count <= 0 || totalPrice <= 0) {
+      return false;
+    }
+    return executeUpdate(
+            """
+            UPDATE users
+            SET balance = balance - ?, paid_spin_credits = paid_spin_credits + ?
+            WHERE id = ?
+            AND balance >= ?
+            """,
+            totalPrice,
+            count,
+            userId,
+            totalPrice);
   }
 
   /** Extends or starts VIP from balance; returns false if plan invalid or insufficient funds. */

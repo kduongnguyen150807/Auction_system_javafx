@@ -38,6 +38,9 @@ public abstract class User extends Entity implements Serializable {
 
   protected LocalDateTime vipUntil;
 
+  protected LocalDateTime lastDailySpinAt;
+  protected int paidSpinCredits;
+
   public User() {
 
     this.balance = 0.0;
@@ -273,6 +276,22 @@ public abstract class User extends Entity implements Serializable {
   /** Active VIP if expiry is in the future. */
   public boolean isVip() {
     return vipUntil != null && vipUntil.isAfter(LocalDateTime.now());
+  }
+
+  public LocalDateTime getLastDailySpinAt() {
+    return lastDailySpinAt;
+  }
+
+  public void setLastDailySpinAt(LocalDateTime lastDailySpinAt) {
+    this.lastDailySpinAt = lastDailySpinAt;
+  }
+
+  public int getPaidSpinCredits() {
+    return paidSpinCredits;
+  }
+
+  public void setPaidSpinCredits(int paidSpinCredits) {
+    this.paidSpinCredits = paidSpinCredits;
   }
 
   public void deposit(double amount) {

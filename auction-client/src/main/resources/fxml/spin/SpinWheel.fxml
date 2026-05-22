@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="spin-scroll" stylesheets="/css/spin/SpinWheel.css"
+            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.Spin.SpinWheelController">
+    <content>
+        <VBox alignment="TOP_CENTER" styleClass="spin-page-root">
+            <children>
+                <VBox maxWidth="720.0" spacing="24.0" styleClass="spin-glass-panel">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                            <children>
+                                <VBox spacing="6.0">
+                                    <children>
+                                        <Label styleClass="spin-title" text="🎰 Vòng Quay May Mắn"/>
+                                        <Label styleClass="spin-subtitle" text="1 lượt quay miễn phí mỗi ngày — mua thêm lượt bằng số dư"/>
+                                    </children>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="btn-spin-refresh" text="Làm mới"/>
+                            </children>
+                        </HBox>
+
+                        <HBox alignment="CENTER" spacing="40.0">
+                            <children>
+                                <StackPane fx:id="wheelHost" prefHeight="380.0" prefWidth="380.0" styleClass="wheel-host"/>
+
+                                <VBox alignment="CENTER_LEFT" spacing="16.0" prefWidth="260.0">
+                                    <children>
+                                        <Label fx:id="balanceLabel" styleClass="spin-balance" text="Số dư: 0$"/>
+                                        <Label fx:id="countdownLabel" styleClass="spin-countdown" text="Lượt quay miễn phí: —"/>
+                                        <Label fx:id="creditsLabel" styleClass="spin-credits" text="Lượt đã mua: 0"/>
+                                        <Button fx:id="spinButton" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleSpin" styleClass="btn-spin-main" text="QUAY"/>
+                                        <Button fx:id="buyButton" maxWidth="Infinity" mnemonicParsing="false" onAction="#handleBuyCredit" styleClass="btn-spin-buy" text="Mua 1 lượt (5$)"/>
+                                        <Label fx:id="statusLabel" styleClass="spin-status" wrapText="true" text=""/>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+
+                        <Label styleClass="spin-legend-title" text="PHẦN THƯỞNG"/>
+                        <Label styleClass="spin-legend" wrapText="true"
+                               text="VIP 1 ngày · VIP 2 ngày · VIP 1 năm · Chúc bạn may mắn lần sau · 10$ · 100$ · 10000$&#10;VIP 1 năm và 10000$ cực hiếm (~0,01%)"/>
+                    </children>
+                    <padding>
+                        <Insets bottom="40.0" left="30.0" right="30.0" top="40.0"/>
+                    </padding>
+                </VBox>
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>
