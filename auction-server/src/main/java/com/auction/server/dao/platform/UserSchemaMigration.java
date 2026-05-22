@@ -28,6 +28,7 @@ final class UserSchemaMigration {
     MigrationSchemaSupport.addColumnIfMissing(conn, "users", "total_ratings", "INT NOT NULL DEFAULT 0");
     MigrationSchemaSupport.addColumnIfMissing(conn, "users", "last_login_at", "DATETIME NULL");
     MigrationSchemaSupport.addColumnIfMissing(conn, "users", "session_token", "VARCHAR(64) NULL");
+    MigrationSchemaSupport.addColumnIfMissing(conn, "users", "vip_until", "DATETIME NULL");
 
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_username", "username");
     MigrationSchemaSupport.createUniqueIndexIfMissing(conn, "users", "uk_users_email", "email");

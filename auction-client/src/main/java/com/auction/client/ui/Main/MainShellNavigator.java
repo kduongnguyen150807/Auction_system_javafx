@@ -11,6 +11,7 @@ final class MainShellNavigator {
   private final HBox auctionMenu;
   private final HBox watchlistMenu;
   private final HBox liveMenu;
+  private final HBox vipMenu;
   private final HBox historyMenu;
   private final HBox myItemMenu;
   private final HBox profileMenu;
@@ -24,6 +25,7 @@ final class MainShellNavigator {
           HBox auctionMenu,
           HBox watchlistMenu,
           HBox liveMenu,
+          HBox vipMenu,
           HBox historyMenu,
           HBox myItemMenu,
           HBox profileMenu,
@@ -34,6 +36,7 @@ final class MainShellNavigator {
     this.auctionMenu = auctionMenu;
     this.watchlistMenu = watchlistMenu;
     this.liveMenu = liveMenu;
+    this.vipMenu = vipMenu;
     this.historyMenu = historyMenu;
     this.myItemMenu = myItemMenu;
     this.profileMenu = profileMenu;
@@ -81,6 +84,6 @@ final class MainShellNavigator {
 
   private HBox[] menuBoxes() {
     // ĐÃ THÊM watchlistMenu VÀO MẢNG ĐỂ NÓ ĐỔI MÀU KHI CLICK
-    return new HBox[] {auctionMenu, watchlistMenu, liveMenu, historyMenu, myItemMenu, profileMenu, chatMenu, manageUsersMenu};
+    return new HBox[] {auctionMenu, liveMenu, watchlistMenu, vipMenu, historyMenu, myItemMenu, profileMenu, chatMenu, manageUsersMenu};
   }
 }

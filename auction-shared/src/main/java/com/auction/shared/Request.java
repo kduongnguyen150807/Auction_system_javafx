@@ -73,6 +73,10 @@ public class Request implements Serializable {
   public static final String GET_LIVE_BID_TIERS = "GET_LIVE_BID_TIERS";
   public static final String GET_LIVE_AUCTIONS = "GET_LIVE_AUCTIONS";
 
+  // --- VIP membership ---
+  public static final String PURCHASE_VIP = "PURCHASE_VIP";
+  public static final String GET_VIP_PLANS = "GET_VIP_PLANS";
+
   protected String requestId;
   protected String action;
   protected Object payload;

@@ -47,7 +47,8 @@ public final class LiveSessionManager {
             user.getId(),
             user.getUsername(),
             user.getAvatarUrl(),
-            LiveParticipantEvent.Action.JOINED));
+            LiveParticipantEvent.Action.JOINED,
+            user.isVip()));
     return info;
   }
 
@@ -65,7 +66,8 @@ public final class LiveSessionManager {
               userId,
               user.getUsername(),
               user.getAvatarUrl(),
-              LiveParticipantEvent.Action.LEFT));
+              LiveParticipantEvent.Action.LEFT,
+              user.isVip()));
     }
   }
 
@@ -80,7 +82,8 @@ public final class LiveSessionManager {
     for (Integer uid : ids) {
       User u = AuctionManager.getInstance().getUserDao().getById(String.valueOf(uid));
       if (u != null) {
-        participants.add(new LiveParticipantSummary(u.getId(), u.getUsername(), u.getAvatarUrl()));
+        participants.add(
+            new LiveParticipantSummary(u.getId(), u.getUsername(), u.getAvatarUrl(), u.isVip()));
       }
     }
     return new LiveSessionInfo(itemId, udpPort, participants.size(), participants);

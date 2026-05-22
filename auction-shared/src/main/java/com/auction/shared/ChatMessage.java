@@ -16,6 +16,7 @@ public class ChatMessage extends Entity {
   private String content;
   private String messageType;
   private LocalDateTime createdAt;
+  private boolean senderVip;
 
   public ChatMessage() {
     this.createdAt = LocalDateTime.now();
@@ -52,4 +53,7 @@ public class ChatMessage extends Entity {
 
   public LocalDateTime getCreatedAt() { return this.createdAt; }
   public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+  public boolean isSenderVip() { return senderVip; }
+  public void setSenderVip(boolean senderVip) { this.senderVip = senderVip; }
 }

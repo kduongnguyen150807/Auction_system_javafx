@@ -1,0 +1,140 @@
+@import url("../shared/AppScrollbar.css");
+
+.vip-page-root {
+    -fx-background-color: transparent;
+    -fx-font-family: "Consolas";
+}
+
+.vip-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.vip-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.vip-glass-panel {
+    -fx-background-color: rgba(25, 25, 25, 0.88);
+    -fx-background-radius: 30;
+    -fx-border-color: rgba(255, 215, 0, 0.35);
+    -fx-border-radius: 30;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 30, 0, 0, 10);
+}
+
+.vip-page-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: 900;
+    -fx-text-fill: linear-gradient(to right, #ffd700, #ffaa00);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 215, 0, 0.45), 10, 0, 0, 0);
+}
+
+.vip-page-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #bbbbbb;
+    -fx-wrap-text: true;
+}
+
+.vip-balance {
+    -fx-text-fill: #00d4ff;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.vip-active {
+    -fx-text-fill: #ffd700;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-background-color: rgba(255, 215, 0, 0.15);
+    -fx-background-radius: 12;
+    -fx-padding: 6 14;
+    -fx-border-color: rgba(255, 215, 0, 0.5);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.vip-inactive {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 14px;
+}
+
+.vip-section-label {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+
+.vip-plan-card {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(255, 215, 0, 0.25);
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.35), 12, 0, 0, 4);
+}
+
+.vip-plan-card:hover {
+    -fx-border-color: rgba(255, 215, 0, 0.55);
+    -fx-background-color: rgba(255, 215, 0, 0.08);
+}
+
+.vip-plan-title {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+}
+
+.vip-plan-price {
+    -fx-text-fill: #ffd700;
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+}
+
+.vip-plan-duration {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 12px;
+}
+
+.btn-vip-buy {
+    -fx-background-color: linear-gradient(to right, #ffd700, #ffaa00);
+    -fx-text-fill: black;
+    -fx-font-weight: 900;
+    -fx-font-size: 13px;
+    -fx-background-radius: 12;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+
+.btn-vip-buy:hover:!disabled {
+    -fx-background-color: linear-gradient(to right, #ffea70, #ffd700);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 215, 0, 0.5), 10, 0, 0, 0);
+}
+
+.btn-vip-buy:disabled {
+    -fx-opacity: 0.45;
+}
+
+.btn-vip-refresh {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-padding: 10 16;
+}
+
+.btn-vip-refresh:hover {
+    -fx-background-color: rgba(255, 215, 0, 0.2);
+    -fx-border-color: rgba(255, 215, 0, 0.4);
+}
+
+.vip-status {
+    -fx-text-fill: #00ff88;
+    -fx-font-size: 13px;
+    -fx-wrap-text: true;
+}

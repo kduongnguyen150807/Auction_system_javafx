@@ -45,7 +45,7 @@ public class KhungController {
   private MainShellNetworkBridge networkBridge;
 
   // ĐÃ THÊM watchlistNode
-  private Node auctionHomeNode, watchlistNode, liveAuctionNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
+  private Node auctionHomeNode, watchlistNode, liveAuctionNode, vipMembershipNode, historyNode, myItemsNode, profileNode, adminDashboardNode, addLotNode, chatNode;
   private TrangChuController homeController;
   private YourItemController myItemsController;
   private HistoryController historyController;
@@ -57,11 +57,12 @@ public class KhungController {
   // ĐÃ THÊM watchlistController
   private com.auction.client.ui.Watchlist.WatchlistController watchlistController;
   private com.auction.client.ui.Live.LiveAuctionController liveAuctionController;
+  private com.auction.client.ui.Vip.VipMembershipController vipMembershipController;
 
   @FXML private HBox SearchContainer;
   @FXML private StackPane ContentArea;
 
-  @FXML private HBox AuctionMenu, WatchlistMenu, LiveMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
+  @FXML private HBox AuctionMenu, WatchlistMenu, LiveMenu, VipMenu, HistoryMenu, MyItemMenu, ProfileMenu, ChatMenu, ManageUsersMenu;
   @FXML private Label UserName, Rank;
   @FXML private ImageView sidebaravatar;
 
@@ -82,6 +83,7 @@ public class KhungController {
       // ĐÃ THÊM LOAD WATCHLIST FXML
       NodeContentLoader<Pane> watchlist = loadFxml("/fxml/watchlist/Watchlist.fxml");
       NodeContentLoader<Pane> liveAuction = loadFxml("/fxml/live/LiveAuction.fxml");
+      NodeContentLoader<Pane> vipMembership = loadFxml("/fxml/vip/VipMembership.fxml");
 
       NodeContentLoader<Pane> hist = loadFxml("/fxml/history/History.fxml");
       NodeContentLoader<Pane> myItem = loadFxml("/fxml/youritem/YourItem.fxml");
@@ -96,6 +98,7 @@ public class KhungController {
       auctionHomeNode = auction.getCurrentNode();
       watchlistNode = watchlist.getCurrentNode();
       liveAuctionNode = liveAuction.getCurrentNode();
+      vipMembershipNode = vipMembership.getCurrentNode();
       historyNode = hist.getCurrentNode();
       myItemsNode = myItem.getCurrentNode();
       profileNode = profile.getCurrentNode();
@@ -106,6 +109,7 @@ public class KhungController {
       homeController = auction.getController();
       watchlistController = watchlist.getController();
       liveAuctionController = liveAuction.getController();
+      vipMembershipController = vipMembership.getController();
       myItemsController = myItem.getController();
       historyController = hist.getController();
       profileController = profile.getController();
@@ -120,6 +124,7 @@ public class KhungController {
                       AuctionMenu,
                       WatchlistMenu,
                       LiveMenu,
+                      VipMenu,
                       HistoryMenu,
                       MyItemMenu,
                       ProfileMenu,
@@ -182,6 +187,13 @@ public class KhungController {
   }
 
   @FXML
+  public void openVipMembership(MouseEvent event) {
+    if (switchPage(vipMembershipNode, VipMenu) && vipMembershipController != null) {
+      vipMembershipController.refreshOnNavigate();
+    }
+  }
+
+  @FXML
   public void openHistory(MouseEvent event) {
     if (switchPage(historyNode, HistoryMenu) && historyController != null) historyController.refreshHistory();
   }
@@ -213,6 +225,7 @@ public class KhungController {
     if (current == auctionHomeNode) refreshAuctionHome();
     else if (current == watchlistNode && watchlistController != null) watchlistController.refreshItems();
     else if (current == liveAuctionNode && liveAuctionController != null) liveAuctionController.refreshOnNavigate();
+    else if (current == vipMembershipNode && vipMembershipController != null) vipMembershipController.refreshOnNavigate();
     else if (current == historyNode && historyController != null) historyController.refreshHistory();
     else if (current == myItemsNode && myItemsController != null) myItemsController.refreshItems();
     else if (current == profileNode && profileController != null) profileController.refreshFromServer();
@@ -244,6 +257,9 @@ public class KhungController {
     if (UserName != null) UserName.setText(ClientSession.getUsername());
     if (Rank != null) {
       String rankText = ClientSession.getActiveRole().name();
+      if (currentUser.isVip()) {
+        rankText = "VIP | " + rankText;
+      }
       if (currentUser.getTotalRatings() > 0)
         rankText +=
                 " | "

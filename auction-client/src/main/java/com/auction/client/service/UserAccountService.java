@@ -78,4 +78,19 @@ public class UserAccountService {
     }
     return null;
   }
+
+  public boolean purchaseVip(String planId) {
+    if (planId == null || planId.isBlank()) {
+      return false;
+    }
+    Map<String, String> data = new HashMap<>();
+    data.put("planId", planId.trim());
+    Request request = new Request(Request.PURCHASE_VIP, (Serializable) data);
+    Response response = NetworkClient.getInstance().sendRequestAndWait(request);
+    if (response != null && Response.OK.equals(response.getStatus())) {
+      ClientSession.setCurrentUser((User) response.getPayload());
+      return true;
+    }
+    return false;
+  }
 }

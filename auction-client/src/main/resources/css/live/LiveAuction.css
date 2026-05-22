@@ -154,6 +154,36 @@
     -fx-font-weight: bold;
 }
 
+.live-vip-tag {
+    -fx-background-color: linear-gradient(to right, #ffd700, #ffaa00);
+    -fx-text-fill: black;
+    -fx-font-size: 12px;
+    -fx-font-weight: 900;
+    -fx-padding: 4 10;
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.65);
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.55), 6, 0, 0, 2);
+}
+
+.live-participant-tile-vip {
+    -fx-border-color: rgba(255, 215, 0, 0.75);
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 215, 0, 0.35), 16, 0, 0, 0);
+}
+
+.live-video-frame-vip {
+    -fx-border-color: rgba(255, 215, 0, 0.65);
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+}
+
+.participant-name-vip {
+    -fx-text-fill: #ffd700;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 215, 0, 0.45), 6, 0, 0, 0);
+}
+
 .btn-refresh {
     -fx-background-color: rgba(255, 255, 255, 0.15);
     -fx-text-fill: white;

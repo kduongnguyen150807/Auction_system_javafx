@@ -31,6 +31,7 @@ public class ChatHandler implements ActionHandler {
         int myId = ((Number) data.get("myId")).intValue();
         int otherId = ((Number) data.get("otherId")).intValue();
         List<ChatMessage> history = chatDao.getPrivateHistory(myId, otherId, 100);
+        enrichVipFlags(history);
         return new Response(requestId, Response.OK, "success", history);
       }
 
@@ -66,6 +67,8 @@ public class ChatHandler implements ActionHandler {
       return new Response(request.getRequestId(), Response.ERROR, "Empty message", null);
     }
 
+    msg.setSenderVip(sender.isVip());
+
     if (chatDao.insertMessage(msg)) {
       if (ChatMessage.TYPE_GLOBAL.equals(msg.getMessageType())) {
         AuctionManager.getInstance().broadcast(new Response("", "CHAT_GLOBAL", "new_message", msg));
@@ -79,6 +82,20 @@ public class ChatHandler implements ActionHandler {
   }
 
   private Response handleGetGlobalHistory(String requestId) {
-    return new Response(requestId, Response.OK, "success", chatDao.getGlobalHistory(100));
+    List<ChatMessage> history = chatDao.getGlobalHistory(100);
+    enrichVipFlags(history);
+    return new Response(requestId, Response.OK, "success", history);
+  }
+
+  private void enrichVipFlags(List<ChatMessage> messages) {
+    if (messages == null) {
+      return;
+    }
+    for (ChatMessage message : messages) {
+      User sender = userDao.getById(String.valueOf(message.getSenderId()));
+      if (sender != null) {
+        message.setSenderVip(sender.isVip());
+      }
+    }
   }
 }

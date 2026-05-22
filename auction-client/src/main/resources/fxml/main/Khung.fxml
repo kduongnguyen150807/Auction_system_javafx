@@ -33,6 +33,17 @@
                             </children>
                         </HBox>
 
+                        <HBox fx:id="LiveMenu" styleClass="menu-item" onMouseClicked="#openLiveAuction" maxWidth="Infinity">
+                            <children>
+                                <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
+                                    <children>
+                                        <SVGPath content="M17 10.5V7C17 4.24 14.76 2 12 2S7 4.24 7 7V10.5C5.62 11.15 4.75 12.52 4.75 14.08V17C4.75 19.21 6.54 21 8.75 21H15.25C17.46 21 19.25 19.21 19.25 17V14.08C19.25 12.52 18.38 11.15 17 10.5ZM9 7C9 5.34 10.34 4 12 4S15 5.34 15 7V10H9V7ZM17.25 17C17.25 18.07 16.32 19 15.25 19H8.75C7.68 19 6.75 18.07 6.75 17V14.08C6.75 13.01 7.68 12.08 8.75 12.08H15.25C16.32 12.08 17.25 13.01 17.25 14.08V17Z" styleClass="icon"/>
+                                    </children>
+                                </StackPane>
+                                <Label text="Live Auction" styleClass="menu-text" minWidth="120.0"/>
+                            </children>
+                        </HBox>
+
                         <!-- NÚT WATCHLIST MỚI THÊM -->
                         <HBox fx:id="WatchlistMenu" styleClass="menu-item" onMouseClicked="#openWatchlist" maxWidth="Infinity">
                             <children>
@@ -45,14 +56,14 @@
                             </children>
                         </HBox>
 
-                        <HBox fx:id="LiveMenu" styleClass="menu-item" onMouseClicked="#openLiveAuction" maxWidth="Infinity">
+                        <HBox fx:id="VipMenu" styleClass="menu-item" onMouseClicked="#openVipMembership" maxWidth="Infinity">
                             <children>
                                 <StackPane prefWidth="24.0" minWidth="24.0" maxWidth="24.0" alignment="CENTER" styleClass="menu-icon-slot">
                                     <children>
-                                        <SVGPath content="M17 10.5V7C17 4.24 14.76 2 12 2S7 4.24 7 7V10.5C5.62 11.15 4.75 12.52 4.75 14.08V17C4.75 19.21 6.54 21 8.75 21H15.25C17.46 21 19.25 19.21 19.25 17V14.08C19.25 12.52 18.38 11.15 17 10.5ZM9 7C9 5.34 10.34 4 12 4S15 5.34 15 7V10H9V7ZM17.25 17C17.25 18.07 16.32 19 15.25 19H8.75C7.68 19 6.75 18.07 6.75 17V14.08C6.75 13.01 7.68 12.08 8.75 12.08H15.25C16.32 12.08 17.25 13.01 17.25 14.08V17Z" styleClass="icon"/>
+                                        <SVGPath content="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" styleClass="icon"/>
                                     </children>
                                 </StackPane>
-                                <Label text="Live Auction" styleClass="menu-text" minWidth="120.0"/>
+                                <Label text="VIP" styleClass="menu-text" minWidth="120.0"/>
                             </children>
                         </HBox>
 

@@ -61,6 +61,11 @@ public class UserDao extends BaseDao<User> implements UserRepository {
       user.setLastLogin(lastLoginAt.toLocalDateTime());
     }
 
+    Timestamp vipUntil = rs.getTimestamp("vip_until");
+    if (vipUntil != null) {
+      user.setVipUntil(vipUntil.toLocalDateTime());
+    }
+
     return user;
   }
 
@@ -569,6 +574,32 @@ public class UserDao extends BaseDao<User> implements UserRepository {
         return rs.next();
       }
     }
+  }
+
+  /** Extends or starts VIP from balance; returns false if plan invalid or insufficient funds. */
+  public boolean purchaseVip(int userId, VipPlan plan) {
+    if (plan == null || plan.getPrice() <= 0) {
+      return false;
+    }
+    User user = getById(String.valueOf(userId));
+    if (user == null || user.getBalance() < plan.getPrice()) {
+      return false;
+    }
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime base =
+        user.getVipUntil() != null && user.getVipUntil().isAfter(now) ? user.getVipUntil() : now;
+    LocalDateTime newUntil = base.plusDays(plan.getDays());
+    return executeUpdate(
+            """
+            UPDATE users
+            SET balance = balance - ?, vip_until = ?
+            WHERE id = ?
+            AND balance >= ?
+            """,
+            plan.getPrice(),
+            Timestamp.valueOf(newUntil),
+            userId,
+            plan.getPrice());
   }
 
   private String normalize(String value) {

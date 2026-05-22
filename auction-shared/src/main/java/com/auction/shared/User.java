@@ -36,6 +36,8 @@ public abstract class User extends Entity implements Serializable {
   protected double avgRating;
   protected int totalRatings;
 
+  protected LocalDateTime vipUntil;
+
   public User() {
 
     this.balance = 0.0;
@@ -258,6 +260,19 @@ public abstract class User extends Entity implements Serializable {
 
   public void setTotalRatings(int totalRatings) {
     this.totalRatings = totalRatings;
+  }
+
+  public LocalDateTime getVipUntil() {
+    return vipUntil;
+  }
+
+  public void setVipUntil(LocalDateTime vipUntil) {
+    this.vipUntil = vipUntil;
+  }
+
+  /** Active VIP if expiry is in the future. */
+  public boolean isVip() {
+    return vipUntil != null && vipUntil.isAfter(LocalDateTime.now());
   }
 
   public void deposit(double amount) {

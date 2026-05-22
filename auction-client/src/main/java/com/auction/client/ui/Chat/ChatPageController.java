@@ -305,6 +305,12 @@ public class ChatPageController implements ChatLeftListHost {
 
   private void appendBubble(ChatMessage msg) {
     boolean mine = msg.getSenderId() == myId();
+    if (mine) {
+      User me = ClientSession.getCurrentUser();
+      if (me != null && me.isVip()) {
+        msg.setSenderVip(true);
+      }
+    }
     messagesContainer.getChildren().add(ChatBubbleRowFactory.createRow(msg, mine, TIME_FMT));
   }
 

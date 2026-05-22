@@ -16,16 +16,23 @@ public class LiveParticipantEvent implements Serializable {
   private String username;
   private String avatarUrl;
   private Action action;
+  private boolean vip;
 
   public LiveParticipantEvent() {}
 
   public LiveParticipantEvent(
       int itemId, int userId, String username, String avatarUrl, Action action) {
+    this(itemId, userId, username, avatarUrl, action, false);
+  }
+
+  public LiveParticipantEvent(
+      int itemId, int userId, String username, String avatarUrl, Action action, boolean vip) {
     this.itemId = itemId;
     this.userId = userId;
     this.username = username;
     this.avatarUrl = avatarUrl;
     this.action = action;
+    this.vip = vip;
   }
 
   public int getItemId() {
@@ -66,5 +73,13 @@ public class LiveParticipantEvent implements Serializable {
 
   public void setAction(Action action) {
     this.action = action;
+  }
+
+  public boolean isVip() {
+    return vip;
+  }
+
+  public void setVip(boolean vip) {
+    this.vip = vip;
   }
 }

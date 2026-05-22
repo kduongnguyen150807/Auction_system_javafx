@@ -26,6 +26,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +54,7 @@ public class LiveAuctionController {
 
   private final LiveAuctionClientService liveService = new LiveAuctionClientService();
   private final UdpRelayVideoTransport videoTransport = new UdpRelayVideoTransport();
-  private final Map<Integer, VBox> participantTiles = new HashMap<>();
+  private final Map<Integer, ParticipantTile> participantTiles = new HashMap<>();
   private int localUserId = -1;
 
   private int activeItemId = -1;
@@ -60,6 +63,41 @@ public class LiveAuctionController {
 
   public static LiveAuctionController getInstance() {
     return instance;
+  }
+
+  public static void refreshLocalVipIfOpen() {
+    if (instance != null) {
+      instance.refreshLocalVipBadge();
+    }
+  }
+
+  /** Updates VIP overlay on the local user's video tile after purchasing VIP. */
+  public void refreshLocalVipBadge() {
+    User me = ClientSession.getCurrentUser();
+    if (me == null || localUserId <= 0) {
+      return;
+    }
+    Platform.runLater(
+        () -> {
+          ParticipantTile tile = participantTiles.get(localUserId);
+          if (tile != null) {
+            applyVipStyles(tile, me.isVip());
+          }
+        });
+  }
+
+  private static final class ParticipantTile {
+    private final VBox root;
+    private final ImageView imageView;
+    private final Label vipTag;
+    private final Label nameLabel;
+
+    private ParticipantTile(VBox root, ImageView imageView, Label vipTag, Label nameLabel) {
+      this.root = root;
+      this.imageView = imageView;
+      this.vipTag = vipTag;
+      this.nameLabel = nameLabel;
+    }
   }
 
   @FXML
@@ -213,7 +251,7 @@ public class LiveAuctionController {
     }
     Platform.runLater(() -> {
       if (event.getAction() == LiveParticipantEvent.Action.JOINED) {
-        ensureParticipantTile(event.getUserId(), event.getUsername());
+        ensureParticipantTile(event.getUserId(), event.getUsername(), event.isVip());
       } else {
         removeParticipantTile(event.getUserId());
       }
@@ -237,7 +275,7 @@ public class LiveAuctionController {
     videoGrid.getChildren().clear();
     participantTiles.clear();
     for (LiveParticipantSummary p : info.getParticipants()) {
-      ensureParticipantTile(p.getUserId(), p.getUsername());
+      ensureParticipantTile(p.getUserId(), p.getUsername(), p.isVip());
     }
     joinButton.setDisable(true);
     leaveButton.setDisable(false);
@@ -342,11 +380,15 @@ public class LiveAuctionController {
           userId == localUserId
               ? resolveUsername(userId) + " (Bạn)"
               : resolveUsername(userId);
-      VBox tile = participantTiles.get(userId);
+      ParticipantTile tile = participantTiles.get(userId);
       if (tile == null) {
-        tile = ensureParticipantTile(userId, label);
+        boolean vip =
+            ClientSession.getCurrentUser() != null
+                && ClientSession.getCurrentUser().getId() == userId
+                && ClientSession.getCurrentUser().isVip();
+        tile = ensureParticipantTile(userId, label, vip);
       }
-      ImageView view = (ImageView) tile.getUserData();
+      ImageView view = tile.imageView;
       if (view != null) {
         try {
           view.setImage(new Image(new ByteArrayInputStream(jpeg), 200, 150, true, true));
@@ -365,9 +407,10 @@ public class LiveAuctionController {
     return "User " + userId;
   }
 
-  private VBox ensureParticipantTile(int userId, String username) {
-    VBox existing = participantTiles.get(userId);
+  private ParticipantTile ensureParticipantTile(int userId, String username, boolean vip) {
+    ParticipantTile existing = participantTiles.get(userId);
     if (existing != null) {
+      applyVipStyles(existing, vip);
       return existing;
     }
     ImageView imageView = new ImageView();
@@ -375,20 +418,50 @@ public class LiveAuctionController {
     imageView.setFitHeight(150);
     imageView.setPreserveRatio(true);
     imageView.getStyleClass().add("live-video-frame");
+
+    Label vipTag = new Label("VIP");
+    vipTag.getStyleClass().add("live-vip-tag");
+    StackPane videoStack = new StackPane(imageView, vipTag);
+    StackPane.setAlignment(vipTag, Pos.TOP_RIGHT);
+    StackPane.setMargin(vipTag, new Insets(6, 6, 0, 0));
+
     Label name = new Label(username != null ? username : ("User " + userId));
     name.getStyleClass().add("participant-name");
-    VBox box = new VBox(8, imageView, name);
+
+    VBox box = new VBox(8, videoStack, name);
     box.getStyleClass().add("live-participant-tile");
-    box.setUserData(imageView);
-    participantTiles.put(userId, box);
+
+    ParticipantTile tile = new ParticipantTile(box, imageView, vipTag, name);
+    applyVipStyles(tile, vip);
+    participantTiles.put(userId, tile);
     videoGrid.getChildren().add(box);
-    return box;
+    return tile;
+  }
+
+  private void applyVipStyles(ParticipantTile tile, boolean vip) {
+    tile.vipTag.setVisible(vip);
+    tile.vipTag.setManaged(vip);
+    if (vip) {
+      if (!tile.root.getStyleClass().contains("live-participant-tile-vip")) {
+        tile.root.getStyleClass().add("live-participant-tile-vip");
+      }
+      if (!tile.imageView.getStyleClass().contains("live-video-frame-vip")) {
+        tile.imageView.getStyleClass().add("live-video-frame-vip");
+      }
+      if (!tile.nameLabel.getStyleClass().contains("participant-name-vip")) {
+        tile.nameLabel.getStyleClass().add("participant-name-vip");
+      }
+    } else {
+      tile.root.getStyleClass().remove("live-participant-tile-vip");
+      tile.imageView.getStyleClass().remove("live-video-frame-vip");
+      tile.nameLabel.getStyleClass().remove("participant-name-vip");
+    }
   }
 
   private void removeParticipantTile(int userId) {
-    VBox box = participantTiles.remove(userId);
-    if (box != null) {
-      videoGrid.getChildren().remove(box);
+    ParticipantTile tile = participantTiles.remove(userId);
+    if (tile != null) {
+      videoGrid.getChildren().remove(tile.root);
     }
   }
 

@@ -138,6 +138,8 @@ public class ClientHandler implements Runnable {
     reg.register(Request.UPDATE_PROFILE, ActionHandler.requireAuth(new UpdateProfileHandler()));
     reg.register(Request.UPDATE_AVATAR, ActionHandler.requireAuth(new UpdateAvatarHandler()));
     reg.register(Request.DEPOSIT, ActionHandler.requireAuth(new DepositHandler()));
+    reg.register(Request.PURCHASE_VIP, ActionHandler.requireAuth(new PurchaseVipHandler()));
+    reg.register(Request.GET_VIP_PLANS, new GetVipPlansHandler());
     reg.register(Request.SUBMIT_RATING, ActionHandler.requireAuth(ratingHandler));
     reg.register(Request.SEND_CHAT, ActionHandler.requireAuth(chatHandler));
 
