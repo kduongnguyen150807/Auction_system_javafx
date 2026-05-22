@@ -1,0 +1,8 @@
+.notification-overlay {
+    -fx-background-color: #242526;
+    -fx-border-color: black;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 10;
+}
+

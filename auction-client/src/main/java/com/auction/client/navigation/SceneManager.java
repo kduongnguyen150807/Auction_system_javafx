@@ -2,6 +2,7 @@ package com.auction.client.navigation;
 
 import com.auction.client.ui.homeview.HomeView;
 import com.auction.client.ui.homeview.HomeViewType;
+import com.auction.client.ui.loginview.LoginView;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -53,6 +54,16 @@ public class SceneManager {
   public void deleteHomeView() {
     Scene homeViewSCene =  sceneMap.get(SceneType.HOME_VIEW);
     sceneMap.remove(SceneType.HOME_VIEW);
+  }
+
+  public void deleteLoginView() {
+    Scene loginViewScene =  sceneMap.get(SceneType.LOGIN_VIEW);
+    sceneMap.remove(SceneType.LOGIN_VIEW);
+  }
+
+  public void buildLoginView() {
+    Scene loginViewScene =  new Scene(new LoginView());
+    registerScene(SceneType.LOGIN_VIEW, loginViewScene);
   }
 
   public Window getWindow() {

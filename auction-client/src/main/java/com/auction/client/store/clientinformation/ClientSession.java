@@ -1,5 +1,6 @@
 package com.auction.client.store.clientinformation;
 
+import com.auction.client.util.StarUtils;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.beans.property.*;
@@ -31,6 +32,8 @@ public class ClientSession {
 
   private SimpleDoubleProperty averageRating = new SimpleDoubleProperty();
 
+  private SimpleStringProperty avgRatingString =  new SimpleStringProperty();
+
   private ClientSession() {}
 
   public void setUser(User user) {
@@ -46,6 +49,14 @@ public class ClientSession {
     this.itemsBought.setValue(user.getItemsBought());
     this.moneySpent.setValue(user.getMoneySpent());
     this.averageRating.setValue(user.getAvgRating());
+    this.currentRole.setValue(user.getRole());
+
+    String ratingStr = "N/A";
+    if (user.getTotalRatings() > 0) {
+      String sentiment = StarUtils.getRatingTypeFromAvg(user.getAvgRating());
+      ratingStr = String.format("%.1f (%d) %s", user.getAvgRating(), user.getTotalRatings(), sentiment);
+    }
+    this.avgRatingString.set(ratingStr);
   }
 
   public void applyProfileUpdate(String fullname, String phoneNumber, String email) {
@@ -118,6 +129,9 @@ public class ClientSession {
     return moneySpent;
   }
 
+  public SimpleStringProperty avgRatingProperty() {
+    return avgRatingString;
+  }
   public void clear() {
     currentUser.setValue(null);
     currentRole.setValue(null);
@@ -126,5 +140,6 @@ public class ClientSession {
     phoneNumber.setValue(null);
     email.setValue(null);
     avatarUrl.setValue(null);
+    avgRatingString.setValue(null);
   }
 }

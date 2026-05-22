@@ -15,7 +15,6 @@
         <Label fx:id="lotsName"
                text="Art Lots"
                styleClass="category-heading"/>
-
         <ScrollPane fx:id="scrollPane"
                     fitToHeight="true"
                     fitToWidth="true"
@@ -23,16 +22,12 @@
                     vbarPolicy="NEVER"
                     pannable="true"
                     styleClass="category-shelf">
-
             <content>
-
                 <HBox fx:id="listRow"
                       alignment="CENTER_LEFT"
                       spacing="16.0"
                       styleClass="category-row"/>
-
             </content>
-
         </ScrollPane>
 
     </children>

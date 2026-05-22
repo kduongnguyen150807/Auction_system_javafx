@@ -1,0 +1,43 @@
+/* Khung bọc tổng thể mini */
+.userbar {
+    -fx-background-color: rgba(20, 20, 20, 0.8);
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: rgba(255, 255, 255, 0.06);
+    -fx-border-width: 1px;
+
+    /* Thu nhỏ padding xuống 8px trên dưới, 12px hai bên */
+    -fx-padding: 8px 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 6, 0.0, 0, 2);
+}
+
+.userbar:hover {
+    -fx-background-color: rgba(35, 35, 35, 0.85);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-cursor: hand;
+}
+
+/* Kiểu dáng nhãn thứ hạng gọn gàng */
+.userbar .rank-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+    -fx-min-width: 28px; /* Giữ độ rộng vừa đủ để số không làm lệch dòng */
+    -fx-alignment: center;
+}
+
+/* Định dạng nhãn tiền tệ */
+.userbar .money-label {
+    -fx-text-fill: #4caf50; /* Màu xanh lá nhẹ nhàng cho tiền bạc, dễ nhìn trên nền tối */
+    -fx-font-weight: 500;
+}
+
+/* Hiệu ứng phát sáng nhẹ cho sao */
+.userbar .stars-glow {
+    -fx-text-fill: #ffb300;
+}
+
+/* Số lượt đánh giá phụ */
+.userbar .rating-count {
+    -fx-text-fill: #aaaaaa;
+}

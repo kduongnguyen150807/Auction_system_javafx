@@ -4,6 +4,7 @@ import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.StringFormat;
 import com.auction.client.util.TimeFormat;
+import com.auction.shared.ItemStatus;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
@@ -58,7 +59,15 @@ public class InfoLayoutController {
     maxPriceValue.setText(StringFormat.formatMoney(selectedItem.getItem().getMaxPrice()));
     sellerName.setText(selectedItem.getItem().getSellerUsername());
 
-    setUpCountdownTimeline(selectedItem.getItem().getEndTime());
+    if (selectedItem.getItem().getStatus() == ItemStatus.OPEN) {
+      setUpCountdownTimeline(selectedItem.getItem().getEndTime());
+    } else {
+      if (selectedItem.getItem().getWinnerUsername() != null) {
+        endsInValue.setText("WINNER: " + selectedItem.getItem().getWinnerUsername());
+      } else {
+        endsInValue.setText("EXPIRED");
+      }
+    }
   }
 
   private void setUpCountdownTimeline(LocalDateTime endTime) {
@@ -68,7 +77,7 @@ public class InfoLayoutController {
     }
     long totalSecondsLeft = ChronoUnit.SECONDS.between(endTime, LocalDateTime.now());
     if (totalSecondsLeft <= 0) {
-      endsInValue.setText("CLOSED");
+      endsInValue.setText("WINNER: " + selectedItem.getItem().getWinnerUsername());
     }
     if (totalSecondsLeft < 3600) {
       countdownTimeline = new Timeline(

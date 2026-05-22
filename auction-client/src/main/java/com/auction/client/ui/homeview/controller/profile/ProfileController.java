@@ -1,13 +1,12 @@
 package com.auction.client.ui.homeview.controller.profile;
 
 import com.auction.client.app.AutoInject;
-import com.auction.client.network.NetworkEventListener;
 import com.auction.client.service.user.AuthService;
 import com.auction.client.service.user.ClientService;
 import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.component.UserCard;
 import com.auction.client.util.AlertUtil;
-import com.auction.client.util.FXThread; // Khai báo helper bọc luồng UI an toàn
+import com.auction.client.util.FXThread;
 import com.auction.shared.Response;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -18,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
-public class ProfileController implements NetworkEventListener {
+public class ProfileController{
   private static final Logger LOGGER = LoggerFactory.getLogger(ProfileController.class);
 
   private ClientSession currentSession;
@@ -39,10 +38,11 @@ public class ProfileController implements NetworkEventListener {
 
   @FXML
   private void initialize() {
-
     currentSession = ClientSession.CURRENT_SESSION.getCurrentSession();
     currentSession.currentUserProperty().addListener((observable, oldValue, newValue) -> {
-      applySession(currentSession);
+      if (newValue != null) {
+        applySession(currentSession);
+      }
     });
     applySession(currentSession);
 

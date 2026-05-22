@@ -12,18 +12,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-public class OngoingLots {
-  public static OngoingLots AUCTION_STORE = new OngoingLots();
+public class ClosedLots {
+  public static ClosedLots CLOSED_LOTS = new ClosedLots();
 
-  private final ObservableList<ItemModel> ongoingItemsList = FXCollections.observableArrayList();
+  private final ObservableList<ItemModel> closedList = FXCollections.observableArrayList();
 
   private final Map<Integer, ItemModel> clientItemMap = new HashMap<>();
 
-  public ObservableList<ItemModel> getOngoingClientItemList() {
-    return ongoingItemsList;
+  public ObservableList<ItemModel> getClosedLots() {
+    return closedList;
   }
 
-  public void loadOngoingItems(List<Item> items) {
+  public void setClosedLots(List<Item> items) {
     FXThread.run(() -> {
       for (Item item : items) {
         addItemIfMissing(item);
@@ -37,9 +37,6 @@ public class OngoingLots {
       ItemModel clientItem = clientItemMap.get(item.getId());
       if (clientItem != null) {
         clientItem.update(item);
-        if (item.getStatus().equals(ItemStatus.CLOSED)) {
-          ongoingItemsList.remove(clientItem);
-        }
       } else {
         addItemIfMissing(item);
       }
@@ -51,7 +48,7 @@ public class OngoingLots {
       ItemModel clientItem = clientItemMap.get(item.getId());
       if (clientItem == null) {
         clientItem = new ItemModel(item);
-        ongoingItemsList.add(clientItem);
+        closedList.add(clientItem);
         clientItemMap.put(item.getId(), clientItem);
       }
     });
@@ -62,12 +59,12 @@ public class OngoingLots {
   }
 
   public FilteredList<ItemModel> getFilteredItems(Predicate<ItemModel> predicate) {
-    return new FilteredList<>(ongoingItemsList, predicate);
+    return new FilteredList<>(closedList, predicate);
   }
 
   public void clear() {
     FXThread.run(() -> {
-      ongoingItemsList.clear();
+      closedList.clear();
       clientItemMap.clear();
     });
   }

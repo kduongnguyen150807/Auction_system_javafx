@@ -42,6 +42,10 @@ public class MetricLayoutController {
   }
 
   private void bind() {
+    if (clientSession == null) {
+      return;
+    }
+
     if (clientSession.currentRoleProperty().get().equals(UserRole.ADMIN)) {
       toggleRoleButton.setVisible(false);
     }

@@ -45,9 +45,6 @@ public class PendingLots {
       ItemModel clientItem = itemModelMap.get(item.getId());
       if (clientItem != null) {
         clientItem.update(item);
-        if (item.getStatus().equals(ItemStatus.CLOSED)) {
-          pendingItemsList.remove(clientItem);
-        }
       } else {
         addItemIfMissing(item);
       }
@@ -62,6 +59,13 @@ public class PendingLots {
         pendingItemsList.add(clientItem);
         itemModelMap.put(item.getId(), clientItem);
       }
+    });
+  }
+
+  public void clear() {
+    FXThread.run(() -> {
+      pendingItemsList.clear();
+      itemModelMap.clear();
     });
   }
 }

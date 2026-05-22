@@ -1,5 +1,6 @@
 package com.auction.client.network;
 
+import com.auction.client.ui.homeview.homeviewcomponent.NotificationBell;
 import com.auction.shared.ChatMessage;
 import com.auction.shared.Friendship;
 import com.auction.shared.Item;
@@ -30,4 +31,6 @@ public interface NetworkEventListener {
    * lifted. The UI may show an informational toast or alert.
    */
   default void onAccountUnbanned() {}
+
+  public void setNotificationBell(NotificationBell notificationBell);
 }

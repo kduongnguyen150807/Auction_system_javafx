@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import com.auction.client.ui.component.IntegerField?>
+<fx:root type="HBox" xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml" stylesheets="@../../css/component/FilterBox.css"
+         spacing="2">
+    <children>
+        <ComboBox fx:id="categoryFilter" prefHeight="42.0" prefWidth="160.0" promptText="Danh mục" styleClass="category-filter" />
+        <IntegerField fx:id="minPriceField" prefHeight="42.0" prefWidth="90.0" promptText="Min $" styleClass="search-input" />
+        <IntegerField fx:id="maxPriceField" prefHeight="42.0" prefWidth="90.0" promptText="Max $" styleClass="search-input" />
+        <Button fx:id="filterButton" onAction="#applyFilter" prefHeight="42.0" styleClass="btn-apply" text="Apply" />
+    </children>
+</fx:root>

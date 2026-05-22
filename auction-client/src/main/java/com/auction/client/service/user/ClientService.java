@@ -72,7 +72,7 @@ public class ClientService {
   @SuppressWarnings("unchecked")
   public CompletableFuture<Void> getUserTransaction() {
     // BỎ .join()
-    return RequestHelper.sendRequest("get_transactions", ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+    return RequestHelper.sendRequest(Request.GET_TRANSACTIONS, ClientSession.CURRENT_SESSION.getCurrentUser().getId())
       .thenAccept(response -> {
         if (response != null && Response.OK.equals(response.getStatus()) && response.getPayload() instanceof List<?> list) {
           UserTransactionHistory.USER_TRANSACTION_HISTORY.setHistory((List<TransactionLog>) list);

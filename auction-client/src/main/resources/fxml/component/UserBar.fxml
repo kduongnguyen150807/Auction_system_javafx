@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.image.ImageView?>
+<fx:root type="HBox" xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml" styleClass="userbar"
+         stylesheets="/css/component/UserBar.css"
+         alignment="CENTER_LEFT" spacing="12.0"> <!-- Giảm spacing giữa các khối lớn xuống 12px -->
+    <children>
+        <!-- Nhãn thứ hạng nhỏ gọn -->
+        <Label fx:id="topLabel" styleClass="rank-label" />
+
+        <!-- Khung chứa Avatar thu nhỏ từ 100x100 xuống 46x46 -->
+        <VBox alignment="CENTER">
+            <children>
+                <StackPane prefHeight="46.0" prefWidth="46.0">
+                    <children>
+                        <!-- Vòng tròn nền bọc ngoài đường kính 44px -->
+                        <Circle radius="22.0" stroke="WHITE" strokeType="INSIDE"
+                                strokeWidth="1.5"
+                                style="-fx-fill: rgba(255,255,255,0.1); -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 2);"/>
+                        <!-- Ảnh đại diện khớp lòng vòng tròn (38x38) -->
+                        <ImageView fx:id="avatarImageView" fitHeight="38.0" fitWidth="38.0"
+                                   pickOnBounds="true" preserveRatio="true"/>
+                    </children>
+                </StackPane>
+            </children>
+        </VBox>
+
+        <!-- Khối thông tin chữ nhỏ lại, khoảng cách dòng sát hơn (spacing="2.0") -->
+        <VBox alignment="CENTER_LEFT" spacing="2.0" HBox.hgrow="ALWAYS">
+            <children>
+                <HBox alignment="BASELINE_LEFT" spacing="8.0"> <!-- Đổi sang BASELINE để chân chữ đều nhau -->
+                    <children>
+                        <!-- Tên user hạ từ 32px xuống 15px -->
+                        <Label fx:id="userNameLabel" text="username" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="15.0"/>
+                            </font>
+                        </Label>
+                        <!-- Số tiền hạ xuống 13px, màu hơi mờ nhẹ để phụ trợ cho tên -->
+                        <Label fx:id="moneySpent" text="MONEY SPENT HERE" styleClass="money-label">
+                            <font>
+                                <Font size="13.0"/>
+                            </font>
+                        </Label>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                    <children>
+                        <!-- Sao và số lượng đánh giá nhỏ gọn (11px) -->
+                        <Label fx:id="ratingStarsLabel" styleClass="stars-glow" text="★★★★★">
+                            <font>
+                                <Font size="11.0"/>
+                            </font>
+                        </Label>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</fx:root>

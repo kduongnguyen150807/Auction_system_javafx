@@ -7,6 +7,7 @@ public enum HomeViewType {
   ADMIN_DASHBOARD("/fxml/homeview/admin/AdminDashboard.fxml"),
   ITEM_INFORMATION("/fxml/homeview/iteminformation/ItemInformation.fxml"),
   RESULT_PAGE("/fxml/homeview/ResultPage.fxml"),
+  HISTORY("/fxml/homeview/History.fxml"),
   ;
 
   private String fxmlPath;

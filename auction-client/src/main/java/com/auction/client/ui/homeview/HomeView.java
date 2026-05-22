@@ -2,12 +2,14 @@ package com.auction.client.ui.homeview;
 
 import com.auction.client.AppContainer;
 import com.auction.client.app.NodeContentLoader;
+import com.auction.client.network.NetworkClient;
 import com.auction.client.service.user.AuthService;
 import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.store.lotsinformation.ResultStore;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.homeview.controller.ContentTable;
+import com.auction.client.ui.homeview.homeviewcomponent.NotificationBell;
 import com.auction.client.ui.homeview.homeviewcomponent.SearchBar;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -74,6 +76,10 @@ public class HomeView extends HBox {
     ContentTable contentTable = new ContentTable(AppContainer.getService(AuthService.class));
     contentTable.setSwitchNode(this::switchNode);
     sideBar.getChildren().add(contentTable);
+
+    NotificationBell notificationBell = new NotificationBell();
+    searchContainer.getChildren().add(notificationBell);
+    NetworkClient.getInstance().registerNotifcationBell(notificationBell);
 
     SearchBar<ItemModel> searchBar = new SearchBar<>();
     searchContainer.getChildren().add(searchBar);

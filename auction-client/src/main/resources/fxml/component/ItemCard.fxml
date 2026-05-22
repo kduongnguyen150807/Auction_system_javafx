@@ -14,14 +14,11 @@
         fx:id="itemRoot"
         xmlns="http://javafx.com/javafx/25"
         xmlns:fx="http://javafx.com/fxml/1"
-
         alignment="TOP_CENTER"
         spacing="0.0"
-
-        prefWidth="300.0"
-        minWidth="300.0"
-        maxWidth="300.0"
-
+        prefWidth="250.0"
+        minWidth="250.0"
+        maxWidth="250.0"
         styleClass="glass-card-item"
         stylesheets="@../../css/itemcard/ItemCard.css">
 
@@ -34,15 +31,15 @@
 
                 <ImageView
                         fx:id="imageHolder"
-                        fitHeight="240.0"
-                        fitWidth="270.0"
+                        fitHeight="200.0"
+                        fitWidth="240.0"
                         pickOnBounds="true"
                         preserveRatio="false">
 
                     <clip>
                         <Rectangle
                                 fx:id="imageClip"
-                                width="270.0"
+                                width="240.0"
                                 height="240.0"
                                 arcWidth="30.0"
                                 arcHeight="30.0"/>

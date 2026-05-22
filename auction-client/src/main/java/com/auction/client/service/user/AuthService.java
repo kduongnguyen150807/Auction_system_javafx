@@ -3,6 +3,9 @@ package com.auction.client.service.user;
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
 import com.auction.client.store.clientinformation.ClientSession;
+import com.auction.client.store.lotsinformation.ClosedLots;
+import com.auction.client.store.lotsinformation.OngoingLots;
+import com.auction.client.store.lotsinformation.PendingLots;
 import com.auction.client.util.FXThread; // Đảm bảo dùng helper bọc Platform.runLater
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.PasswordEncoder;
@@ -58,9 +61,15 @@ public class AuthService {
 
   public void signOut() {
     ClientSession.CURRENT_SESSION.clear();
+
+    OngoingLots.AUCTION_STORE.clear();
+    ClosedLots.CLOSED_LOTS.clear();
+    PendingLots.PENDING_LOTS.clear();
+
     FXThread.run(() -> {
-      SceneManager.getInstance().deleteHomeView();
+      SceneManager.getInstance().buildLoginView();
       SceneManager.getInstance().switchScene(SceneType.LOGIN_VIEW);
+      SceneManager.getInstance().deleteHomeView();
     });
   }
 
@@ -68,6 +77,7 @@ public class AuthService {
     FXThread.run(() -> {
       SceneManager.getInstance().buildHomeView();
       SceneManager.getInstance().switchScene(SceneType.HOME_VIEW);
+      SceneManager.getInstance().deleteLoginView();
     });
   }
 }

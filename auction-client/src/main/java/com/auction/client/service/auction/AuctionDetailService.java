@@ -1,7 +1,7 @@
 package com.auction.client.service.auction;
 
-import com.auction.client.store.lotsinformation.OngoingLots;
 import com.auction.client.store.lotsinformation.ItemModel;
+import com.auction.client.store.lotsinformation.OngoingLots;
 import com.auction.client.store.selectediteminformation.SelectedItem;
 import com.auction.client.store.selectediteminformation.SelectedItemBidHistory;
 import com.auction.client.util.RequestHelper;
@@ -26,7 +26,6 @@ public class AuctionDetailService {
 
   public void setSelectedItem(ItemModel item) {
     if (item == null) return;
-
     SelectedItem.SELECTED_ITEM.setSelectedItem(item);
     getSelectedItemBidHistory(item.getId())
       .thenAccept(bidHistory -> {

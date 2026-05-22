@@ -28,13 +28,13 @@
                                 <StackPane prefWidth="48.0" prefHeight="48.0" minWidth="48.0" minHeight="48.0" alignment="CENTER">
                                     <children>
                                         <Circle radius="24.0" styleClass="avatar-circle"/>
-                                        <ImageView fx:id="sidebaravatar" fitWidth="48.0" fitHeight="48.0" preserveRatio="false"/>
+                                        <ImageView fx:id="sidebarAvatar" fitWidth="48.0" fitHeight="48.0" preserveRatio="false"/>
                                     </children>
                                 </StackPane>
                                 <VBox>
                                     <children>
-                                        <Label fx:id="UserName" text="username" styleClass="user-name"/>
-                                        <Label fx:id="Rank" text="Bidder" styleClass="user-rank"/>
+                                        <Label fx:id="usernameLabel" text="username" styleClass="user-name"/>
+                                        <Label fx:id="rankLabel" text="Bidder" styleClass="user-rank"/>
                                     </children>
                                 </VBox>
                             </children>

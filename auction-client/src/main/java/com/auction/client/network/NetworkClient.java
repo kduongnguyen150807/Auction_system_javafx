@@ -1,5 +1,8 @@
 package com.auction.client.network;
 
+import com.auction.client.navigation.SceneManager;
+import com.auction.client.navigation.SceneType;
+import com.auction.client.ui.homeview.homeviewcomponent.NotificationBell;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -213,11 +216,21 @@ public class NetworkClient {
         Request req = new Request(Request.RECONNECT, user.getSessiontoken());
         Response res = sendRequestAndWait(req);
         if (res == null || !Response.OK.equals(res.getStatus())) {
-          com.auction.client.ui.Main.KhungController.performForcedLogoutFromServer();
+          SceneManager.getInstance().buildLoginView();
+          SceneManager.getInstance().switchScene(SceneType.LOGIN_VIEW);
+          SceneManager.getInstance().deleteHomeView();
         }
       }
     } catch (Exception e) {
       this.out = null;
+    }
+  }
+
+  public void registerNotifcationBell(NotificationBell notificationBell) {
+    if (!listeners.isEmpty()) {
+      for (NetworkEventListener networkEventListener : listeners) {
+        networkEventListener.setNotificationBell(notificationBell);
+      }
     }
   }
 }

@@ -11,69 +11,73 @@
 <?import javafx.scene.text.Font?>
 
 <?import com.auction.client.ui.homeview.homeviewcomponent.RedOrBlueToolbar?>
-<?import com.auction.client.ui.homeview.homeviewcomponent.TrendingBind?>
 <?import com.auction.client.ui.homeview.homeviewcomponent.ListPane?>
+<?import com.auction.client.ui.homeview.homeviewcomponent.VBoxModel?>
+<?import com.auction.client.ui.component.FilterBox?>
+<?import javafx.scene.layout.Region?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.ui.homeview.controller.TrangChuController"
       fx:id="MainBackGround"
       styleClass="trangchu-page"
       stylesheets="/css/trangchu/TrangChu.css">
-    <children>
-        <RedOrBlueToolbar fx:id="auctionTypeToggle"/>
-        <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
-            <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="260.0" percentWidth="35.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="320.0" percentWidth="65.0"/>
-            </columnConstraints>
-            <rowConstraints>
-                <RowConstraints vgrow="ALWAYS"/>
-            </rowConstraints>
-            <VBox GridPane.columnIndex="0" spacing="0.0" styleClass="col-trending" GridPane.vgrow="ALWAYS">
-                <children>
-                    <HBox>
-                        <children>
-                            <Label styleClass="TopLabel" text="Trending Lots">
-                                <font>
-                                    <Font size="24.0"/>
-                                </font>
-                            </Label>
-                        </children>
-                    </HBox>
-                    <ScrollPane fitToWidth="true"
-                                hbarPolicy="NEVER"
-                                minHeight="0.0"
-                                styleClass="scroll-pane trending-scroll"
-                                vbarPolicy="AS_NEEDED"
-                                VBox.vgrow="ALWAYS">
-                        <content>
-                            <VBox spacing="20.0" alignment="TOP_CENTER" maxWidth="Infinity">
-                                <TrendingBind fx:id="trendingBind"/>
-                                <VBox spacing="15.0" styleClass="TrendingBind" alignment="TOP_CENTER"
-                                      maxWidth="Infinity">
-                                    <Label styleClass="TopLabel" text="Top Đại Gia"/>
-                                    <VBox fx:id="leaderboardcontainer" spacing="10.0"/>
-                                </VBox>
-                            </VBox>
-                        </content>
-                    </ScrollPane>
-                </children>
-            </VBox>
-            <VBox GridPane.columnIndex="1"
-                  GridPane.rowIndex="0"
-                  GridPane.hgrow="ALWAYS"
-                  GridPane.vgrow="ALWAYS"
-                  minHeight="0.0"
-                  styleClass="scroll-pane auction-categories-scroll">
-                <children>
-                    <ListPane fx:id="artLots"/>
-                    <ListPane fx:id="electronicsLots"/>
-                    <ListPane fx:id="vehiclesLots"/>
-                </children>
-            </VBox>
-        </GridPane>
-    </children>
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="16.0"/>
     </padding>
+    <HBox alignment="CENTER_LEFT">
+        <Region HBox.hgrow="ALWAYS"/>
+        <FilterBox fx:id="filterBox" />
+    </HBox>
+    <RedOrBlueToolbar fx:id="auctionTypeToggle"/>
+    <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
+        <columnConstraints>
+            <ColumnConstraints minWidth="260.0" percentWidth="35.0"/>
+            <ColumnConstraints minWidth="320.0" percentWidth="65.0"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints vgrow="ALWAYS"/>
+        </rowConstraints>
+        <VBox GridPane.columnIndex="0" spacing="0.0" styleClass="col-trending" GridPane.vgrow="ALWAYS">
+            <children>
+                <HBox>
+                    <children>
+                        <Label styleClass="TopLabel" text="Trending Lots">
+                            <font>
+                                <Font size="24.0"/>
+                            </font>
+                        </Label>
+                    </children>
+                </HBox>
+                <ScrollPane fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            minHeight="0.0"
+                            styleClass="scroll-pane trending-scroll"
+                            vbarPolicy="AS_NEEDED"
+                            VBox.vgrow="ALWAYS">
+                    <content>
+                        <VBox spacing="20.0" alignment="TOP_CENTER" maxWidth="Infinity">
+                            <VBoxModel fx:id="trendingBind" alignment="TOP_CENTER"/>
+                            <Label styleClass="TopLabel" text="Top Đại Gia"/>
+                            <VBoxModel fx:id="leaderboardContainer" spacing="10.0"
+                                  styleClass="leaderboard"
+                                  style="-fx-background-color: -color-bg;
+                                             -fx-background-radius: 10;"/>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+            </children>
+        </VBox>
+        <ScrollPane GridPane.columnIndex="1"
+              GridPane.rowIndex="0"
+              GridPane.hgrow="ALWAYS"
+              GridPane.vgrow="ALWAYS">
+            <content>
+                <VBox>
+                    <ListPane fx:id="artLots" VBox.vgrow="ALWAYS"/>
+                    <ListPane fx:id="electronicsLots" VBox.vgrow="ALWAYS"/>
+                    <ListPane fx:id="vehiclesLots" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </GridPane>
 </VBox>
