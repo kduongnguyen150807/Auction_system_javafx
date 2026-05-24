@@ -1,9 +1,11 @@
 package com.auction.client.service.auction;
 
 import com.auction.client.store.lotsinformation.ItemModel;
-import com.auction.client.store.lotsinformation.OngoingLots;
+import com.auction.client.store.lotsinformation.OpenLots;
 import com.auction.client.store.selectediteminformation.SelectedItem;
 import com.auction.client.store.selectediteminformation.SelectedItemBidHistory;
+import com.auction.client.store.userinformation.SelectedUser;
+import com.auction.client.store.userinformation.UserModel;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.BidTransaction;
 import com.auction.shared.Item;
@@ -36,10 +38,26 @@ public class AuctionDetailService {
 
   public void handleRealtimeItemUpdate(Item updatedItem) {
     if (updatedItem == null) return;
-    OngoingLots.AUCTION_STORE.updateClientItem(updatedItem);
+    OpenLots.AUCTION_STORE.updateClientItem(updatedItem);
     if (SelectedItemBidHistory.SELECTED_ITEM_BID_HISTORY.getSelectedItemId() == updatedItem.getId()) {
       BidTransaction fakeTransaction = new BidTransaction(updatedItem.getId(), -1, updatedItem.getCurrentPrice());
       SelectedItemBidHistory.SELECTED_ITEM_BID_HISTORY.appendBidTransaction(fakeTransaction);
     }
+  }
+
+  public CompletableFuture<List<Item>> getSelectedUserItems(int id) {
+    return RequestHelper.sendRequest(Request.GET_MY_ITEMS, id)
+      .thenApply(response -> {
+        if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof List<?> items) {
+          return (List<Item>) items;
+        } else {
+          return List.of();
+        }
+      });
+  }
+
+  public void setSelectedUser(UserModel user) {
+    if (user == null) return;
+    SelectedUser.SELECTED_USER.setSelectedUser(user);
   }
 }

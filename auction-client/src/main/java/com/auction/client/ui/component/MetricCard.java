@@ -40,7 +40,12 @@ public class MetricCard extends VBox {
   }
 
   public void bind(ObservableValue<String> value) {
+    unbind();
     valueLabel.textProperty().bind(value);
+  }
+
+  public void setText(String text) {
+    valueLabel.setText(text);
   }
 
   public StringProperty titleProperty() {

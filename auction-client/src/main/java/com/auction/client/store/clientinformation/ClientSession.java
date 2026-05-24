@@ -1,145 +1,78 @@
 package com.auction.client.store.clientinformation;
 
-import com.auction.client.util.StarUtils;
+import com.auction.client.store.userinformation.UserModel;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.beans.property.*;
 
-public class ClientSession {
-  public static ClientSession CURRENT_SESSION = new ClientSession();
+public class ClientSession extends UserModel {
+  public static final ClientSession CURRENT_SESSION = new ClientSession();
 
-  private ObjectProperty<User> currentUser = new SimpleObjectProperty<>();
+  private IdStateManager watchedItemsList = new IdStateManager();
 
-  private ObjectProperty<UserRole> currentRole = new SimpleObjectProperty<>();
+  private final SimpleIntegerProperty itemsSold = new SimpleIntegerProperty();
+  private final SimpleDoubleProperty moneyReceived = new SimpleDoubleProperty();
+  private final SimpleIntegerProperty itemsBought = new SimpleIntegerProperty();
+  private final SimpleDoubleProperty averageRating = new SimpleDoubleProperty();
 
-  private SimpleDoubleProperty currentBalance = new SimpleDoubleProperty();
-
-  private SimpleStringProperty currentName = new SimpleStringProperty();
-
-  private SimpleStringProperty phoneNumber = new SimpleStringProperty();
-
-  private SimpleStringProperty email = new SimpleStringProperty();
-
-  private SimpleStringProperty avatarUrl =  new SimpleStringProperty();
-
-  private SimpleIntegerProperty itemsSold =  new SimpleIntegerProperty();
-
-  private SimpleDoubleProperty moneyReceived = new SimpleDoubleProperty();
-
-  private SimpleIntegerProperty itemsBought = new SimpleIntegerProperty();
-
-  private SimpleDoubleProperty moneySpent = new SimpleDoubleProperty();
-
-  private SimpleDoubleProperty averageRating = new SimpleDoubleProperty();
-
-  private SimpleStringProperty avgRatingString =  new SimpleStringProperty();
-
-  private ClientSession() {}
+  private ClientSession() {
+    super();
+  }
 
   public void setUser(User user) {
-    this.currentUser.setValue(user);
-    this.currentRole.setValue(user.getRole());
-    this.currentBalance.setValue(user.getBalance());
-    this.currentName.setValue(user.getFullName());
-    this.phoneNumber.setValue(user.getPhoneNumber());
-    this.email.setValue(user.getEmail());
-    this.avatarUrl.setValue(user.getAvatarUrl());
-    this.itemsSold.setValue(user.getItemsSold());
-    this.moneyReceived.setValue(user.getMoneyReceived());
-    this.itemsBought.setValue(user.getItemsBought());
-    this.moneySpent.setValue(user.getMoneySpent());
-    this.averageRating.setValue(user.getAvgRating());
-    this.currentRole.setValue(user.getRole());
+    super.updateUser(user);
 
-    String ratingStr = "N/A";
-    if (user.getTotalRatings() > 0) {
-      String sentiment = StarUtils.getRatingTypeFromAvg(user.getAvgRating());
-      ratingStr = String.format("%.1f (%d) %s", user.getAvgRating(), user.getTotalRatings(), sentiment);
+    if (user != null) {
+      this.itemsSold.setValue(user.getItemsSold());
+      this.moneyReceived.setValue(user.getMoneyReceived());
+      this.itemsBought.setValue(user.getItemsBought());
+      this.averageRating.setValue(user.getAvgRating());
     }
-    this.avgRatingString.set(ratingStr);
   }
 
   public void applyProfileUpdate(String fullname, String phoneNumber, String email) {
-    this.currentName.setValue(fullname);
+    this.fullName.setValue(fullname);
     this.phoneNumber.setValue(phoneNumber);
     this.email.setValue(email);
+    if (this.user != null) {
+      this.user.setFullName(fullname);
+      this.user.setPhoneNumber(phoneNumber);
+      this.user.setEmail(email);
+    }
   }
 
   public void applyAvatarUrl(String avatarUrl) {
     this.avatarUrl.setValue(avatarUrl);
+    if (this.user != null) {
+      this.user.setAvatarUrl(avatarUrl);
+    }
   }
 
   public void deposit(double newBalance) {
     this.currentBalance.setValue(this.currentBalance.getValue() + newBalance);
+    if (this.user != null) {
+      this.user.setBalance(this.currentBalance.get());
+    }
   }
 
-  public ClientSession getCurrentSession() {
-    return CURRENT_SESSION;
-  }
+  public SimpleIntegerProperty itemsSoldProperty() { return itemsSold; }
+  public SimpleDoubleProperty moneyReceivedProperty() { return moneyReceived; }
+  public SimpleIntegerProperty itemsBoughtProperty() { return itemsBought; }
+  public SimpleDoubleProperty averageRatingProperty() { return averageRating; }
 
-  public User getCurrentUser() {
-    return currentUser.get();
-  }
+  public IdStateManager getWatchedItemsList() { return watchedItemsList; }
+  public User getCurrentUser() { return getUser(); }
 
-  public ObjectProperty<User> currentUserProperty() {
-    return currentUser;
-  }
+  public ObjectProperty<UserRole> currentRoleProperty() { return roleProperty(); }
+  public SimpleStringProperty currentNameProperty() { return (SimpleStringProperty) fullNameProperty(); }
 
-  public ObjectProperty<UserRole> currentRoleProperty() {
-    return currentRole;
-  }
-
-  public SimpleDoubleProperty currentBalanceProperty() {
-    return currentBalance;
-  }
-
-  public SimpleStringProperty currentNameProperty() {
-    return currentName;
-  }
-
-  public SimpleStringProperty phoneNumberProperty() {
-    return phoneNumber;
-  }
-
-  public SimpleStringProperty emailProperty() {
-    return email;
-  }
-
-  public SimpleStringProperty avatarUrlProperty() {
-    return avatarUrl;
-  }
-
-  public SimpleIntegerProperty itemsSoldProperty() {
-    return itemsSold;
-  }
-
-  public SimpleDoubleProperty averageRatingProperty() {
-    return averageRating;
-  }
-
-  public SimpleDoubleProperty moneyReceivedProperty() {
-    return moneyReceived;
-  }
-
-  public SimpleIntegerProperty itemsBoughtProperty() {
-    return itemsBought;
-  }
-
-  public SimpleDoubleProperty moneySpentProperty() {
-    return moneySpent;
-  }
-
-  public SimpleStringProperty avgRatingProperty() {
-    return avgRatingString;
-  }
   public void clear() {
-    currentUser.setValue(null);
-    currentRole.setValue(null);
-    currentBalance.setValue(0.0);
-    currentName.setValue(null);
-    phoneNumber.setValue(null);
-    email.setValue(null);
-    avatarUrl.setValue(null);
-    avgRatingString.setValue(null);
+    watchedItemsList = new IdStateManager();
+    super.clearModel();
+
+    itemsSold.setValue(0);
+    moneyReceived.setValue(0.0);
+    itemsBought.setValue(0);
+    averageRating.setValue(0.0);
   }
 }

@@ -11,7 +11,7 @@ public class ResultStore {
   private ResultStore() {
   }
 
-  private final ObservableList<ItemModel> resultItem = OngoingLots.AUCTION_STORE.getOngoingClientItemList();
+  private final ObservableList<ItemModel> resultItem = OpenLots.AUCTION_STORE.getOngoingClientItemList();
 
   private final FilteredList<ItemModel> filteredItems = new FilteredList<>(resultItem);
 

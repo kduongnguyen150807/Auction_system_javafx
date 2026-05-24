@@ -7,20 +7,27 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-public class OngoingLots {
-  public static OngoingLots AUCTION_STORE = new OngoingLots();
+public class OpenLots {
+  public static OpenLots AUCTION_STORE = new OpenLots();
 
   private final ObservableList<ItemModel> ongoingItemsList = FXCollections.observableArrayList();
+
+  private final ObservableList<ItemModel> upcomingItemsList = FXCollections.observableArrayList();
 
   private final Map<Integer, ItemModel> clientItemMap = new HashMap<>();
 
   public ObservableList<ItemModel> getOngoingClientItemList() {
     return ongoingItemsList;
+  }
+
+  public ObservableList<ItemModel> getUpcomingClientItemList() {
+    return upcomingItemsList;
   }
 
   public void loadOngoingItems(List<Item> items) {
@@ -51,7 +58,11 @@ public class OngoingLots {
       ItemModel clientItem = clientItemMap.get(item.getId());
       if (clientItem == null) {
         clientItem = new ItemModel(item);
-        ongoingItemsList.add(clientItem);
+        if (item.getStartTime().isAfter(LocalDateTime.now())) {
+          upcomingItemsList.add(clientItem);
+        } else {
+          ongoingItemsList.add(clientItem);
+        }
         clientItemMap.put(item.getId(), clientItem);
       }
     });

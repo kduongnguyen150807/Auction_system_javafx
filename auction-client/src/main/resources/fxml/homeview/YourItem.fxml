@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<?import com.auction.client.ui.component.MetricCard?>
+<?import com.auction.client.ui.homeview.homeviewcomponent.ReactiveFlowPane?>
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane" stylesheets="@/css/youritem/YourItem.css"
+            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.homeview.controller.YourItemController">
+    <content>
+        <VBox alignment="TOP_CENTER" style="-fx-background-color: transparent;">
+            <children>
+                <VBox maxWidth="1000.0" spacing="30.0" styleClass="glass-panel-item">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <children>
+                                <VBox spacing="5.0">
+                                    <children>
+                                        <Label styleClass="Bigtext" text="Hàng Của Tôi"/>
+                                        <Label styleClass="Smalltext" text="Quản lý các sản phẩm bạn đã đăng bán"/>
+                                    </children>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="btn-refresh" text="Làm mới" />
+                            </children>
+                        </HBox>
+                        <HBox spacing="20.0">
+                            <children>
+                                <MetricCard title="ĐANG ĐẤU GIÁ" fx:id="activeItemCard" HBox.hgrow="ALWAYS" />
+                                <MetricCard title="TỔNG GIÁ TRỊ" fx:id="inventoryValue" HBox.hgrow="ALWAYS"/>
+                            </children>
+                        </HBox>
+                        <VBox spacing="15.0">
+                            <children>
+                                <Label styleClass="section-title" text="Danh sách sản phẩm"/>
+                                <ReactiveFlowPane fx:id="inventoryPane" alignment="TOP_CENTER" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
+                            </children>
+                        </VBox>
+                    </children>
+                    <VBox.margin>
+                        <Insets bottom="40.0" top="40.0"/>
+                    </VBox.margin>
+                </VBox>
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>

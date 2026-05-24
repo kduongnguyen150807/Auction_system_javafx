@@ -139,5 +139,12 @@ public class HomeView extends HBox {
 
   @FXML
   private void handleRefresh() {
+    for (Map.Entry<HomeViewType, Object> entry : controllerMap.entrySet()) {
+      Object controller = controllerMap.get(entry.getKey());
+      if (controller instanceof CanRefresh cr) {
+        CompletableFuture.runAsync(cr::refreshData);
+        LOGGER.info("Refresh complete for type {}", entry.getKey());
+      }
+    }
   }
 }

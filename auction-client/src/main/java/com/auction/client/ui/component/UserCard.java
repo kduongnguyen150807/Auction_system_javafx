@@ -1,6 +1,7 @@
 package com.auction.client.ui.component;
 
 import com.auction.client.store.clientinformation.ClientSession;
+import com.auction.client.store.userinformation.UserModel;
 import com.auction.client.util.ImagePresentationUtil;
 import com.auction.client.util.StarUtils;
 import javafx.beans.binding.Bindings;
@@ -15,14 +16,12 @@ import java.io.IOException;
 public class UserCard extends HBox {
   private static final String USER_CARD_FXML = "/fxml/component/UserCard.fxml";
 
-  private ClientSession clientSession;
+  private UserModel userModel;
 
   @FXML private ImageView avatarImageView;
   @FXML private Label userNameLabel;
   @FXML private Label verifiedLabel;
   @FXML private Label ratingStarsLabel;
-  @FXML private Label ratingCountLabel;
-  @FXML private Label reputationWarning;
 
   public UserCard() {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(USER_CARD_FXML));
@@ -36,9 +35,9 @@ public class UserCard extends HBox {
     }
   }
 
-  public void setClientSession(ClientSession clientSession) {
+  public void setUserModel(UserModel userModel) {
     unbind();
-    this.clientSession = clientSession;
+    this.userModel = userModel;
     bind();
   }
 
@@ -46,47 +45,27 @@ public class UserCard extends HBox {
     userNameLabel.textProperty().unbind();
     verifiedLabel.textProperty().unbind();
     ratingStarsLabel.textProperty().unbind();
-    ratingCountLabel.textProperty().unbind();
   }
 
   private void bind() {
-    userNameLabel.textProperty().bind(clientSession.currentNameProperty());
+    userNameLabel.textProperty().bind(userModel.usernameProperty());
     verifiedLabel.textProperty().bind(Bindings.createStringBinding(
       () -> {
-        String phone = clientSession.phoneNumberProperty().get();
+        String phone = userModel.phoneNumberProperty().get();
         boolean verified = phone != null && !phone.isBlank();
         return verified ? "Verified" : "Unverified";
-      }, clientSession.phoneNumberProperty()));
+      }, userModel.phoneNumberProperty()));
 
-    ratingStarsLabel.textProperty().bind(Bindings.createStringBinding(
-      () ->
-        StarUtils.stars(
-          clientSession.averageRatingProperty().get()
-        ), clientSession.averageRatingProperty()));
+    ratingStarsLabel.textProperty().bind(userModel.avgRatingProperty());
 
-    ratingCountLabel.textProperty().bind(Bindings.createStringBinding(
-      () -> {
-        double averageRating = clientSession.averageRatingProperty().get();
-        if (averageRating > 0) {
-          if (averageRating < 2) {
-            return "Negative";
-          } else if (averageRating < 3) {
-            return "Neutral";
-          } else {
-            return "Positive";
-          }
-        }
-        return "No rating yet";
-      },  clientSession.averageRatingProperty()));
-
-    clientSession.avatarUrlProperty().addListener((observable, oldValue, newValue) -> {
+    userModel.avatarUrlProperty().addListener((observable, oldValue, newValue) -> {
       if (newValue == null || newValue.isBlank()) {
         return;
       }
 
       loadAvatar(newValue);
     });
-    loadAvatar(clientSession.avatarUrlProperty().get());
+    loadAvatar(userModel.avatarUrlProperty().get());
   }
 
   private void loadAvatar(String avatarUrl) {

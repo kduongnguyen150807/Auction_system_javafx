@@ -4,7 +4,7 @@ import com.auction.client.navigation.SceneManager;
 import com.auction.client.navigation.SceneType;
 import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.store.lotsinformation.ClosedLots;
-import com.auction.client.store.lotsinformation.OngoingLots;
+import com.auction.client.store.lotsinformation.OpenLots;
 import com.auction.client.store.lotsinformation.PendingLots;
 import com.auction.client.util.FXThread; // Đảm bảo dùng helper bọc Platform.runLater
 import com.auction.client.util.RequestHelper;
@@ -60,17 +60,17 @@ public class AuthService {
   }
 
   public void signOut() {
-    ClientSession.CURRENT_SESSION.clear();
+    RequestHelper.sendRequest("LOGOUT", ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+        .thenAccept(response -> {
 
-    OngoingLots.AUCTION_STORE.clear();
-    ClosedLots.CLOSED_LOTS.clear();
-    PendingLots.PENDING_LOTS.clear();
 
-    FXThread.run(() -> {
-      SceneManager.getInstance().buildLoginView();
-      SceneManager.getInstance().switchScene(SceneType.LOGIN_VIEW);
-      SceneManager.getInstance().deleteHomeView();
-    });
+            FXThread.run(() -> {
+              SceneManager.getInstance().buildLoginView();
+              SceneManager.getInstance().deleteHomeView();
+              SceneManager.getInstance().switchScene(SceneType.LOGIN_VIEW);
+              ClientSession.CURRENT_SESSION.clear();
+            });
+        });
   }
 
   public void switchHomeScene() {

@@ -1,10 +1,9 @@
-package com.auction.client.ui.homeview.homeviewcomponent;
+package com.auction.client.ui.component.userbar;
 
 import com.auction.client.store.userinformation.UserModel;
+import com.auction.client.ui.base.CanBind;
 import com.auction.client.util.ImagePresentationUtil;
-import com.auction.client.util.StarUtils;
 import com.auction.client.util.StringFormat;
-import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -12,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 public class UserBar extends HBox {
   private static final String BASE_FXML_PATH = "/fxml/component/UserBar.fxml";
@@ -22,8 +22,9 @@ public class UserBar extends HBox {
   @FXML private Label userNameLabel;
   @FXML private Label moneySpent;
   @FXML private Label ratingStarsLabel;
-  @FXML private Label ratingCountsLabel;
   @FXML private Label topLabel;
+
+  private Consumer<UserModel> onUserBarClicked;
 
   public UserBar(UserModel userModel) {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(BASE_FXML_PATH));
@@ -31,18 +32,19 @@ public class UserBar extends HBox {
     fxmlLoader.setRoot(this);
     try {
       fxmlLoader.load();
-      setUser(userModel);
+      this.userModel = userModel;
+      bind();
+      setOnMouseClicked(event -> {
+        if (onUserBarClicked != null) {
+          onUserBarClicked.accept(userModel);
+        }
+      });
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public void setUser(UserModel userModel) {
-    this.userModel = userModel;
-    bind();
-  }
-
-  private void bind() {
+  public void bind() {
     userNameLabel.setText(userModel.usernameProperty().getValue());
     moneySpent.setText("Money spent: " + StringFormat.formatMoney(userModel.moneySpentProperty().get()));
     ratingStarsLabel.textProperty().bind(userModel.avgRatingProperty());
@@ -72,5 +74,9 @@ public class UserBar extends HBox {
     } else {
       topLabel.setText("#" + rank); // Các hạng sau hiển thị #4, #5...
     }
+  }
+
+  public void setOnUserBarClicked(Consumer<UserModel> onUserBarClicked) {
+    this.onUserBarClicked = onUserBarClicked;
   }
 }

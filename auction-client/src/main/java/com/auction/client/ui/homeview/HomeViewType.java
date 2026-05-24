@@ -8,6 +8,9 @@ public enum HomeViewType {
   ITEM_INFORMATION("/fxml/homeview/iteminformation/ItemInformation.fxml"),
   RESULT_PAGE("/fxml/homeview/ResultPage.fxml"),
   HISTORY("/fxml/homeview/History.fxml"),
+  MY_ITEM("/fxml/homeview/YourItem.fxml"),
+  WATCHED_LIST("/fxml/homeview/WatchList.fxml"),
+  USER_INFORMATION("/fxml/homeview/UserInformation.fxml"),
   ;
 
   private String fxmlPath;

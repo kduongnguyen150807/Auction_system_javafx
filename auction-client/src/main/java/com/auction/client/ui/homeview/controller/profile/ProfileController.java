@@ -4,6 +4,8 @@ import com.auction.client.app.AutoInject;
 import com.auction.client.service.user.AuthService;
 import com.auction.client.service.user.ClientService;
 import com.auction.client.store.clientinformation.ClientSession;
+import com.auction.client.store.userinformation.UserModel;
+import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.component.UserCard;
 import com.auction.client.util.AlertUtil;
 import com.auction.client.util.FXThread;
@@ -17,10 +19,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
-public class ProfileController{
+public class ProfileController {
   private static final Logger LOGGER = LoggerFactory.getLogger(ProfileController.class);
-
-  private ClientSession currentSession;
 
   @FXML private IdentityLayoutController identityLayoutController;
   @FXML private WalletLayoutController walletLayoutController;
@@ -38,13 +38,7 @@ public class ProfileController{
 
   @FXML
   private void initialize() {
-    currentSession = ClientSession.CURRENT_SESSION.getCurrentSession();
-    currentSession.currentUserProperty().addListener((observable, oldValue, newValue) -> {
-      if (newValue != null) {
-        applySession(currentSession);
-      }
-    });
-    applySession(currentSession);
+    applySession(ClientSession.CURRENT_SESSION);
 
     clientService.refreshUserTransaction()
       .exceptionally(ex -> {
@@ -57,7 +51,7 @@ public class ProfileController{
     if (identityLayoutController != null) identityLayoutController.setClientSession(session);
     if (walletLayoutController != null) walletLayoutController.setClientSession(session);
     if (metricLayoutController != null) metricLayoutController.setClientSession(session);
-    if (userCard != null) userCard.setClientSession(session);
+    if (userCard != null) userCard.setUserModel(new UserModel(ClientSession.CURRENT_SESSION.getCurrentUser()));
   }
 
   public void handleLogout(ActionEvent actionEvent) {

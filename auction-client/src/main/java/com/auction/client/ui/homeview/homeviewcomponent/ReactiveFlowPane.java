@@ -1,104 +1,126 @@
 package com.auction.client.ui.homeview.homeviewcomponent;
 
 import com.auction.client.store.lotsinformation.ItemModel;
+import com.auction.client.ui.base.CanBind;
 import com.auction.client.util.FXThread;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.scene.Node;
 import javafx.scene.layout.FlowPane;
+import javafx.util.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ReactiveFlowPane extends FlowPane {
-  private ObservableList<ItemModel> itemList;
-  private ListChangeListener<ItemModel> activeListener;
-  private Consumer<ItemModel> onCardClicked;
+public class ReactiveFlowPane<T> extends FlowPane {
+  private ObservableList<T> dataList;
+  private ListChangeListener<T> activeListener;
+
+  private Callback<T, Node> cellFactory;
 
   public ReactiveFlowPane() {}
 
-  public void bindList(ObservableList<ItemModel> newItemList, Consumer<ItemModel> onCardClicked) {
+  public void setAll(List<T> data, Callback<T, Node> cellFactory) {
+    getChildren().clear();
+
+    FXThread.run(() -> {
+      List<Node> list = new ArrayList<>();
+      for (T t : data) {
+        Node node = cellFactory.call(t);
+        if (node != null) {
+          list.add(node);
+        }
+      }
+
+      getChildren().addAll(list);
+    });
+  }
+
+  public void bind(ObservableList<T> newDataList, Callback<T, Node> cellFactory) {
     unbind();
-    this.onCardClicked = onCardClicked;
-    this.itemList = newItemList;
-    if (newItemList == null) { return; }
+
+    this.dataList = newDataList;
+    this.cellFactory = cellFactory;
+
+    if (newDataList == null || cellFactory == null) return;
+
+    this.activeListener = change -> {
+      FXThread.run(() -> {
+        while (change.next()) {
+          if (change.wasRemoved()) {
+            removeCard(change.getFrom(), change.getRemoved().size());
+          }
+          if (change.wasAdded()) {
+            addCard(change.getAddedSubList(), change.getFrom());
+          }
+        }
+      });
+    };
 
     renderInitialItems();
 
-    this.activeListener = change -> FXThread.run(() -> {
-      while (change.next()) {
-        if (change.wasRemoved()) {
-          List<? extends ItemModel> removedModels = change.getRemoved();
-          removeCards(removedModels);
-        }
-        if (change.wasAdded()) {
-          List<? extends ItemModel> addedModels = change.getAddedSubList();
-          int startIndex = change.getFrom();
-          addCards(addedModels, startIndex);
-        }
-      }
-    });
-
-    this.itemList.addListener(this.activeListener);
-  }
-
-  private void unbind() {
-    this.onCardClicked = null;
-    if (this.itemList != null) {
-      this.itemList.removeListener(this.activeListener);
-      this.itemList = null;
-    }
-    getChildren().clear();
+    this.dataList.addListener(this.activeListener);
   }
 
   private void renderInitialItems() {
-    getChildren().clear();
-    if (itemList == null || itemList.isEmpty()) {
-      return;
-    }
-    for (ItemModel item : itemList) {
-      ItemCard itemCard = new ItemCard(item);
-      itemCard.setOnMouseClicked(event -> {
-        if (onCardClicked != null) {
-          onCardClicked.accept(itemCard.getItemModel());
-        }
-      });
-      getChildren().add(itemCard);
-    }
-  }
+    if (dataList == null || dataList.isEmpty()) return;
 
-  private void removeCards(List<? extends ItemModel> itemsToBeRemoved) {
-    if (itemsToBeRemoved == null || itemsToBeRemoved.isEmpty() || getChildren().isEmpty()) {
-      return;
-    }
-
-    getChildren().removeIf(node -> {
-      if (node instanceof ItemCard card) {
-        if (itemsToBeRemoved.contains(card.getItemModel())) {
-          card.dispose();
-          return true;
-        }
+    List<Node> initialNode = new ArrayList<>();
+    for (T item : dataList) {
+      Node node = cellFactory.call(item);
+      if (node != null) {
+        initialNode.add(node);
       }
-      return false;
-    });
+    }
+    getChildren().addAll(initialNode);
   }
 
-  private void addCards(List<? extends ItemModel> items, int startIndex) {
-    if (items == null || items.isEmpty()) return;
+  private void unbind() {
+    if (this.dataList != null && this.activeListener != null) {
+      this.dataList.removeListener(this.activeListener);
+    }
 
-    List<ItemCard> newCards = new ArrayList<>();
-    for (ItemModel item : items) {
-      ItemCard newCard = new ItemCard(item);
-      newCard.setOnMouseClicked(event -> {
-        if (onCardClicked != null) {
-          onCardClicked.accept(newCard.getItemModel());
-        }
-      });
-      newCards.add(newCard);
+    this.dataList = null;
+    this.activeListener = null;
+    this.cellFactory = null;
+  }
+
+  private void addCard(List<? extends T> item, int startIndex) {
+    if (item == null ||  item.isEmpty()) {
+      return;
+    }
+
+    List<Node> newNode =  new ArrayList<>();
+    for (T t : item) {
+      Node node = cellFactory.call(t);
+      if (node != null) {
+        newNode.add(node);
+      }
     }
 
     int safeIndex = Math.min(startIndex, getChildren().size());
-    getChildren().addAll(safeIndex, newCards);
+    getChildren().addAll(safeIndex, newNode);
+  }
+
+  private void removeCard(int startIndex, int count) {
+    if (getChildren().isEmpty()) {
+      return;
+    }
+
+    int endIndex = Math.min(startIndex + count, getChildren().size());
+    if (startIndex >= endIndex) {
+      return;
+    }
+
+    for (int i = startIndex; i < endIndex; i++) {
+      Node node = getChildren().get(i);
+      if (node instanceof CanBind canBind) {
+        canBind.dispose();
+      }
+    }
+
+    getChildren().remove(startIndex, endIndex);
   }
 }

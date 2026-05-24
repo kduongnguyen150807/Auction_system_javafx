@@ -43,8 +43,6 @@
                 <HBox alignment="CENTER_LEFT" spacing="8.0">
                     <children>
                         <Label fx:id="ratingStarsLabel" styleClass="stars-glow" text="★★★★★"/>
-                        <Label fx:id="ratingCountLabel" style="-fx-text-fill: #cccccc;"
-                               text="(0 đánh giá)"/>
                     </children>
                 </HBox>
                 <Label fx:id="reputationWarning" managed="false"

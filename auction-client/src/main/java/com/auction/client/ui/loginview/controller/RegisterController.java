@@ -2,6 +2,8 @@ package com.auction.client.ui.loginview.controller;
 
 import com.auction.client.app.AutoInject;
 import com.auction.client.service.user.AuthService;
+import com.auction.client.service.user.ClientService;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.loginview.LoginViewType;
 import com.auction.client.util.FXThread; // Sử dụng helper bọc Platform.runLater an toàn
@@ -18,12 +20,14 @@ import javafx.scene.layout.AnchorPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class RegisterController implements CanSwitchNode<LoginViewType> {
   private static final Logger LOGGER = LoggerFactory.getLogger(RegisterController.class);
 
   private final AuthService authService;
+  private final ClientService clientService;
   private Consumer<LoginViewType> switchNode;
 
   @FXML private AnchorPane rootPane;
@@ -36,8 +40,9 @@ public class RegisterController implements CanSwitchNode<LoginViewType> {
   @FXML private Button registerButton;
 
   @AutoInject
-  public RegisterController(AuthService authService) {
+  public RegisterController(AuthService authService, ClientService clientService) {
     this.authService = authService;
+    this.clientService = clientService;
   }
 
   @Override
@@ -63,6 +68,8 @@ public class RegisterController implements CanSwitchNode<LoginViewType> {
         setLoadingState(false);
 
         if (response != null && Response.OK.equals(response.getStatus())) {
+          clientService.getWatchedList();
+          clientService.getUserTransaction();
           setMessage("Đăng ký thành công! Đang chuyển hướng...");
           authService.switchHomeScene();
         } else {

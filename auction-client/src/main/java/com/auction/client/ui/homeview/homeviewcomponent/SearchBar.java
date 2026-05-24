@@ -16,6 +16,7 @@ public class SearchBar<T> extends HBox {
   @FXML private Button applyButton;
 
   private Consumer<String> onSearch;
+  private Runnable onRefresh;
 
   public SearchBar() {
     FXMLLoader loader = new FXMLLoader(getClass().getResource(BASE_FXML_PATH));

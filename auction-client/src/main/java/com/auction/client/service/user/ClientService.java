@@ -4,6 +4,7 @@ import com.auction.client.network.NetworkClient;
 import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.store.clientinformation.UserTransactionHistory;
 import com.auction.client.util.RequestHelper;
+import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.auction.shared.TransactionLog;
@@ -78,6 +79,55 @@ public class ClientService {
           UserTransactionHistory.USER_TRANSACTION_HISTORY.setHistory((List<TransactionLog>) list);
         } else {
           throw new RuntimeException(response.getMessage() != null ? response.getMessage() : "Failed to get user transaction");
+        }
+      });
+  }
+
+  public CompletableFuture<List<Item>> getUserItem() {
+    return RequestHelper.sendRequest(Request.GET_MY_ITEMS, ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+      .thenApply(response ->  {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          List<Item> items = (List<Item>) response.getPayload();
+          return items;
+        }
+        return List.of();
+      });
+  }
+
+  public CompletableFuture<Void> getWatchedList() {
+    return RequestHelper.sendRequest(Request.GET_WATCHLIST, ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+      .thenAccept(response ->  {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          List<Integer> watchedItems = (List<Integer>) response.getPayload();
+          ClientSession.CURRENT_SESSION.getWatchedItemsList().initialize(watchedItems);
+        } else {
+          throw new RuntimeException(response.getMessage() != null ? response.getMessage() : "Failed to get watched list");
+        }
+      });
+  }
+
+  public CompletableFuture<List<Item>> getWatchedItems() {
+    return RequestHelper.sendRequest(Request.GET_WATCHLIST_ITEMS, ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+      .thenApply(response ->   {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          List<Item> items = (List<Item>) response.getPayload();
+          return items;
+        } else {
+          throw new RuntimeException(response.getMessage() != null ? response.getMessage() : "Failed to get watched list");
+        }
+      });
+  }
+
+  public CompletableFuture<Void> toggleWatchedItem(int itemId, boolean isWatching) {
+    Map<String, Object> data = new HashMap<>();
+    data.put("itemId", itemId);
+    data.put("isWatching", isWatching);
+    return RequestHelper.sendRequest(Request.TOGGLE_WATCHLIST, data)
+      .thenAccept(response -> {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          ClientSession.CURRENT_SESSION.getWatchedItemsList().toggle(itemId, isWatching);
+        } else {
+          throw new RuntimeException(response.getMessage() != null ? response.getMessage() : "Failed to toggle watched list");
         }
       });
   }

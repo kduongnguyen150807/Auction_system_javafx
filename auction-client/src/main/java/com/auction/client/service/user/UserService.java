@@ -23,4 +23,14 @@ public class UserService {
         }
       });
   }
+
+  public CompletableFuture<User> getUserById(int id) {
+    return RequestHelper.sendRequest(Request.GET_USER_BY_ID, id)
+      .thenApply(response ->  {
+        if (Response.OK.equals(response.getStatus()) && response.getPayload() instanceof User) {
+          return (User) response.getPayload();
+        }
+        return null;
+      });
+  }
 }

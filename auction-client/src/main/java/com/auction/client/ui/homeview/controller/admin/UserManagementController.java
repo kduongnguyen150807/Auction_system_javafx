@@ -46,7 +46,7 @@ public class UserManagementController implements CanRefresh {
   private void setUpTable() {
     colUsername.setCellValueFactory(cell -> cell.getValue().usernameProperty());
     colEmail.setCellValueFactory(cell -> cell.getValue().emailProperty());
-    colRole.setCellValueFactory(cell -> cell.getValue().roleProperty());
+    colRole.setCellValueFactory(cell -> cell.getValue().roleProperty().asString());
     colStatus.setCellValueFactory(cell -> cell.getValue().statusProperty());
     colRating.setCellValueFactory(cell -> cell.getValue().avgRatingProperty());
   }

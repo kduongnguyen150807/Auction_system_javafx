@@ -3,12 +3,16 @@ package com.auction.client.ui.homeview.controller;
 import com.auction.client.app.AutoInject;
 import com.auction.client.service.auction.AuctionDetailService;
 import com.auction.client.service.auction.AuctionDiscoveryService;
+import com.auction.client.service.user.ClientService;
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.store.lotsinformation.ItemModel;
-import com.auction.client.store.lotsinformation.OngoingLots;
+import com.auction.client.store.lotsinformation.OpenLots;
 import com.auction.client.store.userinformation.UserModel;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
 import com.auction.client.ui.component.FilterBox;
+import com.auction.client.ui.component.itemcard.ItemCardConfig;
+import com.auction.client.ui.component.userbar.UserBarConfig;
 import com.auction.client.ui.homeview.HomeViewType;
 import com.auction.client.ui.homeview.homeviewcomponent.*;
 import com.auction.client.util.FXThread;
@@ -19,7 +23,6 @@ import javafx.animation.Timeline;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,13 +31,13 @@ import java.util.function.Consumer;
 public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewType> {
   private Consumer<HomeViewType> switchNode;
 
-  private final FilteredList<ItemModel> filteredList = new FilteredList<>(OngoingLots.AUCTION_STORE.getOngoingClientItemList());
+  private final FilteredList<ItemModel> filteredList = new FilteredList<>(OpenLots.AUCTION_STORE.getOngoingClientItemList());
 
   @FXML private RedOrBlueToolbar<AuctionType> auctionTypeToggle;
   private final ToggleGroup toggleGroup = new ToggleGroup();
 
-  @FXML private VBoxModel<ItemModel, ItemCard> trendingBind;
-  @FXML private VBoxModel<UserModel, UserBar> leaderboardContainer;
+  @FXML private VBoxModel<ItemModel> trendingBind;
+  @FXML private VBoxModel<UserModel> leaderboardContainer;
   @FXML private ListPane<ItemModel> artLots;
   @FXML private ListPane<ItemModel> electronicsLots;
   @FXML private ListPane<ItemModel> vehiclesLots;
@@ -42,20 +45,30 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
 
   private final AuctionDiscoveryService discoveryService;
   private AuctionDetailService detailService;
+  private ClientService clientService;
 
   private Timeline countdownTimeline;
-  private final Consumer<ItemModel> onItemCardClicked = itemModel -> {
-    if (detailService == null) return;
-    detailService.setSelectedItem(itemModel);
-    if (switchNode != null) {
-      switchNode.accept(HomeViewType.ITEM_INFORMATION);
-    }
+  Consumer<ItemModel> onCardClicked = (selectedItem) -> {
+    detailService.setSelectedItem(selectedItem);
+    switchNode.accept(HomeViewType.ITEM_INFORMATION);
   };
+  Consumer<ItemModel> onHeartClicked = (selectedItem) -> {
+    int itemId = selectedItem.getId();
+    boolean isWatching = ClientSession.CURRENT_SESSION.getWatchedItemsList().contain(itemId);
+    clientService.toggleWatchedItem(itemId, !isWatching);
+  };
+  private final ItemCardConfig itemCardConfig = new ItemCardConfig(onHeartClicked, onCardClicked);
+  private final UserBarConfig userBarConfig = new UserBarConfig(
+    userModel -> {
+      detailService.setSelectedUser(userModel);
+      switchNode.accept(HomeViewType.USER_INFORMATION);
+    });
 
   @AutoInject
-  public TrangChuController(AuctionDiscoveryService discoveryService, AuctionDetailService detailService) {
+  public TrangChuController(AuctionDiscoveryService discoveryService, AuctionDetailService detailService, ClientService clientService) {
     this.discoveryService = discoveryService;
     this.detailService = detailService;
+    this.clientService = clientService;
   }
 
   @FXML
@@ -66,13 +79,7 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
     setToggleToolbar();
     initLotsRow();
 
-    /* set up trendingbind */
-    trendingBind.setItemFac(ItemCard::new);
-    trendingBind.setOnItemClicked(onItemCardClicked);
     refreshTrendingBid();
-
-    /* set up leaderboard*/
-    leaderboardContainer.setItemFac(UserBar::new);
     refreshLeaderBoard();
     countdownTimeline = TimelineUtils.setTimeline(countdownTimeline, 30, List.of(this::refreshLeaderBoard, this::refreshTrendingBid));
   }
@@ -80,7 +87,7 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
   private void setToggleToolbar() {
     auctionTypeToggle.setUpToggleGroup(toggleGroup);
     auctionTypeToggle.setData("Browse category", AuctionType.ENGLISH, AuctionType.DUTCH);
-    toggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+    toggleGroup.selectedToggleProperty().addListener((_, oldValue, newValue) -> {
       if (newValue == null) {
         if (oldValue != null) oldValue.setSelected(true);
         return;
@@ -119,9 +126,7 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
           if (targetCategory.equals("ALL")) {
             return true;
           }
-          if (!targetCategory.equalsIgnoreCase(item.getCategory())) {
-            return false;
-          }
+          return item.getCategory().equalsIgnoreCase(targetCategory);
         }
         return true;
       });
@@ -133,18 +138,19 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
     FilteredList<ItemModel> row = new FilteredList<>(filteredList,
       clientItem -> clientItem.getItem() != null && category.equalsIgnoreCase(clientItem.getItem().getCategory()));
     lots.setTitle(rowName);
-    lots.setItems(row, ItemCard::new, onItemCardClicked);
+    lots.bind(row, itemCardConfig.cardFactory());
   }
 
   @Override
   public void refreshData() {
     discoveryService.refreshOngoingLots();
+    refreshLeaderBoard();
+    refreshTrendingBid();
   }
 
   private void refreshLeaderBoard() {
-    discoveryService.fetchLeaderboardData(userModels -> {
-      FXThread.run(() -> leaderboardContainer.setItems(userModels));
-    });
+    leaderboardContainer.getChildren().clear();
+    discoveryService.fetchLeaderboardData(userModels -> leaderboardContainer.setAll(userModels, userBarConfig.cardFactory()));
   }
 
   private void refreshTrendingBid() {
@@ -158,10 +164,8 @@ public class TrangChuController implements CanRefresh, CanSwitchNode<HomeViewTyp
             itemModels.add(new ItemModel(item));
           }
         }
-        FXThread.run(() -> trendingBind.setItems(itemModels));
-      }).exceptionally(throwable -> {
-        throwable.printStackTrace();
-        return null;
+
+        FXThread.run(() -> trendingBind.setAll(itemModels, itemCardConfig.cardFactory()));
       });
   }
 

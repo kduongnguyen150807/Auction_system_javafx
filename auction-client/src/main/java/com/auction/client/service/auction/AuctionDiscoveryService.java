@@ -1,8 +1,10 @@
 package com.auction.client.service.auction;
 
+import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.store.lotsinformation.ClosedLots;
-import com.auction.client.store.lotsinformation.OngoingLots;
+import com.auction.client.store.lotsinformation.OpenLots;
 import com.auction.client.store.userinformation.UserModel;
+import com.auction.client.util.FXThread;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.*;
 
@@ -18,7 +20,7 @@ public class AuctionDiscoveryService {
       .thenApply(response -> {
         if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof List<?> ongoingLots) {
           List<Item> items = (List<Item>) ongoingLots;
-          OngoingLots.AUCTION_STORE.loadOngoingItems(items);
+          OpenLots.AUCTION_STORE.loadOngoingItems(items);
           return items;
         }
         return List.of();
@@ -34,6 +36,18 @@ public class AuctionDiscoveryService {
           return items;
         }
         return List.of();
+      });
+  }
+
+  public CompletableFuture<List<Item>> getPastBids(UserModel user) {
+    return RequestHelper.sendRequest(Request.GET_PAST_BIDS, ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+      .thenApply(response ->  {
+        if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof List<?> pastBids) {
+          List<Item> items = (List<Item>) pastBids;
+          return items;
+        } else {
+          return List.of();
+        }
       });
   }
 
@@ -105,12 +119,10 @@ public class AuctionDiscoveryService {
       })
       .thenAccept(finalUserModels -> {
         if (consumer != null) {
-          System.out.println("[Service] Đã xử lý xong dữ liệu. Kích hoạt callback render.");
-          consumer.accept(finalUserModels);
+          FXThread.run(() -> consumer.accept(finalUserModels));
         }
       })
       .exceptionally(ex -> {
-        System.err.println("[Service] Lỗi nghiêm trọng khi xử lý dữ liệu Leaderboard:");
         ex.printStackTrace();
         if (consumer != null) {
           consumer.accept(new ArrayList<>());

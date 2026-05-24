@@ -67,17 +67,17 @@
                 </ScrollPane>
             </children>
         </VBox>
-        <ScrollPane GridPane.columnIndex="1"
+        <VBox GridPane.columnIndex="1"
               GridPane.rowIndex="0"
               GridPane.hgrow="ALWAYS"
               GridPane.vgrow="ALWAYS">
-            <content>
+            <children>
                 <VBox>
                     <ListPane fx:id="artLots" VBox.vgrow="ALWAYS"/>
                     <ListPane fx:id="electronicsLots" VBox.vgrow="ALWAYS"/>
                     <ListPane fx:id="vehiclesLots" VBox.vgrow="ALWAYS"/>
                 </VBox>
-            </content>
-        </ScrollPane>
+            </children>
+        </VBox>
     </GridPane>
 </VBox>

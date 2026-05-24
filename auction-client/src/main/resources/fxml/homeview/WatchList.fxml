@@ -9,7 +9,10 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane" stylesheets="@/css/youritem/YourItem.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.ui.Watchlist.WatchlistController">
+<?import com.auction.client.ui.homeview.homeviewcomponent.ReactiveFlowPane?>
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane" stylesheets="@/css/youritem/YourItem.css"
+            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.client.ui.homeview.controller.WatchListController">
     <content>
         <VBox alignment="TOP_CENTER" style="-fx-background-color: transparent;">
             <children>
@@ -19,22 +22,23 @@
                             <children>
                                 <VBox spacing="5.0">
                                     <children>
-                                        <Label styleClass="Bigtext" text="❤ My Watchlist" />
-                                        <Label styleClass="Smalltext" text="Danh sách các sản phẩm bạn đang theo dõi" />
+                                        <Label styleClass="Bigtext" text="❤ My Watchlist"/>
+                                        <Label styleClass="Smalltext" text="Danh sách các sản phẩm bạn đang theo dõi"/>
                                     </children>
                                 </VBox>
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Button mnemonicParsing="false" onAction="#refreshItems" styleClass="btn-refresh" text="Làm mới" />
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button mnemonicParsing="false" onAction="#refreshItems" styleClass="btn-refresh"
+                                        text="Làm mới"/>
                             </children>
                         </HBox>
                         <VBox spacing="15.0">
                             <children>
-                                <FlowPane fx:id="ItemContainer" hgap="20.0" vgap="20.0" />
+                                <ReactiveFlowPane fx:id="itemContainer" hgap="20.0" vgap="20.0"/>
                             </children>
                         </VBox>
                     </children>
                     <VBox.margin>
-                        <Insets bottom="40.0" top="40.0" />
+                        <Insets bottom="40.0" top="40.0"/>
                     </VBox.margin>
                 </VBox>
             </children>

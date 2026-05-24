@@ -1,6 +1,9 @@
 package com.auction.client.ui.homeview.controller.iteminformation;
 
+import com.auction.client.app.AutoInject;
+import com.auction.client.service.user.UserService;
 import com.auction.client.store.lotsinformation.ItemModel;
+import com.auction.client.util.FXThread;
 import com.auction.client.util.ImageViewUtils;
 import com.auction.client.util.StringFormat;
 import com.auction.client.util.TimeFormat;
@@ -28,6 +31,13 @@ public class InfoLayoutController {
   @FXML private Label currentHighestBidValue;
   @FXML private Label maxPriceValue;
   @FXML private Label endsInValue;
+
+  private final UserService userService;
+
+  @AutoInject
+  public InfoLayoutController(UserService userService) {
+    this.userService = userService;
+  }
 
   public void setSelectedItem(ItemModel clientItem) {
     unbind();
@@ -59,11 +69,19 @@ public class InfoLayoutController {
     maxPriceValue.setText(StringFormat.formatMoney(selectedItem.getItem().getMaxPrice()));
     sellerName.setText(selectedItem.getItem().getSellerUsername());
 
-    if (selectedItem.getItem().getStatus() == ItemStatus.OPEN) {
+    if (selectedItem.getItem().getStatus() == ItemStatus.OPEN && !selectedItem.getItem().getStartTime().isAfter(LocalDateTime.now())) {
       setUpCountdownTimeline(selectedItem.getItem().getEndTime());
+    } else if (selectedItem.getItem().getStartTime().isAfter(LocalDateTime.now())) {
+      endsInValue.setText("UPCOMING IN: " + TimeFormat.getDHM(selectedItem.getItem().getStartTime()));
     } else {
-      if (selectedItem.getItem().getWinnerUsername() != null) {
-        endsInValue.setText("WINNER: " + selectedItem.getItem().getWinnerUsername());
+      if (selectedItem.getItem().getWinnerId() != 0) {
+        userService.getUserById(selectedItem.getItem().getWinnerId())
+            .thenCompose(user -> {
+              FXThread.run(() -> {
+                endsInValue.setText("WINNER: " + user.getUsername());
+              });
+              return null;
+            });
       } else {
         endsInValue.setText("EXPIRED");
       }
@@ -75,7 +93,7 @@ public class InfoLayoutController {
       endsInValue.setText("UNKNOW TIME");
       return;
     }
-    long totalSecondsLeft = ChronoUnit.SECONDS.between(endTime, LocalDateTime.now());
+    long totalSecondsLeft = ChronoUnit.SECONDS.between(LocalDateTime.now(), endTime);
     if (totalSecondsLeft <= 0) {
       endsInValue.setText("WINNER: " + selectedItem.getItem().getWinnerUsername());
     }
