@@ -144,6 +144,13 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
   }
 
   @Override
+  public List<Item> getOpenItems() {
+    return queryList(
+            "SELECT i.*, u.username AS seller_name, u.avatar_url AS seller_avatar "
+                    + "FROM items i LEFT JOIN users u ON i.sellerid = u.id "
+                    + "WHERE i.status = 'OPEN' ORDER BY i.id DESC");
+  }
+  @Override
   public List<Item> getAll() {
     return queryList(SELECT_ITEM_WITH_SELLER);
   }

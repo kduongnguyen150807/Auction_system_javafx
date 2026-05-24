@@ -13,39 +13,57 @@ public class SellerCancelItemHandler implements ActionHandler {
   @Override
   public Response handle(Request request, HandlerContext context) {
     User me = context.getCurrentUser();
+
     try {
       @SuppressWarnings("unchecked")
       Map<String, String> data = (Map<String, String>) request.getPayload();
-      if (data == null || data.get("itemid") == null) {
+
+      if (data == null || isBlank(data.get("itemid"))) {
         return new Response(request.getRequestId(), Response.ERROR, "invalid_payload", null);
       }
+
       int itemId = Integer.parseInt(data.get("itemid").trim());
+
       Item item = context.getItemDao().getById(itemId);
       if (item == null) {
         return new Response(request.getRequestId(), Response.ERROR, "not_found", null);
       }
+
       if (item.getSellerId() != me.getId()) {
         return new Response(request.getRequestId(), Response.ERROR, "forbidden", null);
       }
+
       if (item.getStatus() == ItemStatus.PENDING) {
         boolean ok = context.getItemDao().sellerCancelPending(itemId, me.getId());
+
         return new Response(
-            request.getRequestId(),
-            ok ? Response.OK : Response.ERROR,
-            ok ? "success" : "fail",
-            null);
+                request.getRequestId(),
+                ok ? Response.OK : Response.ERROR,
+                ok ? "success" : "fail",
+                null);
       }
+
       if (item.getStatus() == ItemStatus.OPEN) {
         boolean ok = context.getAuctionManager().voluntarySellerCancelOpenAuction(me.getId(), itemId);
+
         return new Response(
-            request.getRequestId(),
-            ok ? Response.OK : Response.ERROR,
-            ok ? "success" : "cannot_cancel",
-            null);
+                request.getRequestId(),
+                ok ? Response.OK : Response.ERROR,
+                ok ? "success" : "cannot_cancel",
+                null);
       }
+
       return new Response(request.getRequestId(), Response.ERROR, "cannot_cancel_status", null);
+    } catch (ClassCastException e) {
+      return new Response(request.getRequestId(), Response.ERROR, "invalid_payload", null);
+    } catch (NumberFormatException e) {
+      return new Response(request.getRequestId(), Response.ERROR, "invalid_item_id", null);
     } catch (Exception e) {
-      return new Response(request.getRequestId(), Response.ERROR, "fail", null);
+      return new Response(request.getRequestId(), Response.ERROR, "server_error", null);
     }
+  }
+
+  private static boolean isBlank(String value) {
+    return value == null || value.trim().isEmpty();
   }
 }
