@@ -28,6 +28,19 @@ public class AuctionDiscoveryService {
       });
   }
 
+  public CompletableFuture<Void> refreshItem(int id) {
+    return RequestHelper.sendRequest(Request.GET_ITEM_BY_ID, id)
+      .thenAccept(response -> {
+        if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof Item item) {
+          FXThread.run(() -> {
+            OpenLots.AUCTION_STORE.updateClientItem(item);
+          });
+        } else {
+          AlertUtil.showErrorAlert("FAIL" , "FAIL TO GET ITEM BY ID");
+        }
+      });
+  }
+
   public CompletableFuture<List<Item>> refreshClosedLots() {
     return RequestHelper.sendRequest(Request.GET_CLOSED_BIDS, null)
       .thenApply(response -> {

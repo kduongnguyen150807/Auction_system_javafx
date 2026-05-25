@@ -19,7 +19,7 @@ public class IntegerField extends TextField {
     }
   }
 
-  public int getValue() {
-    return getText().isBlank() ? -1 : Integer.parseInt(getText());
+  public double getValue() {
+    return getText().isBlank() ? -1 : Double.parseDouble(getText());
   }
 }

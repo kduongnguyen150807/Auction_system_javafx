@@ -1,18 +1,24 @@
 package com.auction.client.store.lotsinformation;
 
+import com.auction.client.util.FXThread;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;
 import javafx.beans.property.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
 public class ItemModel {
+  private static final Logger logger = LoggerFactory.getLogger(ItemModel.class);
+
   private final LongProperty id = new SimpleLongProperty();
   private final StringProperty name = new SimpleStringProperty();
   private final StringProperty description = new SimpleStringProperty();
   private final DoubleProperty currentPrice = new SimpleDoubleProperty();
   private final ObjectProperty<ItemStatus> status = new SimpleObjectProperty<>();
   private final ObjectProperty<LocalDateTime> endTime = new SimpleObjectProperty<>();
+  private final SimpleStringProperty winner = new SimpleStringProperty();
 
   private Item item;
 
@@ -25,18 +31,32 @@ public class ItemModel {
     status.set(item.getStatus());
     description.set(item.getDescription());
     endTime.set(item.getEndTime());
+    if (item.getWinnerUsername() != null) {
+      winner.set(item.getWinnerUsername());
+    }
 
     this.category = item.getCategory();
     this.item = item;
   }
 
   public void update(Item item) {
-    currentPrice.set(item.getCurrentPrice());
-    status.set(item.getStatus());
+    FXThread.run(() -> {
+      this.item = item;
+
+      winner.set(item.getWinnerUsername());
+      endTime.set(item.getEndTime());
+      status.set(null);
+      status.set(item.getStatus());
+      currentPrice.set(item.getCurrentPrice());
+    });
   }
 
   public Item getItem() {
     return item;
+  }
+
+  public SimpleStringProperty winnerProperty() {
+    return winner;
   }
 
   public String getCategory() {

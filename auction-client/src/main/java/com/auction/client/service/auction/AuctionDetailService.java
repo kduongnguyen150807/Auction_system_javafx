@@ -7,10 +7,8 @@ import com.auction.client.store.selectediteminformation.SelectedItemBidHistory;
 import com.auction.client.store.userinformation.SelectedUser;
 import com.auction.client.store.userinformation.UserModel;
 import com.auction.client.util.RequestHelper;
-import com.auction.shared.BidTransaction;
-import com.auction.shared.Item;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
+import com.auction.shared.*;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -43,6 +41,22 @@ public class AuctionDetailService {
       BidTransaction fakeTransaction = new BidTransaction(updatedItem.getId(), -1, updatedItem.getCurrentPrice());
       SelectedItemBidHistory.SELECTED_ITEM_BID_HISTORY.appendBidTransaction(fakeTransaction);
     }
+  }
+
+  public void closeItem(Item item) {
+    if (item == null) return;
+    OpenLots.AUCTION_STORE.updateClientItem(item);
+  }
+
+  public CompletableFuture<Void> loadRating(int id) {
+    return RequestHelper.sendRequest(Request.GET_RATINGS, id)
+      .thenAccept(response -> {
+        if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof List<?> ratings) {
+          if (SelectedItem.SELECTED_ITEM.getSelectedItem().getId() == id) {
+            SelectedItem.SELECTED_ITEM.setSelectedItemRatings((List<Rating>) ratings);
+          }
+        }
+      });
   }
 
   public CompletableFuture<List<Item>> getSelectedUserItems(int id) {

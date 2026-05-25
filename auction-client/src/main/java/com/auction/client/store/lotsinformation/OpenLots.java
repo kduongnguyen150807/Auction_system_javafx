@@ -3,10 +3,13 @@ package com.auction.client.store.lotsinformation;
 import com.auction.client.util.FXThread;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Predicate;
@@ -45,31 +48,21 @@ public class OpenLots {
       ItemModelRegistry.updateIfNewer(item);
       ItemModel securedModel = ItemModelRegistry.getOrCreate(item);
 
-      Item verifiedItem = securedModel.getItem();
-      if (verifiedItem == null) return;
-
-      if (item.getStatus() == ItemStatus.CLOSED) {
+      if (item.getStatus().equals(ItemStatus.CLOSED) || item.getStatus().equals(ItemStatus.EXPIRED)) {
         ongoingItemsList.remove(securedModel);
         upcomingItemsList.remove(securedModel);
-      }
-      else if (item.getStartTime().isAfter(LocalDateTime.now())) {
+      } else if (item.getStartTime().isAfter(LocalDateTime.now())) {
         if (!upcomingItemsList.contains(securedModel)) {
           upcomingItemsList.add(securedModel);
         }
         ongoingItemsList.remove(securedModel);
-      }
-      else {
+      } else {
         if (!ongoingItemsList.contains(securedModel)) {
           ongoingItemsList.add(securedModel);
         }
         upcomingItemsList.remove(securedModel);
       }
     });
-  }
-
-  @Deprecated
-  public void addItemIfMissing(Item item) {
-    updateClientItem(item);
   }
 
   public FilteredList<ItemModel> getFilteredStatusItems(ItemStatus status) {

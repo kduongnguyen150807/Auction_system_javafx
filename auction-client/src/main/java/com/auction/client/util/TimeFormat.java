@@ -38,6 +38,23 @@ public class TimeFormat {
     return text;
   }
 
+  public static String getUpcommingDHMS(LocalDateTime time) {
+    Duration duration = Duration.between(time, LocalDateTime.now());
+    long days = duration.toDays();
+    long hours = duration.toHours() % 24;
+    long minutes = duration.toMinutes() % 60;
+    long seconds = duration.getSeconds() % 60;
+
+    String text = String.format(
+      "%dd %dh %dm %s",
+      days,
+      hours,
+      minutes,
+      seconds
+    );
+    return text;
+  }
+
   public static String getDHM(LocalDateTime time) {
     Duration duration = Duration.between(LocalDateTime.now(), time);
     long days = duration.toDays();

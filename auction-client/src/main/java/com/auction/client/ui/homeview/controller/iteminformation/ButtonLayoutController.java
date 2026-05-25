@@ -8,16 +8,15 @@ import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.component.IntegerField;
 import com.auction.client.ui.homeview.homeviewcomponent.BiddingForm;
 import com.auction.client.ui.homeview.homeviewcomponent.RatingBox;
+import com.auction.client.ui.homeview.homeviewcomponent.VBoxModel;
 import com.auction.client.util.AlertUtil;
 import com.auction.client.util.FXThread;
 import com.auction.client.util.StageUtil;
-import com.auction.shared.BidTransaction;
-import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
-import com.auction.shared.Response;
-import com.auction.shared.User;
+import com.auction.shared.*;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.layout.VBox;
 
 public class ButtonLayoutController {
   private ItemModel selectedItem;
@@ -25,7 +24,10 @@ public class ButtonLayoutController {
 
   @FXML private Button bidButton;
   @FXML private Button autoBidButton;
-  @FXML private RatingBox ratingBox;
+  @FXML private Button rateButton;
+  @FXML private ComboBox<String> ratingFilterCombo;
+  @FXML private VBoxModel<Rating> ratingsBox;
+  @FXML private VBox ratingsContainer;
   @FXML private IntegerField autoBidField;
 
   private final BiddingService biddingService;
@@ -84,14 +86,21 @@ public class ButtonLayoutController {
     bidButton.setDisable(true);
     autoBidButton.setDisable(true);
     autoBidField.setDisable(true);
-    ratingBox.setVisible(true);
+
+    ratingsContainer.setVisible(true);
+
+    if (selectedItem.getItem().getWinnerId() == ClientSession.CURRENT_SESSION.getCurrentUser().getId()) {
+      rateButton.setVisible(true);
+    }
   }
 
   private void enableButton() {
     bidButton.setDisable(false);
     autoBidButton.setDisable(false);
     autoBidField.setDisable(false);
-    ratingBox.setVisible(false);
+
+    ratingsContainer.setVisible(false);
+    rateButton.setVisible(false);
   }
 
   private boolean validate(User user, double bidAmount) {
@@ -173,5 +182,17 @@ public class ButtonLayoutController {
     } else {
       AlertUtil.showWarningAlert("Bidding Refused", response.getMessage());
     }
+  }
+
+  @FXML
+  private void showRatingForm() {}
+
+  @FXML
+  private void handleRatingFilter() {
+    String filter = ratingFilterCombo != null && ratingFilterCombo.getValue() != null ? ratingFilterCombo.getValue() : "All";
+    renderratings(filter);
+  }
+
+  private void renderratings(String filter) {
   }
 }

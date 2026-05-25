@@ -5,6 +5,7 @@
 
 <?import com.auction.client.ui.component.IntegerField?>
 <?import com.auction.client.ui.homeview.homeviewcomponent.RatingBox?>
+<?import com.auction.client.ui.homeview.homeviewcomponent.VBoxModel?>
 <VBox xmlns="http://javafx.com/javafx" spacing="10"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.ui.homeview.controller.iteminformation.ButtonLayoutController"
@@ -19,6 +20,19 @@
             </children>
         </HBox>
 
-        <RatingBox fx:id="ratingBox" visible="true"/>
+        <Button fx:id="rateButton" maxWidth="Infinity" onAction="#showRatingForm" prefHeight="50.0" text="RATE THIS TRANSACTION" styleClass="btn-rounded-gold-sm" />
+
+        <VBox fx:id="ratingsContainer" spacing="8.0">
+            <children>
+                <HBox spacing="12.0" alignment="CENTER_LEFT">
+                    <children>
+                        <Label text="RATINGS" styleClass="label-sm-gray" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="ratingFilterCombo" onAction="#handleRatingFilter" prefWidth="130" styleClass="combo-mac-sm" />
+                        <VBoxModel fx:id="ratingsBox" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
     </children>
 </VBox>

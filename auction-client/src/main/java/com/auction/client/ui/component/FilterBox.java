@@ -64,8 +64,8 @@ public class FilterBox extends HBox {
   }
 
   public void executeInternalFilter() {
-    int minPrice = getMinPrice();
-    int maxPrice = getMaxPrice();
+    double minPrice = getMinPrice();
+    double maxPrice = getMaxPrice();
     String targetCategory = getCategory();
 
     Predicate<ItemModel> filterPredicate = itemModel -> {
@@ -94,7 +94,7 @@ public class FilterBox extends HBox {
     });
   }
 
-  public int getMinPrice() { return minPriceField.getValue(); }
-  public int getMaxPrice() { return maxPriceField.getValue(); }
+  public double getMinPrice() { return minPriceField.getValue(); }
+  public double getMaxPrice() { return maxPriceField.getValue(); }
   public String getCategory() { return categoryFilter.getValue(); }
 }

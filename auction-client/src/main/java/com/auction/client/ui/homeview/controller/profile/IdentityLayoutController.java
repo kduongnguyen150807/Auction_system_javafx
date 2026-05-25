@@ -80,13 +80,12 @@ public class IdentityLayoutController {
     setLoadingState(true);
     editButton.setText("Saving...");
 
-    clientService.updateProfile(fullName, email, phone)
+    clientService.updateProfile(fullName, phone, email)
       .thenAccept(response -> FXThread.run(() -> {
         setLoadingState(false);
 
         if (response != null && Response.OK.equals(response.getStatus())) {
           AlertUtil.showInfoAlert("Success", "Profile updated successfully!");
-
           isEditing = false;
           setVisible(isEditing);
         } else {

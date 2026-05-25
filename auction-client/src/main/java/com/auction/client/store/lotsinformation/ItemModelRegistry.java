@@ -1,7 +1,7 @@
 package com.auction.client.store.lotsinformation;
 
+import com.auction.client.util.FXThread;
 import com.auction.shared.Item;
-import com.auction.shared.ItemStatus;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,35 +17,30 @@ public final class ItemModelRegistry {
             return null;
         }
 
-        if (item.getStatus() == ItemStatus.CLOSED) {
-            ItemModel closedModel = ACTIVE_POOL.remove(item.getId());
-            if (closedModel != null) {
-                closedModel.update(item);
-                return closedModel;
-            }
-            return new ItemModel(item);
+        if (ACTIVE_POOL.containsKey(item.getId())) {
+            return ACTIVE_POOL.get(item.getId());
+        } else {
+            ItemModel itemModel = new ItemModel(item);
+            FXThread.run(() -> ACTIVE_POOL.put(item.getId(), itemModel));
+            return itemModel;
         }
-
-        return ACTIVE_POOL.computeIfAbsent(item.getId(), id -> new ItemModel(item));
     }
 
     public static void updateIfNewer(Item newItem) {
         if (newItem == null) return;
 
-        ACTIVE_POOL.computeIfPresent(newItem.getId(), (id, existingModel) -> {
-            Item currentItem = existingModel.getItem();
-            if (newItem.getCurrentPrice() <= currentItem.getCurrentPrice()
-              && newItem.getStatus() == currentItem.getStatus()) {
-                return existingModel;
-            }
+        if (ACTIVE_POOL.containsKey(newItem.getId())) {
+            ItemModel itemModel = ACTIVE_POOL.get(newItem.getId());
+            itemModel.update(newItem);
+        } else {
+            getOrCreate(newItem);
+        }
+    }
 
-            existingModel.update(newItem);
-
-            if (newItem.getStatus() == ItemStatus.CLOSED) {
-                return null;
-            }
-
-            return existingModel;
-        });
+    public static void removeItem(Item item) {
+        if (item == null) return;
+        if (ACTIVE_POOL.containsKey(item.getId())) {
+            FXThread.run(() -> ACTIVE_POOL.remove(item.getId()));
+        }
     }
 }

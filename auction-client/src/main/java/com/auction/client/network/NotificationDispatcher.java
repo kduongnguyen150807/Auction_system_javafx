@@ -11,6 +11,7 @@ import com.auction.client.util.FXThread;
 import com.auction.shared.ChatMessage;
 import com.auction.shared.Friendship;
 import com.auction.shared.Item;
+import com.auction.shared.User;
 
 public class NotificationDispatcher implements NetworkEventListener{
   private final AuctionDetailService auctionDetailService;
@@ -46,7 +47,12 @@ public class NotificationDispatcher implements NetworkEventListener{
 
   @Override
   public void onItemClosed(Item item) {
-    auctionDetailService.handleRealtimeItemUpdate(item);
+    auctionDiscoveryService.getUserById(item.getWinnerId())
+        .thenAccept(user -> {
+          item.setWinnerUsername(user.getUsername());
+          auctionDetailService.closeItem(item);
+        });
+
   }
 
   @Override

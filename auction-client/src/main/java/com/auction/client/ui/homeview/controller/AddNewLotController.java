@@ -182,14 +182,14 @@ public class AddNewLotController implements CanRefresh {
     /* basic value */
     String name = nameField.getText().trim();
     String price = priceField.getText().trim();
-    String maxPrice = maxPriceField.getText().trim();
+    String maxPrice = maxPriceField.getText();
     String description = descriptionField.getText().trim();
     if (name.isEmpty() || price.isEmpty() || description.isEmpty()) {
       AlertUtil.showErrorAlert("ADD NEW LOT FAILED", "Please fill all the fields");
       return null;
     }
     if (!maxPrice.isEmpty()) {
-      if (Integer.parseInt(maxPrice) < Integer.parseInt(price)) {
+      if (Double.parseDouble(price) > Double.parseDouble(maxPrice)) {
         AlertUtil.showErrorAlert("ADD NEW LOT FAILED", "MAX PRICE CAN NOT BE BELOW STARTING PRICE");
         return null;
       }
