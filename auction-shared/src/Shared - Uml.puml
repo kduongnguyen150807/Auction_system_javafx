@@ -1,0 +1,210 @@
+@startuml Server_Main_UML
+
+title UML Server - Nhánh Main
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide members
+hide methods
+
+package "com.auction.server" {
+    class Main
+}
+
+package "controller" {
+    class SocketServer
+    class ClientHandler
+    class TokenBucket
+}
+
+package "handler.dispatch" {
+    interface ActionHandler
+    class ActionRegistry
+    class HandlerContext
+}
+
+package "handler.auth" {
+    class LoginHandler
+    class SignupHandler
+    class ForgotPasswordHandler
+    class ReconnectHandler
+}
+
+package "handler.auction" {
+    class AddLotHandler
+    class BidHandler
+    class ListItemsHandler
+    class ItemQueryHandler
+    class LotQueryHandler
+    class AutocompleteHandler
+    class SellerCancelItemHandler
+    class SellerUpdatePendingItemHandler
+}
+
+package "handler.user" {
+    class DepositHandler
+    class UpdateAvatarHandler
+    class UpdateProfileHandler
+    class UserManagementHandler
+    class WatchlistHandler
+}
+
+package "handler.chat" {
+    class ChatHandler
+    class FriendHandler
+}
+
+package "handler.rating" {
+    class RatingHandler
+}
+
+package "handler.misc" {
+    class LeaderboardHandler
+    class MiscHandler
+}
+
+package "service.auction" {
+    class AuctionManager
+    class AuctionBidPipeline
+    class AuctionRealtimeNotifier
+    class AutoBidCoordinator
+    class AutoBidRegistration
+    class BidAuctionValidator
+    class ManualBidExecutor
+    class SettlementService
+    class ClientConnectionHub
+    class LeaderboardService
+    class DutchAuctionCatalogSync
+    class TrendingLotsFormula
+    class Trie
+    class TrieManager
+    class BanCascadeService
+    class AuctionEndEvent
+}
+
+package "service.user" {
+    class UserService
+    class OtpService
+}
+
+package "dao.auction" {
+    class ItemDao
+    class LotDao
+    class BidDao
+    class ItemRepository
+    class LotRepository
+}
+
+package "dao.user" {
+    class UserDao
+    class UserRepository
+    class WatchlistDao
+}
+
+package "dao.chat" {
+    class ChatDao
+    class FriendDao
+}
+
+package "dao.rating" {
+    class RatingDao
+    class RatingRepository
+}
+
+package "dao.wallet" {
+    class TransactionLogDao
+}
+
+package "dao.platform" {
+    class DatabaseConnection
+    class BaseDao
+    class DatabaseMigration
+    class MigrationSchemaSupport
+    class UserSchemaMigration
+    class ItemSchemaMigration
+    class BidTransactionsSchemaMigration
+    class RatingsSchemaMigration
+    class TransactionLogSchemaMigration
+    class ChatSchemaMigration
+    class FriendshipSchemaMigration
+}
+
+Main --> SocketServer
+SocketServer --> ClientHandler
+ClientHandler --> ActionRegistry
+ClientHandler --> HandlerContext
+ActionRegistry --> ActionHandler
+
+ActionHandler <|.. LoginHandler
+ActionHandler <|.. SignupHandler
+ActionHandler <|.. ForgotPasswordHandler
+ActionHandler <|.. ReconnectHandler
+
+ActionHandler <|.. AddLotHandler
+ActionHandler <|.. BidHandler
+ActionHandler <|.. ListItemsHandler
+ActionHandler <|.. ItemQueryHandler
+ActionHandler <|.. LotQueryHandler
+ActionHandler <|.. AutocompleteHandler
+ActionHandler <|.. SellerCancelItemHandler
+ActionHandler <|.. SellerUpdatePendingItemHandler
+
+ActionHandler <|.. DepositHandler
+ActionHandler <|.. UpdateAvatarHandler
+ActionHandler <|.. UpdateProfileHandler
+ActionHandler <|.. UserManagementHandler
+ActionHandler <|.. WatchlistHandler
+
+ActionHandler <|.. ChatHandler
+ActionHandler <|.. FriendHandler
+ActionHandler <|.. RatingHandler
+ActionHandler <|.. LeaderboardHandler
+ActionHandler <|.. MiscHandler
+
+BidHandler --> AuctionManager
+BidHandler --> AuctionBidPipeline
+AuctionBidPipeline --> BidAuctionValidator
+AuctionBidPipeline --> ManualBidExecutor
+AuctionBidPipeline --> AutoBidCoordinator
+AuctionManager --> SettlementService
+AuctionManager --> AuctionRealtimeNotifier
+AuctionRealtimeNotifier --> ClientConnectionHub
+LeaderboardHandler --> LeaderboardService
+
+LoginHandler --> UserService
+SignupHandler --> UserService
+ForgotPasswordHandler --> OtpService
+UserService --> UserDao
+
+AddLotHandler --> LotDao
+ListItemsHandler --> ItemDao
+ItemQueryHandler --> ItemDao
+LotQueryHandler --> LotDao
+WatchlistHandler --> WatchlistDao
+ChatHandler --> ChatDao
+FriendHandler --> FriendDao
+RatingHandler --> RatingDao
+DepositHandler --> TransactionLogDao
+
+ItemDao --> DatabaseConnection
+LotDao --> DatabaseConnection
+BidDao --> DatabaseConnection
+UserDao --> DatabaseConnection
+ChatDao --> DatabaseConnection
+FriendDao --> DatabaseConnection
+RatingDao --> DatabaseConnection
+WatchlistDao --> DatabaseConnection
+TransactionLogDao --> DatabaseConnection
+
+DatabaseMigration --> MigrationSchemaSupport
+DatabaseMigration --> UserSchemaMigration
+DatabaseMigration --> ItemSchemaMigration
+DatabaseMigration --> BidTransactionsSchemaMigration
+DatabaseMigration --> RatingsSchemaMigration
+DatabaseMigration --> TransactionLogSchemaMigration
+DatabaseMigration --> ChatSchemaMigration
+DatabaseMigration --> FriendshipSchemaMigration
+
+@enduml

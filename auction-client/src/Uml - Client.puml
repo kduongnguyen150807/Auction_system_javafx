@@ -1,0 +1,140 @@
+@startuml Client_Main_UML
+
+title UML Client - Nhánh Main
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide members
+hide methods
+
+package "com.auction.client" {
+    class App
+    class Main
+    class SceneManager
+    class ClientSession
+}
+
+package "ui.Main" {
+    class KhungController
+    class MainShellNavigator
+    class MainShellNetworkBridge
+    class AdminDashboardController
+}
+
+package "network" {
+    class NetworkClient
+    class IncomingResponseRouter
+    class ObjectSocketConnection
+    interface NetworkEventListener
+}
+
+package "service" {
+    class BiddingClientService
+    class LotSubmissionService
+    class UserAccountService
+}
+
+package "controller" {
+    class WelcomeController
+    class LoginController
+    class RegisterController
+    class ForgotPasswordController
+}
+
+package "ui.TrangChu" {
+    class TrangChuController
+}
+
+package "ui.ItemCard" {
+    class ItemCardController
+}
+
+package "ui.ItemInformation" {
+    class ItemInformationController
+}
+
+package "ui.BiddingForm" {
+    class BiddingFormController
+}
+
+package "ui.AddNewLot" {
+    class AddNewLotController
+}
+
+package "ui.Profile" {
+    class ProfileController
+}
+
+package "ui.Watchlist" {
+    class WatchlistController
+}
+
+package "ui.YourItem" {
+    class YourItemController
+}
+
+package "ui.History" {
+    class HistoryController
+}
+
+package "ui.TransactionHistory" {
+    class TransactionHistoryController
+}
+
+package "ui.Chat" {
+    class ChatPageController
+}
+
+package "ui.RatingForm" {
+    class RatingFormController
+}
+
+package "ui.SearchBar" {
+    class ThanhTimKiemController
+    class UserSearchResultsPopup
+}
+
+package "util" {
+    class ImagePresentationUtil
+    class InputValidators
+    class NotificationCenter
+    class NotificationPopup
+    class ItemNotificationText
+}
+
+Main --> SceneManager
+SceneManager --> KhungController
+
+KhungController --> MainShellNavigator
+KhungController --> MainShellNetworkBridge
+MainShellNetworkBridge ..|> NetworkEventListener
+
+KhungController --> TrangChuController
+KhungController --> AddNewLotController
+KhungController --> WatchlistController
+KhungController --> YourItemController
+KhungController --> ProfileController
+KhungController --> HistoryController
+KhungController --> TransactionHistoryController
+KhungController --> ChatPageController
+KhungController --> AdminDashboardController
+
+TrangChuController --> ItemCardController
+ItemCardController --> ItemInformationController
+ItemInformationController --> BiddingFormController
+ItemInformationController --> RatingFormController
+
+LoginController --> NetworkClient
+RegisterController --> NetworkClient
+ForgotPasswordController --> NetworkClient
+
+NetworkClient --> ObjectSocketConnection
+NetworkClient --> IncomingResponseRouter
+
+BiddingFormController --> BiddingClientService
+AddNewLotController --> LotSubmissionService
+ProfileController --> UserAccountService
+
+@enduml

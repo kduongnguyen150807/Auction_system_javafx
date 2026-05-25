@@ -168,3 +168,132 @@ Mở một Terminal mới và khởi động giao diện JavaFX. Có thể chạ
 cd auction-client
 mvn javafx:run
 ```
+## Hướng dẫn build và chạy bằng JAR
+
+### Yêu cầu môi trường
+
+Máy cần cài:
+
+- JDK 25
+- Maven 3.8+
+- MySQL 8.0+
+
+Kiểm tra Java:
+
+```bash
+java -version
+```
+
+Kiểm tra Maven:
+
+```bash
+mvn -version
+```
+
+### 1. Tạo database
+
+Trước khi chạy server, cần tạo database trong MySQL:
+
+```sql
+CREATE DATABASE auction_db;
+```
+
+Server sẽ tự chạy migration để tạo các bảng cần thiết khi khởi động.
+
+### 2. Cấu hình database
+
+Mở file:
+
+```text
+auction-server/src/main/resources/db.properties
+```
+
+Kiểm tra lại thông tin database:
+
+```properties
+db.url=jdbc:mysql://localhost:3306/auction_db
+db.user=root
+db.password=your_password
+```
+
+Thay `root` và `your_password` theo tài khoản MySQL trên máy.
+
+Ví dụ nếu MySQL của bạn có user là `root` và password là `123456`, sửa thành:
+
+```properties
+db.url=jdbc:mysql://localhost:3306/auction_db
+db.user=root
+db.password=123456
+```
+
+### 3. Build project thành fat JAR / uber JAR
+
+Tại thư mục gốc project, chạy:
+
+```bash
+mvn clean package -DskipTests -Dcheckstyle.skip=true
+```
+
+Sau khi build thành công, Maven sẽ tạo ra 2 file JAR:
+
+```text
+auction-server/target/auction-server.jar
+auction-client/target/auction-client.jar
+```
+
+### 4. Chạy server
+
+Mở terminal thứ nhất, chạy:
+
+```bash
+java -jar auction-server/target/auction-server.jar
+```
+
+Server mặc định chạy ở port:
+
+```text
+8080
+```
+
+Nếu muốn đổi port server, có thể cấu hình biến môi trường `SERVER_PORT`.
+
+### 5. Chạy client
+
+Mở terminal thứ hai, chạy:
+
+```bash
+java -jar auction-client/target/auction-client.jar
+```
+
+Nếu client hỏi địa chỉ server, nhập:
+
+```text
+127.0.0.1
+```
+
+Nếu server chạy ở máy khác, nhập IP của máy đang chạy server.
+
+### 6. Chạy nhiều client cùng lúc
+
+Có thể mở nhiều terminal và chạy client nhiều lần:
+
+```bash
+java -jar auction-client/target/auction-client.jar
+```
+
+Ví dụ:
+
+```text
+Terminal 1: chạy server
+Terminal 2: chạy client user A
+Terminal 3: chạy client user B
+Terminal 4: chạy client admin
+```
+
+### 7. Mô hình chạy chương trình
+
+```text
+auction-client  <---- TCP Socket port 8080 ---->  auction-server  <----> MySQL
+```
+
+Client và server chạy riêng. Server cần chạy trước, sau đó client mới kết nối vào server.
