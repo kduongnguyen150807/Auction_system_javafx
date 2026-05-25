@@ -11,6 +11,7 @@
 
 <?import com.auction.client.ui.component.MetricCard?>
 <?import com.auction.client.ui.homeview.homeviewcomponent.ReactiveFlowPane?>
+<?import com.auction.client.ui.component.FilterBox?>
 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane" stylesheets="@/css/youritem/YourItem.css"
             xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.auction.client.ui.homeview.controller.YourItemController">
@@ -31,6 +32,7 @@
                                 <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="btn-refresh" text="Làm mới" />
                             </children>
                         </HBox>
+                        <FilterBox fx:id="filterBox" />
                         <HBox spacing="20.0">
                             <children>
                                 <MetricCard title="ĐANG ĐẤU GIÁ" fx:id="activeItemCard" HBox.hgrow="ALWAYS" />
@@ -39,6 +41,7 @@
                         </HBox>
                         <VBox spacing="15.0">
                             <children>
+
                                 <Label styleClass="section-title" text="Danh sách sản phẩm"/>
                                 <ReactiveFlowPane fx:id="inventoryPane" alignment="TOP_CENTER" hgap="25.0" vgap="25.0" styleClass="flow-pane-clean" />
                             </children>

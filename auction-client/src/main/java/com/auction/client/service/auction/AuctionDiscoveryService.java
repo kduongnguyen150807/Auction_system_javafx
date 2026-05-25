@@ -4,6 +4,7 @@ import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.store.lotsinformation.ClosedLots;
 import com.auction.client.store.lotsinformation.OpenLots;
 import com.auction.client.store.userinformation.UserModel;
+import com.auction.client.util.AlertUtil;
 import com.auction.client.util.FXThread;
 import com.auction.client.util.RequestHelper;
 import com.auction.shared.*;
@@ -78,6 +79,28 @@ public class AuctionDiscoveryService {
           return (User) response.getPayload();
         }
         return null;
+      });
+  }
+
+  public CompletableFuture<List<User>> getUsers(String kw) {
+    return RequestHelper.sendRequest(Request.SEARCH_USERS, kw.trim())
+      .thenApply(response -> {
+        if (response.getStatus().equals(Response.OK) && response.getPayload() instanceof List<?> users) {
+          return (List<User>) users;
+        } else {
+          return List.of();
+        }
+      });
+  }
+
+  public CompletableFuture<Void> sendFriendRequest(int id) {
+    return RequestHelper.sendRequest(Request.ADD_FRIEND, id)
+      .thenAccept(response -> {
+        if (response.getStatus().equals(Response.OK)) {
+          FXThread.run(() -> {
+            AlertUtil.showInfoAlert("Friend request has been sent", "Friend request has been sent");
+          });
+        }
       });
   }
 

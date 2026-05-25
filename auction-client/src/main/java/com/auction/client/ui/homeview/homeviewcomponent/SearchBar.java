@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 public class SearchBar<T> extends HBox {
-  private static final String BASE_FXML_PATH = "/fxml/homeview/SearchBar.fxml";
+  private static final String BASE_FXML_PATH = "/fxml/component/SearchBar.fxml";
 
   @FXML private TextField searchField;
   @FXML private Button applyButton;

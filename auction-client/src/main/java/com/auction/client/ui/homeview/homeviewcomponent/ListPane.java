@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
@@ -21,6 +22,7 @@ public class ListPane<T> extends VBox {
 
   @FXML private Label lotsName;
   @FXML private HBox listRow;
+  @FXML private ScrollPane scrollPane;
 
   private ObservableList<T> dataList;
   private ListChangeListener<T> activeListener;

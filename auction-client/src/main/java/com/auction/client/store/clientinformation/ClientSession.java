@@ -1,6 +1,7 @@
 package com.auction.client.store.clientinformation;
 
 import com.auction.client.store.userinformation.UserModel;
+import com.auction.shared.Friendship;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.beans.property.*;
@@ -8,7 +9,11 @@ import javafx.beans.property.*;
 public class ClientSession extends UserModel {
   public static final ClientSession CURRENT_SESSION = new ClientSession();
 
-  private IdStateManager watchedItemsList = new IdStateManager();
+  private IdStateManager<Integer> watchedItemsList = new IdStateManager();
+
+  private IdStateManager<Friendship> friendsList = new IdStateManager();
+
+  private IdStateManager<Friendship> friendRequestList = new IdStateManager();
 
   private final SimpleIntegerProperty itemsSold = new SimpleIntegerProperty();
   private final SimpleDoubleProperty moneyReceived = new SimpleDoubleProperty();
@@ -60,14 +65,19 @@ public class ClientSession extends UserModel {
   public SimpleIntegerProperty itemsBoughtProperty() { return itemsBought; }
   public SimpleDoubleProperty averageRatingProperty() { return averageRating; }
 
-  public IdStateManager getWatchedItemsList() { return watchedItemsList; }
+  public IdStateManager<Integer> getWatchedItemsList() { return watchedItemsList; }
+  public IdStateManager<Friendship> getFriendsList() { return friendsList; }
+  public IdStateManager<Friendship> getRequestList() { return friendRequestList; }
+
   public User getCurrentUser() { return getUser(); }
 
   public ObjectProperty<UserRole> currentRoleProperty() { return roleProperty(); }
   public SimpleStringProperty currentNameProperty() { return (SimpleStringProperty) fullNameProperty(); }
 
   public void clear() {
-    watchedItemsList = new IdStateManager();
+    watchedItemsList = new IdStateManager<Integer>();
+    friendsList = new IdStateManager<Friendship>();
+    friendRequestList = new IdStateManager<Friendship>();
     super.clearModel();
 
     itemsSold.setValue(0);

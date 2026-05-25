@@ -76,4 +76,13 @@ public class UserCard extends HBox {
 
     ImagePresentationUtil.loadCircularAvatar(avatarImageView, avatarUrl, 34, 68);
   }
+
+  private void addOrRemove(Label label, String text, String preText) {
+    if (text == null || text.isEmpty()) {
+      label.setVisible(false);
+      label.setManaged(false);
+    } else {
+      label.setText(preText + text);
+    }
+  }
 }

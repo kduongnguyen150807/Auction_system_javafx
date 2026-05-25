@@ -1,6 +1,7 @@
 package com.auction.client.store.selectediteminformation;
 
 import com.auction.client.store.lotsinformation.ItemModel;
+import com.auction.client.store.lotsinformation.ItemModelRegistry;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
@@ -9,8 +10,16 @@ public class SelectedItem {
 
   private final ObjectProperty<ItemModel> selectedItem = new SimpleObjectProperty<>();
 
+  private SelectedItem() {
+  }
+
   public void setSelectedItem(ItemModel item) {
-    selectedItem.set(item);
+    if (item == null || item.getItem() == null) {
+      selectedItem.set(null);
+      return;
+    }
+    ItemModel singleItem = ItemModelRegistry.getOrCreate(item.getItem());
+    selectedItem.set(singleItem);
   }
 
   public ItemModel getSelectedItem() {

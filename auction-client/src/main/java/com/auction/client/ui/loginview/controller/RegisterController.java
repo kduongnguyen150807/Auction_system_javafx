@@ -68,10 +68,7 @@ public class RegisterController implements CanSwitchNode<LoginViewType> {
         setLoadingState(false);
 
         if (response != null && Response.OK.equals(response.getStatus())) {
-          clientService.getWatchedList();
-          clientService.getUserTransaction();
-          setMessage("Đăng ký thành công! Đang chuyển hướng...");
-          authService.switchHomeScene();
+          switchNode.accept(LoginViewType.LOGIN);
         } else {
           String errorMsg = (response != null) ? response.getMessage() : "Đăng ký thất bại, máy chủ từ chối.";
           setMessage(errorMsg);

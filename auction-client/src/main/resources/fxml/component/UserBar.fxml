@@ -65,5 +65,24 @@
                 </HBox>
             </children>
         </VBox>
+        <HBox fx:id="actionBox" alignment="CENTER_RIGHT" spacing="6.0">
+            <children>
+                <Button fx:id="addFriendBtn" text="Add" styleClass="btn-action, btn-add">
+                    <font>
+                        <Font name="System Bold" size="12.0"/>
+                    </font>
+                </Button>
+                <Button fx:id="acceptBtn" text="Accept" styleClass="btn-action, btn-accept">
+                    <font>
+                        <Font name="System Bold" size="12.0"/>
+                    </font>
+                </Button>
+                <Button fx:id="declineBtn" text="Decline" styleClass="btn-action, btn-decline">
+                    <font>
+                        <Font name="System Bold" size="12.0"/>
+                    </font>
+                </Button>
+            </children>
+        </HBox>
     </children>
 </fx:root>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Button?>
+<?import com.auction.client.ui.homeview.homeviewcomponent.VBoxModel?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.homeview.controller.chat.MainContainerController"
+      HBox.hgrow="ALWAYS" styleClass="chat-right-panel" spacing="0">
+    <!-- Chat header -->
+    <HBox styleClass="chat-conv-header" alignment="CENTER_LEFT" spacing="10">
+        <children>
+            <Label fx:id="chatTitle" text="Select a friend to chat" styleClass="chat-conv-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="chatSubtitle" text="" styleClass="chat-conv-sub"/>
+        </children>
+        <padding>
+            <Insets left="16" right="16" top="10" bottom="10"/>
+        </padding>
+    </HBox>
+
+    <!-- Messages scroll -->
+    <ScrollPane fx:id="messagesScroll" fitToWidth="true" VBox.vgrow="ALWAYS"
+                styleClass="chat-scroll" hbarPolicy="NEVER">
+        <content>
+            <VBoxModel fx:id="messagesContainer" spacing="6" styleClass="messages-container">
+                <padding>
+                    <Insets top="10" bottom="10" left="12" right="12"/>
+                </padding>
+            </VBoxModel>
+        </content>
+    </ScrollPane>
+
+    <!-- Input -->
+    <HBox fx:id="inputBar" styleClass="chat-input-bar" spacing="8" alignment="CENTER"
+          visible="false" managed="false">
+        <children>
+            <TextField fx:id="messageInput" promptText="Type a message..."
+                       onAction="#handleSend" styleClass="chat-input" HBox.hgrow="ALWAYS"/>
+            <Button text="Send" onAction="#handleSend" styleClass="chat-send-btn"/>
+        </children>
+        <padding>
+            <Insets left="12" right="12" top="8" bottom="10"/>
+        </padding>
+    </HBox>
+</VBox>

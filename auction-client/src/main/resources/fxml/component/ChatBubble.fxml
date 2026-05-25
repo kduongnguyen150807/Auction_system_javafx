@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<fx:root type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         maxWidth="Infinity" alignment="CENTER_LEFT">
+    <children>
+        <VBox fx:id="bubble" spacing="2.0" maxWidth="380.0" fillWidth="false">
+            <children>
+                <Label fx:id="senderLabel" text="User" textFill="#9ca3af">
+                    <font>
+                        <Font name="System Bold" size="11.0" />
+                    </font>
+                </Label>
+
+                <Label fx:id="textLabel" text="message content" wrapText="true" maxWidth="350.0" textFill="WHITE">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Label>
+
+                <Label fx:id="timeLabel" text="12:00" textFill="#9ca3af" maxWidth="Infinity">
+                    <font>
+                        <Font size="10.0" />
+                    </font>
+                </Label>
+            </children>
+        </VBox>
+    </children>
+</fx:root>

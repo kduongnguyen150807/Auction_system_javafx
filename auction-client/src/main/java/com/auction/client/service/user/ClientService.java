@@ -3,13 +3,14 @@ package com.auction.client.service.user;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.store.clientinformation.UserTransactionHistory;
+import com.auction.client.store.userinformation.SelectedUser;
+import com.auction.client.util.AlertUtil;
+import com.auction.client.util.FXThread;
 import com.auction.client.util.RequestHelper;
-import com.auction.shared.Item;
-import com.auction.shared.Request;
-import com.auction.shared.Response;
-import com.auction.shared.TransactionLog;
+import com.auction.shared.*;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,58 @@ public class ClientService {
       });
   }
 
+  public CompletableFuture<Void> getFriendsList() {
+    return RequestHelper.sendRequest(Request.GET_FRIENDS, ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+      .thenAccept(response ->   {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          List<Friendship> friends = (List<Friendship>) response.getPayload();
+          ClientSession.CURRENT_SESSION.getFriendsList().initialize(friends);
+        } else {
+          ClientSession.CURRENT_SESSION.getFriendsList().initialize(List.of());
+        }
+      });
+  }
+
+  public CompletableFuture<Void> getFriendRequest() {
+    return RequestHelper.sendRequest(Request.GET_FRIEND_REQUESTS, ClientSession.CURRENT_SESSION.getCurrentUser().getId())
+      .thenAccept(response ->  {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          List<Friendship> friendRequests = (List<Friendship>) response.getPayload();
+          ClientSession.CURRENT_SESSION.getRequestList().initialize(friendRequests);
+        } else  {
+          ClientSession.CURRENT_SESSION.getRequestList().initialize(List.of());
+        }
+      });
+  }
+
+  public CompletableFuture<Void> acceptFriendRequest(int id) {
+    return RequestHelper.sendRequest(Request.ACCEPT_FRIEND, id)
+      .thenAccept(response ->  {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          FXThread.run(() -> {
+            AlertUtil.showInfoAlert("FRIEND", "FRIEND ACCEPTED");
+            ClientSession.CURRENT_SESSION.getRequestList().getIdSet().removeIf(
+              param -> param.getRequesterId() == id
+            );
+          });
+        }
+      });
+  }
+
+  public CompletableFuture<Void> declineFriendRequest(int id) {
+    return RequestHelper.sendRequest(Request.DECLINE_FRIEND, id)
+      .thenAccept(response ->  {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          FXThread.run(() -> {
+            AlertUtil.showInfoAlert("FRIEND", "FRIEND ACCEPTED");
+            ClientSession.CURRENT_SESSION.getRequestList().getIdSet().removeIf(
+              param -> param.getRequesterId() == id
+            );
+          });
+        }
+      });
+  }
+
   public CompletableFuture<Void> toggleWatchedItem(int itemId, boolean isWatching) {
     Map<String, Object> data = new HashMap<>();
     data.put("itemId", itemId);
@@ -128,6 +181,48 @@ public class ClientService {
           ClientSession.CURRENT_SESSION.getWatchedItemsList().toggle(itemId, isWatching);
         } else {
           throw new RuntimeException(response.getMessage() != null ? response.getMessage() : "Failed to toggle watched list");
+        }
+      });
+  }
+
+  public CompletableFuture<Void> getChatHistory(int otherId) {
+    Map<String, Object> data = new HashMap<>();
+    data.put("myId", ClientSession.CURRENT_SESSION.getCurrentUser().getId());
+    data.put("otherId", otherId);
+    return RequestHelper.sendRequest(Request.GET_PRIVATE_CHAT_HISTORY, (Serializable) data)
+      .thenAccept(response -> {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          SelectedUser.SELECTED_USER.setSelectedChatHistory((List<ChatMessage>) response.getPayload());
+        } else {
+          SelectedUser.SELECTED_USER.setSelectedChatHistory(List.of());
+        }
+      });
+  }
+
+  public CompletableFuture<Void> sendMessage(ChatMessage chatMessage) {
+    return RequestHelper.sendRequest(Request.SEND_CHAT, chatMessage)
+      .thenAccept(response -> {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          if (chatMessage.getReceiverId() == SelectedUser.SELECTED_USER.getSelectedUser().getUser().getId()) {
+            FXThread.run(() -> {
+              SelectedUser.SELECTED_USER.addMessage(chatMessage);
+            });
+          }
+        } else {
+          AlertUtil.showInfoAlert("CHAT", "Failed to send message");
+        }
+      });
+  }
+
+  public CompletableFuture<Void> getGlobalChatHistory() {
+    return RequestHelper.sendRequest(Request.GET_GLOBAL_CHAT_HISTORY, null)
+      .thenAccept(response -> {
+        if (response != null && Response.OK.equals(response.getStatus())) {
+          SelectedUser.SELECTED_USER.setSelectedChatHistory((List<ChatMessage>) response.getPayload());
+        } else  {
+          FXThread.run(() -> {
+            AlertUtil.showInfoAlert("CHAT", "Failed to fetch global chat history");
+          });
         }
       });
   }

@@ -10,19 +10,24 @@ import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.store.lotsinformation.OpenLots;
 import com.auction.client.ui.base.CanRefresh;
 import com.auction.client.ui.base.CanSwitchNode;
+import com.auction.client.ui.component.FilterBox;
 import com.auction.client.ui.component.itemcard.ItemCardConfig;
 import com.auction.client.ui.homeview.HomeViewType;
 import com.auction.client.ui.homeview.homeviewcomponent.ReactiveFlowPane;
 import com.auction.client.util.FXThread;
 import com.auction.shared.Item;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-
 public class HistoryController implements CanRefresh, CanSwitchNode<HomeViewType> {
+  @FXML private FilterBox filterBox;
+
   @FXML private ReactiveFlowPane<ItemModel> ongoingContainer;
   @FXML private ReactiveFlowPane<ItemModel> upcomingContainer;
   @FXML private ReactiveFlowPane<ItemModel> closedContainer;
@@ -32,20 +37,30 @@ public class HistoryController implements CanRefresh, CanSwitchNode<HomeViewType
   private AuctionDetailService detailService;
   private ClientService clientService;
 
+  private final ObservableList<ItemModel> pastRawList = FXCollections.observableArrayList();
+
+  private FilteredList<ItemModel> filteredClosed;
+  private FilteredList<ItemModel> filteredUpcoming;
+  private FilteredList<ItemModel> filteredOngoing;
+  private FilteredList<ItemModel> filteredPast;
+
   private Consumer<HomeViewType> switchNode;
-  Consumer<ItemModel> onCardClicked = (selectedItem) -> {
+
+  private final Consumer<ItemModel> onCardClicked = (selectedItem) -> {
     detailService.setSelectedItem(selectedItem);
     switchNode.accept(HomeViewType.ITEM_INFORMATION);
   };
-  Consumer<ItemModel> onHeartClicked = (selectedItem) -> {
+
+  private final Consumer<ItemModel> onHeartClicked = (selectedItem) -> {
     int itemId = selectedItem.getId();
     boolean isWatching = ClientSession.CURRENT_SESSION.getWatchedItemsList().contain(itemId);
     clientService.toggleWatchedItem(itemId, !isWatching);
   };
-  ItemCardConfig itemCardConfig = new ItemCardConfig(onHeartClicked, onCardClicked);
+
+  private final ItemCardConfig itemCardConfig = new ItemCardConfig(onHeartClicked, onCardClicked);
 
   @AutoInject
-  public HistoryController(AuctionDiscoveryService discoveryService,  AuctionDetailService detailService,  ClientService clientService) {
+  public HistoryController(AuctionDiscoveryService discoveryService, AuctionDetailService detailService, ClientService clientService) {
     this.discoveryService = discoveryService;
     this.detailService = detailService;
     this.clientService = clientService;
@@ -53,13 +68,24 @@ public class HistoryController implements CanRefresh, CanSwitchNode<HomeViewType
 
   @FXML
   private void initialize() {
-    bind();
+    initFilteredLists();
+    bindContainersToUi();
+
+    filterBox.registerListsToFilter(List.of(filteredClosed, filteredUpcoming, filteredOngoing, filteredPast));
   }
 
-  private void bind() {
-    closedContainer.bind(ClosedLots.CLOSED_LOTS.getClosedLots(), itemCardConfig.cardFactory());
-    upcomingContainer.bind(OpenLots.AUCTION_STORE.getUpcomingClientItemList(),  itemCardConfig.cardFactory());
-    ongoingContainer.bind(OpenLots.AUCTION_STORE.getOngoingClientItemList(), itemCardConfig.cardFactory());
+  private void initFilteredLists() {
+    filteredClosed = new FilteredList<>(ClosedLots.CLOSED_LOTS.getClosedLots());
+    filteredUpcoming = new FilteredList<>(OpenLots.AUCTION_STORE.getUpcomingClientItemList());
+    filteredOngoing = new FilteredList<>(OpenLots.AUCTION_STORE.getOngoingClientItemList());
+    filteredPast = new FilteredList<>(pastRawList);
+  }
+
+  private void bindContainersToUi() {
+    closedContainer.bind(filteredClosed, itemCardConfig.cardFactory());
+    upcomingContainer.bind(filteredUpcoming, itemCardConfig.cardFactory());
+    ongoingContainer.bind(filteredOngoing, itemCardConfig.cardFactory());
+    pastContainer.bind(filteredPast, itemCardConfig.cardFactory());
   }
 
   @Override
@@ -67,17 +93,24 @@ public class HistoryController implements CanRefresh, CanSwitchNode<HomeViewType
     discoveryService.refreshOngoingLots();
     discoveryService.refreshClosedLots();
     discoveryService.getTrendingLots()
-      .thenCompose(list -> {
-        FXThread.run(() -> {
-          List<ItemModel> items = new ArrayList<>();
-          for (Item item : list) {
+      .thenAccept(list -> {
+        if (list == null) return;
+
+        List<ItemModel> items = new ArrayList<>();
+        for (Item item : list) {
+          if (item != null) {
             items.add(new ItemModel(item));
           }
-          pastContainer.getChildren().clear();
-          pastContainer.setAll(items, itemCardConfig.cardFactory());
+        }
+        FXThread.run(() -> {
+          pastRawList.setAll(items);
         });
+      })
+      .exceptionally(ex -> {
+        ex.printStackTrace();
         return null;
       });
+    filterBox.executeInternalFilter();
   }
 
   @Override

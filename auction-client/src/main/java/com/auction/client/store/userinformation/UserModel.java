@@ -1,6 +1,8 @@
 package com.auction.client.store.userinformation;
 
 import com.auction.client.util.StarUtils;
+import com.auction.shared.Bidder;
+import com.auction.shared.Friendship;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.beans.property.*;
@@ -24,6 +26,22 @@ public class UserModel {
 
   public UserModel() {
     this.user = null;
+  }
+
+  public static UserModel toUserModel(Friendship friendship, int currentUserId) {
+    boolean isRequester = (friendship.getRequesterId() == currentUserId);
+
+    String friendUsername = isRequester ? friendship.getAddresseeUsername() : friendship.getRequesterUsername();
+    String friendAvatarUrl = isRequester ? friendship.getAddresseeAvatarUrl() : friendship.getRequesterAvatarUrl();
+    int friendId = isRequester ? friendship.getAddresseeId() : friendship.getRequesterId();
+
+    User friendUser = new Bidder();
+    friendUser.setId(friendId);
+    friendUser.setUsername(friendUsername);
+    friendUser.setAvatarUrl(friendAvatarUrl);
+
+    UserModel userModel = new UserModel(friendUser);
+    return userModel;
   }
 
   public UserModel(User user) {

@@ -90,4 +90,18 @@ public class ItemModel {
   public void setName(String name) {
     this.name.set(name);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ItemModel that = (ItemModel) o;
+    return this.getItem() != null && that.getItem() != null &&
+      this.getItem().getId() == that.getItem().getId();
+  }
+
+  @Override
+  public int hashCode() {
+    return this.getItem() != null ? java.util.Objects.hash(this.getItem().getId()) : super.hashCode();
+  }
 }

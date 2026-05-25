@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import com.auction.client.ui.homeview.homeviewcomponent.ReactiveFlowPane?>
+<?import com.auction.client.ui.component.FilterBox?>
 <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
             styleClass="scroll-pane"
             stylesheets="/css/history/History.css"
@@ -14,7 +15,7 @@
         <VBox alignment="TOP_LEFT" spacing="30.0" styleClass="history-main-container">
             <padding><Insets bottom="40.0" left="40.0" right="40.0" top="30.0" /></padding>
             <children>
-
+                <FilterBox fx:id="filterBox" />
                 <!-- 2. KHỐI TRENDING -->
                 <VBox styleClass="history-section-glass">
                     <children>

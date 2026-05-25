@@ -41,3 +41,35 @@
 .userbar .rating-count {
     -fx-text-fill: #aaaaaa;
 }
+
+/* Style chung cho tất cả các nút hành động trong UserBar */
+.btn-action {
+    -fx-background-radius: 6px;
+    -fx-padding: 4px 10px 4px 10px; /* Padding vừa vặn, không làm phình chiều cao UserBar */
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+/* 🔵 Nút Add Friend - Màu xanh dương/Cyan hiện đại */
+.btn-add {
+    -fx-background-color: #0284c7;
+}
+.btn-add:hover {
+    -fx-background-color: #0369a1;
+}
+
+/* 🟢 Nút Accept - Màu xanh lá cây tinh tế */
+.btn-accept {
+    -fx-background-color: #10b981;
+}
+.btn-accept:hover {
+    -fx-background-color: #059669;
+}
+
+/* 🔴 Nút Decline - Màu đỏ sẫm mờ */
+.btn-decline {
+    -fx-background-color: #ef4444;
+}
+.btn-decline:hover {
+    -fx-background-color: #dc2626;
+}

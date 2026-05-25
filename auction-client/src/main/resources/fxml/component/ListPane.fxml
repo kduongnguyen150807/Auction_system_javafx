@@ -6,22 +6,14 @@
 <fx:root type="VBox"
          xmlns="http://javafx.com/javafx/25"
          xmlns:fx="http://javafx.com/fxml/1"
-         spacing="10.0"
-         styleClass="category-block"
          stylesheets="@../../css/component/ListPane.css">
-
     <children>
-
         <Label fx:id="lotsName"
                text="Art Lots"
                styleClass="category-heading"/>
         <ScrollPane fx:id="scrollPane"
-                    fitToHeight="true"
-                    fitToWidth="true"
                     hbarPolicy="NEVER"
-                    vbarPolicy="NEVER"
-                    pannable="true"
-                    styleClass="category-shelf">
+                    vbarPolicy="NEVER">
             <content>
                 <HBox fx:id="listRow"
                       alignment="CENTER_LEFT"

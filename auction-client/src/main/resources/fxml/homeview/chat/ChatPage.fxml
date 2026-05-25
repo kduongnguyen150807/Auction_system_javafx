@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<HBox prefHeight="700" prefWidth="900" spacing="0"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.ui.homeview.controller.chat.ChatController"
+      stylesheets="/css/chat/Chat.css">
+    <!-- ═══════ LEFT: Friends + Requests + Search ═══════ -->
+    <fx:include source="SideBar.fxml" fx:id="sideBar"/>
+    <!-- ═══════ RIGHT: Chat area ═══════ -->
+    <fx:include source="MainContainer.fxml" fx:id="mainContainer"/>
+</HBox>

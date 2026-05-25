@@ -3,8 +3,13 @@ package com.auction.client.network;
 import com.auction.client.service.auction.AuctionDetailService;
 import com.auction.client.service.auction.AuctionDiscoveryService;
 import com.auction.client.service.user.AuthService;
+import com.auction.client.store.clientinformation.ClientSession;
+import com.auction.client.store.userinformation.SelectedUser;
 import com.auction.client.ui.homeview.homeviewcomponent.NotificationBell;
 import com.auction.client.util.AlertUtil;
+import com.auction.client.util.FXThread;
+import com.auction.shared.ChatMessage;
+import com.auction.shared.Friendship;
 import com.auction.shared.Item;
 
 public class NotificationDispatcher implements NetworkEventListener{
@@ -49,6 +54,32 @@ public class NotificationDispatcher implements NetworkEventListener{
     AlertUtil.showErrorAlert("BAN", reason);
     addNotification(NotificationBell.WARN, reason);
     authService.signOut();
+  }
+
+  @Override
+  public void onGlobalChat(ChatMessage message) {
+    if (SelectedUser.SELECTED_USER.getSelectedUser() == null) {
+      SelectedUser.SELECTED_USER.addMessage(message);
+    }
+  }
+
+  @Override
+  public void onPrivateChat(ChatMessage message) {
+    if (SelectedUser.SELECTED_USER.getSelectedUser().getUser().getId() == message.getSenderId()) {
+      SelectedUser.SELECTED_USER.addMessage(message);
+    }
+  }
+
+  @Override
+  public void onFriendRequest(Friendship friendship) {
+    ClientSession.CURRENT_SESSION.getRequestList().getIdSet().add(friendship);
+  }
+
+  @Override
+  public void onAccountUnbanned() {
+    FXThread.run(() -> {
+      AlertUtil.showInfoAlert("BAN", "You have been unbanned");
+    });
   }
 
   public void addNotification(String icon, String message) {

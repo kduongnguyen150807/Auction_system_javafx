@@ -14,7 +14,6 @@ public record UserBarConfig (
       userModel -> {
         UserBar userBar = new UserBar(userModel);
         userBar.setOnUserBarClicked(onUserBarClicked);
-
         return userBar;
       },
       onUserBarClicked

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<?import com.auction.client.ui.homeview.homeviewcomponent.VBoxModel?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.ui.homeview.controller.chat.SideBarController"
+      prefWidth="280" minWidth="260" maxWidth="300" styleClass="chat-left-panel" spacing="0">
+    <children>
+        <!-- Tab bar: Friends / Requests -->
+        <HBox styleClass="chat-header" alignment="CENTER">
+            <children>
+                <Button fx:id="friendsTabBtn" text="Friends" onAction="#switchToFriends"
+                        styleClass="chat-tab, chat-tab-active" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                <Button fx:id="requestsTabBtn" text="Requests" onAction="#switchToRequests"
+                        styleClass="chat-tab" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </children>
+        </HBox>
+
+        <!-- Search bar to find + add friends -->
+        <HBox spacing="5" alignment="CENTER_LEFT" styleClass="search-row">
+            <children>
+                <TextField fx:id="searchField" promptText="Search users to add..."
+                           styleClass="chat-search" HBox.hgrow="ALWAYS"/>
+                <Button text="Find" onAction="#handleSearch" styleClass="chat-send-btn"/>
+            </children>
+            <padding>
+                <Insets left="10" right="10" top="8" bottom="8"/>
+            </padding>
+        </HBox>
+
+        <!-- Friend / Request list -->
+        <VBoxModel fx:id="leftList" VBox.vgrow="ALWAYS" styleClass="contact-list"/>
+
+        <!-- Global Chat button at bottom -->
+        <Button text="Global Chat" onAction="#openGlobalChat"
+                styleClass="global-chat-btn" maxWidth="Infinity"/>
+    </children>
+</VBox>

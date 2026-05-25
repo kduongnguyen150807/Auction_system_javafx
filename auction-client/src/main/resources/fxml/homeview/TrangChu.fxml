@@ -26,7 +26,7 @@
     </padding>
     <HBox alignment="CENTER_LEFT">
         <Region HBox.hgrow="ALWAYS"/>
-        <FilterBox fx:id="filterBox" />
+        <FilterBox fx:id="filterBox"/>
     </HBox>
     <RedOrBlueToolbar fx:id="auctionTypeToggle"/>
     <GridPane hgap="28.0" styleClass="dashboard-split" VBox.vgrow="ALWAYS">
@@ -59,25 +59,25 @@
                             <VBoxModel fx:id="trendingBind" alignment="TOP_CENTER"/>
                             <Label styleClass="TopLabel" text="Top Đại Gia"/>
                             <VBoxModel fx:id="leaderboardContainer" spacing="10.0"
-                                  styleClass="leaderboard"
-                                  style="-fx-background-color: -color-bg;
+                                       styleClass="leaderboard"
+                                       style="-fx-background-color: -color-bg;
                                              -fx-background-radius: 10;"/>
                         </VBox>
                     </content>
                 </ScrollPane>
             </children>
         </VBox>
-        <VBox GridPane.columnIndex="1"
-              GridPane.rowIndex="0"
-              GridPane.hgrow="ALWAYS"
-              GridPane.vgrow="ALWAYS">
-            <children>
-                <VBox>
-                    <ListPane fx:id="artLots" VBox.vgrow="ALWAYS"/>
-                    <ListPane fx:id="electronicsLots" VBox.vgrow="ALWAYS"/>
-                    <ListPane fx:id="vehiclesLots" VBox.vgrow="ALWAYS"/>
+        <ScrollPane GridPane.columnIndex="1" styleClass="scroll-pane trending-scroll"
+                    GridPane.vgrow="ALWAYS"
+                    VBox.vgrow="ALWAYS"
+                    vbarPolicy="AS_NEEDED">
+            <content>
+                <VBox spacing="10.0" styleClass="category-block">
+                    <ListPane styleClass="category-block" fx:id="artLots"/>
+                    <ListPane styleClass="category-block" fx:id="electronicsLots"/>
+                    <ListPane styleClass="category-block" fx:id="vehiclesLots"/>
                 </VBox>
-            </children>
-        </VBox>
+            </content>
+        </ScrollPane>
     </GridPane>
 </VBox>

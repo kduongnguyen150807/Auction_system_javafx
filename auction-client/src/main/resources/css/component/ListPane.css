@@ -138,3 +138,8 @@
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: 800;
 }
+
+.category-shelf {
+    -fx-fit-to-height: false;
+    -fx-pref-viewport-height: 380;
+}

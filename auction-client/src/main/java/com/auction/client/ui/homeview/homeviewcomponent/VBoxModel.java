@@ -18,7 +18,7 @@ public class VBoxModel<T> extends VBox {
   private ObservableList<T> dataList;
   private ListChangeListener<T> activeListener;
 
-  private Callback<T, Node> cellFactory;
+  private Callback<T, ? extends Node> cellFactory;
 
   public VBoxModel() {
     this.setSpacing(10.0);
@@ -33,11 +33,13 @@ public class VBoxModel<T> extends VBox {
             """);
   }
 
-  public void bind(ObservableList<T> newDataList, Callback<T, Node> cellFactory) {
+  public void bind(ObservableList<T> newDataList, Callback<T, ? extends Node> cellFactory) {
     unbind();
 
     this.dataList = newDataList;
     this.cellFactory = cellFactory;
+
+    renderInitialItems();
 
     if (newDataList == null || cellFactory == null) return;
 
@@ -54,7 +56,7 @@ public class VBoxModel<T> extends VBox {
       });
     };
 
-    renderInitialItems();
+
 
     this.dataList.addListener(this.activeListener);
   }
@@ -75,6 +77,7 @@ public class VBoxModel<T> extends VBox {
   }
 
   private void renderInitialItems() {
+    getChildren().clear();
     if (dataList == null || dataList.isEmpty()) return;
 
     List<Node> initialNode = new ArrayList<>();

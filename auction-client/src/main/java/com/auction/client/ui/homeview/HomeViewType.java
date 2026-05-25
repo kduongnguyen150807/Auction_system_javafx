@@ -11,6 +11,7 @@ public enum HomeViewType {
   MY_ITEM("/fxml/homeview/YourItem.fxml"),
   WATCHED_LIST("/fxml/homeview/WatchList.fxml"),
   USER_INFORMATION("/fxml/homeview/UserInformation.fxml"),
+  CHAT_PAGE("/fxml/homeview/chat/ChatPage.fxml"),
   ;
 
   private String fxmlPath;

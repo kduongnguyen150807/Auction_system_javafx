@@ -6,10 +6,10 @@ import javafx.collections.ObservableSet;
 
 import java.util.Collection;
 
-public class IdStateManager {
-  private final ObservableSet<Integer> idSet = FXCollections.observableSet();
+public class IdStateManager<T> {
+  private final ObservableSet<T> idSet = FXCollections.observableSet();
 
-  public void initialize(Collection<Integer> ids) {
+  public void initialize(Collection<T> ids) {
     FXThread.run(() -> {
       this.idSet.clear();
       if (ids != null) {
@@ -18,15 +18,15 @@ public class IdStateManager {
     });
   }
 
-  public ObservableSet<Integer> getIdSet() {
+  public ObservableSet<T> getIdSet() {
     return idSet;
   }
 
-  public boolean contain(int id) {
+  public boolean contain(T id) {
     return idSet.contains(id);
   }
 
-  public void toggle(int id, boolean exist) {
+  public void toggle(T id, boolean exist) {
     FXThread.run(() -> {
       if (exist) idSet.add(id);
       else idSet.remove(id);
