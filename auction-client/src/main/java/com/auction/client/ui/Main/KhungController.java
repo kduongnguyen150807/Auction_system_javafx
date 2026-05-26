@@ -13,6 +13,7 @@ import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.client.util.ImagePresentationUtil;
 import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
+import com.auction.shared.Request;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.application.Platform;
@@ -275,8 +276,13 @@ public class KhungController {
   }
 
   private void performUserSignOut() {
-    ClientSession.clear();
+    try {
+      NetworkClient.getInstance().sendRequestAndWait(new Request(Request.LOGOUT, null));
+    } catch (Exception ex) {
+      LOGGER.warn("Server logout failed during sign out", ex);
+    }
     if (networkBridge != null) NetworkClient.getInstance().removeListener(networkBridge);
+    ClientSession.clear();
     navigateToLogin();
   }
 
