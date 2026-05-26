@@ -66,19 +66,22 @@ final class AutoBidCoordinator {
 
   void runRounds(int itemid, List<Runnable> after, Set<Integer> pendingpricebroadcast, ManualBidExecutor executor) {
     PriorityQueue<AutoBidRegistration> regs = registry.get(itemid);
-    if (regs == null || regs.size() < 2) {
+    if (regs == null || regs.isEmpty()) {
       return;
     }
     Item item = itemdao.getById(itemid);
     if (item == null || item.getStatus() != ItemStatus.OPEN) {
       return;
     }
-    AutoBidRegistration top = regs.poll();
-    AutoBidRegistration second = regs.poll();
-    if (top != null && second != null) {
-      regs.add(top);
-      regs.add(second);
-      double target = Math.min(second.maxAutoBid + top.increment, top.maxAutoBid);
+    AutoBidRegistration top = regs.peek();
+    if (top == null) {
+      pruneExhaustedRegistrations(itemid, regs);
+      return;
+    }
+    int currentLeader = biddao.getPreviousHighestBidder(itemid);
+    if (top.userId != currentLeader) {
+      AutoBidRegistration runnerUp = regs.size() >= 2 ? findRunnerUp(regs, top.userId) : null;
+      double target = computeCounterTarget(item.getCurrentPrice(), top, runnerUp);
       if (target > item.getCurrentPrice()) {
         BidTransaction counterbid = new BidTransaction(itemid, top.userId, target);
         counterbid.setAutoBid(false);
@@ -86,11 +89,49 @@ final class AutoBidCoordinator {
         executor.execute(counterbid, after, pendingpricebroadcast);
       }
     }
+    pruneExhaustedRegistrations(itemid, regs);
+  }
+
+  /**
+   * Counter bid for the top proxy: beat current price by increment, and when two proxies compete also
+   * respect the second-highest ceiling formula.
+   */
+  static double computeCounterTarget(
+      double currentPrice, AutoBidRegistration top, AutoBidRegistration runnerUp) {
+    double beatCurrent = Math.min(currentPrice + top.increment, top.maxAutoBid);
+    if (runnerUp == null) {
+      return beatCurrent;
+    }
+    double proxyTarget = Math.min(runnerUp.maxAutoBid + top.increment, top.maxAutoBid);
+    if (proxyTarget > currentPrice) {
+      return proxyTarget;
+    }
+    return beatCurrent;
+  }
+
+  private static AutoBidRegistration findRunnerUp(
+      PriorityQueue<AutoBidRegistration> regs, int topUserId) {
+    AutoBidRegistration runnerUp = null;
+    for (AutoBidRegistration candidate : regs) {
+      if (candidate.userId == topUserId) {
+        continue;
+      }
+      if (runnerUp == null
+          || candidate.maxAutoBid > runnerUp.maxAutoBid
+          || (candidate.maxAutoBid == runnerUp.maxAutoBid
+              && candidate.registrationTime.isBefore(runnerUp.registrationTime))) {
+        runnerUp = candidate;
+      }
+    }
+    return runnerUp;
+  }
+
+  private void pruneExhaustedRegistrations(int itemid, PriorityQueue<AutoBidRegistration> regs) {
     Item freshitem = itemdao.getById(itemid);
     if (freshitem != null) {
       regs.removeIf(r -> r.maxAutoBid <= freshitem.getCurrentPrice());
     } else {
-      regs.clear();
+      registry.remove(itemid);
     }
   }
 }
