@@ -3,9 +3,11 @@ package com.auction.client.ui.homeview.controller.iteminformation;
 import com.auction.client.app.AutoInject;
 import com.auction.client.navigation.SceneManager;
 import com.auction.client.service.auction.BiddingService;
+import com.auction.client.service.item.ItemService;
 import com.auction.client.store.lotsinformation.ItemModel;
 import com.auction.client.store.clientinformation.ClientSession;
 import com.auction.client.ui.component.IntegerField;
+import com.auction.client.ui.component.RatingForm;
 import com.auction.client.ui.homeview.homeviewcomponent.BiddingForm;
 import com.auction.client.ui.homeview.homeviewcomponent.RatingBox;
 import com.auction.client.ui.homeview.homeviewcomponent.VBoxModel;
@@ -18,23 +20,29 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ButtonLayoutController {
   private ItemModel selectedItem;
   private Item item;
+
+  private List<Rating> cachedRatings = new ArrayList<>();
 
   @FXML private Button bidButton;
   @FXML private Button autoBidButton;
   @FXML private Button rateButton;
   @FXML private ComboBox<String> ratingFilterCombo;
-  @FXML private VBoxModel<Rating> ratingsBox;
   @FXML private VBox ratingsContainer;
   @FXML private IntegerField autoBidField;
 
   private final BiddingService biddingService;
+  private final ItemService itemService;
 
   @AutoInject
-  public ButtonLayoutController(BiddingService biddingService) {
+  public ButtonLayoutController(BiddingService biddingService, ItemService itemService) {
     this.biddingService = biddingService;
+    this.itemService = itemService;
   }
 
   public void setSelectedItem(ItemModel selectedItem) {
@@ -77,7 +85,7 @@ public class ButtonLayoutController {
   private void adjustButton(ItemStatus itemStatus) {
     if (ItemStatus.OPEN.equals(itemStatus)) {
       enableButton();
-    } else if (ItemStatus.CLOSED.equals(itemStatus)) {
+    } else if (ItemStatus.CLOSED.equals(itemStatus) || ItemStatus.EXPIRED.equals(itemStatus) || ItemStatus.FINISHED.equals(itemStatus)) {
       disableButton();
     }
   }
@@ -88,10 +96,15 @@ public class ButtonLayoutController {
     autoBidField.setDisable(true);
 
     ratingsContainer.setVisible(true);
+    ratingsContainer.setManaged(true);
 
-    if (selectedItem.getItem().getWinnerId() == ClientSession.CURRENT_SESSION.getCurrentUser().getId()) {
-      rateButton.setVisible(true);
-    }
+    boolean canrate = (item.getStatus() == ItemStatus.CLOSED || item.getStatus() == ItemStatus.FINISHED)
+      && ClientSession.CURRENT_SESSION.getUser() != null
+      && ClientSession.CURRENT_SESSION.getUser().getId() == item.getWinnerId();
+    rateButton.setVisible(canrate);
+    rateButton.setManaged(canrate);
+
+    loadRatings();
   }
 
   private void enableButton() {
@@ -101,6 +114,8 @@ public class ButtonLayoutController {
 
     ratingsContainer.setVisible(false);
     rateButton.setVisible(false);
+    ratingsContainer.setManaged(false);
+    rateButton.setManaged(false);
   }
 
   private boolean validate(User user, double bidAmount) {
@@ -185,7 +200,55 @@ public class ButtonLayoutController {
   }
 
   @FXML
-  private void showRatingForm() {}
+  private void showRatingForm() {
+    RatingForm form = new RatingForm(selectedItem.getId());
+
+    form.setOnSubmit(() -> {
+      Rating rating = form.collectData();
+      if (rating == null) {
+        AlertUtil.showErrorAlert("Rating", "PLEASE SELECT AT LEAST 1 STAR");
+      }
+      if (rating != null) {
+        itemService.submitRating(rating)
+          .thenCompose(v -> {
+            FXThread.run(() -> {
+              rateButton.setVisible(false);
+              rateButton.setManaged(false);
+              loadRatings();
+            });
+            return null;
+          });
+      }
+    });
+
+    StageUtil.showModalStage(form, SceneManager.getInstance().getWindow());
+  }
+
+  private void loadRatings() {
+    if (selectedItem.getId() <= 0) {
+      return;
+    }
+
+    itemService.loadRatings(selectedItem.getId())
+      .thenAccept(list -> {
+        for (Rating r : list) {
+          if (r.getRaterUserId() == ClientSession.CURRENT_SESSION.getCurrentUser().getId()) {
+            rateButton.setVisible(false);
+            rateButton.setManaged(false);
+            break;
+          }
+        }
+        cachedRatings.clear();
+        cachedRatings.addAll(list);
+        FXThread.run(() -> {
+          if (ratingFilterCombo != null && ratingFilterCombo.getItems().isEmpty()) {
+            ratingFilterCombo.getItems().addAll("All", "Positive", "Neutral", "Negative");
+            ratingFilterCombo.setValue("All");
+          }
+          renderratings("All");
+        });
+      });
+  }
 
   @FXML
   private void handleRatingFilter() {
@@ -194,5 +257,6 @@ public class ButtonLayoutController {
   }
 
   private void renderratings(String filter) {
+    RatingListRenderer.render(ratingsContainer, cachedRatings, filter);
   }
 }

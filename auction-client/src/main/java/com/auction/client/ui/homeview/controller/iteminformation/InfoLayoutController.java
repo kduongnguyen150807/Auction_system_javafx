@@ -132,8 +132,6 @@ public class InfoLayoutController {
     stopTimers();
     endsInValue.textProperty().unbind();
 
-    System.out.println("Status: " + status);
-
     if (selectedItem == null || selectedItem.getItem() == null) {
       endsInValue.setText("");
       return;

@@ -132,7 +132,6 @@ public class HomeView extends HBox {
     Object controller = controllerMap.get(type);
     if (controller instanceof CanRefresh cr) {
       CompletableFuture.runAsync(cr::refreshData);
-      LOGGER.info("Refresh complete for type {}", type);
     }
     contentPanel.getChildren().setAll(node);
   }
@@ -143,7 +142,6 @@ public class HomeView extends HBox {
       Object controller = controllerMap.get(entry.getKey());
       if (controller instanceof CanRefresh cr) {
         CompletableFuture.runAsync(cr::refreshData);
-        LOGGER.info("Refresh complete for type {}", entry.getKey());
       }
     }
   }
