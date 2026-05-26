@@ -261,7 +261,13 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
   public boolean sellerCancelPending(int itemId, int sellerId) {
     String sql =
         "UPDATE items SET status = 'CANCELED' WHERE id = ? AND sellerid = ? AND status = 'PENDING'";
-    return executeUpdate(sql, itemId, sellerId);
+    if (executeUpdate(sql, itemId, sellerId)) {
+      return true;
+    }
+    Item item = getById(itemId);
+    return item != null
+        && item.getSellerId() == sellerId
+        && item.getStatus() == ItemStatus.CANCELED;
   }
 
   /**

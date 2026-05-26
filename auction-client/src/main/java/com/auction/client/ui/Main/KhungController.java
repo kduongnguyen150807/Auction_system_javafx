@@ -13,7 +13,6 @@ import com.auction.client.ui.YourItem.YourItemController;
 import com.auction.client.util.ImagePresentationUtil;
 import com.auction.shared.AuctionType;
 import com.auction.shared.Item;
-import com.auction.shared.Request;
 import com.auction.shared.User;
 import com.auction.shared.UserRole;
 import javafx.application.Platform;
@@ -259,6 +258,12 @@ public class KhungController {
     if (instance != null && instance.homeController != null) instance.homeController.updatePriceUi(item);
   }
 
+  static void notifySellerListingClosed(Item item) {
+    if (instance != null && instance.myItemsController != null) {
+      instance.myItemsController.applySellerListingClosed(item);
+    }
+  }
+
   // ĐÃ THÊM CẬP NHẬT WATCHLIST CONTROLLER
   public static void notifyWatchlistToggle(int itemId, boolean isWatched) {
     if (instance == null) return;
@@ -276,13 +281,8 @@ public class KhungController {
   }
 
   private void performUserSignOut() {
-    try {
-      NetworkClient.getInstance().sendRequestAndWait(new Request(Request.LOGOUT, null));
-    } catch (Exception ex) {
-      LOGGER.warn("Server logout failed during sign out", ex);
-    }
-    if (networkBridge != null) NetworkClient.getInstance().removeListener(networkBridge);
     ClientSession.clear();
+    if (networkBridge != null) NetworkClient.getInstance().removeListener(networkBridge);
     navigateToLogin();
   }
 

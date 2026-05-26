@@ -60,8 +60,10 @@ final class MainShellNetworkBridge implements NetworkEventListener {
     ItemInformationController d = detail();
     if (d != null) d.markItemClosed(item);
     User me = ClientSession.getCurrentUser();
-    if (me != null && item.getSellerId() == me.getId())
+    if (me != null && item.getSellerId() == me.getId()) {
+      KhungController.notifySellerListingClosed(item);
       NotificationCenter.addNotification(ItemNotificationText.itemClosed(item));
+    }
   }
 
   @Override

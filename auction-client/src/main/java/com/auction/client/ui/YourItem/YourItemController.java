@@ -34,6 +34,7 @@ public class YourItemController {
   private final Map<Integer, ItemCardController> cardMap = new HashMap<>();
   private final Map<Integer, Node> cardRootByItemId = new HashMap<>();
   private final LotSubmissionService lotSubmissionService = new LotSubmissionService();
+  private volatile boolean cancelInFlight;
 
   @FXML
   void initialize() {
@@ -109,6 +110,9 @@ public class YourItemController {
     if (item.getStatus() == ItemStatus.OPEN) {
       return "\u25B6 \u0110ang \u0111\u1EA5u gi\u00E1";
     }
+    if (item.getStatus() == ItemStatus.CANCELED) {
+      return "\u2716 \u0110\u00E3 h\u1EE7y";
+    }
     return item.getStatus().name();
   }
 
@@ -156,28 +160,90 @@ public class YourItemController {
               if (btn != ButtonType.OK) {
                 return;
               }
+              if (cancelInFlight) {
+                return;
+              }
+              cancelInFlight = true;
+              int itemId = item.getId();
               new Thread(
                       () -> {
                         try {
-                          Response res =
-                              lotSubmissionService.cancelSellerItem(item.getId());
+                          Response res = lotSubmissionService.cancelSellerItem(itemId);
                           Platform.runLater(
                               () -> {
-                                if (res != null && Response.OK.equals(res.getStatus())) {
-                                  refreshItems();
-                                } else {
-                                  Alert err = new Alert(Alert.AlertType.ERROR);
-                                  err.setHeaderText(null);
-                                  err.setContentText(
-                                      res != null ? res.getMessage() : "Không hủy được.");
-                                  err.showAndWait();
-                                }
+                                cancelInFlight = false;
+                                onCancelSellerItemFinished(itemId, res);
                               });
                         } catch (Exception ignored) {
+                          Platform.runLater(() -> cancelInFlight = false);
                         }
                       })
                   .start();
             });
+  }
+
+  /** Called after cancel RPC or when server pushes {@code ITEM_CLOSED} for this seller. */
+  public void applySellerListingClosed(Item item) {
+    if (item == null) {
+      return;
+    }
+    Platform.runLater(
+        () -> {
+          ItemCardController card = cardMap.get(item.getId());
+          if (card != null) {
+            updateCanceledCard(card, item);
+            recalcSellerDashboard();
+          } else {
+            refreshItems();
+          }
+        });
+  }
+
+  private void onCancelSellerItemFinished(int itemId, Response res) {
+    if (res != null && Response.OK.equals(res.getStatus())) {
+      if (res.getPayload() instanceof Item updated) {
+        ItemCardController card = cardMap.get(itemId);
+        if (card != null) {
+          updateCanceledCard(card, updated);
+          recalcSellerDashboard();
+          return;
+        }
+      }
+      refreshItems();
+      return;
+    }
+    Alert err = new Alert(Alert.AlertType.ERROR);
+    err.setHeaderText(null);
+    String msg = res != null ? res.getMessage() : null;
+    err.setContentText(msg != null && !msg.isBlank() ? msg : "Không hủy được.");
+    err.showAndWait();
+  }
+
+  private void updateCanceledCard(ItemCardController card, Item item) {
+    card.syncFromCatalogItemStaticTime(item, statusCaption(item));
+    card.attachCatalogItem(item);
+    configureSellerTools(card, item);
+  }
+
+  private void recalcSellerDashboard() {
+    int openCount = 0;
+    double inventoryTotal = 0;
+    for (ItemCardController card : cardMap.values()) {
+      Item it = card.getAttachedCatalogItem();
+      if (it == null) {
+        continue;
+      }
+      if (isOpenLiveWindow(it)) {
+        openCount++;
+      }
+      inventoryTotal += it.getCurrentPrice();
+    }
+    if (ActiveItemsValue != null) {
+      ActiveItemsValue.setText(String.valueOf(openCount));
+    }
+    if (InventoryValue != null) {
+      InventoryValue.setText(String.format("%,.0f$", inventoryTotal));
+    }
   }
 
   private void incrementalRender(List<Item> visible) {

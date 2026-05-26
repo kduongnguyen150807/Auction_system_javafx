@@ -58,6 +58,10 @@ public class ItemCardController {
     refreshpricemetriccaption();
   }
 
+  public Item getAttachedCatalogItem() {
+    return catalogitemsnapshot;
+  }
+
   public void setCompactRowLayout(boolean compact) {
     if (itemRoot != null) {
       itemRoot.getStyleClass().remove("item-card-compact");
