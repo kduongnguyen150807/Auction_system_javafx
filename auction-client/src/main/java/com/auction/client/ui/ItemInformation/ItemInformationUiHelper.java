@@ -51,6 +51,19 @@ final class ItemInformationUiHelper {
     endsInValue.setText(DutchAuctionPricing.formatShortCountdownToward(target, now));
   }
 
+  /** Updates current listed price for Dutch auctions on each UI tick. */
+  static void applyDutchLivePrice(Label priceLabel, Item item) {
+    if (priceLabel == null || item == null || item.getAuctionType() != AuctionType.DUTCH) {
+      return;
+    }
+    if (item.getStatus() != ItemStatus.OPEN) {
+      return;
+    }
+    double effective = DutchAuctionPricing.computeEffectivePrice(item, LocalDateTime.now());
+    item.setCurrentPrice(effective);
+    priceLabel.setText(formatPriceDollars(effective));
+  }
+
   private static String closedEndsInCaption(ItemStatus status) {
     return switch (status) {
       case EXPIRED -> "Expired";

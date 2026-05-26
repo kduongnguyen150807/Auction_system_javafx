@@ -162,6 +162,56 @@ class DutchAuctionPricingTest {
   }
 
   @Nested
+  @DisplayName("validateDutchSchedule")
+  class ValidateSchedule {
+
+    @Test
+    void endBeforeLastDrop_rejected() {
+      LocalDateTime start = LocalDateTime.of(2026, 6, 1, 10, 0);
+      LocalDateTime end = start.plusMinutes(30);
+      String err =
+          DutchAuctionPricing.validateDutchSchedule(start, end, 200, 100, 25, 10);
+      assertEquals("end_time_too_early_for_dutch_drops", err);
+    }
+
+    @Test
+    void endAtSuggestedDuration_accepted() {
+      LocalDateTime start = LocalDateTime.of(2026, 6, 1, 10, 0);
+      long mins = DutchAuctionPricing.minAuctionDurationMinutes(200, 100, 25, 10);
+      LocalDateTime end = start.plusMinutes(mins);
+      assertNull(DutchAuctionPricing.validateDutchSchedule(start, end, 200, 100, 25, 10));
+    }
+
+    @Test
+    void suggestedEndTime_matchesMinDuration() {
+      LocalDateTime start = LocalDateTime.of(2026, 6, 1, 10, 0);
+      LocalDateTime suggested =
+          DutchAuctionPricing.suggestedEndTime(start, 200, 100, 25, 10);
+      assertEquals(start.plusMinutes(40), suggested);
+    }
+
+    @Test
+    void derivedTickFromStartEndInterval_splitsEvenly() {
+      LocalDateTime start = LocalDateTime.of(2026, 6, 1, 10, 0);
+      LocalDateTime end = start.plusMinutes(40);
+      assertEquals(4, DutchAuctionPricing.dropSlotsBetween(start, end, 10));
+      assertEquals(25.0, DutchAuctionPricing.derivedTickAmount(start, end, 10, 200, 100), 1e-9);
+      assertNull(
+          DutchAuctionPricing.validateDutchScheduleFromInterval(start, end, 200, 100, 10));
+    }
+
+    @Test
+    void derivedTick_windowTooShort_rejected() {
+      LocalDateTime start = LocalDateTime.of(2026, 6, 1, 10, 0);
+      LocalDateTime end = start.plusMinutes(5);
+      assertEquals(-1, DutchAuctionPricing.derivedTickAmount(start, end, 10, 200, 100), 1e-9);
+      assertEquals(
+          "dutch_window_too_short",
+          DutchAuctionPricing.validateDutchScheduleFromInterval(start, end, 200, 100, 10));
+    }
+  }
+
+  @Nested
   @DisplayName("formatShortCountdownToward")
   class FormatCountdown {
 
