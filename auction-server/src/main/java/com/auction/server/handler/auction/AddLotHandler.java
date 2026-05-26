@@ -4,6 +4,7 @@ import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
 
 import com.auction.shared.AuctionType;
+import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.time.LocalDateTime;
@@ -37,11 +38,18 @@ public class AddLotHandler implements ActionHandler {
       if (auctionType == AuctionType.DUTCH) {
         maxPrice = 0;
         dutchReserve = Double.parseDouble(data.getOrDefault("dutchreserve", "0"));
-        dutchTickAmt = Double.parseDouble(data.getOrDefault("dutchdecrement", "0"));
         dutchIntervalMin = Integer.parseInt(data.getOrDefault("dutchintervalmins", "0"));
-        String err = validateDutch(starting, dutchReserve, dutchTickAmt, dutchIntervalMin);
-        if (err != null)
+        String err =
+            DutchAuctionPricing.validateDutchScheduleFromInterval(
+                startTime, endTime, starting, dutchReserve, dutchIntervalMin);
+        if (err != null) {
           return new Response(request.getRequestId(), Response.ERROR, err, null);
+        }
+        dutchTickAmt =
+            DutchAuctionPricing.derivedTickAmount(
+                startTime, endTime, dutchIntervalMin, starting, dutchReserve);
+      } else if (!endTime.isAfter(startTime)) {
+        return new Response(request.getRequestId(), Response.ERROR, "invalid_time_range", null);
       }
 
       boolean success =
@@ -68,13 +76,5 @@ public class AddLotHandler implements ActionHandler {
     } catch (Exception e) {
       return new Response(request.getRequestId(), Response.ERROR, "fail", null);
     }
-  }
-
-  private static String validateDutch(double startPrice, double reserve, double tick, int mins) {
-    if (reserve < 0) return "Invalid reserve price";
-    if (reserve >= startPrice) return "Reserve must be below starting price";
-    if (tick <= 0) return "Price decrement must be positive";
-    if (mins <= 0) return "Decrease interval must be at least 1 minute";
-    return null;
   }
 }

@@ -256,6 +256,7 @@ public class ItemCardController {
       return;
     }
     LocalDateTime now = LocalDateTime.now();
+    refreshDutchLivePrice(now);
     LocalDateTime target;
     boolean dutchauction = catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH && catalogitemsnapshot.getEndTime() != null;
     if (dutchauction) {
@@ -285,6 +286,20 @@ public class ItemCardController {
       }
     }
     TimeRemain.setText(label);
+  }
+
+  /** Recompute listed Dutch price from schedule (no server round-trip). */
+  private void refreshDutchLivePrice(LocalDateTime now) {
+    if (catalogitemsnapshot == null
+        || catalogitemsnapshot.getAuctionType() != AuctionType.DUTCH
+        || catalogitemsnapshot.getStatus() != ItemStatus.OPEN) {
+      return;
+    }
+    double effective = DutchAuctionPricing.computeEffectivePrice(catalogitemsnapshot, now);
+    if (Double.compare(currentprice, effective) != 0) {
+      updateprice(effective);
+      catalogitemsnapshot.setCurrentPrice(effective);
+    }
   }
 
   private void updateprice(double newprice) {

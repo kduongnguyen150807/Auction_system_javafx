@@ -78,6 +78,10 @@ public class ItemInformationController {
             return;
         }
         ItemInformationUiHelper.applyEndsIn(EndsInValue, endsinsourceitem);
+        if (listingkind == AuctionType.DUTCH && CurrentHighestBidValue != null) {
+            ItemInformationUiHelper.applyDutchLivePrice(CurrentHighestBidValue, endsinsourceitem);
+            lastlistedprice = endsinsourceitem.getCurrentPrice();
+        }
         refreshBidControls();
     }
 

@@ -4,6 +4,7 @@ import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
 import com.auction.server.service.auction.SettlementService;
 import com.auction.shared.AuctionType;
+import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Item;
 import com.auction.shared.ItemStatus;
 import com.auction.shared.Request;
@@ -68,18 +69,22 @@ public class SellerUpdatePendingItemHandler implements ActionHandler {
       if (auctionType == AuctionType.DUTCH) {
         maxPrice = 0;
         dutchReserve = Double.parseDouble(data.getOrDefault("dutchreserve", "0"));
-        dutchTickAmt = Double.parseDouble(data.getOrDefault("dutchdecrement", "0"));
         dutchIntervalMin = Integer.parseInt(data.getOrDefault("dutchintervalmins", "0"));
-        String err = validateDutch(starting, dutchReserve, dutchTickAmt, dutchIntervalMin);
+        String err =
+            DutchAuctionPricing.validateDutchScheduleFromInterval(
+                startTime, endTime, starting, dutchReserve, dutchIntervalMin);
         if (err != null) {
           return new Response(request.getRequestId(), Response.ERROR, err, null);
         }
+        dutchTickAmt =
+            DutchAuctionPricing.derivedTickAmount(
+                startTime, endTime, dutchIntervalMin, starting, dutchReserve);
       }
 
       if (openBeforeStart && !startTime.isAfter(now)) {
         return new Response(request.getRequestId(), Response.ERROR, "start_must_be_future", null);
       }
-      if (!endTime.isAfter(startTime)) {
+      if (auctionType != AuctionType.DUTCH && !endTime.isAfter(startTime)) {
         return new Response(request.getRequestId(), Response.ERROR, "invalid_time_range", null);
       }
 
@@ -114,13 +119,5 @@ public class SellerUpdatePendingItemHandler implements ActionHandler {
     } catch (Exception e) {
       return new Response(request.getRequestId(), Response.ERROR, "fail", null);
     }
-  }
-
-  private static String validateDutch(double startPrice, double reserve, double tick, int mins) {
-    if (reserve < 0) return "Invalid reserve price";
-    if (reserve >= startPrice) return "Reserve must be below starting price";
-    if (tick <= 0) return "Price decrement must be positive";
-    if (mins <= 0) return "Decrease interval must be at least 1 minute";
-    return null;
   }
 }
