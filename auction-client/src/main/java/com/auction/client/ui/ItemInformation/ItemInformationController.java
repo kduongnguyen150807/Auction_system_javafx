@@ -74,6 +74,9 @@ public class ItemInformationController {
         if (t != null && t.startsWith("Winner:")) {
             return;
         }
+        if (endsinsourceitem.getStatus() != ItemStatus.OPEN) {
+            return;
+        }
         ItemInformationUiHelper.applyEndsIn(EndsInValue, endsinsourceitem);
         refreshBidControls();
     }

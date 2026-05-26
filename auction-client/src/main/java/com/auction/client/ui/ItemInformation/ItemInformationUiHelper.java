@@ -3,6 +3,7 @@ package com.auction.client.ui.ItemInformation;
 import com.auction.shared.AuctionType;
 import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Item;
+import com.auction.shared.ItemStatus;
 import java.time.LocalDateTime;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -28,16 +29,35 @@ final class ItemInformationUiHelper {
       return;
     }
     LocalDateTime now = LocalDateTime.now();
+    ItemStatus status = item.getStatus();
+    if (status != null && status != ItemStatus.OPEN) {
+      endsInValue.setText(closedEndsInCaption(status));
+      return;
+    }
     LocalDateTime start = item.getStartTime();
     if (start != null && start.isAfter(now)) {
       endsInValue.setText("Starts in " + DutchAuctionPricing.formatShortCountdownToward(start, now));
       return;
     }
+    LocalDateTime endTime = item.getEndTime();
+    if (endTime != null && !endTime.isAfter(now)) {
+      endsInValue.setText("Auction Closed");
+      return;
+    }
     LocalDateTime target =
         item.getAuctionType() == AuctionType.DUTCH
             ? DutchAuctionPricing.countdownTarget(item, now)
-            : item.getEndTime();
+            : endTime;
     endsInValue.setText(DutchAuctionPricing.formatShortCountdownToward(target, now));
+  }
+
+  private static String closedEndsInCaption(ItemStatus status) {
+    return switch (status) {
+      case EXPIRED -> "Expired";
+      case CANCELED -> "Canceled";
+      case PENDING -> "Pending approval";
+      default -> "Auction Closed";
+    };
   }
 
   /** True when lot is OPEN in DB but {@code startTime} is still in the future. */
