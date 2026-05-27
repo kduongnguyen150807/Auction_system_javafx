@@ -38,4 +38,8 @@ public class UserService {
   public boolean setUserRole(String username, String role) {
     return this.userDao.setUserRole(username, role);
   }
+
+  public User getByUsername(String username) {
+    return userDao.getByUsername(username);
+  }
 }
