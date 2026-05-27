@@ -2,145 +2,79 @@ package com.auction.server.handler.auction;
 
 import com.auction.server.handler.dispatch.ActionHandler;
 import com.auction.server.handler.dispatch.HandlerContext;
+
 import com.auction.shared.AuctionType;
+import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Map;
 
 public class AddLotHandler implements ActionHandler {
-  private static final DateTimeFormatter DATE_TIME_FORMATTER =
-          DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]");
-
   @Override
   public Response handle(Request request, HandlerContext context) {
     try {
-      @SuppressWarnings("unchecked")
       Map<String, String> data = (Map<String, String>) request.getPayload();
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]");
 
-      String payloadError = validateAddLotPayload(data);
-      if (payloadError != null) {
-        return new Response(request.getRequestId(), Response.ERROR, payloadError, null);
-      }
+      String startTimeStr = data.get("starttime");
+      if (startTimeStr.length() == 16) startTimeStr += ":00";
+      LocalDateTime startTime = LocalDateTime.parse(startTimeStr, formatter);
 
-      LocalDateTime startTime = parseDateTime(data.get("starttime"));
-      LocalDateTime endTime = parseDateTime(data.get("endtime"));
-
-      if (!endTime.isAfter(startTime)) {
-        return new Response(request.getRequestId(), Response.ERROR, "invalid_time_range", null);
-      }
+      String endTimeStr = data.get("endtime");
+      if (endTimeStr.length() == 16) endTimeStr += ":00";
+      LocalDateTime endTime = LocalDateTime.parse(endTimeStr, formatter);
 
       AuctionType auctionType =
-              AuctionType.parse(data.getOrDefault("auctiontype", "ENGLISH"));
-
-      double startingPrice = Double.parseDouble(data.get("startingprice"));
-      if (startingPrice <= 0) {
-        return new Response(request.getRequestId(), Response.ERROR, "invalid_starting_price", null);
-      }
+          AuctionType.parse(data.getOrDefault("auctiontype", "ENGLISH"));
+      double starting = Double.parseDouble(data.get("startingprice"));
 
       double maxPrice = Double.parseDouble(data.getOrDefault("maxprice", "0"));
       double dutchReserve = 0;
-      double dutchTickAmount = 0;
-      int dutchIntervalMinutes = 0;
+      double dutchTickAmt = 0;
+      int dutchIntervalMin = 0;
 
       if (auctionType == AuctionType.DUTCH) {
         maxPrice = 0;
         dutchReserve = Double.parseDouble(data.getOrDefault("dutchreserve", "0"));
-        dutchTickAmount = Double.parseDouble(data.getOrDefault("dutchdecrement", "0"));
-        dutchIntervalMinutes = Integer.parseInt(data.getOrDefault("dutchintervalmins", "0"));
-
-        String dutchError =
-                validateDutch(startingPrice, dutchReserve, dutchTickAmount, dutchIntervalMinutes);
-
-        if (dutchError != null) {
-          return new Response(request.getRequestId(), Response.ERROR, dutchError, null);
+        dutchIntervalMin = Integer.parseInt(data.getOrDefault("dutchintervalmins", "0"));
+        String err =
+            DutchAuctionPricing.validateDutchScheduleFromInterval(
+                startTime, endTime, starting, dutchReserve, dutchIntervalMin);
+        if (err != null) {
+          return new Response(request.getRequestId(), Response.ERROR, err, null);
         }
+        dutchTickAmt =
+            DutchAuctionPricing.derivedTickAmount(
+                startTime, endTime, dutchIntervalMin, starting, dutchReserve);
+      } else if (!endTime.isAfter(startTime)) {
+        return new Response(request.getRequestId(), Response.ERROR, "invalid_time_range", null);
       }
 
       boolean success =
-              context
-                      .getItemDao()
-                      .insertLot(
-                              data.get("name"),
-                              data.get("description"),
-                              startingPrice,
-                              maxPrice,
-                              startTime,
-                              endTime,
-                              data.get("sellerusername"),
-                              data.getOrDefault("imageurl", ""),
-                              data.getOrDefault("category", "Vehicle"),
-                              auctionType,
-                              dutchReserve,
-                              dutchTickAmount,
-                              dutchIntervalMinutes);
+          context
+              .getItemDao()
+              .insertLot(
+                  data.get("name"),
+                  data.get("description"),
+                  starting,
+                  maxPrice,
+                  startTime,
+                  endTime,
+                  data.get("sellerusername"),
+                  data.getOrDefault("imageurl", ""),
+                  data.getOrDefault("category", "Vehicle"),
+                  auctionType,
+                  dutchReserve,
+                  dutchTickAmt,
+                  dutchIntervalMin);
 
-      return new Response(
-              request.getRequestId(),
-              success ? Response.OK : Response.ERROR,
-              success ? "success" : "fail",
-              null);
-    } catch (ClassCastException e) {
-      return new Response(request.getRequestId(), Response.ERROR, "invalid_payload", null);
-    } catch (NumberFormatException e) {
-      return new Response(request.getRequestId(), Response.ERROR, "invalid_number_format", null);
-    } catch (DateTimeParseException e) {
-      return new Response(request.getRequestId(), Response.ERROR, "invalid_datetime_format", null);
+      return new Response(request.getRequestId(),
+          success ? Response.OK : Response.ERROR,
+          success ? "success" : "fail", null);
     } catch (Exception e) {
-      return new Response(request.getRequestId(), Response.ERROR, "server_error", null);
+      return new Response(request.getRequestId(), Response.ERROR, "fail", null);
     }
-  }
-
-  private static String validateAddLotPayload(Map<String, String> data) {
-    if (data == null) {
-      return "invalid_payload";
-    }
-
-    if (isBlank(data.get("name"))
-            || isBlank(data.get("description"))
-            || isBlank(data.get("startingprice"))
-            || isBlank(data.get("starttime"))
-            || isBlank(data.get("endtime"))
-            || isBlank(data.get("sellerusername"))) {
-      return "missing_required_fields";
-    }
-
-    return null;
-  }
-
-  private static LocalDateTime parseDateTime(String value) {
-    String normalized = value.trim();
-
-    if (normalized.length() == 16) {
-      normalized += ":00";
-    }
-
-    return LocalDateTime.parse(normalized, DATE_TIME_FORMATTER);
-  }
-
-  private static String validateDutch(double startPrice, double reserve, double tick, int mins) {
-    if (reserve < 0) {
-      return "Invalid reserve price";
-    }
-
-    if (reserve >= startPrice) {
-      return "Reserve must be below starting price";
-    }
-
-    if (tick <= 0) {
-      return "Price decrement must be positive";
-    }
-
-    if (mins <= 0) {
-      return "Decrease interval must be at least 1 minute";
-    }
-
-    return null;
-  }
-
-  private static boolean isBlank(String value) {
-    return value == null || value.trim().isEmpty();
   }
 }

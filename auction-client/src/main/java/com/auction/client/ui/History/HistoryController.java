@@ -5,11 +5,12 @@ import com.auction.client.app.NodeContentLoader;
 import com.auction.client.network.NetworkClient;
 import com.auction.client.ui.ItemCard.ItemCardController;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.client.ui.TrangChu.HomeItemCardFactory;
 import com.auction.shared.AuctionType;
+import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.Item;
 import com.auction.shared.Request;
 import com.auction.shared.Response;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,8 +18,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -40,6 +44,10 @@ public class HistoryController {
   private final PaneCards closedmodel = new PaneCards();
   private final PaneCards pastmodel = new PaneCards();
   private final AtomicLong fetchgen = new AtomicLong(0);
+  private final AtomicBoolean sectionRefreshInFlight = new AtomicBoolean(false);
+  private final HomeItemCardFactory liveCardFactory = new HomeItemCardFactory();
+  private final List<Item> cachedUpcoming = new ArrayList<>();
+  private Timeline sectionTimeline;
 
   private static final class PaneCards {
     final Map<Integer, ItemCardController> cards = new HashMap<>();
@@ -48,6 +56,13 @@ public class HistoryController {
 
   @FXML
   public void initialize() {
+    sectionTimeline =
+        new Timeline(
+            new KeyFrame(
+                javafx.util.Duration.seconds(1),
+                e -> tickUpcomingAndTrendingSections()));
+    sectionTimeline.setCycleCount(Timeline.INDEFINITE);
+    sectionTimeline.play();
     refreshHistory();
   }
 
@@ -57,51 +72,163 @@ public class HistoryController {
     }
     int userid = ClientSession.getCurrentUser().getId();
     long currentgen = fetchgen.incrementAndGet();
-    Thread thread = new Thread(() -> {
-      List<Item> watchlist = fetchitems(Request.GET_WATCHLIST_ITEMS, userid); // Lấy Watchlist
-      List<Item> trending = fetchTrendingLotsForCatalogType();
-      List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
-      List<Item> closed = fetchitems("getclosedbids", userid);
-      List<Item> past = fetchitems("getpastbids", userid);
+    Thread thread =
+        new Thread(
+            () -> {
+              List<Item> watchlist = fetchitems(Request.GET_WATCHLIST_ITEMS, userid);
+              List<Item> trending = fetchTrendingLotsForCatalogType();
+              List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
+              List<Item> closed = fetchitems(Request.GET_CLOSED_BIDS, userid);
+              List<Item> past = fetchitems(Request.GET_PAST_BIDS, userid);
 
-      Platform.runLater(() -> {
-        if (currentgen != fetchgen.get()) return;
+              Platform.runLater(
+                  () -> {
+                    if (currentgen != fetchgen.get()) {
+                      return;
+                    }
+                    replaceCachedUpcoming(upcoming);
 
-        // Render Watchlist
-        if (watchlistcontainer != null && watchlist != null) {
-          incrementalrender(watchlistcontainer, watchlist, watchlistmodel, this::timecaptionscheduled);
-        }
-
-        if (ongoingcontainer != null && trending != null) {
-          incrementalrender(ongoingcontainer, trending, trendingSectionCards, this::timecaptionongoing);
-        }
-        if (upcomingcontainer != null && upcoming != null) {
-          incrementalrender(upcomingcontainer, upcoming, upcomingmodel, this::timecaptionscheduled);
-        }
-        if (closedcontainer != null && closed != null) {
-          incrementalrender(closedcontainer, closed, closedmodel, this::timecaptionscheduled);
-        }
-        if (pastcontainer != null && past != null) {
-          incrementalrender(pastcontainer, past, pastmodel, this::timecaptionscheduled);
-        }
-      });
-    });
+                    if (watchlistcontainer != null && watchlist != null) {
+                      incrementalrender(
+                          watchlistcontainer,
+                          watchlist,
+                          watchlistmodel,
+                          this::timecaptionscheduled,
+                          false);
+                    }
+                    if (ongoingcontainer != null && trending != null) {
+                      incrementalrender(
+                          ongoingcontainer,
+                          trending,
+                          trendingSectionCards,
+                          this::timecaptionongoing,
+                          true);
+                    }
+                    if (upcomingcontainer != null && upcoming != null) {
+                      incrementalrender(
+                          upcomingcontainer,
+                          upcoming,
+                          upcomingmodel,
+                          this::timecaptionupcoming,
+                          false);
+                    }
+                    if (closedcontainer != null && closed != null) {
+                      incrementalrender(
+                          closedcontainer, closed, closedmodel, this::timecaptionscheduled, false);
+                    }
+                    if (pastcontainer != null && past != null) {
+                      incrementalrender(
+                          pastcontainer, past, pastmodel, this::timecaptionscheduled, false);
+                    }
+                  });
+            });
     thread.setDaemon(true);
     thread.start();
   }
 
+  /** When startTime passes: drop from Upcoming and reload Trending so new live lots appear. */
+  private void tickUpcomingAndTrendingSections() {
+    trendingSectionCards.cards.values().forEach(ItemCardController::updateTimeLabel);
+    if (cachedUpcoming.isEmpty()) {
+      return;
+    }
+    LocalDateTime now = LocalDateTime.now();
+    boolean anyStarted =
+        cachedUpcoming.stream()
+            .anyMatch(
+                item ->
+                    item.getStartTime() != null && !item.getStartTime().isAfter(now));
+    if (anyStarted) {
+      refreshUpcomingAndTrendingAsync();
+    } else {
+      refreshUpcomingCaptions();
+    }
+  }
+
+  private void refreshUpcomingCaptions() {
+    for (Item item : cachedUpcoming) {
+      ItemCardController card = upcomingmodel.cards.get(item.getId());
+      if (card != null) {
+        card.syncFromCatalogItemStaticTime(item, timecaptionupcoming(item));
+      }
+    }
+  }
+
+  private void refreshUpcomingAndTrendingAsync() {
+    if (ClientSession.getCurrentUser() == null) {
+      return;
+    }
+    if (!sectionRefreshInFlight.compareAndSet(false, true)) {
+      return;
+    }
+    int userid = ClientSession.getCurrentUser().getId();
+    Thread thread =
+        new Thread(
+            () -> {
+              try {
+                List<Item> upcoming = fetchitems(Request.GET_UPCOMING_BIDS, userid);
+                List<Item> trending = fetchTrendingLotsForCatalogType();
+                Platform.runLater(
+                    () -> {
+                      try {
+                        replaceCachedUpcoming(upcoming);
+                        if (upcomingcontainer != null) {
+                          incrementalrender(
+                              upcomingcontainer,
+                              upcoming != null ? upcoming : List.of(),
+                              upcomingmodel,
+                              this::timecaptionupcoming,
+                              false);
+                        }
+                        if (ongoingcontainer != null && trending != null) {
+                          incrementalrender(
+                              ongoingcontainer,
+                              trending,
+                              trendingSectionCards,
+                              this::timecaptionongoing,
+                              true);
+                        }
+                      } finally {
+                        sectionRefreshInFlight.set(false);
+                      }
+                    });
+              } catch (Exception e) {
+                sectionRefreshInFlight.set(false);
+              }
+            });
+    thread.setDaemon(true);
+    thread.start();
+  }
+
+  private void replaceCachedUpcoming(List<Item> upcoming) {
+    cachedUpcoming.clear();
+    if (upcoming != null) {
+      cachedUpcoming.addAll(upcoming);
+    }
+  }
+
   private String timecaptionongoing(Item item) {
-    String ans = buildhistorycaption(item, true);
-    return ans;
+    return buildhistorycaption(item, true);
   }
 
   private String timecaptionscheduled(Item item) {
-    String ans = buildhistorycaption(item, false);
-    return ans;
+    return buildhistorycaption(item, false);
+  }
+
+  private String timecaptionupcoming(Item item) {
+    if (item.getWinnerUsername() != null && !item.getWinnerUsername().isEmpty()) {
+      return "Winner: " + item.getWinnerUsername();
+    }
+    LocalDateTime start = item.getStartTime();
+    if (start == null) {
+      return "N/A";
+    }
+    return "Starts in " + formatCountdownToward(start);
   }
 
   private String buildhistorycaption(Item item, boolean isongoing) {
-    String timelabel = formattime(isongoing ? item.getEndTime() : item.getStartTime());
+    String timelabel =
+        formatCountdownToward(isongoing ? item.getEndTime() : item.getStartTime());
     if (item.getWinnerUsername() != null && !item.getWinnerUsername().isEmpty()) {
       timelabel = "Winner: " + item.getWinnerUsername();
     }
@@ -135,14 +262,18 @@ public class HistoryController {
     if (res != null && Response.OK.equals(res.getStatus())) {
       Object payload = res.getPayload();
       if (payload instanceof List) {
-        List<Item> ans = (List<Item>) payload;
-        return ans;
+        return (List<Item>) payload;
       }
     }
     return null;
   }
 
-  private void incrementalrender(FlowPane pane, List<Item> items, PaneCards model, Function<Item, String> captionfn) {
+  private void incrementalrender(
+      FlowPane pane,
+      List<Item> items,
+      PaneCards model,
+      Function<Item, String> captionfn,
+      boolean liveTrendingCountdown) {
     if (pane == null) {
       return;
     }
@@ -180,8 +311,19 @@ public class HistoryController {
       ItemCardController card = cardmap.get(item.getId());
       String caption = captionfn.apply(item);
       if (card != null) {
-        card.syncFromCatalogItemStaticTime(item, caption);
-        card.attachCatalogItem(item);
+        if (liveTrendingCountdown) {
+          card.syncFromCatalogItem(item);
+        } else {
+          card.syncFromCatalogItemStaticTime(item, caption);
+          card.attachCatalogItem(item);
+        }
+      } else if (liveTrendingCountdown) {
+        ItemCardController newcard = liveCardFactory.createCard(item, false);
+        VBox root = newcard != null ? newcard.getRootNode() : null;
+        if (newcard != null && root != null) {
+          cardmap.put(item.getId(), newcard);
+          rootbyitemid.put(item.getId(), root);
+        }
       } else {
         try {
           NodeContentLoader<VBox> cardloader = new NodeContentLoader<>();
@@ -189,7 +331,15 @@ public class HistoryController {
           ItemCardController newcard = cardloader.getController();
           VBox root = cardloader.getCurrentNode();
           if (newcard != null && root != null) {
-            newcard.setData(item.getId(), safe(item.getName()), item.getCurrentPrice(), safe(item.getDescription()), caption, safe(item.getImageUrl()), safe(item.getSellerUsername()), safe(item.getSellerAvatarUrl()));
+            newcard.setData(
+                item.getId(),
+                safe(item.getName()),
+                item.getCurrentPrice(),
+                safe(item.getDescription()),
+                caption,
+                safe(item.getImageUrl()),
+                safe(item.getSellerUsername()),
+                safe(item.getSellerAvatarUrl()));
             newcard.setEndTime(null);
             newcard.attachCatalogItem(item);
             cardmap.put(item.getId(), newcard);
@@ -222,38 +372,32 @@ public class HistoryController {
   }
 
   private String safe(String value) {
-    String ans = value == null ? "" : value;
-    return ans;
+    return value == null ? "" : value;
   }
 
-  private String formattime(LocalDateTime time) {
+  private String formatCountdownToward(LocalDateTime time) {
     if (time == null) {
       return "N/A";
     }
-    Duration remaining = Duration.between(LocalDateTime.now(), time);
-    if (remaining.isNegative() || remaining.isZero()) {
+    LocalDateTime now = LocalDateTime.now();
+    if (!time.isAfter(now)) {
       return "closed";
     }
-    long hours = remaining.toHours();
-    if (hours / 24 > 0) {
-      String ans = (hours / 24) + "d " + (hours % 24) + "h";
-      return ans;
-    }
-    String ans = (hours % 24) + "h " + (remaining.toMinutes() % 60) + "m";
-    return ans;
+    return DutchAuctionPricing.formatShortCountdownToward(time, now);
   }
+
   public void updateWatchlistUi(int itemId, boolean isWatched) {
     updateCardHeart(trendingSectionCards, itemId, isWatched);
     updateCardHeart(upcomingmodel, itemId, isWatched);
     updateCardHeart(closedmodel, itemId, isWatched);
     updateCardHeart(pastmodel, itemId, isWatched);
-    // Riêng thẻ trong mục Watchlist, nếu bỏ tim thì ta vẫn giữ nguyên trên màn hình (chỉ đổi icon thành trắng)
-    // để tránh việc UI bị giật/biến mất đột ngột. Lần sau user ấn Refresh nó mới biến mất.
     updateCardHeart(watchlistmodel, itemId, isWatched);
   }
 
   private void updateCardHeart(PaneCards model, int itemId, boolean isWatched) {
     ItemCardController card = model.cards.get(itemId);
-    if (card != null) card.setHeartUI(isWatched);
+    if (card != null) {
+      card.setHeartUI(isWatched);
+    }
   }
 }

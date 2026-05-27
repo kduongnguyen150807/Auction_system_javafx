@@ -7,6 +7,7 @@ public class Response implements Serializable {
   private static final long serialVersionUID = 1L;
   public static final String OK = "SUCCESS";
   public static final String ERROR = "ERROR";
+  public static final String SUCCESS = "SUCCESS";
 
   public static final String ACCOUNT_BANNED = "ACCOUNT_BANNED";
   public static final String ACCOUNT_UNBANNED = "ACCOUNT_UNBANNED";

@@ -15,6 +15,48 @@ final class MigrationSchemaSupport {
 
   private MigrationSchemaSupport() {}
 
+  /**
+   * Renames a column when an older schema used a different name (e.g. {@code seller_id} → {@code sellerid}).
+   * Tries MySQL 8 {@code RENAME COLUMN}, then falls back to {@code CHANGE COLUMN} with {@code definition}.
+   */
+  static void renameColumnIfExists(
+      Connection conn, String table, String fromColumn, String toColumn, String changeDefinition) {
+    try {
+      if (!columnExists(conn, table, fromColumn) || columnExists(conn, table, toColumn)) {
+        return;
+      }
+      try (Statement st = conn.createStatement()) {
+        st.execute(
+            "ALTER TABLE "
+                + table
+                + " RENAME COLUMN "
+                + fromColumn
+                + " TO "
+                + toColumn);
+        LOGGER.info("Renamed column {}.{} -> {}", table, fromColumn, toColumn);
+      }
+    } catch (SQLException renameFailed) {
+      try {
+        if (columnExists(conn, table, fromColumn) && !columnExists(conn, table, toColumn)) {
+          try (Statement st = conn.createStatement()) {
+            st.execute(
+                "ALTER TABLE "
+                    + table
+                    + " CHANGE COLUMN `"
+                    + fromColumn
+                    + "` `"
+                    + toColumn
+                    + "` "
+                    + changeDefinition);
+            LOGGER.info("Renamed column {}.{} -> {} (CHANGE)", table, fromColumn, toColumn);
+          }
+        }
+      } catch (SQLException e) {
+        LOGGER.warn("Failed to rename column {}.{} -> {}", table, fromColumn, toColumn, e);
+      }
+    }
+  }
+
   static void addColumnIfMissing(Connection conn, String table, String column, String definition) {
     try {
       if (!columnExists(conn, table, column)) {

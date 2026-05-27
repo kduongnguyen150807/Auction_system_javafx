@@ -22,8 +22,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class AuctionManager {
   private static volatile AuctionManager instance;
 
-  private static final long SESSION_TTL_MILLIS = 24L * 60 * 60 * 1000;
-
   private final ClientConnectionHub connections = new ClientConnectionHub();
   private final ItemDao itemdao;
   private final UserDao userdao;
@@ -36,22 +34,7 @@ public class AuctionManager {
   private final AutoBidCoordinator autobidcoordinator;
   private final BanCascadeService bancascade;
   private final LeaderboardService leaderboardservice = new LeaderboardService();
-
-  private final ConcurrentHashMap<String, SessionInfo> sessions = new ConcurrentHashMap<>();
-
-  private static class SessionInfo {
-    private final User user;
-    private final long expiresAt;
-
-    private SessionInfo(User user, long expiresAt) {
-      this.user = user;
-      this.expiresAt = expiresAt;
-    }
-
-    private boolean isExpired() {
-      return System.currentTimeMillis() > expiresAt;
-    }
-  }
+  private final java.util.concurrent.ConcurrentHashMap<String, User> sessions = new java.util.concurrent.ConcurrentHashMap<>();
 
   private AuctionManager() {
     itemdao = new ItemDao();
@@ -82,54 +65,32 @@ public class AuctionManager {
   private void initleaderboard() {
     List<User> res = userdao.getAllUsers();
     for (User ans : res) {
+      //Lọc role admin ra khỏi hiển thị
       if (ans.getMoneySpent() > 0 && ans.getRole() != com.auction.shared.UserRole.ADMIN) {
-        leaderboardservice.updatescore(
-                ans.getId(),
-                ans.getUsername(),
-                ans.getAvatarUrl(),
-                ans.getMoneySpent());
+        leaderboardservice.updatescore(ans.getId(), ans.getUsername(), ans.getAvatarUrl(), ans.getMoneySpent());
       }
     }
   }
-
   public void registersession(String token, User user) {
-    long expiresAt = System.currentTimeMillis() + SESSION_TTL_MILLIS;
-    registersession(token, user, expiresAt);
-  }
-
-  public void registersession(String token, User user, long expiresAt) {
-    if (token == null || token.isBlank() || user == null) {
-      return;
-    }
-
-    sessions.put(token, new SessionInfo(user, expiresAt));
+    sessions.put(token, user);
   }
 
   public User getsession(String token) {
-    if (token == null || token.isBlank()) {
-      return null;
-    }
-
-    SessionInfo session = sessions.get(token);
-
-    if (session == null) {
-      return null;
-    }
-
-    if (session.isExpired()) {
-      sessions.remove(token);
-      return null;
-    }
-
-    return session.user;
+    User ans = sessions.get(token);
+    return ans;
   }
 
-  public void removesession(String token) {
-    if (token != null) {
-      sessions.remove(token);
-    }
+  /** Drops DB session_token and in-memory reconnect entries for this user. */
+  public void releaseUserSession(int userId) {
+    userdao.clearSessionToken(userId);
+    sessions.entrySet().removeIf(
+        e -> e.getValue() != null && e.getValue().getId() == userId);
   }
 
+  /** Wipes reconnect map; call with {@link UserDao#clearAllSessionTokens()} on startup. */
+  public void clearInMemorySessions() {
+    sessions.clear();
+  }
   public static AuctionManager getInstance() {
     if (instance == null) {
       synchronized (AuctionManager.class) {
@@ -172,13 +133,10 @@ public class AuctionManager {
     if (earlycheck == null) {
       return BidAuctionValidator.error("User not found");
     }
-
     if (earlycheck.isLocked() || !earlycheck.isActive()) {
       return BidAuctionValidator.error("Account is suspended");
     }
-
     ReentrantLock lock = getAuctionLock(bid.getItemId());
-
     try {
       if (!lock.tryLock(500, TimeUnit.MILLISECONDS)) {
         return BidAuctionValidator.error("Auction is busy, please try again");
@@ -187,38 +145,30 @@ public class AuctionManager {
       Thread.currentThread().interrupt();
       return BidAuctionValidator.error("Bid interrupted");
     }
-
     List<Runnable> after = new ArrayList<>();
     Set<Integer> pendingpricebroadcast = new HashSet<>();
     ManualBidExecutor exec = bidpipeline::processManualBid;
-
     try {
       if (bid.isAutoBid()) {
         return autobidcoordinator.handleRegistration(bid, after, pendingpricebroadcast, exec);
       }
-
       Response ans = bidpipeline.processManualBid(bid, after, pendingpricebroadcast);
-
       if (ans != null && Response.OK.equals(ans.getStatus())) {
         autobidcoordinator.runRounds(bid.getItemId(), after, pendingpricebroadcast, exec);
       }
-
       return ans;
     } finally {
       for (Integer itemid : pendingpricebroadcast) {
         int id = itemid;
         after.add(() -> realtime.broadcastPriceUpdate(id));
       }
-
       lock.unlock();
-
-      after.forEach(
-              task -> {
-                try {
-                  task.run();
-                } catch (Exception e) {
-                }
-              });
+      after.forEach(task -> {
+        try {
+          task.run();
+        } catch (Exception e) {
+        }
+      });
     }
   }
 
@@ -230,10 +180,13 @@ public class AuctionManager {
     bancascade.handleSellerBan(sellerid);
   }
 
+  /**
+   * Seller voluntarily cancels an OPEN auction they own. Uses per-auction lock; refunds current high
+   * bidder and unschedules settlement.
+   */
   public boolean voluntarySellerCancelOpenAuction(int sellerId, int itemId) {
     ReentrantLock lock = getAuctionLock(itemId);
     lock.lock();
-
     try {
       return bancascade.voluntarySellerCancelOpen(itemId, sellerId);
     } catch (SQLException e) {

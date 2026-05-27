@@ -1,158 +1,112 @@
 package com.auction.server.dao.user;
 
 import com.auction.server.dao.platform.BaseDao;
-import com.auction.shared.Admin;
-import com.auction.shared.Bidder;
-import com.auction.shared.Seller;
-import com.auction.shared.User;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
+import com.auction.shared.*;
+
+import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class UserDao extends BaseDao<User> implements UserRepository {
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserDao.class);
 
-  private static final String LOGIN_SQL =
-          "SELECT * FROM users "
-                  + "WHERE username = ? AND password = ? AND isactive = true AND islocked = false";
-
-  private static final String SIGNUP_SQL =
-          "INSERT INTO users(username, fullname, password, email, age, phonenumber, role, isactive, islocked) "
-                  + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-  private static final String GET_BY_ID_SQL =
-          "SELECT * FROM users WHERE id = ?";
-
-  private static final String GET_ALL_USERS_SQL =
-          "SELECT * FROM users";
-
-  private static final String SEARCH_USERS_SQL =
-          "SELECT * FROM users "
-                  + "WHERE (LOWER(username) LIKE ? OR LOWER(fullname) LIKE ?) "
-                  + "AND isactive = true "
-                  + "AND LOWER(role) != 'admin' "
-                  + "LIMIT 20";
-
-  private static final String UPDATE_PROFILE_SQL =
-          "UPDATE users SET fullname = ?, email = ?, phonenumber = ? WHERE id = ?";
-
-  private static final String UPDATE_AVATAR_SQL =
-          "UPDATE users SET avatar_url = ? WHERE username = ?";
-
-  private static final String ATOMIC_DEDUCT_BALANCE_SQL =
-          "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?";
-
-  private static final String ATOMIC_CREDIT_BALANCE_SQL =
-          "UPDATE users SET balance = balance + ? WHERE id = ?";
-
-  private static final String SET_USER_LOCKED_SQL =
-          "UPDATE users SET islocked = ? WHERE username = ?";
-
-  private static final String SET_USER_ROLE_SQL =
-          "UPDATE users SET role = ? WHERE username = ?";
-
-  private static final String UPDATE_PASSWORD_BY_EMAIL_SQL =
-          "UPDATE users SET password = ? WHERE email = ?";
-
-  private static final String CHECK_EMAIL_EXISTS_SQL =
-          "SELECT * FROM users WHERE email = ? LIMIT 1";
-
-  private static final String ADD_BIDDER_METRICS_SQL =
-          "UPDATE users SET moneyspent = moneyspent + ?, itemsbought = itemsbought + 1 WHERE id = ?";
-
-  private static final String ADD_SELLER_METRICS_SQL =
-          "UPDATE users SET moneyreceived = moneyreceived + ?, itemssold = itemssold + 1 WHERE id = ?";
-
-  private static final String GET_BY_USERNAME_SQL =
-          "SELECT * FROM users WHERE username = ? LIMIT 1";
-
-  private static final String EXISTS_DUPLICATE_USER_SQL =
-          "SELECT 1 FROM users "
-                  + "WHERE LOWER(TRIM(username)) = LOWER(TRIM(?)) "
-                  + "OR LOWER(TRIM(email)) = LOWER(TRIM(?)) "
-                  + "LIMIT 1";
-
-  private static final String EMAIL_TAKEN_BY_OTHER_USER_SQL =
-          "SELECT 1 FROM users "
-                  + "WHERE id <> ? AND LOWER(TRIM(email)) = LOWER(TRIM(?)) "
-                  + "LIMIT 1";
-
-  private static final String PHONE_TAKEN_BY_OTHER_USER_SQL =
-          "SELECT 1 FROM users "
-                  + "WHERE id <> ? "
-                  + "AND TRIM(COALESCE(phonenumber, '')) <> '' "
-                  + "AND LOWER(TRIM(phonenumber)) = LOWER(TRIM(?)) "
-                  + "LIMIT 1";
+  private static final Logger LOGGER =
+          LoggerFactory.getLogger(UserDao.class);
 
   @Override
   protected User mapRow(ResultSet rs) throws SQLException {
-    User user = createUserByRole(rs.getString("role"));
+
+    String role = rs.getString("role");
+
+    User user =
+            role.equalsIgnoreCase("ADMIN")
+                    ? new Admin()
+                    : new Bidder();
 
     user.setId(rs.getInt("id"));
-    user.setVersion(rs.getInt("version"));
+    //user.setVersion(rs.getInt("version"));
+
     user.setUsername(rs.getString("username"));
     user.setFullName(rs.getString("fullname"));
+
     user.setPassword(rs.getString("password"));
     user.setEmail(rs.getString("email"));
+
     user.setAge(rs.getString("age"));
-    user.setPhoneNumber(rs.getString("phonenumber"));
+    user.setPhoneNumber(rs.getString("phone_number"));
+
     user.setBalance(rs.getDouble("balance"));
-    user.setMoneySpent(rs.getDouble("moneyspent"));
-    user.setItemsBought(rs.getInt("itemsbought"));
-    user.setMoneyReceived(rs.getDouble("moneyreceived"));
-    user.setItemsSold(rs.getInt("itemssold"));
-    user.setActive(rs.getBoolean("isactive"));
-    user.setLocked(rs.getBoolean("islocked"));
+
+    user.setMoneySpent(rs.getDouble("money_spent"));
+    user.setItemsBought(rs.getInt("items_bought"));
+
+    user.setMoneyReceived(rs.getDouble("money_received"));
+    user.setItemsSold(rs.getInt("items_sold"));
+
+    user.setAvgRating(rs.getDouble("avg_rating"));
+    user.setTotalRatings(rs.getInt("total_ratings"));
+
+    user.setActive(rs.getBoolean("is_active"));
+    user.setLocked(rs.getBoolean("is_locked"));
+
     user.setAvatarUrl(rs.getString("avatar_url"));
 
-    mapOptionalRatingFields(rs, user);
+    user.setSessionToken(rs.getString("session_token"));
+
+    Timestamp lastLoginAt = rs.getTimestamp("last_login_at");
+    if (lastLoginAt != null) {
+      user.setLastLogin(lastLoginAt.toLocalDateTime());
+    }
 
     return user;
   }
 
-  private User createUserByRole(String role) {
-    if (role == null) {
-      return new Bidder();
-    }
-
-    if ("ADMIN".equalsIgnoreCase(role)) {
-      return new Admin();
-    }
-
-    if ("SELLER".equalsIgnoreCase(role)) {
-      return new Seller();
-    }
-
-    return new Bidder();
-  }
-
-  private void mapOptionalRatingFields(ResultSet rs, User user) {
-    try {
-      user.setAvgRating(rs.getDouble("avgrating"));
-    } catch (SQLException e) {
-      LOGGER.debug("Column avgrating is not available in this query", e);
-    }
-
-    try {
-      user.setTotalRatings(rs.getInt("totalratings"));
-    } catch (SQLException e) {
-      LOGGER.debug("Column totalratings is not available in this query", e);
-    }
-  }
-
   @Override
   public User login(String username, String password) {
-    return querySingle(LOGIN_SQL, username, password);
+
+    User user = querySingle(
+            """
+            SELECT *
+            FROM users
+            WHERE username = ?
+            AND password = ?
+            AND is_active = true
+            AND is_locked = false
+            """,
+            username,
+            password);
+
+    if (user == null) {
+      return null;
+    }
+    if (user.getSessionToken() != null
+            && !user.getSessionToken().isBlank()) {
+
+      LOGGER.warn(
+              "User already logged in elsewhere: {}",
+              username);
+
+      return null;
+    }
+    String sessionToken = UUID.randomUUID().toString();
+    LocalDateTime loginAt = LocalDateTime.now();
+
+    applySuccessfulLogin(user.getId(), sessionToken, loginAt);
+
+    user.setSessionToken(sessionToken);
+    user.setLastLogin(loginAt);
+
+    return user;
   }
 
   @Override
   public boolean signup(User user) {
+
     try (Connection conn = getConn()) {
+
       String username = normalize(user.getUsername());
       String email = normalize(user.getEmail());
 
@@ -160,177 +114,373 @@ public class UserDao extends BaseDao<User> implements UserRepository {
         return false;
       }
 
-      try (PreparedStatement ps = conn.prepareStatement(SIGNUP_SQL)) {
-        bindSignupParams(ps, user, username, email);
+      String sql =
+              """
+              INSERT INTO users(
+                  username,
+                  fullname,
+                  password,
+                  email,
+                  age,
+                  phone_number,
+                  role,
+                  balance,
+                  is_active,
+                  is_locked,
+                  avatar_url,
+                  money_spent,
+                  items_bought,
+                  money_received,
+                  items_sold,
+                  avg_rating,
+                  total_ratings,
+                  session_token
+              )
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+              """;
+
+      try (PreparedStatement ps =
+                   conn.prepareStatement(sql)) {
+
+        String profileName =
+                normalize(user.getFullName());
+
+        if (profileName.isBlank()) {
+          profileName = username;
+        }
+
+        ps.setString(1, username);
+        ps.setString(2, profileName);
+
+        ps.setString(3, user.getPassword());
+        ps.setString(4, email);
+
+        ps.setString(5, user.getAge());
+        ps.setString(6, user.getPhoneNumber());
+
+        ps.setString(7, user.getRole().name());
+
+        ps.setDouble(8, 0.0);
+
+        ps.setBoolean(9, true);
+        ps.setBoolean(10, false);
+
+        ps.setString(11, null);
+
+        ps.setDouble(12, 0.0);
+        ps.setInt(13, 0);
+
+        ps.setDouble(14, 0.0);
+        ps.setInt(15, 0);
+
+        ps.setDouble(16, 0.0);
+        ps.setInt(17, 0);
+
+        ps.setString(18, null);
+
         return ps.executeUpdate() > 0;
       }
-    } catch (SQLIntegrityConstraintViolationException e) {
-      return false;
+
     } catch (Exception e) {
-      LOGGER.warn("Signup failed", e);
+
+      LOGGER.error("Signup failed", e);
       return false;
     }
   }
 
-  private void bindSignupParams(
-          PreparedStatement ps,
-          User user,
-          String username,
-          String email)
-          throws SQLException {
+  @Override
+  public boolean updateSessionToken(
+          int userId,
+          String sessionToken) {
 
-    String profileName = normalize(user.getFullName());
-    if (profileName.isBlank()) {
-      profileName = username;
-    }
+    return executeUpdate(
+            """
+            UPDATE users
+            SET session_token = ?
+            WHERE id = ?
+            """,
+            sessionToken,
+            userId);
+  }
 
-    ps.setString(1, username);
-    ps.setString(2, profileName);
-    ps.setString(3, user.getPassword());
-    ps.setString(4, email);
-    ps.setString(5, user.getAge());
-    ps.setString(6, user.getPhoneNumber());
-    ps.setString(7, user.getRole().name());
-    ps.setBoolean(8, true);
-    ps.setBoolean(9, false);
+  private boolean applySuccessfulLogin(int userId, String sessionToken, LocalDateTime loginAt) {
+    return executeUpdate(
+            """
+            UPDATE users
+            SET session_token = ?, last_login_at = ?
+            WHERE id = ?
+            """,
+            sessionToken,
+            Timestamp.valueOf(loginAt),
+            userId);
+  }
+
+  @Override
+  public boolean clearSessionToken(int userId) {
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET session_token = NULL
+            WHERE id = ?
+            """,
+            userId);
+  }
+
+  /** Clears every persisted login slot (e.g. after server restart). */
+  public void clearAllSessionTokens() {
+    executeUpdate(
+            """
+            UPDATE users
+            SET session_token = NULL
+            WHERE session_token IS NOT NULL
+            """);
+  }
+
+  @Override
+  public User getBySessionToken(
+          String sessionToken) {
+
+    return querySingle(
+            """
+            SELECT *
+            FROM users
+            WHERE session_token = ?
+            """,
+            sessionToken);
   }
 
   @Override
   public User getById(String id) {
+
     try {
-      return querySingle(GET_BY_ID_SQL, Integer.parseInt(id));
+
+      return querySingle(
+              "SELECT * FROM users WHERE id = ?",
+              Integer.parseInt(id));
+
     } catch (Exception e) {
-      LOGGER.warn("getById failed for id={}", id, e);
+
+      LOGGER.warn("getById failed", e);
       return null;
     }
+  }
+
+  @Override
+  public User getByUsername(String username) {
+
+    return querySingle(
+            """
+            SELECT *
+            FROM users
+            WHERE username = ?
+            LIMIT 1
+            """,
+            username);
   }
 
   @Override
   public List<User> getAllUsers() {
-    return queryList(GET_ALL_USERS_SQL);
+
+    return queryList("SELECT * FROM users");
   }
 
   @Override
   public List<User> searchUsers(String keyword) {
-    String safeKeyword = normalize(keyword).toLowerCase();
-    String pattern = "%" + safeKeyword + "%";
 
-    List<User> users = queryList(SEARCH_USERS_SQL, pattern, pattern);
-    clearPasswords(users);
+    String sql =
+            """
+            SELECT *
+            FROM users
+            WHERE
+                (
+                    LOWER(username) LIKE ?
+                    OR LOWER(fullname) LIKE ?
+                )
+                AND is_active = true
+            LIMIT 20
+            """;
+
+    String kw =
+            "%" + keyword.toLowerCase().trim() + "%";
+
+    List<User> users =
+            queryList(sql, kw, kw);
+
+    users.forEach(u -> u.setPassword(""));
 
     return users;
   }
 
-  private void clearPasswords(List<User> users) {
-    for (User user : users) {
-      user.setPassword("");
-    }
-  }
-
   @Override
-  public String updateUserProfile(int userId, String fullName, String email, String phone) {
-    String normalizedFullName = normalize(fullName);
-    String normalizedEmail = normalize(email);
-    String normalizedPhone = normalize(phone);
+  public String updateUserProfile(
+          int userId,
+          String fullName,
+          String email,
+          String phone) {
 
-    if (normalizedEmail.isEmpty()) {
-      return "invalid_email";
-    }
+    try {
 
-    try (Connection conn = getConn()) {
-      if (emailTakenByOtherUser(conn, userId, normalizedEmail)) {
-        return "duplicate_email";
-      }
+      boolean ok =
+              executeUpdate(
+                      """
+                      UPDATE users
+                      SET
+                          fullname = ?,
+                          email = ?,
+                          phone_number = ?
+                      WHERE id = ?
+                      """,
+                      fullName,
+                      email,
+                      phone,
+                      userId);
 
-      if (!normalizedPhone.isEmpty() && phoneTakenByOtherUser(conn, userId, normalizedPhone)) {
-        return "duplicate_phone";
-      }
+      return ok ? null : "update_failed";
 
-      try (PreparedStatement ps = conn.prepareStatement(UPDATE_PROFILE_SQL)) {
-        ps.setString(1, normalizedFullName);
-        ps.setString(2, normalizedEmail);
-        ps.setString(3, normalizedPhone);
-        ps.setInt(4, userId);
-        ps.executeUpdate();
-      }
-
-      return null;
-    } catch (SQLIntegrityConstraintViolationException e) {
-      return "duplicate_email";
     } catch (Exception e) {
-      LOGGER.warn("updateUserProfile failed for userId={}", userId, e);
+
       return "update_failed";
     }
   }
 
   @Override
-  public void updateAvatar(String username, String avatarUrl) throws Exception {
-    try (Connection conn = getConn();
-         PreparedStatement ps = conn.prepareStatement(UPDATE_AVATAR_SQL)) {
+  public void updateAvatar(
+          String username,
+          String avatarUrl) throws Exception {
 
-      ps.setString(1, avatarUrl);
-      ps.setString(2, username);
-      ps.executeUpdate();
-    }
+    executeUpdate(
+            """
+            UPDATE users
+            SET avatar_url = ?
+            WHERE username = ?
+            """,
+            avatarUrl,
+            username);
   }
 
-  public boolean atomicDeductBalance(int userId, double amount) {
-    if (!isValidAmount(amount)) {
+  @Override
+  public boolean setUserLocked(
+          String username,
+          boolean lockStatus) {
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET is_locked = ?
+            WHERE username = ?
+            """,
+            lockStatus,
+            username);
+  }
+
+  @Override
+  public boolean setUserRole(
+          String username,
+          String role) {
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET role = ?
+            WHERE username = ?
+            """,
+            role,
+            username);
+  }
+
+  @Override
+  public boolean addBidderMetrics(
+          int userId,
+          double amount) {
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET
+                money_spent = money_spent + ?,
+                items_bought = items_bought + 1
+            WHERE id = ?
+            """,
+            amount,
+            userId);
+  }
+
+  @Override
+  public boolean addSellerMetrics(
+          int userId,
+          double amount) {
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET
+                money_received = money_received + ?,
+                items_sold = items_sold + 1
+            WHERE id = ?
+            """,
+            amount,
+            userId);
+  }
+  public boolean atomicDeductBalance(
+          int userId,
+          double amount) {
+
+    if (amount <= 0) {
       return false;
     }
 
-    return executeUpdate(ATOMIC_DEDUCT_BALANCE_SQL, amount, userId, amount);
+    return executeUpdate(
+            """
+            UPDATE users
+            SET balance = balance - ?
+            WHERE id = ?
+            AND balance >= ?
+            """,
+            amount,
+            userId,
+            amount);
   }
 
-  public boolean atomicCreditBalance(int userId, double amount) {
-    if (!isValidAmount(amount)) {
+  public boolean atomicCreditBalance(
+          int userId,
+          double amount) {
+
+    if (amount <= 0) {
       return false;
     }
 
-    return executeUpdate(ATOMIC_CREDIT_BALANCE_SQL, amount, userId);
+    return executeUpdate(
+            """
+            UPDATE users
+            SET balance = balance + ?
+            WHERE id = ?
+            """,
+            amount,
+            userId);
   }
 
-  @Override
-  public boolean setUserLocked(String username, boolean lockStatus) {
-    return executeUpdate(SET_USER_LOCKED_SQL, lockStatus, username);
-  }
-
-  @Override
-  public boolean setUserRole(String username, String role) {
-    return executeUpdate(SET_USER_ROLE_SQL, role, username);
-  }
-
-  public boolean updatePasswordByEmail(String email, String newHashedPassword) {
-    return executeUpdate(UPDATE_PASSWORD_BY_EMAIL_SQL, newHashedPassword, email);
-  }
-
-  public boolean isEmailExists(String email) {
-    User user = querySingle(CHECK_EMAIL_EXISTS_SQL, email);
-    return user != null;
-  }
-
-  @Override
-  public boolean addBidderMetrics(int userId, double amount) {
-    return executeUpdate(ADD_BIDDER_METRICS_SQL, amount, userId);
-  }
-
-  @Override
-  public boolean addSellerMetrics(int userId, double amount) {
-    return executeUpdate(ADD_SELLER_METRICS_SQL, amount, userId);
-  }
-
-  public User getByUsername(String username) {
-    return querySingle(GET_BY_USERNAME_SQL, username);
-  }
-
-  public boolean deductBalanceTx(int userId, double amount, Connection conn)
+  public boolean deductBalanceTx(
+          int userId,
+          double amount,
+          Connection conn)
           throws SQLException {
 
-    if (!isValidAmount(amount)) {
+    if (amount <= 0) {
       return false;
     }
 
-    try (PreparedStatement ps = conn.prepareStatement(ATOMIC_DEDUCT_BALANCE_SQL)) {
+    String sql =
+            """
+            UPDATE users
+            SET balance = balance - ?
+            WHERE id = ?
+            AND balance >= ?
+            """;
+
+    try (PreparedStatement ps =
+                 conn.prepareStatement(sql)) {
+
       ps.setDouble(1, amount);
       ps.setInt(2, userId);
       ps.setDouble(3, amount);
@@ -339,25 +489,79 @@ public class UserDao extends BaseDao<User> implements UserRepository {
     }
   }
 
-  public boolean creditBalanceTx(int userId, double amount, Connection conn)
+  public boolean creditBalanceTx(
+          int userId,
+          double amount,
+          Connection conn)
           throws SQLException {
 
-    if (!isValidAmount(amount)) {
+    if (amount <= 0) {
       return false;
     }
 
-    try (PreparedStatement ps = conn.prepareStatement(ATOMIC_CREDIT_BALANCE_SQL)) {
+    String sql =
+            """
+            UPDATE users
+            SET balance = balance + ?
+            WHERE id = ?
+            """;
+
+    try (PreparedStatement ps =
+                 conn.prepareStatement(sql)) {
+
       ps.setDouble(1, amount);
       ps.setInt(2, userId);
 
       return ps.executeUpdate() > 0;
     }
   }
+  public boolean isEmailExists(String email) {
 
-  private boolean existsDuplicateUser(Connection conn, String username, String email)
+    User user = querySingle(
+            """
+            SELECT *
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+            """,
+            email);
+
+    return user != null;
+  }
+
+  public boolean updatePasswordByEmail(
+          String email,
+          String newPassword) {
+
+    return executeUpdate(
+            """
+            UPDATE users
+            SET password = ?
+            WHERE email = ?
+            """,
+            newPassword,
+            email);
+  }
+
+  private boolean existsDuplicateUser(
+          Connection conn,
+          String username,
+          String email)
           throws SQLException {
 
-    try (PreparedStatement ps = conn.prepareStatement(EXISTS_DUPLICATE_USER_SQL)) {
+    String sql =
+            """
+            SELECT 1
+            FROM users
+            WHERE
+                LOWER(username) = LOWER(?)
+                OR LOWER(email) = LOWER(?)
+            LIMIT 1
+            """;
+
+    try (PreparedStatement ps =
+                 conn.prepareStatement(sql)) {
+
       ps.setString(1, username);
       ps.setString(2, email);
 
@@ -367,37 +571,10 @@ public class UserDao extends BaseDao<User> implements UserRepository {
     }
   }
 
-  private boolean emailTakenByOtherUser(Connection conn, int userId, String email)
-          throws SQLException {
-
-    try (PreparedStatement ps = conn.prepareStatement(EMAIL_TAKEN_BY_OTHER_USER_SQL)) {
-      ps.setInt(1, userId);
-      ps.setString(2, email);
-
-      try (ResultSet rs = ps.executeQuery()) {
-        return rs.next();
-      }
-    }
-  }
-
-  private boolean phoneTakenByOtherUser(Connection conn, int userId, String phone)
-          throws SQLException {
-
-    try (PreparedStatement ps = conn.prepareStatement(PHONE_TAKEN_BY_OTHER_USER_SQL)) {
-      ps.setInt(1, userId);
-      ps.setString(2, phone);
-
-      try (ResultSet rs = ps.executeQuery()) {
-        return rs.next();
-      }
-    }
-  }
-
-  private boolean isValidAmount(double amount) {
-    return amount > 0;
-  }
-
   private String normalize(String value) {
-    return value == null ? "" : value.trim();
+
+    return value == null
+            ? ""
+            : value.trim();
   }
 }

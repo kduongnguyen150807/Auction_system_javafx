@@ -73,7 +73,7 @@ public class RatingDao extends BaseDao<Rating> implements RatingRepository {
           if (ans.next()) {
             double avgrating = ans.getDouble("avg_s");
             int totalratings = ans.getInt("cnt");
-            String updatesql = "UPDATE users SET avgrating = ?, totalratings = ? WHERE id = ?";
+            String updatesql = "UPDATE users SET avg_rating = ?, total_ratings = ? WHERE id = ?";
             try (PreparedStatement updatestmt = conn.prepareStatement(updatesql)) {
               updatestmt.setDouble(1, avgrating);
               updatestmt.setInt(2, totalratings);

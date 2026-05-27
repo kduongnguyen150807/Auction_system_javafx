@@ -121,9 +121,14 @@ class BanCascadeService {
     runTransaction(
         conn -> {
           Item item = itemDao.getByIdTx(itemId, conn);
-          if (item == null
-              || item.getStatus() != ItemStatus.OPEN
-              || item.getSellerId() != sellerId) {
+          if (item == null || item.getSellerId() != sellerId) {
+            return;
+          }
+          if (item.getStatus() == ItemStatus.CANCELED) {
+            cancelled[0] = true;
+            return;
+          }
+          if (item.getStatus() != ItemStatus.OPEN) {
             return;
           }
           int currentBidder = bidDao.getCurrentHighestBidderTx(itemId, conn);
@@ -141,12 +146,16 @@ class BanCascadeService {
     if (!cancelled[0]) {
       return false;
     }
-    manager.cleanupAutoBids(itemId);
-    SettlementService.getInstance().unschedule(itemId);
-    if (refundedBidder[0] > 0) {
-      manager.sendBalanceUpdateToUser(refundedBidder[0]);
+    try {
+      manager.cleanupAutoBids(itemId);
+      SettlementService.getInstance().unschedule(itemId);
+      if (refundedBidder[0] > 0) {
+        manager.sendBalanceUpdateToUser(refundedBidder[0]);
+      }
+      manager.broadcastItemClosed(itemId);
+    } catch (RuntimeException ignored) {
+      // DB cancel already committed; do not fail the seller RPC.
     }
-    manager.broadcastItemClosed(itemId);
     return true;
   }
 

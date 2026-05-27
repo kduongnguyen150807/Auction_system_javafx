@@ -258,6 +258,12 @@ public class KhungController {
     if (instance != null && instance.homeController != null) instance.homeController.updatePriceUi(item);
   }
 
+  static void notifySellerListingClosed(Item item) {
+    if (instance != null && instance.myItemsController != null) {
+      instance.myItemsController.applySellerListingClosed(item);
+    }
+  }
+
   // ĐÃ THÊM CẬP NHẬT WATCHLIST CONTROLLER
   public static void notifyWatchlistToggle(int itemId, boolean isWatched) {
     if (instance == null) return;

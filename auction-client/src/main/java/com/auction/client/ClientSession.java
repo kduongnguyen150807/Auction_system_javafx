@@ -50,6 +50,7 @@ public final class ClientSession {
   public static void clear() {
     currentUser = null;
     activeRole = null;
+    watchedItemIds.clear();
   }
   // Cache lưu trữ ID các item đang theo dõi (O(1) lookup)
   private static final java.util.Set<Integer> watchedItemIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -68,7 +69,6 @@ public final class ClientSession {
     if (ids != null) watchedItemIds.addAll(ids);
   }
 
-  // Nhớ thêm watchedItemIds.clear(); vào trong hàm clear() (lúc logout)
   private static String safe(String value) {
     return value == null ? "" : value;
   }

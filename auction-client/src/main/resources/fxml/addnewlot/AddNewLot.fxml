@@ -84,12 +84,11 @@
                                         <VBox fx:id="dutchExtrasVBox" spacing="10.0" managed="false" visible="false">
                                             <children>
                                                 <TextField fx:id="txtDutchReservePrice" promptText="RESERVE / MIN PRICE ($)" styleClass="input-mac-blue" />
-                                                <HBox spacing="10.0">
-                                                    <children>
-                                                        <TextField fx:id="txtDutchDecrement" promptText="PRICE STEP DOWN ($)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
-                                                        <TextField fx:id="txtDutchIntervalMinutes" promptText="INTERVAL (MINUTES)" styleClass="input-mac-blue" HBox.hgrow="ALWAYS" />
-                                                    </children>
-                                                </HBox>
+                                                <TextField fx:id="txtDutchIntervalMinutes" promptText="INTERVAL (MINUTES)" styleClass="input-mac-blue" />
+                                                <TextField fx:id="txtDutchDecrement" editable="false" focusTraversable="false"
+                                                           promptText="PRICE STEP DOWN — AUTO ($)" styleClass="input-mac-blue" />
+                                                <Label fx:id="lblDutchSchedulePreview" styleClass="label-sm-muted" maxWidth="Infinity"
+                                                       text="Chọn start, end, interval và reserve — bước giảm sẽ được tính tự động." wrapText="true" />
                                                 <Label styleClass="label-sm-muted" maxWidth="Infinity"
                                                        text="Dutch auctions lower the listing by the step amount each interval until someone buys at the current price or the reserve/end is reached." wrapText="true" />
                                             </children>

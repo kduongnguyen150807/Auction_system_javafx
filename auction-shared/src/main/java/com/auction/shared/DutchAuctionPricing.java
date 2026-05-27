@@ -14,11 +14,108 @@ public final class DutchAuctionPricing {
   /** Minimum number of downward ticks needed to reach reserve from the starting ceiling. */
   public static long maxDropTicks(Item item) {
     if (item == null || item.getAuctionType() != AuctionType.DUTCH) return 0;
-    double p0 = item.getStartingPrice();
-    double reserve = Math.max(item.getDutchReservePrice(), 0);
-    double tick = Math.max(item.getDutchTickAmount(), 0);
-    if (tick <= EPS || p0 <= reserve + EPS) return 0;
-    return (long) Math.ceil((p0 - reserve - EPS) / tick);
+    return maxDropTicks(item.getStartingPrice(), item.getDutchReservePrice(), item.getDutchTickAmount());
+  }
+
+  /** Same as {@link #maxDropTicks(Item)} from raw Dutch parameters. */
+  public static long maxDropTicks(double startingPrice, double reserve, double tick) {
+    double p0 = startingPrice;
+    double floor = Math.max(reserve, 0);
+    double step = Math.max(tick, 0);
+    if (step <= EPS || p0 <= floor + EPS) return 0;
+    return (long) Math.ceil((p0 - floor - EPS) / step);
+  }
+
+  /**
+   * Minimum minutes from {@code startTime} until the last scheduled drop at {@code intervalMinutes}.
+   * Auction {@code endTime} must be at or after {@code start + this duration}.
+   */
+  public static long minAuctionDurationMinutes(
+      double startingPrice, double reserve, double tick, int intervalMinutes) {
+    long kmax = maxDropTicks(startingPrice, reserve, tick);
+    if (kmax <= 0 || intervalMinutes <= 0) return 0;
+    return kmax * intervalMinutes;
+  }
+
+  public static LocalDateTime suggestedEndTime(
+      LocalDateTime start, double startingPrice, double reserve, double tick, int intervalMinutes) {
+    if (start == null) return null;
+    long mins = minAuctionDurationMinutes(startingPrice, reserve, tick, intervalMinutes);
+    return mins > 0 ? start.plusMinutes(mins) : start;
+  }
+
+  /**
+   * Number of drop slots between {@code start} and {@code end} at {@code intervalMinutes} apart.
+   */
+  public static long dropSlotsBetween(LocalDateTime start, LocalDateTime end, int intervalMinutes) {
+    if (start == null || end == null || !end.isAfter(start) || intervalMinutes <= 0) {
+      return 0;
+    }
+    return ChronoUnit.MINUTES.between(start, end) / intervalMinutes;
+  }
+
+  /**
+   * Tick amount so price moves evenly from {@code startingPrice} to {@code reserve} across all slots
+   * between {@code start} and {@code end}. Returns {@code -1} when inputs are invalid.
+   */
+  public static double derivedTickAmount(
+      LocalDateTime start,
+      LocalDateTime end,
+      int intervalMinutes,
+      double startingPrice,
+      double reserve) {
+    if (reserve < 0 || reserve >= startingPrice) {
+      return -1;
+    }
+    long slots = dropSlotsBetween(start, end, intervalMinutes);
+    if (slots <= 0) {
+      return -1;
+    }
+    double raw = (startingPrice - reserve) / slots;
+    return Math.round(raw * 100.0) / 100.0;
+  }
+
+  /** Validates Dutch schedule when seller picks start, end, interval; tick is derived. */
+  public static String validateDutchScheduleFromInterval(
+      LocalDateTime start,
+      LocalDateTime end,
+      double startingPrice,
+      double reserve,
+      int intervalMinutes) {
+    if (intervalMinutes <= 0) {
+      return "Decrease interval must be at least 1 minute";
+    }
+    if (start == null || end == null || !end.isAfter(start)) {
+      return "invalid_time_range";
+    }
+    double tick = derivedTickAmount(start, end, intervalMinutes, startingPrice, reserve);
+    if (tick <= 0) {
+      return "dutch_window_too_short";
+    }
+    return validateDutchSchedule(start, end, startingPrice, reserve, tick, intervalMinutes);
+  }
+
+  /** Validates Dutch numeric fields and that {@code end} allows every scheduled drop. */
+  public static String validateDutchSchedule(
+      LocalDateTime start,
+      LocalDateTime end,
+      double startingPrice,
+      double reserve,
+      double tick,
+      int intervalMinutes) {
+    if (reserve < 0) return "Invalid reserve price";
+    if (reserve >= startingPrice) return "Reserve must be below starting price";
+    if (tick <= 0) return "Price decrement must be positive";
+    if (intervalMinutes <= 0) return "Decrease interval must be at least 1 minute";
+    if (start == null || end == null || !end.isAfter(start)) return "invalid_time_range";
+    long minMins = minAuctionDurationMinutes(startingPrice, reserve, tick, intervalMinutes);
+    if (minMins > 0) {
+      LocalDateTime minEnd = start.plusMinutes(minMins);
+      if (end.isBefore(minEnd)) {
+        return "end_time_too_early_for_dutch_drops";
+      }
+    }
+    return null;
   }
 
   /**

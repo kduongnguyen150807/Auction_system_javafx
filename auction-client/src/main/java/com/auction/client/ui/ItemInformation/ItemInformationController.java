@@ -74,7 +74,14 @@ public class ItemInformationController {
         if (t != null && t.startsWith("Winner:")) {
             return;
         }
+        if (endsinsourceitem.getStatus() != ItemStatus.OPEN) {
+            return;
+        }
         ItemInformationUiHelper.applyEndsIn(EndsInValue, endsinsourceitem);
+        if (listingkind == AuctionType.DUTCH && CurrentHighestBidValue != null) {
+            ItemInformationUiHelper.applyDutchLivePrice(CurrentHighestBidValue, endsinsourceitem);
+            lastlistedprice = endsinsourceitem.getCurrentPrice();
+        }
         refreshBidControls();
     }
 

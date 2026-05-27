@@ -209,8 +209,8 @@ public class NetworkClient {
       initializeConnection();
 
       com.auction.shared.User user = com.auction.client.ClientSession.getCurrentUser();
-      if (user != null && user.getSessiontoken() != null) {
-        Request req = new Request(Request.RECONNECT, user.getSessiontoken());
+      if (user != null && user.getSessionToken() != null) {
+        Request req = new Request(Request.RECONNECT, user.getSessionToken());
         Response res = sendRequestAndWait(req);
         if (res == null || !Response.OK.equals(res.getStatus())) {
           com.auction.client.ui.Main.KhungController.performForcedLogoutFromServer();
