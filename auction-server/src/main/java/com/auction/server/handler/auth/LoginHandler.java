@@ -6,11 +6,17 @@ import com.auction.shared.Request;
 import com.auction.shared.Response;
 import com.auction.shared.User;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoginHandler implements ActionHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(LoginHandler.class);
+
+  /**
+   * Session token sống 24 giờ.
+   */
+  private static final long SESSION_TTL_MILLIS = 24L * 60 * 60 * 1000;
 
   @Override
   public Response handle(Request request, HandlerContext context) {
@@ -28,10 +34,14 @@ public class LoginHandler implements ActionHandler {
       String password = credentials.get("password");
 
       User user = context.getUserService().login(username, password);
+
       if (user != null) {
-        String token = java.util.UUID.randomUUID().toString();
+        String token = UUID.randomUUID().toString();
+        long expiresAt = System.currentTimeMillis() + SESSION_TTL_MILLIS;
+
         user.setSessiontoken(token);
-        context.getAuctionManager().registersession(token, user);
+
+        context.getAuctionManager().registersession(token, user, expiresAt);
         context.setCurrentUser(user);
 
         return new Response(request.getRequestId(), Response.OK, "success", user);
