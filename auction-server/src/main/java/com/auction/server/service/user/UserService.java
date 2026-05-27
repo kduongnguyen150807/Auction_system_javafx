@@ -42,4 +42,11 @@ public class UserService {
   public User getByUsername(String username) {
     return userDao.getByUsername(username);
   }
+  public boolean isEmailExists(String email) {
+    return userDao.isEmailExists(email);
+  }
+
+  public boolean updatePasswordByEmail(String email, String newHashedPassword) {
+    return userDao.updatePasswordByEmail(email, newHashedPassword);
+  }
 }

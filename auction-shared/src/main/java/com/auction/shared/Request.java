@@ -59,6 +59,7 @@ public class Request implements Serializable {
   public static final String RECONNECT = "RECONNECT";
 
   // --- Tính năng Quên mật khẩu ---
+  public static final String FORGOT_PASSWORD_RESEND = "FORGOT_PASSWORD_RESEND";
   public static final String FORGOT_PASSWORD_REQ = "FORGOT_PASSWORD_REQ";
   public static final String FORGOT_PASSWORD_RESET = "FORGOT_PASSWORD_RESET";
 
