@@ -84,6 +84,11 @@ public class ItemDao extends BaseDao<Item> implements ItemRepository {
   }
 
   @Override
+  public List<Item> getOpenItems() {
+    return queryList(SELECT_ITEM_WITH_SELLER + " WHERE i.status = 'OPEN' ORDER BY i.id DESC");
+  }
+
+  @Override
   public Item getById(int itemId) {
     return querySingle(SELECT_ITEM_WITH_SELLER + " WHERE i.id = ?", itemId);
   }

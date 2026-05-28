@@ -38,6 +38,15 @@ public class UserService {
   public boolean setUserRole(String username, String role) {
     return this.userDao.setUserRole(username, role);
   }
+
+  public boolean isEmailExists(String email) {
+    return this.userDao.isEmailExists(email);
+  }
+
+  public boolean updatePasswordByEmail(String email, String newPassword) {
+    return this.userDao.updatePasswordByEmail(email, newPassword);
+  }
+
   public boolean clearSessionToken(int userId) {
     return userDao.clearSessionToken(userId);
   }

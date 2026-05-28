@@ -39,6 +39,7 @@ public final class ActionRegistryFactory {
 
         ForgotPasswordHandler forgotPasswordHandler = new ForgotPasswordHandler();
         registry.register(Request.FORGOT_PASSWORD_REQ, forgotPasswordHandler);
+        registry.register(Request.FORGOT_PASSWORD_RESEND, forgotPasswordHandler);
         registry.register(Request.FORGOT_PASSWORD_RESET, forgotPasswordHandler);
 
         registry.register(Request.AUTOCOMPLETE, new AutocompleteHandler());
