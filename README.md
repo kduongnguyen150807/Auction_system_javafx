@@ -6,6 +6,30 @@
 ![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
+## Chạy nhanh bằng executable fat JAR
+
+Repository đã cấu hình `maven-shade-plugin` cho cả server và client để đóng gói dependency vào JAR chạy trực tiếp.
+
+```bash
+mvn clean package -DskipTests
+```
+
+Sau khi build, có thể chạy bằng file JAR ở thư mục gốc:
+
+```bash
+java -jar server.jar
+java -jar client.jar
+```
+
+Hoặc chạy trực tiếp từ thư mục `target`:
+
+```bash
+java -jar auction-server/target/auction-server.jar
+java -jar auction-client/target/auction-client.jar
+```
+
+Trước khi chạy server, cần tạo MySQL database và chỉnh `auction-server/src/main/resources/db.properties`.
+
 ## 1. Mô tả bài toán và phạm vi hệ thống
 
 **Auction System JavaFX** là hệ thống đấu giá trực tuyến được xây dựng bằng Java theo mô hình **Client - Server**.
