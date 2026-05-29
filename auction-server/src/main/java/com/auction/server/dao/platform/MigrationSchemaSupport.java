@@ -120,4 +120,16 @@ final class MigrationSchemaSupport {
       }
     }
   }
+  static void createIndexIfMissing(Connection conn, String table, String indexName, String columns) {
+    try {
+      if (!indexExists(conn, table, indexName)) {
+        try (Statement st = conn.createStatement()) {
+          st.execute("CREATE INDEX " + indexName + " ON " + table + "(" + columns + ")");
+          LOGGER.info("Created index {} on {}", indexName, table);
+        }
+      }
+    } catch (SQLException e) {
+      LOGGER.warn("Failed to create index {}", indexName, e);
+    }
+  }
 }

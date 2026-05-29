@@ -21,6 +21,14 @@ final class TransactionLogSchemaMigration {
               + "amount DOUBLE NOT NULL, "
               + "itemid INT DEFAULT 0, "
               + "createdat DATETIME DEFAULT CURRENT_TIMESTAMP)");
+      MigrationSchemaSupport.createIndexIfMissing(
+              conn, "transaction_logs", "idx_transaction_user_time", "userid, createdat");
+
+      MigrationSchemaSupport.createIndexIfMissing(
+              conn, "transaction_logs", "idx_transaction_item", "itemid");
+
+      MigrationSchemaSupport.createIndexIfMissing(
+              conn, "transaction_logs", "idx_transaction_type", "type");
     } catch (Exception e) {
       LOGGER.warn("Failed to ensure transaction_logs table", e);
     }
