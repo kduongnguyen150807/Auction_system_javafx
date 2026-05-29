@@ -2,7 +2,7 @@ package com.auction.server.service.user;
 
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.mail.*;
@@ -13,8 +13,12 @@ import org.slf4j.LoggerFactory;
 public class OtpService {
     private static final Logger logger = LoggerFactory.getLogger(OtpService.class);
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final long OTP_TTL_MS = 5 * 60 * 1000L;
+    private static final long RESEND_COOLDOWN_MS = 60 * 1000L;
+    private static final int MAX_VERIFY_ATTEMPTS = 5;
+
     private static final long OTP_EXPIRE_TIME_MS = 5 * 60 * 1000;
-    private static final long RESEND_COOLDOWN_MS = 60 * 1000;
 
     private String emailUser;
     private String emailPassword;
@@ -25,8 +29,7 @@ public class OtpService {
     // Lưu thời điểm gửi OTP gần nhất: Key = Email, Value = thời gian gửi gần nhất
     private final ConcurrentHashMap<String, Long> lastSentAt = new ConcurrentHashMap<>();
 
-    private record OtpRecord(String code, long expireTimeMs) {}
-
+    private record OtpRecord(String code, long expireTimeMs, long lastSentMs, int attempts) {}
     public OtpService() {
         loadMailConfig();
     }
@@ -96,43 +99,47 @@ public class OtpService {
     }
 
     public void generateAndSendOtp(String targetEmail) {
-        String email = normalizeEmail(targetEmail);
+        long now = System.currentTimeMillis();
 
-        if (email.isEmpty()) {
+        OtpRecord oldRecord = otpCache.get(targetEmail);
+        if (oldRecord != null && now - oldRecord.lastSentMs < RESEND_COOLDOWN_MS) {
+            logger.warn("OTP resend cooldown: {}", targetEmail);
             return;
         }
 
-        // Tạo mã 6 số ngẫu nhiên
-        String otp = String.format("%06d", new Random().nextInt(1_000_000));
+        String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
 
-        // Hết hạn sau 5 phút
-        otpCache.put(email, new OtpRecord(otp, System.currentTimeMillis() + OTP_EXPIRE_TIME_MS));
+        otpCache.put(targetEmail, new OtpRecord(otp, now + OTP_TTL_MS, now, 0));
 
-        // Ghi nhận thời điểm gửi OTP gần nhất
-        lastSentAt.put(email, System.currentTimeMillis());
+        CompletableFuture.runAsync(() -> sendEmail(targetEmail, otp));
 
-        // Gửi email BẤT ĐỒNG BỘ, không block luồng Socket
-        CompletableFuture.runAsync(() -> sendEmail(email, otp));
+        logger.info("Đã tạo OTP cho {}: {}", targetEmail, otp);
     }
 
     public boolean verifyOtp(String email, String inputOtp) {
-        String normalizedEmail = normalizeEmail(email);
-        OtpRecord record = otpCache.get(normalizedEmail);
+        OtpRecord record = otpCache.get(email);
+        if (record == null) return false;
 
-        if (record == null) {
+        if (System.currentTimeMillis() > record.expireTimeMs) {
+            otpCache.remove(email);
             return false;
         }
 
-        if (System.currentTimeMillis() > record.expireTimeMs) {
-            otpCache.remove(normalizedEmail);
+        if (record.attempts >= MAX_VERIFY_ATTEMPTS) {
+            otpCache.remove(email);
             return false;
         }
 
         if (record.code.equals(inputOtp)) {
-            otpCache.remove(normalizedEmail);
-            lastSentAt.remove(normalizedEmail);
+            otpCache.remove(email);
             return true;
         }
+
+        otpCache.put(email, new OtpRecord(
+                record.code,
+                record.expireTimeMs,
+                record.lastSentMs,
+                record.attempts + 1));
 
         return false;
     }
