@@ -515,3 +515,5 @@ Có thể kiểm thử chương trình theo thứ tự sau:
 - Nếu muốn test nhiều người dùng, có thể mở nhiều client cùng lúc.
 - Nhánh nộp cuối cùng là nhánh `main`.
 - Không commit thêm sau deadline theo yêu cầu của giảng viên.
+
+11. Videodemo - Project : https://l.facebook.com/l.php?u=https%3A%2F%2Fdrive.google.com%2Ffile%2Fd%2F1f-rXYu2PapCGe3ON3zm6eOxHXkE3EIol%2Fview%3Fusp%3Ddrivesdk%26fbclid%3DIwZXh0bgNhZW0CMTAAYnJpZBExSGVrRkNpaWNDR05hU1pYRXNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR5kyk2TA-WRr_lAzOky55SFAk8dp2ht_-l1C8LgYeYkK1S1EPdCtEiCo3T0dw_aem_-2vilnAuoisbbHAD0DGmQA&h=AUB6irptr-G-KK8uETchsg_6eBkV-gXE1xlU6AAR9nY3TmMqC3SJ8Ethi2GpkUf2PZIFChxSBXbjCMoh8ahTOE5JetaSg-q_PY5qpR5EhpGLen8EbkpSXBOtZ6j6DXVA8Th4hg
