@@ -168,7 +168,13 @@ public class ItemInformationController {
                         listingkind = item.getAuctionType();
                         lastlistedprice = item.getCurrentPrice();
                         if (CurrentHighestBidValue != null) {
-                            CurrentHighestBidValue.setText(ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
+                          if (listingkind == AuctionType.DUTCH) {
+                            ItemInformationUiHelper.applyDutchLivePrice(CurrentHighestBidValue, item);
+                            lastlistedprice = item.getCurrentPrice();
+                          } else {
+                            CurrentHighestBidValue.setText(
+                                ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
+                          }
                         }
                         buyitnowprice = item.getMaxPrice();
                         if (MaxPriceValue != null) {
@@ -290,7 +296,13 @@ public class ItemInformationController {
         listingkind = item.getAuctionType();
         lastlistedprice = item.getCurrentPrice();
         if (CurrentHighestBidValue != null) {
-            CurrentHighestBidValue.setText(ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
+          if (listingkind == AuctionType.DUTCH) {
+            ItemInformationUiHelper.applyDutchLivePrice(CurrentHighestBidValue, item);
+            lastlistedprice = item.getCurrentPrice();
+          } else {
+            CurrentHighestBidValue.setText(
+                ItemInformationUiHelper.formatPriceDollars(item.getCurrentPrice()));
+          }
         }
         buyitnowprice = item.getMaxPrice();
         if (MaxPriceValue != null) {

@@ -20,6 +20,13 @@ final class ItemInformationUiHelper {
     return String.format("%,.0f$", price);
   }
 
+  static String formatCurrentPrice(AuctionType listingKind, double price) {
+    if (listingKind == AuctionType.DUTCH) {
+      return DutchAuctionPricing.formatListedPrice(price);
+    }
+    return formatPriceDollars(price);
+  }
+
   static String formatBuyItNowLine(double buyItNowPrice) {
     return buyItNowPrice > 0 ? String.format("BUY IT NOW: %,.0f$", buyItNowPrice) : "NO BUY IT NOW";
   }
@@ -61,7 +68,7 @@ final class ItemInformationUiHelper {
     }
     double effective = DutchAuctionPricing.computeEffectivePrice(item, LocalDateTime.now());
     item.setCurrentPrice(effective);
-    priceLabel.setText(formatPriceDollars(effective));
+    priceLabel.setText(DutchAuctionPricing.formatListedPrice(effective));
   }
 
   private static String closedEndsInCaption(ItemStatus status) {

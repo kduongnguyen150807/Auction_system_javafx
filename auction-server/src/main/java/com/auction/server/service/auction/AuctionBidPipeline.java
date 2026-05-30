@@ -4,6 +4,7 @@ import com.auction.server.dao.auction.BidDao;
 import com.auction.server.dao.auction.ItemDao;
 import com.auction.server.dao.user.UserDao;
 import com.auction.server.dao.wallet.TransactionLogDao;
+import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.AuctionType;
 import com.auction.shared.BidTransaction;
 import com.auction.shared.Item;
@@ -72,8 +73,12 @@ final class AuctionBidPipeline {
   private class DutchBiddingStrategy implements BiddingStrategy {
     @Override
     public Response process(BidTransaction bid, Item item, User bidder, List<Runnable> after, Set<Integer> pendingpricebroadcast) {
-      double price = item.getCurrentPrice();
-      if (Math.abs(bid.getBidValue() - price) > 0.02) return BidAuctionValidator.error("invalid_dutch_price");
+      double price =
+          DutchAuctionPricing.roundMoney(
+              DutchAuctionPricing.computeEffectivePrice(item, LocalDateTime.now()));
+      if (!DutchAuctionPricing.bidMatchesListedPrice(bid.getBidValue(), price)) {
+        return BidAuctionValidator.error("invalid_dutch_price");
+      }
 
       if (!userdao.atomicDeductBalance(bidder.getId(), price)) return BidAuctionValidator.error("insufficient_balance");
 

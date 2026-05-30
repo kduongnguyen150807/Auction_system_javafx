@@ -8,8 +8,24 @@ import java.time.temporal.ChronoUnit;
 public final class DutchAuctionPricing {
 
   private static final double EPS = 1e-6;
+  private static final double MONEY_TOLERANCE = 0.02;
 
   private DutchAuctionPricing() {}
+
+  /** Rounds a dollar amount to two decimal places (cents). */
+  public static double roundMoney(double amount) {
+    return Math.round(amount * 100.0) / 100.0;
+  }
+
+  /** UI label for a Dutch listed price, always two decimals. */
+  public static String formatListedPrice(double amount) {
+    return String.format("%,.2f$", roundMoney(amount));
+  }
+
+  /** Compare bid amount to listed Dutch price (both rounded to cents). */
+  public static boolean bidMatchesListedPrice(double bidAmount, double listedPrice) {
+    return Math.abs(roundMoney(bidAmount) - roundMoney(listedPrice)) <= MONEY_TOLERANCE;
+  }
 
   /** Minimum number of downward ticks needed to reach reserve from the starting ceiling. */
   public static long maxDropTicks(Item item) {
@@ -138,7 +154,7 @@ public final class DutchAuctionPricing {
     long ticksDone = elapsedMinutes / intervalMinutes;
     long kmax = maxDropTicks(item);
     long applied = Math.min(kmax, ticksDone);
-    return Math.max(reserve, p0 - applied * tick);
+    return roundMoney(Math.max(reserve, p0 - applied * tick));
   }
 
   /**

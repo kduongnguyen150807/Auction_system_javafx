@@ -248,4 +248,21 @@ class DutchAuctionPricingTest {
       assertEquals("2d 14h", DutchAuctionPricing.formatShortCountdownToward(target, now));
     }
   }
+
+  @Nested
+  @DisplayName("roundMoney / bidMatchesListedPrice")
+  class MoneyRounding {
+
+    @Test
+    void roundMoney_twoDecimals() {
+      assertEquals(157.13, DutchAuctionPricing.roundMoney(157.129), 1e-9);
+      assertEquals("157.13$", DutchAuctionPricing.formatListedPrice(157.129));
+    }
+
+    @Test
+    void bidMatchesListedPrice_acceptsRoundedBid() {
+      assertTrue(DutchAuctionPricing.bidMatchesListedPrice(157.13, 157.129));
+      assertFalse(DutchAuctionPricing.bidMatchesListedPrice(157.0, 157.13));
+    }
+  }
 }

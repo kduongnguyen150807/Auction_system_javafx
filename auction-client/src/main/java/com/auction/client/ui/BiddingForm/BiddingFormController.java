@@ -5,6 +5,7 @@ import com.auction.client.app.NodeManager;
 import com.auction.client.service.BiddingClientService;
 import com.auction.client.ui.ItemInformation.ItemInformationController;
 import com.auction.client.ui.Main.KhungController;
+import com.auction.shared.DutchAuctionPricing;
 import com.auction.shared.BidTransaction;
 import com.auction.shared.Item;
 import com.auction.shared.Response;
@@ -44,9 +45,14 @@ public class BiddingFormController {
     if (ItemName != null) ItemName.setText(itemname == null ? "" : itemname);
     if (MaxPriceInfo != null) {
       if (dutchListedBuy) {
+        double listed = DutchAuctionPricing.roundMoney(dutchListedPrice);
         MaxPriceInfo.setText(
-            String.format("Current Dutch price: %,.0f$ — enter the exact amount to buy now.", dutchListedPrice));
-        if (BidAmount != null) BidAmount.setText(String.format("%.0f", dutchListedPrice));
+            String.format(
+                "Current Dutch price: %s — enter the exact amount to buy now.",
+                DutchAuctionPricing.formatListedPrice(listed)));
+        if (BidAmount != null) {
+          BidAmount.setText(String.format("%.2f", listed));
+        }
       } else if (maxPrice > 0) {
         MaxPriceInfo.setText(String.format("Buy it now price: %,.0f$", maxPrice));
       } else {
@@ -85,7 +91,7 @@ public class BiddingFormController {
         showAlert(Alert.AlertType.WARNING, "Invalid amount", "Enter a bid amount.");
         return;
       }
-      double ans = Double.parseDouble(raw);
+      double ans = DutchAuctionPricing.roundMoney(Double.parseDouble(raw));
       BidTransaction res = new BidTransaction(itemId, ClientSession.getCurrentUser().getId(), ans);
       Response res2 = biddingClientService.placeBid(res);
 
@@ -123,6 +129,9 @@ public class BiddingFormController {
         }
       } else {
         String ans3 = res2 != null ? res2.getMessage() : "Failed to place bid.";
+        if ("invalid_dutch_price".equals(ans3)) {
+          ans3 = "Giá Dutch đã thay đổi — hãy đóng form và thử lại với giá hiện tại.";
+        }
         showAlert(Alert.AlertType.ERROR, "Bid failed", ans3);
       }
     } catch (Exception e) {

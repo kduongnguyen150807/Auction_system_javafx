@@ -16,7 +16,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,6 +27,8 @@ import org.slf4j.LoggerFactory;
 public class NetworkClient {
 
   private static final Logger logger = LoggerFactory.getLogger(NetworkClient.class);
+  static final String SERVER_HOST = "172.188.216.132";
+  static final int SERVER_PORT = 8080;
   private static final long REQUEST_TIMEOUT = 30L;
   private static volatile NetworkClient instance;
 
@@ -50,18 +51,13 @@ public class NetworkClient {
             .build();
     this.jsonMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
 
-    NetworkConnectionUi ui = new NetworkConnectionUi();
-    Optional<String> ipOpt = ui.promptForServerIp();
-    if (ipOpt.isEmpty()) {
-      return;
-    }
-    this.serverIp = ipOpt.get();
+    this.serverIp = SERVER_HOST;
     initializeConnection();
   }
 
   private void initializeConnection() {
     try {
-      ObjectSocketConnection conn = ObjectSocketConnection.connect(serverIp, 8080);
+      ObjectSocketConnection conn = ObjectSocketConnection.connect(serverIp, SERVER_PORT);
       this.out = conn.getOut();
 
       IncomingResponseRouter router = new IncomingResponseRouter(pendingMap, listeners);

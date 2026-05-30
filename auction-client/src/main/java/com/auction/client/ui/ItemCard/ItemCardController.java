@@ -309,7 +309,11 @@ public class ItemCardController {
   private void updateprice(double newprice) {
     this.currentprice = newprice;
     if (Price != null) {
-      Price.setText(String.format("%,.0f$", newprice));
+      if (catalogitemsnapshot != null && catalogitemsnapshot.getAuctionType() == AuctionType.DUTCH) {
+        Price.setText(DutchAuctionPricing.formatListedPrice(newprice));
+      } else {
+        Price.setText(String.format("%,.0f$", newprice));
+      }
     }
   }
 
