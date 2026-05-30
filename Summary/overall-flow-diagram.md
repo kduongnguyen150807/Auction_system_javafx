@@ -1,6 +1,12 @@
 # So do tong the theo tung phan - dang flowchart
 
-File nay ve theo kieu so do hop va mui ten nhu hinh mau. Tat ca so do dung Mermaid `flowchart`, xem truc tiep duoc tren GitHub Markdown.
+File nay ve theo kieu so do hop va mui ten nhu hinh mau.
+
+GitHub co the khong render Mermaid trong mot so che do xem file. Vi vay tai lieu co kem ban anh SVG hien thi truc tiep:
+
+![So do tong the](overall-flow-diagram.svg)
+
+Ben duoi la ban Mermaid de sua tiep khi can.
 
 ---
 
@@ -298,4 +304,3 @@ flowchart LR
   END --> DB
   REAL --> GUI
 ```
-
