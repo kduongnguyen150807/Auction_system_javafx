@@ -1,290 +1,1272 @@
-# Sơ đồ dự án (UML) — Hệ thống đấu giá
+# Sơ đồ UML — Hệ thống đấu giá (auction-client / auction-server / auction-shared)
 
-Tài liệu mô tả **kiến trúc thật trong mã nguồn**: ứng dụng JavaFX nói chuyện với server qua socket, hai bên dùng chung thư viện **`auction-shared`** (lớp `Request` / `Response` và các đối tượng dữ liệu).
+Tài liệu mô tả **kiến trúc thật trong mã nguồn**: ứng dụng JavaFX nói chuyện với server qua socket TCP, hai bên dùng chung thư viện **`auction-shared`**.
 
-**Cách đọc ký hiệu trong các bảng và sơ đồ lớp:**
+> **Cách đọc:** Diagram **tách theo chủ đề** để tránh chồng chéo; nội dung **đầy đủ** nằm ở diagram + **bảng** bên dưới mỗi mục.
 
-- Dấu **`+`** là thành viên public, **`-`** là private, **`#`** là protected, **`~`** là thành viên ở phạm vi gói hoặc được dùng giống kiểu «nội bộ lớp cha» trong sơ đồ quen thuộc.
+**Mục lục**
 
-**Ví dụ nhanh một vòng gọi:** người dùng bấm «Đăng nhập» → màn hình gửi **`Request`** có `action = "LOGIN"` và `payload` chứa thông tin đăng nhập → server xử qua **`LoginHandler`** → trả **`Response`** trạng thái và (nếu thành công) **`User`** trong `payload`.
+1. [Ba module — tổng quan](#1-ba-module--tổng-quan)
+2. [auction-shared (23 lớp)](#2-auction-shared-23-lớp)
+3. [auction-server (72 lớp)](#3-auction-server-72-lớp)
+4. [auction-client (72 lớp)](#4-auction-client-72-lớp)
+5. [Luồng xuyên module](#5-luồng-xuyên-module)
+6. [Realtime server → client](#6-realtime-server--client)
+7. [Ma trận phụ thuộc & tham chiếu](#7-ma-trận-phụ-thuộc--tham-chiếu)
+
+**Ký hiệu UML:** `+` public · `-` private · `#` protected · `<<interface>>` · `<<singleton>>` · `<<utility>>` · `<<enumeration>>`
 
 ---
 
-## 1. Ba module và cách nối nhau
+## 1. Ba module — tổng quan
+
+### 1.1 Phụ thuộc Maven & runtime
 
 ```mermaid
 flowchart LR
-  C[Máy khách auction-client<br/>JavaFX] <--> CHUNG[auction-shared<br/>mô hình và lệnh]
-  MAY_CHU[Máy chủ auction-server] <--> CHUNG
-  C -->|"Một cổng TCP: khối nhị phân chứa chuỗi JSON"| MAY_CHU
-  MAY_CHU --> DB[(MySQL<br/>qua HikariCP)]
+  C[auction-client]
+  S[auction-shared]
+  V[auction-server]
+  DB[(MySQL)]
+
+  C -->|Maven compile| S
+  V -->|Maven compile| S
+  C <-->|TCP JSON| V
+  V --> DB
 ```
 
-**Quy ước gói tin trên dây (server lớp `ClientHandler`):**
+| Liên kết | Loại | Ý nghĩa |
+|----------|------|---------|
+| **Client → Shared** | Compile-time | Import `Request`, `Response`, `User`, `Item`, … |
+| **Server → Shared** | Compile-time | Handler trả `Response` chứa shared POJO |
+| **Client ⇄ Server** | Runtime | Một socket TCP; Jackson serialize/deserialize |
+| **Server → MySQL** | Runtime | HikariCP; client **không** có JDBC |
 
-1. Đọc bốn byte kiểu `int` = độ dài thân tin (tính bằng byte UTF-8).
-2. Đọc đúng số byte đó → ghép thành một chuỗi JSON → Jackson đổi thành đối tượng **`Request`**.
-3. Gửi ngược lại: chuỗi JSON của **`Response`** → ghi `int` độ dài → ghi byte.
-
-**Hai cơ chế đi kèm mỗi kết nối:**
-
-- **`TokenBucket`:** giới hạn số lần xử lý trong một khoảng thời gian (chống spam lệnh).
-- **MDC log:** mỗi luồng xử lý gắn **`requestId`** để dò log theo từng yêu cầu.
-
----
-
-## 2. Luồng xử lý phía server (nhìn từ trên xuống)
+### 1.2 Nội bộ từng module
 
 ```mermaid
 flowchart TB
-  subgraph boot["Bước khởi động"]
-    M[Main: dọn cổng, chạy migration DB, gắn hook tắt máy]
-    SS[SocketServer: lắng nghe TCP + hồ luồng xử lý]
-    M --> SS
-    SS --> CH[Lớp ClientHandler mỗi socket một luồng]
-    SS --> ST[SettlementService.bắt đầu: hàng đợi thời gian kết thúc phiên đấu giá]
+  subgraph CL["auction-client · com.auction.client.*"]
+    direction LR
+    UI[JavaFX Controllers] --> SVC[Services]
+    SVC --> NET[NetworkClient]
+    UI --> SESS[ClientSession]
+    UI --> NET
   end
 
-  subgraph wire["Đọc tin và chọn nơi xử lý"]
-    CH --> TB[TokenBucket]
-    CH --> OM[Jackson bóc/dựng JSON]
-    CH --> AR[Gọi ActionRegistry.dispatch]
-    HC[Ngữ cảnh HandlerContext: dịch vụ người dùng, các DAO, user đang đăng nhập, tham chiếu ClientHandler]
-    CH --> HC
-    CH --> AR
+  subgraph SH["auction-shared · com.auction.shared.*"]
+    direction LR
+    WR[Request / Response] --- DOM[Domain POJO] --- UT[Utilities]
   end
 
-  subgraph exec["Xử lý theo từng loại lệnh"]
-    AH[Các lớp gắn với ActionHandler]
-    AR --> AH
+  subgraph SV["auction-server · com.auction.server.*"]
+    direction TB
+    SOCK[SocketServer / ClientHandler] --> REG[ActionRegistry]
+    REG --> HND[ActionHandlers]
+    HND --> CTX[HandlerContext]
+    HND --> AM[AuctionManager]
+    HND --> DAO[DAO layer]
+    AM --> DAO --> DB[(MySQL)]
   end
 
-  subgraph core["Xử lý đấu giá và thông báo realtime"]
-    AM[AuctionManager]
-    AM --> PL[AuctionBidPipeline + AutoBidCoordinator + BanCascade ...]
-  end
-
-  HC -.-> AM
-  AH --> HC
-
-  subgraph dao["Lưu trữ database"]
-    BD[Lớp trừu tượng BaseDao]
-    DC[DatabaseConnection]
-    U[UserDao]
-    I[ItemDao]
-    B[BidDao]
-    L[LotDao trả về Item hoặc danh sách Item]
-    R[RatingDao]
-    T[TransactionLogDao]
-    C[ChatDao]
-    F[FriendDao]
-    W[WatchlistDao]
-    HC -.-> U & I & L & R & T
-    AM -.-> I & B & T
-    U & I & B & L & R & T & C & F & W --> BD --> DC --> DB[(MySQL)]
-  end
-
-  subgraph extra["Dịch vụ phụ trợ"]
-    Trie[TrieManager: tự động bổ sung từ khóa khi gõ tìm kiếm]
-    OTP[OtpService: mã OTP quên mật khẩu]
-    LB[LeaderboardService: bảng xếp hạng]
-  end
-  AH -.-> Trie & OTP & LB
+  CL --> SH
+  SV --> SH
+  NET <-->|socket| SOCK
 ```
+
+### 1.3 Gói tin & bảo vệ kết nối
+
+**Quy ước (`ClientHandler`):**
+
+1. Đọc 4 byte `int` = độ dài thân (byte UTF-8).
+2. Đọc đúng số byte → chuỗi JSON → `Request`.
+3. Gửi ngược: JSON `Response` → ghi `int` độ dài → ghi byte.
+
+**Mỗi socket:**
+
+- **`TokenBucket`:** giới hạn tốc độ xử lý (chống spam).
+- **MDC log:** gắn `requestId` vào luồng để truy vết log.
+
+**Jackson:** cả client và server dùng `activateDefaultTyping` để serialize polymorphic (`Electronics`, `User`, …).
 
 ---
 
-## 3. Phần dùng chung `com.auction.shared`
+## 2. auction-shared (23 lớp)
 
-### 3.1 Người dùng và vai trò
+Package: `com.auction.shared` — không phụ thuộc client/server.
+
+**Danh sách đầy đủ:** `Entity`, `User`, `Admin`, `Seller`, `Bidder`, `Item`, `Art`, `Electronics`, `Vehicle`, `BidTransaction`, `ChatMessage`, `Friendship`, `Rating`, `TransactionLog`, `LeaderboardEntry`, `UserRole`, `ItemStatus`, `AuctionType`, `Request`, `Response`, `ItemFactory`, `DutchAuctionPricing`, `PasswordEncoder`.
+
+### 2.1 Entity gốc
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
+class Entity {
+  <<abstract>>
+  #int id
+  #int version
+  +getId() int
+  +getVersion() int
+}
+```
+
+Optimistic locking: `version` dùng khi `ItemDao.updatePriceTx`.
+
+### 2.2 User — phân cấp & trường
+
+```mermaid
+classDiagram
+direction TB
+class Entity
+class User {
+  <<abstract>>
+  #String username
+  #String fullName
+  #String password
+  #String email
+  #String phoneNumber
+  #double balance
+  #String sessionToken
+  #double moneySpent
+  #double moneyReceived
+  #double avgRating
+  +getRole() UserRole
+}
+class Admin
+class Seller
+class Bidder
+class UserRole {
+  <<enumeration>>
+  BIDDER
+  SELLER
+  ADMIN
+}
 Entity <|-- User
 User <|-- Admin
 User <|-- Seller
 User <|-- Bidder
 User ..> UserRole
-note for User "Có trường sessiontoken để kết nối lại; đủ getter/setter cho hồ sơ và số liệu ví."
 ```
 
-**Vai trò cố định trong enum `UserRole`:** `BIDDER` (người đấu giá), `SELLER` (người bán), `ADMIN` (quản trị).
-
-### 3.2 Mặt hàng, cơ chế đấu giá, trạng thái
+### 2.3 Item — phân cấp & trường
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
+class Entity
+class Item {
+  <<abstract>>
+  #String name
+  #String description
+  #double startingPrice
+  #double currentPrice
+  #LocalDateTime startTime
+  #LocalDateTime endTime
+  #double maxPrice
+  #int sellerId
+  #int winnerId
+  #ItemStatus status
+  #AuctionType auctionType
+  #double dutchReservePrice
+  #double dutchTickAmount
+  #int dutchTickIntervalMinutes
+  #String imageUrl
+  #String category
+  +calculateTax()* double
+}
+class Art
+class Electronics
+class Vehicle
+class ItemStatus {
+  <<enumeration>>
+  PENDING
+  OPEN
+  CLOSED
+  FINISHED
+  EXPIRED
+  CANCELED
+}
+class AuctionType {
+  <<enumeration>>
+  ENGLISH
+  DUTCH
+}
 Entity <|-- Item
 Item <|-- Art
 Item <|-- Electronics
 Item <|-- Vehicle
 Item ..> ItemStatus
 Item ..> AuctionType
-note for Item "Hai kiểu ENGLISH và DUTCH; DUTCH có giá sàn, bước giảm, khoảng thời gian mỗi bước."
 ```
 
-**Trạng thái mặt hàng `ItemStatus`:** `PENDING` (chờ duyệt), `OPEN` (đang mở đấu), `CLOSED` (đóng kèm người thắng), `FINISHED` (hết giờ, chờ xử lý thanh toán), `EXPIRED` (hết giờ không có người thắng), `CANCELED` (huỷ). Chuỗi lưu trong MySQL được đổi lại enum bằng `parse`; chuỗi lạ vẫn quy về `OPEN` để không vỡ khi đọc dữ liệu cũ.
+| `ItemStatus` | Ý nghĩa trong luồng thực tế |
+|--------------|----------------------------|
+| `PENDING` | Chờ admin duyệt |
+| `OPEN` | Đang hoặc sắp mở đấu |
+| `CLOSED` | Kết thúc có người thắng |
+| `FINISHED` | Enum có sẵn; settlement chủ yếu dùng `CLOSED`/`EXPIRED` |
+| `EXPIRED` | Hết giờ, không ai bid |
+| `CANCELED` | Seller/admin hủy |
 
-**Loại đấu giá `AuctionType`:** `ENGLISH` (giá tăng), `DUTCH` (giá giảm theo bước thời gian). Có hàm `parse` chuỗi và `dbName` để ghi đọc DB.
+> **Không có lớp `Lot`.** Catalog, history, watchlist đều là **`Item`**. `LotDao` (server) trả `List<Item>`.
 
-**Quan trọng:** trong gói shared **không có** lớp tên `Lot`. Danh sách phiên đấu trên giao diện vẫn là **`Item`**. Lớp **`LotDao`** trên server trả về **`Item`** hoặc **`List<Item>`**.
+### 2.4 Bid, Chat, Rating & POJO khác
 
-### 3.3 Đặt giá, chat, bạn bè; các bản ghi không kế thừa `Entity`
+```mermaid
+classDiagram
+direction TB
+class Entity
+class BidTransaction {
+  #int itemId
+  #int userId
+  #double bidValue
+  #LocalDateTime timestamp
+  #double autoMax
+  #double autoIncrement
+}
+class ChatMessage {
+  #int senderId
+  #int receiverId
+  #String content
+  #LocalDateTime sentAt
+}
+class Friendship {
+  #int requesterId
+  #int addresseeId
+  #String status
+}
+class Rating {
+  int score
+  String comment
+  int raterId
+  int ratedUserId
+}
+class TransactionLog {
+  String type
+  double amount
+  int itemId
+}
+class LeaderboardEntry {
+  int userId
+  String username
+  double score
+}
+Entity <|-- BidTransaction
+Entity <|-- ChatMessage
+Entity <|-- Friendship
+```
+
+### 2.5 Request & Response
 
 ```mermaid
 classDiagram
 direction LR
-Entity <|-- BidTransaction
-Entity <|-- ChatMessage
-Entity <|-- Friendship
-class Rating
-class TransactionLog
-class LeaderboardEntry
-note for BidTransaction "Gồm giá đặt, thời điểm, chế độ tự động tối đa, bước nhảy tự động."
-note for Rating "Lớp POJO Serializable: điểm sao và nhận xét sau phiên."
+class Request {
+  +String requestId
+  +String action
+  +Object payload
+  +LocalDateTime timestamp
+}
+class Response {
+  +String requestId
+  +String status
+  +String message
+  +Object payload
+  +LocalDateTime timestamp
+  +OK = SUCCESS
+  +ERROR
+  +ACCOUNT_BANNED
+  +ACCOUNT_UNBANNED
+}
+Request ..> User : payload
+Request ..> Item : payload
+Request ..> BidTransaction : payload
+Request ..> Map : payload
+Response ..> User : payload
+Response ..> Item : payload
+Response ..> List~Item~ : payload
 ```
 
-**Ba lớp tiện ích thường gọi cùng `Item`:**
+**Hằng số `Request` (đầy đủ theo mã):**
 
-- **`ItemFactory.createItem("Electronics")`** trả về instance phân loại tương ứng (ví dụ `Electronics`), mặc định không khớp thì là `Vehicle`.
-- **`DutchAuctionPricing`:** các hàm tĩnh tính giá hiển thị và mốc đếm ngược cho đấu giá Dutch.
-- **`PasswordEncoder`:** băm SHA-256 thành chuỗi hex — client và server dùng **cùng một hàm** `hash`; cột mật khẩu trong MySQL lưu hash, không lưu chuỗi mật khẩu nguyên bản.
+| Nhóm | Constants |
+|------|-----------|
+| Auth | `LOGIN`, `LOGOUT`, `SIGNUP`, `RECONNECT`, `FORGOT_PASSWORD_REQ`, `FORGOT_PASSWORD_RESET` |
+| Auction | `BID`, `ADD_LOT`, `ADD`, `LIST`, `GET_ONGOING_LOTS`, `GET_ONGOING_BIDS`, `GET_TRENDING_LOTS`, `GET_UPCOMING_BIDS`, `GET_CLOSED_BIDS`, `GET_PAST_BIDS`, `GET_WATCHLIST_ITEMS`, `AUTOCOMPLETE` |
+| Item seller | `SELLER_CANCEL_ITEM`, `SELLER_UPDATE_PENDING_ITEM`, `GET_MY_ITEMS`, `GET_ITEM_BY_ID` |
+| Admin item | `GET_PENDING_ITEMS`, `APPROVE_ITEM`, `REJECT_ITEM` |
+| User | `UPDATE_PROFILE`, `UPDATE_AVATAR`, `DEPOSIT`, `REFRESH_USER`, `GET_ALL_USERS`, `SEARCH_USERS`, `GET_USER_BY_ID`, `LOCK_USER`, `UNLOCK_USER`, `PROMOTE_ADMIN` |
+| Watchlist | `GET_WATCHLIST`, `TOGGLE_WATCHLIST` |
+| Rating | `SUBMIT_RATING`, `GET_RATINGS` |
+| Wallet/history | `GET_TRANSACTIONS`, `GET_BID_HISTORY` |
+| Chat/friend | `SEND_CHAT`, `GET_GLOBAL_CHAT_HISTORY`, `GET_PRIVATE_CHAT_HISTORY`, `GET_CHAT_CONTACTS`, `ADD_FRIEND`, `ACCEPT_FRIEND`, `DECLINE_FRIEND`, `REMOVE_FRIEND`, `GET_FRIENDS`, `GET_FRIEND_REQUESTS` |
+| Misc | `PING`, `GET_LEADERBOARD`, `GET_STATUS_STATS`, `GET_CATEGORY_STATS` |
 
-### 3.4 Hai lớp vỏ bọc lệnh
+### 2.6 Tiện ích dùng chung
 
-- **`Request`:** hằng số kiểu chuỗi cho hành động (ví dụ `"LOGIN"`, `"BID"`, `"SEND_CHAT"`, `"GET_WATCHLIST"`, `"FORGOT_PASSWORD_REQ"`); thêm `requestId`, `action`, `payload`, `timestamp`.
-- **`Response`:** ví dụ trạng thái **`SUCCESS`** / **`ERROR`**, các mã **`ACCOUNT_BANNED`** / **`ACCOUNT_UNBANNED`**, cộng `requestId`, `status`, `message`, `payload`, `timestamp`.
+```mermaid
+classDiagram
+direction LR
+class ItemFactory {
+  <<utility>>
+  +createItem(category)$ Item
+}
+class DutchAuctionPricing {
+  <<utility>>
+  +computeEffectivePrice(item, now)$ double
+  +countdownTarget(item, now)$ LocalDateTime
+  +validateDutchScheduleFromInterval(...)$
+  +suggestedEndTime(...)$
+}
+class PasswordEncoder {
+  <<utility>>
+  +hash(raw)$ String
+}
+ItemFactory ..> Item : creates
+DutchAuctionPricing ..> Item : uses
+```
 
----
-
-## 4. Ánh xạ lệnh trên server: `ActionRegistry` và các `Handler`
-
-Contract cố định: **`Response ActionHandler.handle(Request request, HandlerContext context)`**.
-
-Hai bọc chuẩn trong **`ActionHandler`:**
-
-- **`requireAuth(inner)`:** nếu `context.getCurrentUser() == null` thì trả lỗi `"not_logged_in"`, không gọi `inner`.
-- **`requireAdmin(inner)`:** nếu không phải `UserRole.ADMIN` thì trả `"forbidden"`, không gọi `inner`.
-
-Bảng dưới là **ánh xạ theo chức năng**. Danh sách đầy đủ được **đăng ký trong mã `ClientHandler.buildRegistry()`** — một dòng một lệnh, ví dụ `reg.register(Request.BID, ActionHandler.requireAuth(new BidHandler()));`.
-
-| Nhóm chức năng | Các handler được gọi trong mã hiện tại |
-|----------------|----------------------------------------|
-| Đăng nhập / đăng ký / kết nối lại | `LoginHandler`, `SignupHandler`, `ReconnectHandler` |
-| Quên mật khẩu (OTP qua mail) | `ForgotPasswordHandler` |
-| Danh sách, tìm kiếm, tự động ghép từ khóa Autocomplete |
-| Đặt giá và quản lý listing người bán | `BidHandler`, `AddLotHandler`, `SellerCancelItemHandler`, `SellerUpdatePendingItemHandler` |
-| Đánh giá | `RatingHandler` |
-| Hồ sơ, ví, nạp tiền | `UpdateProfileHandler`, `UpdateAvatarHandler`, `DepositHandler` |
-| Quản trị | `UserManagementHandler`; các lệnh duyệt/từ chối sản phẩm chờ và thống kê được gọi trong cùng lớp `ItemQueryHandler` / `MiscHandler` như trong `buildRegistry()` |
-| Dịch vụ lặt vặt có session | `MiscHandler`: làm mới user, lịch sử giao dịch, lịch sử giá, ping, chart thống kê |
-| Chat, bạn, bảng xếp hạng | `ChatHandler`, `FriendHandler`, `LeaderboardHandler` |
-| Danh sách theo dõi | `WatchlistHandler` |
-
-**Hai singleton nằm trọng tâm realtime và kết phiên:**
-
-- **`AuctionManager`:** ví dụ **`processBid`**, **`sendToUser`** / **`broadcast`**, giữ phiên đăng nhập theo token, **`LeaderboardService`** nội bộ.
-- **`SettlementService`:** xếp hàng sự kiện kết thúc phiên và xử lý thanh quyết.
-
----
-
-## 5. Lớp truy xuất dữ liệu (DAO) — nhiệm vụ chính
-
-| DAO | Nhiệm vụ được thấy trong mã |
-|-----|------------------------------|
-| **UserDao** | Đăng nhập đăng ký, đọc theo id/tên/khoá tìm kiếm, cập nhật hồ sơ và avatar, cộng trừ số dư có biến thể transactional, khóa mở tài khoản, đổi vai trò, đặt lại mật khẩu theo email |
-| **ItemDao** | Đọc toàn cục / theo người bán / chờ duyệt, insert lot, đóng phiên **`atomicCloseAuction`**, duyệt từ chối, thống kê, các thao tác huỷ / cập nhật trong giao dịch SQL |
-| **BidDao** | Lịch sử đặt theo phiên, ghi nhận bid trong transaction, tìm người đứng giá cao trước đó, dọn bid khi cấm huỷ |
-| **LotDao** | Các nhóm phiên đang diễn ra / sắp diễn ra / đã đóng / đã qua / trending và **danh sách item trong watchlist** |
-| **RatingDao** | Thêm đánh giá, kiểm tra đã đánh giá chưa, đọc theo phiên, tính lại điểm trung bình người được đánh giá |
-| **TransactionLogDao** | Ghi log giao dịch ví và đọc theo user |
-| **ChatDao** | Gửi tin, lấy lịch sử kênh toàn cục / riêng tư, danh sách đối tác đã chat |
-| **FriendDao** | Gửi lời mời, đồng ý từ chối, xoá bạn, đọc danh sách và trạng thái hai người |
-| **WatchlistDao** | Đọc danh sách id phiên theo dõi và ghi bật tắt theo dõi |
-
-**Lớp nền không phụ thuộc nghiệp vụ:**
-
-- **`DatabaseConnection`:** một instance toàn cục, Hikari tạo kết nối; **`closePool`** gọi khi server tắt.
-- **`DatabaseMigration.runAll()`** và các lớp `*Migration` trong package platform tạo / sửa cột bảng trước khi nhận kết nối người dùng.
+- **`ItemFactory`:** `"Electronics"` → `Electronics`, mặc định → `Vehicle`.
+- **`PasswordEncoder`:** SHA-256 hex — client hash trước khi gửi `LOGIN`/`SIGNUP`.
+- **`DutchAuctionPricing`:** dùng cả client (preview UI) và server (`DutchAuctionCatalogSync`).
 
 ---
 
-## 6. Máy khách JavaFX `com.auction.client`
+## 3. auction-server (72 lớp)
+
+Package gốc: `com.auction.server`.
+
+**Cấu trúc package:**
+
+| Package | Vai trò |
+|---------|---------|
+| `controller` | `Main`, `SocketServer`, `ClientHandler`, `TokenBucket` |
+| `handler.auth` | Login, Signup, Logout, Reconnect, ForgotPassword |
+| `handler.auction` | Bid, AddLot, Seller*, LotQuery, ItemQuery, List, Autocomplete |
+| `handler.user` | Profile, Avatar, Deposit, Watchlist, UserManagement |
+| `handler.chat` | Chat, Friend |
+| `handler.rating` | Rating |
+| `handler.misc` | Leaderboard, Misc (ping, stats, …) |
+| `handler.dispatch` | `ActionHandler`, `ActionRegistry`, `HandlerContext` |
+| `service.auction` | AuctionManager, BidPipeline, Settlement, AutoBid, … |
+| `service.user` | UserService |
+| `dao.*` | ItemDao, LotDao, BidDao, UserDao, … |
+| `dao.platform` | DatabaseConnection, Migration, BaseDao |
+
+### 3.1 Khởi động server
+
+```mermaid
+flowchart TB
+  subgraph boot["Khởi động Main"]
+    M[Main.main]
+    M --> DM[DatabaseMigration.runAll]
+    M --> SS[SocketServer.start]
+    M --> ST[SettlementService.start]
+    M --> HOOK[shutdown hook closePool]
+  end
+  SS -->|accept| CH[ClientHandler Thread]
+  ST -->|DelayQueue| SET[settle expired auctions]
+```
+
+### 3.2 Luồng xử lý một Request
 
 ```mermaid
 flowchart LR
-  App[Hàm App.main] --> Main[Hàm nhập khởi động JavaFX]
-  Main --> SM[SceneManager đổi màn Scene]
-  SM --> Auth[Bộ ba màn Welcome / đăng nhập / đăng ký + quên mật khẩu]
+  A[Đọc JSON Request] --> B[TokenBucket]
+  B --> C[ActionRegistry.dispatch]
+  C --> D[ActionHandler.handle]
+  D --> E[HandlerContext]
+  E --> F[DAO / AuctionManager / UserService]
+  F --> G[Response JSON]
+  G --> H[ClientHandler.send]
+```
 
-  subgraph mang["Đường đi của tin từ server"]
-    NC[NetworkClient một instance duy nhất]
-    RX[IncomingResponseRouter đọc loại tin]
-    CauNoi[MainShellNetworkBridge triển khai NetworkEventListener]
-    NC --> RX --> CauNoi
-  end
+```mermaid
+classDiagram
+direction TB
+class Main {
+  +main(args)$
+}
+class SocketServer {
+  +start()$
+}
+class ClientHandler {
+  <<Thread>>
+  -HandlerContext context
+  -ActionRegistry registry
+  -TokenBucket bucket
+  +run()
+  +send(Response)
+  +getCurrentUser() User
+}
+class TokenBucket {
+  +tryconsume() boolean
+}
+class ActionRegistry {
+  -Map handlers
+  +register(action, handler)
+  +dispatch(Request, ctx) Response
+}
+class ActionHandler {
+  <<interface>>
+  +handle(Request, HandlerContext) Response
+  +requireAuth(inner)$ ActionHandler
+  +requireAdmin(inner)$ ActionHandler
+}
+class HandlerContext {
+  -User currentUser
+  -ItemDao itemDao
+  -LotDao lotDao
+  -UserService userService
+  -TransactionLogDao logDao
+  -RatingDao ratingDao
+  -ClientHandler sender
+  +getAuctionManager() AuctionManager
+  +getCurrentUser() User
+  +setCurrentUser(User)
+}
+Main --> SocketServer
+SocketServer --> ClientHandler
+ClientHandler --> ActionRegistry
+ClientHandler --> HandlerContext
+ClientHandler --> TokenBucket
+ActionRegistry --> ActionHandler
+ActionHandler ..> HandlerContext
+HandlerContext --> ClientHandler : gửi Response
+```
 
-  Auth --> KC[KhungController: khung chính cạnh và tab]
-  KC --> TC[TrangChuController]
+### 3.3 Handlers — từng nhóm (implements ActionHandler)
+
+**Nhóm Auth**
+
+```mermaid
+classDiagram
+direction LR
+class ActionHandler {
+  <<interface>>
+}
+class LoginHandler
+class SignupHandler
+class LogoutHandler
+class ReconnectHandler
+class ForgotPasswordHandler
+ActionHandler <|.. LoginHandler
+ActionHandler <|.. SignupHandler
+ActionHandler <|.. LogoutHandler
+ActionHandler <|.. ReconnectHandler
+ActionHandler <|.. ForgotPasswordHandler
+```
+
+**Nhóm Auction**
+
+```mermaid
+classDiagram
+direction LR
+class ActionHandler {
+  <<interface>>
+}
+class BidHandler
+class AddLotHandler
+class SellerCancelItemHandler
+class SellerUpdatePendingItemHandler
+class LotQueryHandler
+class ItemQueryHandler
+class ListItemsHandler
+class AutocompleteHandler
+ActionHandler <|.. BidHandler
+ActionHandler <|.. AddLotHandler
+ActionHandler <|.. SellerCancelItemHandler
+ActionHandler <|.. SellerUpdatePendingItemHandler
+ActionHandler <|.. LotQueryHandler
+ActionHandler <|.. ItemQueryHandler
+ActionHandler <|.. ListItemsHandler
+ActionHandler <|.. AutocompleteHandler
+```
+
+**Nhóm User**
+
+```mermaid
+classDiagram
+direction LR
+class ActionHandler {
+  <<interface>>
+}
+class UpdateProfileHandler
+class UpdateAvatarHandler
+class DepositHandler
+class WatchlistHandler
+class UserManagementHandler
+ActionHandler <|.. UpdateProfileHandler
+ActionHandler <|.. UpdateAvatarHandler
+ActionHandler <|.. DepositHandler
+ActionHandler <|.. WatchlistHandler
+ActionHandler <|.. UserManagementHandler
+```
+
+**Nhóm Social & Misc**
+
+```mermaid
+classDiagram
+direction LR
+class ActionHandler {
+  <<interface>>
+}
+class RatingHandler
+class ChatHandler
+class FriendHandler
+class LeaderboardHandler
+class MiscHandler
+ActionHandler <|.. RatingHandler
+ActionHandler <|.. ChatHandler
+ActionHandler <|.. FriendHandler
+ActionHandler <|.. LeaderboardHandler
+ActionHandler <|.. MiscHandler
+```
+
+| Nhóm | Handler | Auth |
+|------|---------|------|
+| Auth | Login, Signup, Logout, Reconnect, ForgotPassword | Public / session |
+| Auction | Bid, AddLot, SellerCancel, SellerUpdate, LotQuery, ItemQuery, List, Autocomplete | Bid/Add/Seller*: `requireAuth` |
+| User | UpdateProfile, UpdateAvatar, Deposit, Watchlist, UserManagement | Auth; ban: Admin |
+| Social | Rating, Chat, Friend, Leaderboard, Misc | Tùy action |
+| Admin | Approve/Reject item, Lock/Unlock/Promote user, Stats | `requireAdmin` |
+
+### 3.4 Ánh xạ Request → Handler (`buildRegistry`)
+
+| Request constant | Handler | Wrapper |
+|------------------|---------|---------|
+| `LOGIN`, `SIGNUP`, `RECONNECT` | Login/Signup/ReconnectHandler | — |
+| `LOGOUT` | LogoutHandler | — |
+| `BID` | BidHandler | requireAuth |
+| `ADD_LOT` | AddLotHandler | requireAuth |
+| `SELLER_CANCEL_ITEM` | SellerCancelItemHandler | requireAuth |
+| `SELLER_UPDATE_PENDING_ITEM` | SellerUpdatePendingItemHandler | requireAuth |
+| `GET_ONGOING_BIDS`, `GET_TRENDING_LOTS`, `GET_UPCOMING_BIDS`, `GET_CLOSED_BIDS`, `GET_PAST_BIDS`, `GET_WATCHLIST_ITEMS` | LotQueryHandler | — |
+| `GET_MY_ITEMS`, `GET_ITEM_BY_ID`, `GET_PENDING_ITEMS`, `APPROVE_ITEM`, `REJECT_ITEM` | ItemQueryHandler | Admin cho pending/approve/reject |
+| `LIST`, `GET_ONGOING_LOTS` | ListItemsHandler | — |
+| `AUTOCOMPLETE` | AutocompleteHandler | — |
+| `GET_WATCHLIST`, `TOGGLE_WATCHLIST` | WatchlistHandler | requireAuth |
+| `UPDATE_PROFILE`, `UPDATE_AVATAR`, `DEPOSIT` | Profile/Avatar/DepositHandler | requireAuth |
+| `SUBMIT_RATING`, `GET_RATINGS` | RatingHandler | submit: requireAuth |
+| `SEND_CHAT`, chat history, contacts | ChatHandler | send: requireAuth |
+| `ADD/ACCEPT/DECLINE/REMOVE_FRIEND`, `GET_FRIENDS`, `GET_FRIEND_REQUESTS` | FriendHandler | mutate: requireAuth |
+| `GET_ALL_USERS`, `SEARCH_USERS`, `GET_USER_BY_ID`, `LOCK_USER`, `UNLOCK_USER`, `PROMOTE_ADMIN` | UserManagementHandler | lock/promote: requireAdmin |
+| `REFRESH_USER`, `GET_TRANSACTIONS`, `GET_BID_HISTORY`, `PING`, stats | MiscHandler | stats: requireAdmin |
+| `GET_LEADERBOARD` | LeaderboardHandler | — |
+| `FORGOT_PASSWORD_*` | ForgotPasswordHandler | — |
+
+Nguồn: `auction-server/.../ClientHandler.java` → `buildRegistry()`.
+
+### 3.5 AuctionManager — lõi realtime
+
+```mermaid
+classDiagram
+direction TB
+class AuctionManager {
+  <<singleton>>
+  -ClientConnectionHub connections
+  -ConcurrentHashMap sessions
+  -ConcurrentHashMap auctionlocks
+  +processBid(BidTransaction) Response
+  +voluntarySellerCancelOpenAuction(sellerId, itemId) boolean
+  +broadcast(Response)
+  +sendToUser(userId, Response)
+  +releaseUserSession(userId)
+  +registersession(token, user)
+  +getsession(token) User
+  +handleBidderBan(userId)
+  +handleSellerBan(userId)
+}
+class AuctionBidPipeline {
+  +process(BidTransaction) Response
+  -EnglishBiddingStrategy
+  -DutchBiddingStrategy
+}
+class AutoBidCoordinator {
+  +runRounds(itemId)
+  +cleanup(itemId)
+}
+class BanCascadeService {
+  +handleBidderBan(userId)
+  +handleSellerBan(userId)
+  +voluntarySellerCancelOpen(itemId, sellerId) boolean
+}
+class AuctionRealtimeNotifier {
+  +broadcastPriceUpdate(itemId)
+  +broadcastItemClosed(itemId)
+  +sendBalanceUpdateToUser(userId)
+  +notifyOutbidUser(userId, itemId)
+}
+class ClientConnectionHub {
+  +addClient(ClientHandler)
+  +removeClient(ClientHandler)
+  +broadcast(Response)
+  +sendToUser(userId, Response)
+}
+class LeaderboardService {
+  +updatescore(...)
+  +getTopN(n) List
+}
+AuctionManager *-- AuctionBidPipeline
+AuctionManager *-- AutoBidCoordinator
+AuctionManager *-- BanCascadeService
+AuctionManager *-- AuctionRealtimeNotifier
+AuctionManager *-- ClientConnectionHub
+AuctionManager *-- LeaderboardService
+AuctionBidPipeline --> BidAuctionValidator
+AuctionBidPipeline --> AuctionRealtimeNotifier
+BanCascadeService --> AuctionManager
+```
+
+### 3.6 Dịch vụ phụ trợ đấu giá
+
+```mermaid
+classDiagram
+direction LR
+class SettlementService {
+  <<singleton>>
+  -DelayQueue queue
+  +schedule(itemId, endTime)
+  +unschedule(itemId)
+  +start()$
+}
+class DutchAuctionCatalogSync {
+  <<utility>>
+  +syncItem(ItemDao, Item)$
+  +syncMany(ItemDao, List)$
+}
+class BidAuctionValidator
+class TrieManager {
+  <<singleton>>
+  +insertNewItem(name)
+  +search(prefix) List
+}
+class OtpService
+class TrendingLotsFormula {
+  <<utility>>
+  +computeTrendScore(...)$
+}
+class ManualBidExecutor
+SettlementService ..> ItemDao
+DutchAuctionCatalogSync ..> DutchAuctionPricing : shared
+LotQueryHandler ..> DutchAuctionCatalogSync
+AutocompleteHandler ..> TrieManager
+BidHandler ..> AuctionManager
+SellerCancelItemHandler ..> AuctionManager
+AddLotHandler ..> ItemDao
+```
+
+**Dutch lazy evaluation:** `DutchAuctionCatalogSync.syncItem` cập nhật giá khi query catalog / trước bid — không timer ghi DB mỗi phút.
+
+**SettlementService:** khi `endTime` tới → `atomicCloseAuction` → `CLOSED` hoặc `EXPIRED` → broadcast `ITEM_CLOSED`.
+
+### 3.7 Tầng DAO — interface & implementation
+
+```mermaid
+classDiagram
+direction TB
+class ItemRepository {
+  <<interface>>
+  +getById(id) Item
+  +getBySellerId(sellerId) List
+  +approveItem(id) boolean
+  +rejectItem(id) boolean
+  +insertLot(...) boolean
+  +atomicCloseAuction(...)
+}
+class LotRepository {
+  <<interface>>
+  +getOngoingBids(userId) List
+  +getTrendingLiveItems(type, n) List
+  +getUpcomingBids(userId) List
+  +getClosedBids(userId) List
+  +getPastBids(userId) List
+  +getWatchlistItems(userId) List
+}
+class ItemDao
+class LotDao
+ItemRepository <|.. ItemDao
+LotRepository <|.. LotDao
+```
+
+```mermaid
+classDiagram
+direction TB
+class BaseDao {
+  <<abstract>>
+  #getConn() Connection
+  #queryList(sql) List
+  #executeUpdate(sql, params) boolean
+}
+class DatabaseConnection {
+  <<singleton>>
+  -HikariDataSource datasource
+  +getConnection() Connection
+  +closePool()
+}
+class DatabaseMigration {
+  +runAll()$
+}
+class ItemDao
+class LotDao
+class BidDao
+class UserDao
+class RatingDao
+class TransactionLogDao
+class ChatDao
+class FriendDao
+class WatchlistDao
+class UserService
+BaseDao <|-- ItemDao
+BaseDao <|-- LotDao
+BaseDao <|-- BidDao
+BaseDao <|-- UserDao
+BaseDao <|-- RatingDao
+BaseDao <|-- TransactionLogDao
+BaseDao <|-- ChatDao
+BaseDao <|-- FriendDao
+BaseDao <|-- WatchlistDao
+ItemDao --> DatabaseConnection
+UserDao --> DatabaseConnection
+DatabaseMigration ..> DatabaseConnection
+```
+
+| DAO | Nhiệm vụ chính |
+|-----|----------------|
+| **UserDao** | Login/signup, balance tx, profile, ban/unban, session token, `clearSessionToken` |
+| **ItemDao** | CRUD lot, approve/reject, `atomicCloseAuction`, seller cancel/update, `updatePriceTx` |
+| **BidDao** | placeBid tx, bid history, highest bidder, delete on ban |
+| **LotDao** | Catalog queries + trending formula |
+| **RatingDao** | Submit rating, recalc avg |
+| **TransactionLogDao** | Wallet log (`BID_HOLD`, `BID_REFUND`, `ITEM_SOLD`, …) |
+| **ChatDao** | Global/private history, contacts |
+| **FriendDao** | Friend request lifecycle |
+| **WatchlistDao** | Toggle / list ids |
+
+**Ai gọi DAO:**
+
+```mermaid
+flowchart LR
+  HC[HandlerContext] --> ID[ItemDao]
+  HC --> LD[LotDao]
+  HC --> UD[UserDao via UserService]
+  AM[AuctionManager] --> ID
+  AM --> BD[BidDao]
+  AM --> UD
+  AM --> TD[TransactionLogDao]
+  SS[SettlementService] --> ID
+```
+
+**Map sang shared types:** `ItemDao.mapRow` → `Item`; `UserDao` → `User`; `BidDao` → `BidTransaction`.
+
+---
+
+## 4. auction-client (72 lớp)
+
+Package gốc: `com.auction.client`.
+
+**Cấu trúc package:**
+
+| Package | Vai trò |
+|---------|---------|
+| `controller` | Welcome, Login, Register, ForgotPassword |
+| `ui.Main` | KhungController, AdminDashboard, Navigator, NetworkBridge |
+| `ui.TrangChu` | Home catalog, filter, carousel |
+| `ui.History` | History + helpers |
+| `ui.YourItem` | Seller listing |
+| `ui.AddNewLot` | Form + Dutch schedule + submit |
+| `ui.ItemInformation` | Detail, chart, autobid |
+| `ui.ItemCard` | Card component |
+| `ui.Profile`, `ui.UserProfile`, `ui.TransactionHistory` | User screens |
+| `ui.Chat` | Chat page + bubbles |
+| `ui.Watchlist`, `ui.BiddingForm`, `ui.RatingForm`, `ui.SearchBar` | Feature UI |
+| `network` | NetworkClient, Router, Listener |
+| `service` | UserAccount, Bidding, LotSubmission |
+| `app` | NodeContentLoader, NodeManager |
+| `util` | Image, Notification, Validators |
+
+### 4.1 Khởi động app
+
+```mermaid
+flowchart LR
+  App --> Main --> SM[SceneManager]
+  SM --> W[welcome.fxml]
+  SM --> L[login / register / forgot]
+  SM --> K[Khung.fxml main shell]
+```
+
+### 4.2 Tầng mạng — class diagram đầy đủ
+
+```mermaid
+classDiagram
+direction TB
+class NetworkClient {
+  <<singleton>>
+  -ConcurrentHashMap pendingMap
+  -List listeners
+  -ObjectMapper jsonMapper
+  +getInstance()$ NetworkClient
+  +sendRequestAndWait(Request) Response
+  +addListener(NetworkEventListener)
+  +removeListener(NetworkEventListener)
+  +uploadFile(url, bytes)$ String
+  -attemptReconnect()
+}
+class IncomingResponseRouter {
+  +dispatch(Response)
+  -handleOutbid(payload)
+  -handleLeaderboard(payload)
+}
+class NetworkEventListener {
+  <<interface>>
+  +onBalanceUpdate(User)
+  +onNewBidUpdate(Item)
+  +onItemClosed(Item)
+  +onOutbidNotify(Item)
+  +onSellerBidNotify(Item, price)
+  +onGlobalChat(ChatMessage)
+  +onPrivateChat(ChatMessage)
+  +onFriendRequest(Friendship)
+  +onFriendRequestSent(Friendship)
+  +onFriendAccepted(Friendship)
+  +onAccountBanned(String)
+  +onAccountUnbanned()
+  +onLeaderboardUpdate(List)
+}
+class MainShellNetworkBridge {
+  +onNewBidUpdate(Item)
+  +onItemClosed(Item)
+  +onBalanceUpdate(User)
+  +onAccountBanned(String)
+}
+class ObjectSocketConnection
+class NetworkConnectionUi
+NetworkClient --> IncomingResponseRouter
+IncomingResponseRouter --> NetworkEventListener
+MainShellNetworkBridge ..|> NetworkEventListener
+NetworkClient o-- NetworkEventListener
+```
+
+| Push `Response.status` | Callback | UI cập nhật |
+|--------------------------|----------|-------------|
+| `BALANCE_UPDATE` | `onBalanceUpdate` | Profile, sidebar |
+| `NEW_BID_UPDATE` | `onNewBidUpdate` | TrangChu, ItemInformation |
+| `ITEM_CLOSED` | `onItemClosed` | TrangChu remove, ItemInfo, **YourItem** seller |
+| `OUTBID_NOTIFY` | `onOutbidNotify` | NotificationCenter |
+| `SELLER_BID_NOTIFY` | `onSellerBidNotify` | NotificationCenter |
+| `CHAT_GLOBAL` / `CHAT_PRIVATE` | chat callbacks | ChatPageController |
+| `FRIEND_REQUEST` | `onFriendRequest` | Chat + notification |
+| `ACCOUNT_BANNED` | `onAccountBanned` | Alert → forced logout |
+| `LEADERBOARD_UPDATE` | `onLeaderboardUpdate` | TrangChu leaderboard |
+
+Request thường: `pendingMap` + `CompletableFuture` complete theo `requestId`. Timeout 30s.
+
+### 4.3 KhungController — shell & tab
+
+```mermaid
+classDiagram
+direction TB
+class KhungController {
+  -MainShellNavigator navigator
+  -MainShellNetworkBridge networkBridge
+  -AuctionSearchFilterState searchFilters
+  -TrangChuController homeController
+  -YourItemController myItemsController
+  -HistoryController historyController
+  -WatchlistController watchlistController
+  -ProfileController profileController
+  -AdminDashboardController adminController
+  -ChatPageController chatController
+  -ItemInformationController itemDetailController
+  -AddNewLotController addLotController
+  +handleSignout()
+  +notifySellerListingClosed(Item)$
+  +notifyWatchlistToggle(itemId, watched)$
+  +openEditPendingItem(Item)$
+  +returnFromLotEditor(saved)$
+}
+class MainShellNavigator {
+  +switchPage(node, menuButton)
+  +setCurrentContentNode(node)
+}
+class MainShellNetworkBridge
+class ClientSession {
+  <<static>>
+  -User currentUser
+  -UserRole activeRole
+  -Set watchedItemIds
+  +getCurrentUser() User
+  +toggleRole()
+  +clear()
+  +isWatching(itemId) boolean
+}
+KhungController *-- MainShellNavigator
+KhungController *-- MainShellNetworkBridge
+KhungController --> NetworkClient
+KhungController ..> ClientSession
+MainShellNetworkBridge ..|> NetworkEventListener
+```
+
+**Tab sidebar (FXML `Khung.fxml`):**
+
+```mermaid
+flowchart LR
+  KC[KhungController] --> TC[TrangChuController]
   KC --> WL[WatchlistController]
-  KC --> HIS[HistoryController]
+  KC --> HI[HistoryController]
   KC --> YI[YourItemController]
   KC --> PF[ProfileController]
   KC --> AD[AdminDashboardController]
   KC --> CH[ChatPageController]
-  KC --> II[ItemInformationController]
   KC --> NL[AddNewLotController]
-  KC --> SK[ThanhTimKiemController]
-
-  PF --> UAS[Dịch vụ UserAccountService]
-  II --> BCS[Dịch vụ BiddingClientService]
-  NL --> LSS[Dịch vụ LotSubmissionService]
-
-  subgraph phien[Dữ liệu phiên chỉ trong bộ nhớ máy khách]
-    CS["ClientSession: user hiện tại, vai trò đang bật, tập Id phiên trong watchlist"]
-  end
-  KC -.-> NC
-  CauNoi -.-> KC & PF
 ```
 
-**Giao diện `NetworkEventListener`** (mỗi callback có thân mặc định rỗng trong interface): máy chủ chủ động đẩy tin — ví dụ cập nhật số dư **`onBalanceUpdate`**, có giá mới **`onNewBidUpdate`**, bị trả giá **`onOutbidNotify`**, phiên kết thúc **`onItemClosed`**, chat **`onGlobalChat` / `onPrivateChat`**, sự kiện bạn bè **`onFriendRequest`**, **`onFriendAccepted`**, bảng xếp hạng **`onLeaderboardUpdate`**, **`onAccountBanned` / `onAccountUnbanned`**, người bán được báo **`onSellerBidNotify`**.
+**Màn hình auth & chi tiết:**
 
-**Lớp kết nối:** **`NetworkClient.getInstance()`**, **`sendRequestAndWait`** gửi một **`Request`** và chờ **`Response`**; **`addListener` / `removeListener`** ghép các thành phần UI; **`uploadFile`** tĩnh dùng khi đăng ảnh phiên đấu.
+```mermaid
+flowchart TB
+  subgraph auth["controller.*"]
+    WC[WelcomeController]
+    LC[LoginController]
+    RC[RegisterController]
+    FP[ForgotPasswordController]
+  end
+  subgraph detail["overlay / navigate"]
+    II[ItemInformationController]
+    BF[BiddingFormController]
+    RF[RatingFormController]
+    UP[UserProfileController]
+    TH[TransactionHistoryController]
+    SK[ThanhTimKiemController]
+  end
+  II --> BF
+  II --> RF
+  TC[TrangChu] --> II
+  WL[Watchlist] --> II
+  HI[History] --> II
+```
 
-**Chuyển cảnh nội bộ Pane:** **`NodeManager`** và **`NodeContentLoader<T>`** (`load(path fxml)`, lấy `Node` và controller).
+**ItemCard — component dùng chung:**
 
-Mỗi màn hình JavaFX khớp một cặp: file **`.fxml`** trong `src/main/resources` và lớp **`*Controller.java`** trong package `com.auction.client`; tên biến `@FXML` chỉ xuất hiện trong hai file đó.
+```mermaid
+flowchart LR
+  TC[TrangChu] --> IC[ItemCardController]
+  WL[Watchlist] --> IC
+  HI[History] --> IC
+  YI[YourItem] --> IC
+  IC --> II[ItemInformation]
+```
+
+### 4.4 Client services — class diagram
+
+```mermaid
+classDiagram
+direction TB
+class UserAccountService {
+  +updateProfile(...)
+  +deposit(amount)
+  +refreshUser(userId)
+}
+class BiddingClientService {
+  +placeBid(itemId, amount)
+  +registerAutoBid(...)
+}
+class LotSubmissionService {
+  +submitLot(data) Response
+  +updatePendingLot(data) Response
+  +cancelSellerItem(itemId) Response
+  +uploadImage(url, bytes) String
+}
+class HistoryDataLoader {
+  +loadFullPage(userId) PageData
+  +fetchTrendingForCatalogKind() List
+}
+ProfileController --> UserAccountService
+ItemInformationController --> BiddingClientService
+AddNewLotController --> LotSubmissionService
+YourItemController --> LotSubmissionService
+HistoryController --> HistoryDataLoader
+UserAccountService --> NetworkClient
+BiddingClientService --> NetworkClient
+LotSubmissionService --> NetworkClient
+HistoryDataLoader --> NetworkClient
+```
+
+### 4.5 Helpers refactor (History, AddNewLot, TrangChu)
+
+| Controller | Helpers |
+|------------|---------|
+| `HistoryController` | `HistoryDataLoader`, `HistorySectionRenderer`, `HistoryPaneCards`, `HistoryTimeCaptions`, `HistoryUpcomingCoordinator` |
+| `AddNewLotController` | `AddLotSubmissionCoordinator`, `AddLotDutchScheduleHelper`, `AddLotFormParseHelper`, `AddLotDateTimeHelper`, `AddLotFormInitializer`, `AddLotItemFormMapper`, `AddLotImageUploader`, `AddLotErrorMessages` |
+| `TrangChuController` | `HomeItemCardFactory`, `CatalogRowSynchronizer`, `TrangChuOngoingItemsLoader`, `TrangChuCatalogLoadResult`, `AuctionFilterContext`, `CategoryCarouselSupport` |
+| `ItemInformationController` | `ItemInformationUiHelper`, `ItemInformationDialogs`, `ItemInformationAutoBidCoordinator`, `BidHistoryChartBinder`, `RatingListRenderer` |
+| `ChatPageController` | `ChatRequestExecutor`, `ChatBubbleRowFactory`, `ChatLeftListCell`, `ChatLeftListHost`, `ChatSidebarTab` |
+
+### 4.6 Tiện ích client
+
+| Lớp | Vai trò |
+|-----|---------|
+| `NodeContentLoader<T>` | Load FXML + lấy controller |
+| `NodeManager` | Quản lý node trong Pane |
+| `SceneManager` | Chuyển Scene toàn app |
+| `ImagePresentationUtil` | Avatar tròn, ảnh lot |
+| `ItemCardViewportCrop` | Crop ảnh card |
+| `NotificationCenter` | Desktop notification |
+| `NotificationPopup` | Popup trong app |
+| `ItemNotificationText` | Template thông báo bid/outbid/closed |
+| `InputValidators` | Validate email, IP, username, … |
+
+Mỗi màn hình JavaFX: cặp **`.fxml`** (`src/main/resources/fxml/`) + **`*Controller.java`**.
 
 ---
 
-## 7. Chuỗi realtime: máy chủ → máy khách → màn hình
+## 5. Luồng xuyên module
+
+### 5.1 Đăng nhập
 
 ```mermaid
 sequenceDiagram
-  participant DongCo as AuctionManager và lớp thông báo kèm
-  participant Sock as NetworkClient
-  participant PhanHang as IncomingResponseRouter
-  participant LangNghe as MainShellNetworkBridge
-  participant Man as KhungController và tab con
+  autonumber
+  participant LC as LoginController
+  participant NC as NetworkClient
+  participant CH as ClientHandler
+  participant LH as LoginHandler
+  participant UD as UserDao
+  participant CS as ClientSession
 
-  DongCo->>Sock: Một đối tượng Response đặc thù không phản hồi trực tiếp lệnh vừa gửi
-  Sock->>PhanHang: Phân nhánh theo trường status hoặc message cố định trong code
-  PhanHang->>LangNghe: Ví dụ gọi onNewBidUpdate hoặc onBalanceUpdate
-  LangNghe->>Man: Cập nhật label bảng danh sách làm mới ô chi tiết
+  LC->>NC: Request(LOGIN, credentials)
+  NC->>CH: TCP JSON
+  CH->>LH: ActionRegistry.dispatch
+  LH->>UD: validate + create sessionToken
+  LH->>CH: Response(SUCCESS, User)
+  CH->>NC: TCP JSON
+  NC->>LC: Response
+  LC->>CS: setCurrentUser(User)
+  LC->>LC: GET_WATCHLIST async
+  LC->>LC: SceneManager → Khung.fxml
 ```
 
-**Ví dụ cụ thể:** có giá mới → server gửi payload chứa **`Item`** đã cập nhật → router gọi **`onNewBidUpdate`** → `KhungController` / `ItemInformationController` đọc **`Item`** và vẽ lại giá trên UI.
+### 5.2 Đặt giá (English + autobid + push)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant II as ItemInformationController
+  participant BCS as BiddingClientService
+  participant NC as NetworkClient
+  participant BH as BidHandler
+  participant AM as AuctionManager
+  participant PL as AuctionBidPipeline
+  participant BR as MainShellNetworkBridge
+
+  II->>BCS: placeBid(...)
+  BCS->>NC: Request(BID, BidTransaction)
+  NC->>BH: dispatch
+  BH->>AM: processBid
+  AM->>PL: English/Dutch strategy
+  PL->>AM: escrow + updatePriceTx
+  AM->>NC: push NEW_BID_UPDATE (Item)
+  NC->>BR: onNewBidUpdate
+  BR->>II: updatePriceUi
+  PL->>AM: AutoBidCoordinator.runRounds
+  BH->>NC: Response(SUCCESS)
+  NC->>II: Response
+```
+
+### 5.3 Seller hủy lot OPEN
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant YI as YourItemController
+  participant LSS as LotSubmissionService
+  participant NC as NetworkClient
+  participant SCH as SellerCancelItemHandler
+  participant AM as AuctionManager
+  participant BCS as BanCascadeService
+  participant ID as ItemDao
+  participant BR as MainShellNetworkBridge
+
+  YI->>LSS: cancelSellerItem(itemId)
+  LSS->>NC: Request(SELLER_CANCEL_ITEM)
+  NC->>SCH: dispatch
+  SCH->>AM: voluntarySellerCancelOpenAuction
+  AM->>BCS: voluntarySellerCancelOpen
+  BCS->>ID: UPDATE status=CANCELED
+  BCS->>AM: refund high bidder escrow
+  BCS->>AM: broadcastItemClosed
+  AM->>NC: push ITEM_CLOSED
+  NC->>BR: onItemClosed
+  BR->>YI: applySellerListingClosed
+  SCH->>NC: Response(SUCCESS, Item)
+  NC->>YI: update card → Đã hủy
+```
+
+### 5.4 Sign Out (sidebar — gửi LOGOUT)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant KC as KhungController
+  participant NC as NetworkClient
+  participant LH as LogoutHandler
+  participant AM as AuctionManager
+  participant UD as UserDao
+  participant CS as ClientSession
+
+  KC->>NC: Request(LOGOUT)
+  NC->>LH: dispatch
+  LH->>AM: releaseUserSession
+  AM->>UD: clearSessionToken
+  LH->>NC: Response(SUCCESS)
+  KC->>NC: removeListener(networkBridge)
+  KC->>CS: clear()
+  KC->>KC: navigateToLogin()
+```
+
+### 5.5 Admin duyệt lot PENDING
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant AD as AdminDashboardController
+  participant NC as NetworkClient
+  participant IQ as ItemQueryHandler
+  participant ID as ItemDao
+  participant ST as SettlementService
+  participant TM as TrieManager
+
+  AD->>NC: Request(APPROVE_ITEM, itemId)
+  NC->>IQ: dispatch requireAdmin
+  IQ->>ID: approveItem → OPEN
+  IQ->>ST: schedule(endTime)
+  IQ->>TM: insertNewItem(name)
+  IQ->>NC: Response(SUCCESS)
+  NC->>AD: remove from pending table
+```
+
+### 5.6 Reconnect sau mất mạng
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant NC as NetworkClient
+  participant RH as ReconnectHandler
+  participant AM as AuctionManager
+  participant CS as ClientSession
+  participant KC as KhungController
+
+  NC->>NC: attemptReconnect()
+  NC->>CS: getCurrentUser + sessionToken
+  alt token còn
+    NC->>RH: Request(RECONNECT, token)
+    RH->>AM: getsession(token)
+    RH->>NC: Response(SUCCESS)
+  else token invalid
+    RH->>NC: Response(ERROR)
+    NC->>KC: performForcedLogoutFromServer()
+  end
+```
 
 ---
 
-## 8. Cách khớp tài liệu này với mã nguồn
+## 6. Realtime server → client
 
-- Luồng đăng ký handler và tên **`Request.*`** cố định nằm trong **`auction-server/src/.../ClientHandler.java`**, nhánh **`buildRegistry()`**.
-- Luồng đọc và phân nhánh realtime nằm trong **`auction-client/src/.../network/`** (**`NetworkClient`**, **`IncomingResponseRouter`**, **`MainShellNetworkBridge`**).
-- Mọi lớp public trong **`auction-shared/src/main/java/com/auction/shared/`** là nguồn chân lý cho mục 3.
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CORE as AuctionManager / Notifier
+  participant HUB as ClientConnectionHub
+  participant NC as NetworkClient
+  participant RX as IncomingResponseRouter
+  participant BR as MainShellNetworkBridge
+  participant UI as Controllers
+
+  CORE->>HUB: Response(status, payload)
+  HUB->>NC: TCP push no requestId match
+  NC->>RX: dispatch
+  RX->>BR: onNewBidUpdate / onItemClosed / ...
+  BR->>UI: Platform.runLater update labels
+```
+
+**Ví dụ push:**
+
+| Sự kiện server | status | Payload | UI |
+|----------------|--------|---------|-----|
+| Có bid mới | `NEW_BID_UPDATE` | `Item` | TrangChu, ItemInformation |
+| Phiên đóng/hủy | `ITEM_CLOSED` | `Item` | remove catalog, YourItem seller |
+| Bị vượt giá | `OUTBID_NOTIFY` | `Item` | Notification |
+| Seller có bid | `SELLER_BID_NOTIFY` | `Item` | Notification |
+| Số dư đổi | `BALANCE_UPDATE` | `User` | Profile |
+| Bị ban | `ACCOUNT_BANNED` | message | Alert + logout |
+| BXH | `LEADERBOARD_UPDATE` | `List<LeaderboardEntry>` | TrangChu |
 
 ---
 
-*Tài liệu mô tả đúng cấu trúc thư mục `com.auction.*` tại thời điểm viết file Summary này.*
+## 7. Ma trận phụ thuộc & tham chiếu
+
+### 7.1 Singleton
+
+| Class | Module | Vai trò |
+|-------|--------|---------|
+| `NetworkClient` | client | Một kết nối TCP / app |
+| `ClientSession` (static) | client | User hiện tại, watchlist RAM |
+| `AuctionManager` | server | Bid, session map, broadcast |
+| `SettlementService` | server | Hàng đợi kết thúc phiên |
+| `DatabaseConnection` | server | Hikari pool |
+| `TrieManager` | server | Autocomplete |
+| `OtpService` | server | OTP quên mật khẩu |
+
+### 7.2 Ma trận phụ thuộc
+
+| Lớp / tầng | Phụ thuộc | Được dùng bởi |
+|------------|-----------|---------------|
+| **auction-shared** | JDK | client, server |
+| **NetworkClient** | shared Request/Response | Controllers, Services |
+| **ClientSession** | shared User | Controllers |
+| **HandlerContext** | DAO, UserService, AuctionManager | Handlers |
+| **AuctionManager** | DAO, BidPipeline, Realtime | BidHandler, Settlement, Ban |
+| **ActionRegistry** | ActionHandler map | ClientHandler |
+| **DutchAuctionPricing** | shared Item | client UI + server sync |
+
+### 7.3 File mã nguồn
+
+| Chủ đề | Path |
+|--------|------|
+| Đăng ký handler | `auction-server/src/main/java/com/auction/server/controller/ClientHandler.java` → `buildRegistry()` |
+| Router push | `auction-client/src/main/java/com/auction/client/network/IncomingResponseRouter.java` |
+| Bridge UI | `auction-client/src/main/java/com/auction/client/ui/Main/MainShellNetworkBridge.java` |
+| Domain shared | `auction-shared/src/main/java/com/auction/shared/` |
+| Luồng nghiệp vụ chi tiết | `Summary/project-flow.md` |
+
+### 7.4 Liên kết shared ↔ server ↔ client (tóm tắt)
+
+```mermaid
+flowchart LR
+  subgraph SH["shared"]
+    R[Request/Response]
+    U[User]
+    I[Item]
+    B[BidTransaction]
+  end
+  subgraph SV["server"]
+    H[Handlers]
+    D[DAO]
+  end
+  subgraph CL["client"]
+    N[NetworkClient]
+    C[Controllers]
+  end
+  CL -->|serialize| R
+  R -->|deserialize| H
+  H --> D
+  D -->|mapRow| I & U & B
+  H -->|Response payload| R
+  R -->|deserialize| N
+  N --> C
+```
+
+---
+
+*Phiên bản đầy đủ: nội dung chi tiết như bản UML gốc; diagram tách theo nhóm để tránh chồng chéo. Khớp refactor History / AddNewLot / Dutch lazy / Sign Out LOGOUT / seller cancel realtime.*
