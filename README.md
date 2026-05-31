@@ -186,7 +186,7 @@ Copy-Item ".\auction-server\target\auction-server.jar" ".\server.jar" -Force
 ---
 ## 🔥 6. ĐIỂM NHẤN KỸ THUẬT (Technical Highlights)
 
-### 3.1. Tối ưu hóa tìm kiếm: Autocomplete với cấu trúc dữ liệu Trie
+### 6.1. Tối ưu hóa tìm kiếm: Autocomplete với cấu trúc dữ liệu Trie
 > **Vấn đề:** Sử dụng truy vấn `SELECT ... LIKE '%keyword%'` trực tiếp vào Database sẽ gây thắt cổ chai (Bottleneck) nghiêm trọng khi hàng ngàn người dùng gõ phím liên tục.
 > **Giải pháp:** Nạp toàn bộ tên sản phẩm vào cấu trúc dữ liệu **Trie (Prefix Tree)** trên RAM của Server. Tốc độ gợi ý từ khóa được giảm từ $O(N)$ của DB Scan xuống chỉ còn $O(L)$ với $L$ là độ dài từ khóa.
 
@@ -205,7 +205,7 @@ public List<String> search(String prefix) {
 }
 ```
 
-### 3.2. Xử lý Concurrent Bidding & Proxy Bidding $O(1)$
+### 6.2. Xử lý Concurrent Bidding & Proxy Bidding $O(1)$
 > **Vấn đề:** Khi hàng trăm người dùng cùng đặt Auto-bid cho một sản phẩm, việc dùng vòng lặp (while/for) để mô phỏng từng bước giá sẽ gây tràn bộ nhớ và Deadlock.
 > **Giải pháp:** 
 > 1. Cô lập giao dịch bằng `ReentrantLock` định tuyến theo `itemId`.
@@ -224,7 +224,7 @@ public Response process(BidTransaction bid, Item item, User bidder) {
 }
 ```
 
-### 3.3. Cơ chế chịu tải & Bảo mật (Token Bucket & AES)
+### 6.3. Cơ chế chịu tải & Bảo mật (Token Bucket & AES)
 *   **Rate Limiting:** Tích hợp thuật toán **Token Bucket** tại tầng `ClientHandler`. Mỗi Client chỉ được cấp một lượng Token nhất định. Các Request vượt ngưỡng (Spam/DDoS) sẽ bị Server từ chối ngay lập tức ở tầng mạng, bảo vệ Business Layer.
 *   **Data Security:** Toàn bộ luồng `ObjectOutputStream` và `ObjectInputStream` qua Socket được bọc bởi một lớp mã hóa **AES-256**. Dữ liệu truyền tải trên mạng hoàn toàn miễn nhiễm với các cuộc tấn công Packet Sniffing.
 
@@ -247,11 +247,11 @@ public synchronized boolean tryconsume() {
 }
 ```
 
-### 3.4. Xử lý sự kiện thời gian thực (DelayQueue & Heartbeat)
+### 6.4. Xử lý sự kiện thời gian thực (DelayQueue & Heartbeat)
 *   **Zero-Polling Settlement:** Không dùng Timer quét Database mỗi giây để tìm sản phẩm hết hạn. Hệ thống đưa thời gian kết thúc của sản phẩm vào `java.util.concurrent.DelayQueue`. Một Worker Thread duy nhất sẽ bị block và chỉ thức dậy chính xác vào mili-giây sản phẩm đó hết hạn để chốt phiên.
 *   **Session Recovery:** Client duy trì một luồng **Heartbeat (Ping/Pong)**. Nếu rớt mạng, Client tự động khởi tạo lại Socket, gửi `SessionToken` lên Server để khôi phục trạng thái đăng nhập mà không làm gián đoạn trải nghiệm người dùng.
 
-### 3.5. Thiết kế UI/UX: Non-blocking & Toast Notification
+### 6.5. Thiết kế UI/UX: Non-blocking & Toast Notification
 *   **Thread-Safety UI:** Mọi thao tác I/O (gửi Request, tải ảnh từ Cloudinary) đều bị ép chạy trên Background Threads. Kết quả trả về được đẩy ngược lên UI Thread thông qua `Platform.runLater()`, đảm bảo giao diện JavaFX luôn mượt mà ở 60 FPS.
 *   **Custom Toast:** Xây dựng hệ thống Notification Popup nổi độc lập, tự động xếp chồng và có cơ chế Debounce (chống trôi thông báo) khi Server push hàng loạt event cùng lúc.
 
