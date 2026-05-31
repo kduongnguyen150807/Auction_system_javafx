@@ -1,6 +1,4 @@
-***
-
-# ⚡ Hệ Thống Đấu Giá Trực Tuyến (High-Performance Online Auction System)
+# ⚡ Hệ Thống Đấu Giá Trực Tuyến - Auction System JavaFX
 
 ![Java](https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![JavaFX](https://img.shields.io/badge/JavaFX-GUI-1565C0?style=for-the-badge&logo=java&logoColor=white)
@@ -8,163 +6,514 @@
 ![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
-Hệ thống mô phỏng một sàn giao dịch đấu giá thời gian thực (Real-time Auction Platform). Lấy cảm hứng từ kiến trúc xử lý I/O của **Netty** và tư duy Clean Architecture của **Iluwatar**, hệ thống được thiết kế để chịu tải cao, xử lý đồng thời hàng ngàn kết nối TCP/IP, giải quyết triệt để bài toán Race Condition trong giao dịch tài chính và tối ưu hóa độ trễ (Latency) bằng các cấu trúc dữ liệu In-memory.
+## Chạy nhanh bằng executable fat JAR
 
----
+Repository đã cấu hình `maven-shade-plugin` cho cả server và client để đóng gói dependency vào JAR chạy trực tiếp.
 
-## 🏗️ 1. Kiến trúc hệ thống (High-level Architecture)
-
-Hệ thống vận hành theo mô hình **Client-Server phân tầng**, giao tiếp hoàn toàn qua giao thức TCP Socket thuần túy với payload được Serialize.
-
-*   **Boss-Worker Thread Pool (Netty Style):** Tách biệt hoàn toàn luồng chấp nhận kết nối (Boss Thread) và luồng xử lý I/O (Worker Threads). Số lượng Worker được cấp phát dựa trên công thức `Runtime.getRuntime().availableProcessors() * 2`, tối ưu hóa Context Switching của CPU.
-*   **Command Dispatcher (Iluwatar Style):** Loại bỏ hoàn toàn `if-else` cồng kềnh. Mọi Request từ Client được định tuyến qua `ActionRegistry` tới các `ActionHandler` độc lập, tuân thủ tuyệt đối nguyên lý Open/Closed (OCP) trong SOLID.
-*   **Real-time Push Engine:** Server duy trì một `ClientConnectionHub` (In-memory Registry). Khi có biến động giá, Server chủ động đẩy (Push) gói tin `Response` trực tiếp xuống các Client liên quan thay vì để Client phải Polling gây lãng phí băng thông.
-
-```mermaid
-flowchart LR
-  C1[JavaFX Client 1] <-->|TCP / AES| S[Socket Server]
-  C2[JavaFX Client 2] <-->|TCP / AES| S
-  S -->|Boss Thread| CH[Client Handlers]
-  CH -->|Worker Pool| REG[Action Registry]
-  REG -->|ReentrantLock| AM[Auction Manager]
-  AM <-->|HikariCP| DB[(MySQL)]
-  AM -->|Push Event| HUB[Connection Hub]
-  HUB -.->|Broadcast| C1
-  HUB -.->|Broadcast| C2
+```bash
+mvn clean package -DskipTests
 ```
 
+Sau khi build, có thể chạy bằng file JAR ở thư mục gốc:
+
+```bash
+java -jar server.jar
+java -jar client.jar
+```
+
+Hoặc chạy trực tiếp từ thư mục `target`:
+
+```bash
+java -jar auction-server/target/auction-server.jar
+java -jar auction-client/target/auction-client.jar
+```
+
+Trước khi chạy server, cần tạo MySQL database và chỉnh `auction-server/src/main/resources/db.properties`.
+
+## 1. Mô tả bài toán và phạm vi hệ thống
+
+**Auction System JavaFX** là hệ thống đấu giá trực tuyến được xây dựng bằng Java theo mô hình **Client - Server**.
+
+Hệ thống mô phỏng một sàn đấu giá online, trong đó người dùng có thể đăng ký tài khoản, đăng nhập, xem danh sách sản phẩm, đăng sản phẩm đấu giá, đặt giá, theo dõi sản phẩm, xem lịch sử giao dịch, chat, đánh giá và quản lý thông tin cá nhân.
+
+Mô hình tổng quát của hệ thống:
+
+```text
+auction-client  <---- TCP Socket port 8080 ---->  auction-server  <----> MySQL
+```
+
+Phạm vi hệ thống gồm:
+
+- Ứng dụng **client** sử dụng JavaFX để hiển thị giao diện người dùng.
+- Ứng dụng **server** xử lý nghiệp vụ, quản lý kết nối client và giao tiếp với database.
+- Database **MySQL** lưu trữ thông tin người dùng, sản phẩm, phiên đấu giá, lịch sử đặt giá, giao dịch, đánh giá và chat.
+- Client và server giao tiếp với nhau thông qua **TCP Socket**.
+- Hệ thống hỗ trợ nhiều client kết nối cùng lúc để mô phỏng nhiều người dùng đấu giá.
+
 ---
 
-## 🗄️ 2. Thiết kế Cơ sở dữ liệu & Công nghệ (Database & Tech Stack)
+## 2. Công nghệ sử dụng, môi trường chạy và yêu cầu cài đặt
 
-### Công nghệ cốt lõi
-| Lớp (Layer) | Công nghệ / Thư viện áp dụng |
+### 2.1. Công nghệ sử dụng
+
+Dự án sử dụng các công nghệ chính:
+
+| Thành phần | Công nghệ sử dụng |
 | :--- | :--- |
-| **Core / Runtime** | Java (JDK 25), Maven Multi-module |
-| **Presentation (UI)** | JavaFX (FXML, CSS Glassmorphism) |
-| **Network / Security** | Java Socket (TCP/IP), AES-256 Encryption |
-| **Persistence (DB)** | MySQL 8.0+, JDBC thuần (Tối ưu hóa truy vấn) |
-| **Connection Pool** | HikariCP (Chống sập Server, quản lý connection lifecycle) |
-| **Storage / Logging** | Cloudinary REST API, SLF4J, Logback |
+| Ngôn ngữ lập trình | Java 25 |
+| Giao diện người dùng | JavaFX, FXML, CSS |
+| Quản lý project | Maven multi-module |
+| Giao tiếp mạng | TCP Socket |
+| Database | MySQL 8.0+ |
+| Kết nối database | JDBC, HikariCP |
+| Logging | SLF4J, Logback |
+| Đóng gói JAR | Maven Shade Plugin |
+| Kiểm thử | JUnit |
 
-### Cấu trúc Database & Auto-Migration
-Hệ thống không yêu cầu chạy script SQL thủ công. Tầng DAO được tích hợp cơ chế **Auto-Migration** (tương tự Flyway/Liquibase thu nhỏ). Khi Server khởi động, hệ thống tự động kiểm tra schema, tạo bảng, thêm cột và đánh Index (B-Tree) cho các trường thường xuyên truy vấn.
+### 2.2. Yêu cầu môi trường
 
-**Các thực thể (Entities) chính:**
-*   `users`: Lưu thông tin tài khoản, số dư (balance), role (Admin/Seller/Bidder) và metrics thống kê.
-*   `items`: Lưu thông tin sản phẩm, giá khởi điểm, giá hiện tại, thời gian kết thúc và loại đấu giá (English/Dutch).
-*   `bid_transactions`: Lưu lịch sử đặt giá. Ràng buộc chặt chẽ với `items` và `users`.
-*   `transaction_logs`: Sổ cái tài chính (Ledger) ghi nhận mọi biến động số dư (Deposit, Hold, Refund, Sold).
-*   `ratings`, `chat_messages`, `friendships`: Các bảng phụ trợ cho hệ sinh thái tương tác người dùng.
+Máy chạy chương trình cần cài:
+
+- JDK 25
+- Maven 3.8 trở lên
+- MySQL 8.0 trở lên
+- IntelliJ IDEA hoặc IDE hỗ trợ Maven
+
+Kiểm tra Java:
+
+```bash
+java -version
+```
+
+Kiểm tra Maven:
+
+```bash
+mvn -version
+```
 
 ---
 
-## 🔥 3. ĐIỂM NHẤN KỸ THUẬT (Technical Highlights)
+## 3. Cấu trúc thư mục và các module chính
 
-### 3.1. Tối ưu hóa tìm kiếm: Autocomplete với cấu trúc dữ liệu Trie
-> **Vấn đề:** Sử dụng truy vấn `SELECT ... LIKE '%keyword%'` trực tiếp vào Database sẽ gây thắt cổ chai (Bottleneck) nghiêm trọng khi hàng ngàn người dùng gõ phím liên tục.
-> **Giải pháp:** Nạp toàn bộ tên sản phẩm vào cấu trúc dữ liệu **Trie (Prefix Tree)** trên RAM của Server. Tốc độ gợi ý từ khóa được giảm từ $O(N)$ của DB Scan xuống chỉ còn $O(L)$ với $L$ là độ dài từ khóa.
+Dự án được tổ chức theo dạng **Maven multi-module**, gồm 3 module chính:
 
-```java
-public List<String> search(String prefix) {
-  List<String> ans = new ArrayList<>();
-  trienode curr = root;
-  for (char c : prefix.toLowerCase().toCharArray()) {
-    curr = curr.children.get(c);
-    if (curr == null) {
-      return ans;
-    }
-  }
-  dfs(curr, prefix.toLowerCase(), ans);
-  return ans;
-}
+```text
+Auction_system_javafx
+│
+├── pom.xml
+│
+├── auction-shared
+│   ├── pom.xml
+│   └── src/main/java
+│
+├── auction-server
+│   ├── pom.xml
+│   ├── src/main/java
+│   └── src/main/resources
+│
+└── auction-client
+    ├── pom.xml
+    ├── src/main/java
+    └── src/main/resources
 ```
 
-### 3.2. Xử lý Concurrent Bidding & Proxy Bidding $O(1)$
-> **Vấn đề:** Khi hàng trăm người dùng cùng đặt Auto-bid cho một sản phẩm, việc dùng vòng lặp (while/for) để mô phỏng từng bước giá sẽ gây tràn bộ nhớ và Deadlock.
-> **Giải pháp:** 
-> 1. Cô lập giao dịch bằng `ReentrantLock` định tuyến theo `itemId`.
-> 2. Áp dụng thuật toán **Instant Resolution**: Tính toán điểm giao cắt của các mức giá trần (Max Bid) bằng công thức toán học. Người chiến thắng và mức giá hiện tại được xác định ngay lập tức với độ phức tạp $O(1)$ và chỉ tốn đúng 1 thao tác Database.
+### 3.1. Module `auction-shared`
 
-```java
-public Response process(BidTransaction bid, Item item, User bidder) {
-  double targetprice = Math.min(item.getMaxPrice(), bid.getMaxAutoBid()) + bid.getAutoBidIncrement();
-  boolean deductres = userdao.atomicDeductBalance(bidder.getId(), targetprice);
-  if (!deductres) {
-    Response ans = BidAuctionValidator.error("insufficient_balance");
-    return ans;
-  }
-  Response res = new Response("", Response.OK, "success", bid);
-  return res;
-}
+Module `auction-shared` chứa các class dùng chung giữa client và server.
+
+Một số class tiêu biểu:
+
+```text
+Request
+Response
+User
+Item
+BidTransaction
+Rating
+ChatMessage
+Friendship
+UserRole
+AuctionType
+ItemStatus
 ```
 
-### 3.3. Cơ chế chịu tải & Bảo mật (Token Bucket & AES)
-*   **Rate Limiting:** Tích hợp thuật toán **Token Bucket** tại tầng `ClientHandler`. Mỗi Client chỉ được cấp một lượng Token nhất định. Các Request vượt ngưỡng (Spam/DDoS) sẽ bị Server từ chối ngay lập tức ở tầng mạng, bảo vệ Business Layer.
-*   **Data Security:** Toàn bộ luồng `ObjectOutputStream` và `ObjectInputStream` qua Socket được bọc bởi một lớp mã hóa **AES-256**. Dữ liệu truyền tải trên mạng hoàn toàn miễn nhiễm với các cuộc tấn công Packet Sniffing.
-
-```java
-public synchronized boolean tryconsume() {
-  long now = System.currentTimeMillis();
-  long diff = now - lastrefill;
-  if (diff > 100) {
-    int add = (int) (diff / 100) * 10;
-    tokens = Math.min(max, tokens + add);
-    lastrefill = now;
-  }
-  if (tokens > 0) {
-    tokens--;
-    boolean ans = true;
-    return ans;
-  }
-  boolean res = false;
-  return res;
-}
-```
-
-### 3.4. Xử lý sự kiện thời gian thực (DelayQueue & Heartbeat)
-*   **Zero-Polling Settlement:** Không dùng Timer quét Database mỗi giây để tìm sản phẩm hết hạn. Hệ thống đưa thời gian kết thúc của sản phẩm vào `java.util.concurrent.DelayQueue`. Một Worker Thread duy nhất sẽ bị block và chỉ thức dậy chính xác vào mili-giây sản phẩm đó hết hạn để chốt phiên.
-*   **Session Recovery:** Client duy trì một luồng **Heartbeat (Ping/Pong)**. Nếu rớt mạng, Client tự động khởi tạo lại Socket, gửi `SessionToken` lên Server để khôi phục trạng thái đăng nhập mà không làm gián đoạn trải nghiệm người dùng.
-
-### 3.5. Thiết kế UI/UX: Non-blocking & Toast Notification
-*   **Thread-Safety UI:** Mọi thao tác I/O (gửi Request, tải ảnh từ Cloudinary) đều bị ép chạy trên Background Threads. Kết quả trả về được đẩy ngược lên UI Thread thông qua `Platform.runLater()`, đảm bảo giao diện JavaFX luôn mượt mà ở 60 FPS.
-*   **Custom Toast:** Xây dựng hệ thống Notification Popup nổi độc lập, tự động xếp chồng và có cơ chế Debounce (chống trôi thông báo) khi Server push hàng loạt event cùng lúc.
+Vai trò của module này là thống nhất dữ liệu khi client và server giao tiếp qua socket.
 
 ---
 
-## ⚙️ 4. Hướng dẫn cài đặt & Triển khai
+### 3.2. Module `auction-server`
 
-> **Yêu cầu hệ thống:** JDK 25, Maven 3.8+, MySQL 8.0+
+Module `auction-server` là phần server của hệ thống.
 
-### Bước 1: Khởi tạo Database
-Tạo một database trống trên MySQL. Hệ thống sẽ tự động chạy Migration để tạo bảng.
+Cấu trúc chính:
+
+```text
+auction-server
+│
+├── controller
+│   ├── SocketServer
+│   └── ClientHandler
+│
+├── handler
+│   ├── auth
+│   ├── auction
+│   ├── chat
+│   ├── rating
+│   ├── user
+│   └── misc
+│
+├── service
+│   ├── auction
+│   └── user
+│
+└── dao
+    ├── auction
+    ├── user
+    ├── chat
+    ├── rating
+    ├── wallet
+    └── platform
+```
+
+Vai trò một số thành phần chính:
+
+- `Main`: điểm khởi chạy server.
+- `SocketServer`: mở server socket và chờ client kết nối.
+- `ClientHandler`: xử lý request của từng client.
+- `ActionRegistry`: điều phối request đến đúng handler.
+- `LoginHandler`, `SignupHandler`: xử lý đăng nhập và đăng ký.
+- `BidHandler`: xử lý đặt giá.
+- `AuctionManager`: quản lý nghiệp vụ đấu giá.
+- `DatabaseConnection`: quản lý kết nối MySQL.
+- `DatabaseMigration`: tự động tạo/cập nhật bảng trong database.
+
+---
+
+### 3.3. Module `auction-client`
+
+Module `auction-client` là phần giao diện người dùng bằng JavaFX.
+
+Cấu trúc chính:
+
+```text
+auction-client
+│
+├── controller
+│   ├── WelcomeController
+│   ├── LoginController
+│   ├── RegisterController
+│   └── ForgotPasswordController
+│
+├── network
+│   ├── NetworkClient
+│   ├── ObjectSocketConnection
+│   └── IncomingResponseRouter
+│
+├── service
+│   ├── BiddingClientService
+│   ├── LotSubmissionService
+│   └── UserAccountService
+│
+├── ui
+│   ├── Main
+│   ├── TrangChu
+│   ├── ItemCard
+│   ├── ItemInformation
+│   ├── BiddingForm
+│   ├── AddNewLot
+│   ├── Profile
+│   ├── Watchlist
+│   ├── YourItem
+│   ├── History
+│   ├── TransactionHistory
+│   ├── Chat
+│   ├── RatingForm
+│   └── SearchBar
+│
+└── util
+```
+
+Vai trò một số thành phần chính:
+
+- `App`: launcher dùng khi chạy bằng file `.jar`.
+- `Main`: khởi chạy JavaFX Application.
+- `SceneManager`: quản lý chuyển màn hình.
+- `NetworkClient`: gửi request từ client lên server.
+- `IncomingResponseRouter`: nhận và xử lý response từ server.
+- `KhungController`: controller chính sau khi đăng nhập.
+- `TrangChuController`: điều khiển trang chủ.
+- `ItemInformationController`: hiển thị chi tiết sản phẩm.
+- `BiddingFormController`: xử lý giao diện đặt giá.
+- `AddNewLotController`: xử lý thêm sản phẩm/lô đấu giá.
+- `ProfileController`: quản lý hồ sơ người dùng.
+- `ChatPageController`: xử lý giao diện chat.
+
+---
+
+## 4. Cấu hình database
+
+Trước khi chạy server, cần tạo database trong MySQL:
+
 ```sql
-CREATE DATABASE auction_db;
+CREATE DATABASE IF NOT EXISTS auction_db;
 ```
 
-### Bước 2: Cấu hình môi trường
-Thiết lập các biến môi trường (Environment Variables) cho Server để bảo mật thông tin, tuyệt đối không hardcode:
-*   `DB_URL`: `jdbc:mysql://localhost:3306/auction_db`
-*   `DB_USER`: `<tên_đăng_nhập_mysql>`
-*   `DB_PASS`: `<mật_khẩu_mysql>`
-*   `SERVER_PORT`: `8080`
+Sau đó kiểm tra file cấu hình database:
 
-### Bước 3: Build toàn bộ dự án
-Tại thư mục gốc của dự án, thực thi lệnh Maven để dọn dẹp và biên dịch cả 3 module (`shared`, `server`, `client`):
+```text
+auction-server/src/main/resources/db.properties
+```
+
+Ví dụ cấu hình:
+
+```properties
+db.url=jdbc:mysql://localhost:3306/auction_db
+db.user=root
+db.password=your_password
+```
+
+Trong đó:
+
+- `db.url`: đường dẫn đến database MySQL.
+- `db.user`: tài khoản MySQL.
+- `db.password`: mật khẩu MySQL.
+
+Ví dụ nếu MySQL dùng tài khoản `root` và mật khẩu `123456`:
+
+```properties
+db.url=jdbc:mysql://localhost:3306/auction_db
+db.user=root
+db.password=123456
+```
+
+Sau khi server kết nối database thành công, hệ thống sẽ tự chạy migration để tạo/cập nhật các bảng cần thiết.
+
+---
+
+## 5. Build project thành file JAR
+
+Tại thư mục gốc project, chạy lệnh:
+
 ```bash
-mvn clean verify
+mvn clean package -DskipTests "-Dcheckstyle.skip=true"
 ```
 
-### Bước 4: Khởi chạy Server
-Khởi động lõi xử lý trung tâm. Server sẽ tự động dọn dẹp Port (Auto-kill) nếu bị kẹt từ phiên chạy trước.
-```bash
-cd auction-server
-mvn exec:java -Dexec.mainClass="com.auction.server.Main"
+Nếu build thành công, terminal sẽ hiển thị:
+
+```text
+BUILD SUCCESS
 ```
 
-### Bước 5: Khởi chạy Client
-Mở một Terminal mới và khởi động giao diện JavaFX. Có thể chạy lệnh này nhiều lần để giả lập nhiều người dùng kết nối đồng thời.
+Dự án sử dụng `maven-shade-plugin` để đóng gói dependencies vào file JAR, giúp chương trình có thể chạy trực tiếp bằng lệnh:
+
 ```bash
-cd auction-client
-mvn javafx:run
+java -jar <ten-file>.jar
 ```
+
+---
+
+## 6. Vị trí các file `.jar`
+
+Sau khi build thành công, các file JAR nằm tại:
+
+```text
+auction-server/target/auction-server.jar
+auction-client/target/auction-client.jar
+```
+
+Trong đó:
+
+- `auction-server.jar`: file chạy server.
+- `auction-client.jar`: file chạy client JavaFX.
+
+---
+
+## 7. Hướng dẫn chạy Server/Client theo thứ tự
+
+### Bước 1: Bật MySQL
+
+Đảm bảo MySQL đang chạy và đã có database:
+
+```sql
+CREATE DATABASE IF NOT EXISTS auction_db;
+```
+
+Đảm bảo file sau đã cấu hình đúng tài khoản MySQL:
+
+```text
+auction-server/src/main/resources/db.properties
+```
+
+---
+
+### Bước 2: Chạy server trước
+
+Mở terminal tại thư mục gốc project và chạy:
+
+```bash
+java -jar auction-server/target/auction-server.jar
+```
+
+Server mặc định chạy ở port:
+
+```text
+8080
+```
+
+Khi chạy server, cần giữ nguyên terminal server và không tắt.
+
+---
+
+### Bước 3: Chạy client sau
+
+Mở terminal thứ hai tại thư mục gốc project và chạy:
+
+```bash
+java -jar auction-client/target/auction-client.jar
+```
+
+Nếu client yêu cầu nhập địa chỉ server, nhập:
+
+```text
+127.0.0.1
+```
+
+Nếu server chạy trên máy khác, nhập địa chỉ IP của máy đang chạy server.
+
+---
+
+### Bước 4: Chạy nhiều client cùng lúc
+
+Có thể mở nhiều terminal và chạy nhiều client:
+
+```bash
+java -jar auction-client/target/auction-client.jar
+```
+
+Ví dụ:
+
+```text
+Terminal 1: chạy server
+Terminal 2: chạy client user A
+Terminal 3: chạy client user B
+Terminal 4: chạy client admin
+```
+
+Cách này dùng để kiểm thử chức năng nhiều người dùng cùng tham gia đấu giá.
+
+---
+
+## 8. Danh sách chức năng đã hoàn thành
+
+### 8.1. Chức năng tài khoản
+
+- Đăng ký tài khoản.
+- Đăng nhập.
+- Quên mật khẩu.
+- Đăng xuất.
+- Cập nhật thông tin cá nhân.
+- Cập nhật ảnh đại diện.
+- Nạp tiền vào tài khoản.
+- Quản lý trạng thái tài khoản.
+
+### 8.2. Chức năng đấu giá
+
+- Xem danh sách sản phẩm đấu giá.
+- Xem chi tiết sản phẩm.
+- Thêm sản phẩm/lô đấu giá.
+- Cập nhật sản phẩm đang chờ duyệt.
+- Hủy sản phẩm của người bán.
+- Đặt giá sản phẩm.
+- Theo dõi giá hiện tại.
+- Cập nhật giá theo thời gian thực.
+- Xử lý kết thúc phiên đấu giá.
+
+### 8.3. Chức năng người bán
+
+- Đăng sản phẩm đấu giá.
+- Xem danh sách sản phẩm của mình.
+- Cập nhật thông tin sản phẩm đang chờ duyệt.
+- Hủy sản phẩm.
+- Nhận thông báo khi có người đặt giá.
+
+### 8.4. Chức năng người mua
+
+- Xem sản phẩm đang đấu giá.
+- Đặt giá sản phẩm.
+- Theo dõi sản phẩm yêu thích.
+- Xem lịch sử giao dịch.
+- Nhận thông báo khi bị người khác đặt giá cao hơn.
+
+### 8.5. Chức năng watchlist
+
+- Thêm sản phẩm vào danh sách theo dõi.
+- Xóa sản phẩm khỏi danh sách theo dõi.
+- Hiển thị danh sách sản phẩm đang theo dõi.
+- Cập nhật trạng thái theo dõi trên giao diện.
+
+### 8.6. Chức năng đánh giá
+
+- Gửi đánh giá.
+- Xem danh sách đánh giá.
+- Hiển thị điểm đánh giá trung bình.
+
+### 8.7. Chức năng chat và bạn bè
+
+- Chat giữa người dùng.
+- Tìm kiếm người dùng.
+- Gửi lời mời kết bạn.
+- Chấp nhận lời mời kết bạn.
+- Từ chối lời mời kết bạn.
+- Hiển thị tin nhắn trên giao diện client.
+
+### 8.8. Chức năng quản trị
+
+- Quản lý người dùng.
+- Khóa tài khoản.
+- Mở khóa tài khoản.
+- Theo dõi trạng thái người dùng.
+- Quản lý dữ liệu hệ thống ở mức cơ bản.
+
+### 8.9. Chức năng hệ thống
+
+- Client và server chạy riêng.
+- Server hỗ trợ nhiều client kết nối cùng lúc.
+- Giao tiếp qua TCP Socket.
+- Server xử lý request thông qua các handler riêng biệt.
+- Kết nối MySQL thông qua connection pool.
+- Tự động tạo/cập nhật bảng bằng migration.
+- Đóng gói được thành file executable fat JAR / uber JAR.
+- Chạy được bằng lệnh `java -jar`.
+
+---
+
+## 9. Quy trình kiểm thử nhanh
+
+Có thể kiểm thử chương trình theo thứ tự sau:
+
+```text
+1. Bật MySQL.
+2. Chạy server bằng file auction-server.jar.
+3. Chạy client bằng file auction-client.jar.
+4. Đăng ký tài khoản mới.
+5. Đăng nhập.
+6. Thêm sản phẩm đấu giá.
+7. Mở client thứ hai.
+8. Đăng nhập bằng tài khoản khác.
+9. Đặt giá sản phẩm.
+10. Kiểm tra client còn lại có nhận cập nhật giá không.
+```
+
+---
+
+## 10. Ghi chú khi chạy chương trình
+
+- Server phải chạy trước client.
+- MySQL phải được bật trước khi chạy server.
+- File `db.properties` phải cấu hình đúng tài khoản MySQL.
+- Nếu sửa file trong `src/main/resources`, cần build lại project để file JAR nhận cấu hình mới.
+- Nếu muốn test nhiều người dùng, có thể mở nhiều client cùng lúc.
+- Nhánh nộp cuối cùng là nhánh `main`.
+- Không commit thêm sau deadline theo yêu cầu của giảng viên.
+
+11. Videodemo - Project : https://drive.google.com/file/d/1f-rXYu2PapCGe3ON3zm6eOxHXkE3EIol/view?usp=drivesdk&fbclid=IwY2xjawSH6k9leHRuA2FlbQIxMABicmlkETFIZWtGQ2lpY0NHTmFTWlhFc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHmTKTZMD5ZGv-UDM6TLnlIUCTx2naG3_6XULwuBh5iQrVLUQ90K0SIKjdPR3_aem_-2vilnAuoisbbHAD0DGmQA
