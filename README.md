@@ -59,7 +59,132 @@ Hệ thống không yêu cầu chạy script SQL thủ công. Tầng DAO đượ
 
 ---
 
-## 🔥 3. ĐIỂM NHẤN KỸ THUẬT (Technical Highlights)
+## 📁 3. Cấu trúc thư mục dự án (Project Structure)
+
+Dự án là **Maven multi-module** gồm 3 module phụ thuộc theo thứ tự: `auction-shared` → `auction-server` / `auction-client`.
+
+```
+Auction_system_javafx/
+├── pom.xml                         # Parent POM — khai báo 3 module
+├── README.md
+├── Summary/                        # Tài liệu: UML, flow, báo cáo, video demo
+│   ├── project-uml.md
+│   ├── project-flow.md
+│   └── ...
+│
+├── auction-shared/                 # Thư viện dùng chung (DTO, domain, logic)
+│   └── src/main/java/com/auction/shared/
+│       ├── Request.java, Response.java
+│       ├── Item.java, User.java, BidTransaction.java
+│       ├── DutchAuctionPricing.java
+│       └── ...
+│
+├── auction-server/                 # Backend — TCP Socket + MySQL
+│   ├── src/main/java/com/auction/server/
+│   │   ├── Main.java               # Entry point
+│   │   ├── controller/             # SocketServer, ClientHandler, TokenBucket
+│   │   ├── handler/                # ActionHandler theo nhóm nghiệp vụ
+│   │   │   ├── dispatch/           # ActionRegistry, HandlerContext
+│   │   │   ├── auth/               # Login, Signup, Logout, Reconnect
+│   │   │   ├── auction/            # Bid, AddLot, LotQuery, ItemQuery
+│   │   │   ├── chat/               # Chat, Friend
+│   │   │   ├── user/               # Profile, Deposit, Watchlist
+│   │   │   └── ...
+│   │   ├── service/                # Business layer
+│   │   │   ├── auction/            # AuctionManager, Settlement, AutoBid, Trie
+│   │   │   └── user/
+│   │   └── dao/                    # JDBC + Auto-Migration
+│   │       ├── platform/           # DatabaseConnection, HikariCP, migrations
+│   │       ├── auction/            # ItemDao, LotDao, BidDao
+│   │       ├── user/               # UserDao, WatchlistDao
+│   │       ├── chat/, rating/, wallet/
+│   │       └── ...
+│   └── src/main/resources/
+│       ├── db.properties           # Cấu hình MySQL (hoặc dùng DB_URL env)
+│       └── logback.xml
+│
+└── auction-client/                 # Frontend — JavaFX
+    ├── src/main/java/com/auction/client/
+    │   ├── Main.java               # Entry point JavaFX
+    │   ├── controller/             # Login, Register, Welcome
+    │   ├── network/                # NetworkClient, socket I/O, push events
+    │   ├── service/                # BiddingClientService, UserAccountService
+    │   ├── ui/                     # FXML controllers theo màn hình
+    │   │   ├── Main/               # Khung (shell), sidebar, navigation
+    │   │   ├── TrangChu/           # Trang Auction — catalog, trending
+    │   │   ├── ItemInformation/    # Chi tiết lot, bid, chart
+    │   │   ├── AddNewLot/          # Seller đăng lot mới
+    │   │   ├── YourItem/           # My Items
+    │   │   ├── History/, Chat/, Profile/, ...
+    │   │   └── ...
+    │   ├── app/                    # NodeContentLoader, SceneManager
+    │   └── util/                   # Notification, validation, image
+    └── src/main/resources/
+        ├── fxml/                   # Layout JavaFX (.fxml)
+        ├── css/                    # Glassmorphism / theme
+        └── images/
+```
+
+| Module | Vai trò | Artifact / chạy |
+| :--- | :--- | :--- |
+| **auction-shared** | Model, `Request`/`Response`, enum, Dutch pricing | JAR dependency |
+| **auction-server** | Socket 8080, xử lý bid, DB, push realtime | `auction-server-1.0-SNAPSHOT.jar` |
+| **auction-client** | Giao diện người dùng, kết nối server | `mvn javafx:run` hoặc IDE |
+
+> **Lưu ý:** Thư mục `target/` (build output) và `.idea/` không commit — sinh ra khi `mvn compile` / mở project trong IntelliJ.
+
+---
+
+## ♨️ 4. Vị trí các file JAR
+
+Các file JAR chạy trực tiếp được đặt tại mục GitHub Releases của repository:
+
+- `client.jar`: chạy ứng dụng Client.
+- `server.jar`: chạy Server.
+
+Link Releases:
+
+```text
+https://github.com/kduongnguyen150807/Auction_system_javafx/releases
+```
+
+Nếu build từ source, file JAR sau khi build nằm trong:
+
+```text
+auction-client/target/
+auction-server/target/
+```
+
+Có thể copy ra thư mục gốc để chạy đúng tên:
+
+```powershell
+Copy-Item ".\auction-client\target\auction-client.jar" ".\client.jar" -Force
+Copy-Item ".\auction-server\target\auction-server.jar" ".\server.jar" -Force
+```
+
+---
+
+## 🛠️ 5. Danh sách chức năng đã hoàn thành
+
+- Đăng ký, đăng nhập và quản lý phiên người dùng.
+- Phân quyền người dùng, bao gồm người mua, người bán và quản trị viên.
+- Xem danh sách sản phẩm, xem chi tiết sản phẩm và tìm kiếm sản phẩm.
+- Thêm sản phẩm đấu giá, quản lý ảnh và thông tin sản phẩm.
+- Đấu giá English Auction.
+- Đấu giá Dutch Auction.
+- Auto-bid/proxy bidding.
+- Watchlist để theo dõi sản phẩm quan tâm.
+- Quản lý ví tiền, đặt cọc, giữ tiền, hoàn tiền và ghi nhận giao dịch.
+- Chốt phiên đấu giá và cập nhật trạng thái sản phẩm.
+- Chat realtime gồm global chat và private chat.
+- Quản lý bạn bè/friendship.
+- Trang quản trị hệ thống.
+- Thống kê, lịch sử đấu giá và biểu đồ giá.
+- Logging phục vụ theo dõi lỗi và request trong quá trình chạy.
+
+
+---
+## 🔥 6. ĐIỂM NHẤN KỸ THUẬT (Technical Highlights)
 
 ### 3.1. Tối ưu hóa tìm kiếm: Autocomplete với cấu trúc dữ liệu Trie
 > **Vấn đề:** Sử dụng truy vấn `SELECT ... LIKE '%keyword%'` trực tiếp vào Database sẽ gây thắt cổ chai (Bottleneck) nghiêm trọng khi hàng ngàn người dùng gõ phím liên tục.
@@ -132,52 +257,77 @@ public synchronized boolean tryconsume() {
 
 ---
 
-## ⚙️ 4. Hướng dẫn cài đặt & Triển khai
+## ⚙️ 7. Hướng dẫn cài đặt & Triển khai
 
 > **Yêu cầu hệ thống:** JDK 25, Maven 3.8+, MySQL 8.0+
 
-### Bước 1: Khởi tạo Database
-Tạo một database trống trên MySQL. Hệ thống sẽ tự động chạy Migration để tạo bảng.
+### 7.1. Chuẩn bị database
+
+Tạo database MySQL:
+
 ```sql
 CREATE DATABASE auction_db;
 ```
 
-### Bước 2: Cấu hình môi trường
-Thiết lập các biến môi trường (Environment Variables) cho Server để bảo mật thông tin, tuyệt đối không hardcode:
-*   `DB_URL`: `jdbc:mysql://localhost:3306/auction_db`
-*   `DB_USER`: `<tên_đăng_nhập_mysql>`
-*   `DB_PASS`: `<mật_khẩu_mysql>`
-*   `SERVER_PORT`: `8080`
+Cấu hình thông tin kết nối database theo file cấu hình của server hoặc biến môi trường tương ứng:
 
-### Bước 3: Build toàn bộ dự án
-Tại thư mục gốc của dự án, thực thi lệnh Maven để dọn dẹp và biên dịch cả 3 module (`shared`, `server`, `client`):
-```bash
-mvn clean verify
+```text
+DB_URL=jdbc:mysql://localhost:3306/auction_db
+DB_USER=<tên_đăng_nhập_mysql>
+DB_PASS=<mật_khẩu_mysql>
+SERVER_PORT=8080
 ```
 
-### Bước 4: Khởi chạy Server
-Khởi động lõi xử lý trung tâm. Server sẽ tự động dọn dẹp Port (Auto-kill) nếu bị kẹt từ phiên chạy trước.
-```bash
-cd auction-server
-mvn exec:java -Dexec.mainClass="com.auction.server.Main"
+### 7.2. Chạy bằng file JAR từ GitHub Releases
+
+Bước 1: tải `server.jar` và `client.jar` trong mục Releases.
+
+Bước 2: mở terminal tại thư mục chứa `server.jar` và chạy server trước:
+
+```powershell
+java -jar server.jar
 ```
 
-### Bước 5: Khởi chạy Client
-Mở một Terminal mới và khởi động giao diện JavaFX. Có thể chạy lệnh này nhiều lần để giả lập nhiều người dùng kết nối đồng thời.
-```bash
-cd auction-client
-mvn javafx:run
+Bước 3: mở terminal khác tại thư mục chứa `client.jar` và chạy client:
+
+```powershell
+java -jar client.jar
+```
+
+Muốn chạy nhiều client, mở nhiều cửa sổ terminal và chạy lại:
+
+```powershell
+java -jar client.jar
+```
+
+### 7.3. Build và chạy từ source
+
+Tại thư mục gốc của project:
+
+```powershell
+mvn clean package -DskipTests
+```
+
+Copy JAR ra thư mục gốc:
+
+```powershell
+Copy-Item ".\auction-server\target\auction-server.jar" ".\server.jar" -Force
+Copy-Item ".\auction-client\target\auction-client.jar" ".\client.jar" -Force
+```
+
+Chạy server:
+
+```powershell
+java -jar server.jar
+```
+
+Chạy client:
+
+```powershell
+java -jar client.jar
 ```
 
 
-## 5. Ghi chú khi chạy chương trình
-
-- Server phải chạy trước client.
-- MySQL phải được bật trước khi chạy server.
-- File `db.properties` phải cấu hình đúng tài khoản MySQL.
-- Nếu sửa file trong `src/main/resources`, cần build lại project để file JAR nhận cấu hình mới.
-- Nếu muốn test nhiều người dùng, có thể mở nhiều client cùng lúc.
-- Nhánh nộp cuối cùng là nhánh `main`.
-- Không commit thêm sau deadline theo yêu cầu của giảng viên.
-
-11. Videodemo - Project : https://drive.google.com/file/d/1f-rXYu2PapCGe3ON3zm6eOxHXkE3EIol/view?usp=drivesdk&fbclid=IwY2xjawSH6k9leHRuA2FlbQIxMABicmlkETFIZWtGQ2lpY0NHTmFTWlhFc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHmTKTZMD5ZGv-UDM6TLnlIUCTx2naG3_6XULwuBh5iQrVLUQ90K0SIKjdPR3_aem_-2vilnAuoisbbHAD0DGmQA
+## 📝 8. Báo cáo PDF và video demo
+- Báo cáo PDF: https://drive.google.com/file/d/1pf1j6V50F7uxtXeVZF9_YT36XORGYG4t/view?usp=drive_link
+- Video demo: https://drive.google.com/file/d/1f-rXYu2PapCGe3ON3zm6eOxHXkE3EIol/view
