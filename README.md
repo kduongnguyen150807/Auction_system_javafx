@@ -168,3 +168,16 @@ Mở một Terminal mới và khởi động giao diện JavaFX. Có thể chạ
 cd auction-client
 mvn javafx:run
 ```
+
+
+## 5. Ghi chú khi chạy chương trình
+
+- Server phải chạy trước client.
+- MySQL phải được bật trước khi chạy server.
+- File `db.properties` phải cấu hình đúng tài khoản MySQL.
+- Nếu sửa file trong `src/main/resources`, cần build lại project để file JAR nhận cấu hình mới.
+- Nếu muốn test nhiều người dùng, có thể mở nhiều client cùng lúc.
+- Nhánh nộp cuối cùng là nhánh `main`.
+- Không commit thêm sau deadline theo yêu cầu của giảng viên.
+
+11. Videodemo - Project : https://drive.google.com/file/d/1f-rXYu2PapCGe3ON3zm6eOxHXkE3EIol/view?usp=drivesdk&fbclid=IwY2xjawSH6k9leHRuA2FlbQIxMABicmlkETFIZWtGQ2lpY0NHTmFTWlhFc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHmTKTZMD5ZGv-UDM6TLnlIUCTx2naG3_6XULwuBh5iQrVLUQ90K0SIKjdPR3_aem_-2vilnAuoisbbHAD0DGmQA
