@@ -1,4 +1,4 @@
-# ⚡ Hệ Thống Đấu Giá Trực Tuyến - Auction System JavaFX
+# Hệ Thống Đấu Giá Trực Tuyến
 
 ![Java](https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![JavaFX](https://img.shields.io/badge/JavaFX-GUI-1565C0?style=for-the-badge&logo=java&logoColor=white)
@@ -6,514 +6,206 @@
 ![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
-## Chạy nhanh bằng executable fat JAR
-
-Repository đã cấu hình `maven-shade-plugin` cho cả server và client để đóng gói dependency vào JAR chạy trực tiếp.
-
-```bash
-mvn clean package -DskipTests
-```
-
-Sau khi build, có thể chạy bằng file JAR ở thư mục gốc:
-
-```bash
-java -jar server.jar
-java -jar client.jar
-```
-
-Hoặc chạy trực tiếp từ thư mục `target`:
-
-```bash
-java -jar auction-server/target/auction-server.jar
-java -jar auction-client/target/auction-client.jar
-```
-
-Trước khi chạy server, cần tạo MySQL database và chỉnh `auction-server/src/main/resources/db.properties`.
-
 ## 1. Mô tả bài toán và phạm vi hệ thống
 
-**Auction System JavaFX** là hệ thống đấu giá trực tuyến được xây dựng bằng Java theo mô hình **Client - Server**.
+Dự án mô phỏng một hệ thống đấu giá trực tuyến theo mô hình Client-Server. Người dùng có thể đăng ký, đăng nhập, xem sản phẩm, tham gia đấu giá, theo dõi sản phẩm, quản lý ví tiền và trao đổi qua hệ thống chat. Server xử lý nghiệp vụ đấu giá, đồng bộ dữ liệu, quản lý kết nối TCP Socket và lưu trữ dữ liệu vào MySQL.
 
-Hệ thống mô phỏng một sàn đấu giá online, trong đó người dùng có thể đăng ký tài khoản, đăng nhập, xem danh sách sản phẩm, đăng sản phẩm đấu giá, đặt giá, theo dõi sản phẩm, xem lịch sử giao dịch, chat, đánh giá và quản lý thông tin cá nhân.
+Phạm vi chính của hệ thống:
 
-Mô hình tổng quát của hệ thống:
-
-```text
-auction-client  <---- TCP Socket port 8080 ---->  auction-server  <----> MySQL
-```
-
-Phạm vi hệ thống gồm:
-
-- Ứng dụng **client** sử dụng JavaFX để hiển thị giao diện người dùng.
-- Ứng dụng **server** xử lý nghiệp vụ, quản lý kết nối client và giao tiếp với database.
-- Database **MySQL** lưu trữ thông tin người dùng, sản phẩm, phiên đấu giá, lịch sử đặt giá, giao dịch, đánh giá và chat.
-- Client và server giao tiếp với nhau thông qua **TCP Socket**.
-- Hệ thống hỗ trợ nhiều client kết nối cùng lúc để mô phỏng nhiều người dùng đấu giá.
-
----
+- Ứng dụng Client desktop bằng JavaFX.
+- Server xử lý request từ nhiều client qua TCP Socket.
+- Cơ sở dữ liệu MySQL lưu người dùng, sản phẩm, giao dịch, phiên đấu giá và tin nhắn.
+- Các chức năng đấu giá English Auction, Dutch Auction, auto-bid/proxy bidding, ví tiền, chat và quản trị.
 
 ## 2. Công nghệ sử dụng, môi trường chạy và yêu cầu cài đặt
 
-### 2.1. Công nghệ sử dụng
-
-Dự án sử dụng các công nghệ chính:
-
-| Thành phần | Công nghệ sử dụng |
-| :--- | :--- |
-| Ngôn ngữ lập trình | Java 25 |
-| Giao diện người dùng | JavaFX, FXML, CSS |
-| Quản lý project | Maven multi-module |
-| Giao tiếp mạng | TCP Socket |
-| Database | MySQL 8.0+ |
-| Kết nối database | JDBC, HikariCP |
+| Thành phần | Công nghệ |
+| --- | --- |
+| Ngôn ngữ | Java 25 |
+| Giao diện | JavaFX, FXML, CSS |
+| Build | Maven multi-module |
+| Mạng | Java Socket TCP/IP |
+| Cơ sở dữ liệu | MySQL 8.0+ |
+| Kết nối DB | JDBC, HikariCP |
 | Logging | SLF4J, Logback |
-| Đóng gói JAR | Maven Shade Plugin |
-| Kiểm thử | JUnit |
+| Lưu trữ ảnh | Cloudinary |
 
-### 2.2. Yêu cầu môi trường
+Yêu cầu môi trường:
 
-Máy chạy chương trình cần cài:
-
-- JDK 25
-- Maven 3.8 trở lên
-- MySQL 8.0 trở lên
-- IntelliJ IDEA hoặc IDE hỗ trợ Maven
-
-Kiểm tra Java:
-
-```bash
-java -version
-```
-
-Kiểm tra Maven:
-
-```bash
-mvn -version
-```
-
----
+- Cài JDK 25 hoặc mới hơn.
+- Cài Maven 3.8+ nếu muốn build từ source.
+- Cài MySQL 8.0+ và tạo database cho hệ thống.
+- Server phải chạy trước khi mở Client.
 
 ## 3. Cấu trúc thư mục và các module chính
 
-Dự án được tổ chức theo dạng **Maven multi-module**, gồm 3 module chính:
-
 ```text
-Auction_system_javafx
-│
-├── pom.xml
-│
-├── auction-shared
-│   ├── pom.xml
-│   └── src/main/java
-│
-├── auction-server
-│   ├── pom.xml
-│   ├── src/main/java
-│   └── src/main/resources
-│
-└── auction-client
-    ├── pom.xml
-    ├── src/main/java
-    └── src/main/resources
+Auction_system_javafx/
+├── auction-client/       # Client JavaFX, controller, FXML, CSS, service phía giao diện
+├── auction-server/       # Server TCP Socket, xử lý nghiệp vụ, DAO, database, auction flow
+├── auction-shared/       # Model, request/response, protocol dùng chung giữa client và server
+├── Summary/              # Báo cáo, sơ đồ hệ thống và tài liệu tổng hợp
+├── pom.xml               # Maven parent project
+└── README.md             # Hướng dẫn build, chạy và mô tả dự án
 ```
 
-### 3.1. Module `auction-shared`
+Vai trò từng module:
 
-Module `auction-shared` chứa các class dùng chung giữa client và server.
+- `auction-client`: hiển thị giao diện người dùng, gửi request tới server, nhận dữ liệu realtime và cập nhật UI.
+- `auction-server`: tiếp nhận kết nối client, định tuyến request, xử lý đấu giá, tài khoản, ví tiền, chat và truy cập database.
+- `auction-shared`: chứa các class dùng chung như model, request, response và các hằng số protocol.
 
-Một số class tiêu biểu:
+## 4. Vị trí các file JAR
 
-```text
-Request
-Response
-User
-Item
-BidTransaction
-Rating
-ChatMessage
-Friendship
-UserRole
-AuctionType
-ItemStatus
-```
+Các file JAR chạy trực tiếp được đặt tại mục GitHub Releases của repository:
 
-Vai trò của module này là thống nhất dữ liệu khi client và server giao tiếp qua socket.
+- `client.jar`: chạy ứng dụng Client.
+- `server.jar`: chạy Server.
 
----
-
-### 3.2. Module `auction-server`
-
-Module `auction-server` là phần server của hệ thống.
-
-Cấu trúc chính:
+Link Releases:
 
 ```text
-auction-server
-│
-├── controller
-│   ├── SocketServer
-│   └── ClientHandler
-│
-├── handler
-│   ├── auth
-│   ├── auction
-│   ├── chat
-│   ├── rating
-│   ├── user
-│   └── misc
-│
-├── service
-│   ├── auction
-│   └── user
-│
-└── dao
-    ├── auction
-    ├── user
-    ├── chat
-    ├── rating
-    ├── wallet
-    └── platform
+https://github.com/kduongnguyen150807/Auction_system_javafx/releases
 ```
 
-Vai trò một số thành phần chính:
-
-- `Main`: điểm khởi chạy server.
-- `SocketServer`: mở server socket và chờ client kết nối.
-- `ClientHandler`: xử lý request của từng client.
-- `ActionRegistry`: điều phối request đến đúng handler.
-- `LoginHandler`, `SignupHandler`: xử lý đăng nhập và đăng ký.
-- `BidHandler`: xử lý đặt giá.
-- `AuctionManager`: quản lý nghiệp vụ đấu giá.
-- `DatabaseConnection`: quản lý kết nối MySQL.
-- `DatabaseMigration`: tự động tạo/cập nhật bảng trong database.
-
----
-
-### 3.3. Module `auction-client`
-
-Module `auction-client` là phần giao diện người dùng bằng JavaFX.
-
-Cấu trúc chính:
+Nếu build từ source, file JAR sau khi build nằm trong:
 
 ```text
-auction-client
-│
-├── controller
-│   ├── WelcomeController
-│   ├── LoginController
-│   ├── RegisterController
-│   └── ForgotPasswordController
-│
-├── network
-│   ├── NetworkClient
-│   ├── ObjectSocketConnection
-│   └── IncomingResponseRouter
-│
-├── service
-│   ├── BiddingClientService
-│   ├── LotSubmissionService
-│   └── UserAccountService
-│
-├── ui
-│   ├── Main
-│   ├── TrangChu
-│   ├── ItemCard
-│   ├── ItemInformation
-│   ├── BiddingForm
-│   ├── AddNewLot
-│   ├── Profile
-│   ├── Watchlist
-│   ├── YourItem
-│   ├── History
-│   ├── TransactionHistory
-│   ├── Chat
-│   ├── RatingForm
-│   └── SearchBar
-│
-└── util
+auction-client/target/
+auction-server/target/
 ```
 
-Vai trò một số thành phần chính:
+Có thể copy ra thư mục gốc để chạy đúng tên:
 
-- `App`: launcher dùng khi chạy bằng file `.jar`.
-- `Main`: khởi chạy JavaFX Application.
-- `SceneManager`: quản lý chuyển màn hình.
-- `NetworkClient`: gửi request từ client lên server.
-- `IncomingResponseRouter`: nhận và xử lý response từ server.
-- `KhungController`: controller chính sau khi đăng nhập.
-- `TrangChuController`: điều khiển trang chủ.
-- `ItemInformationController`: hiển thị chi tiết sản phẩm.
-- `BiddingFormController`: xử lý giao diện đặt giá.
-- `AddNewLotController`: xử lý thêm sản phẩm/lô đấu giá.
-- `ProfileController`: quản lý hồ sơ người dùng.
-- `ChatPageController`: xử lý giao diện chat.
+```powershell
+Copy-Item ".\auction-client\target\auction-client.jar" ".\client.jar" -Force
+Copy-Item ".\auction-server\target\auction-server.jar" ".\server.jar" -Force
+```
 
----
+## 5. Hướng dẫn chạy Server/Client theo thứ tự
 
-## 4. Cấu hình database
+### 5.1. Chuẩn bị database
 
-Trước khi chạy server, cần tạo database trong MySQL:
+Tạo database MySQL:
 
 ```sql
-CREATE DATABASE IF NOT EXISTS auction_db;
+CREATE DATABASE auction_db;
 ```
 
-Sau đó kiểm tra file cấu hình database:
+Cấu hình thông tin kết nối database theo file cấu hình của server hoặc biến môi trường tương ứng:
 
 ```text
-auction-server/src/main/resources/db.properties
+DB_URL=jdbc:mysql://localhost:3306/auction_db
+DB_USER=<tên_đăng_nhập_mysql>
+DB_PASS=<mật_khẩu_mysql>
+SERVER_PORT=8080
 ```
 
-Ví dụ cấu hình:
+### 5.2. Chạy bằng file JAR từ GitHub Releases
 
-```properties
-db.url=jdbc:mysql://localhost:3306/auction_db
-db.user=root
-db.password=your_password
+Bước 1: tải `server.jar` và `client.jar` trong mục Releases.
+
+Bước 2: mở terminal tại thư mục chứa `server.jar` và chạy server trước:
+
+```powershell
+java -jar server.jar
 ```
 
-Trong đó:
+Bước 3: mở terminal khác tại thư mục chứa `client.jar` và chạy client:
 
-- `db.url`: đường dẫn đến database MySQL.
-- `db.user`: tài khoản MySQL.
-- `db.password`: mật khẩu MySQL.
-
-Ví dụ nếu MySQL dùng tài khoản `root` và mật khẩu `123456`:
-
-```properties
-db.url=jdbc:mysql://localhost:3306/auction_db
-db.user=root
-db.password=123456
+```powershell
+java -jar client.jar
 ```
 
-Sau khi server kết nối database thành công, hệ thống sẽ tự chạy migration để tạo/cập nhật các bảng cần thiết.
+Muốn chạy nhiều client, mở nhiều cửa sổ terminal và chạy lại:
 
----
-
-## 5. Build project thành file JAR
-
-Tại thư mục gốc project, chạy lệnh:
-
-```bash
-mvn clean package -DskipTests "-Dcheckstyle.skip=true"
+```powershell
+java -jar client.jar
 ```
 
-Nếu build thành công, terminal sẽ hiển thị:
+### 5.3. Build và chạy từ source
 
-```text
-BUILD SUCCESS
+Tại thư mục gốc của project:
+
+```powershell
+mvn clean package -DskipTests
 ```
 
-Dự án sử dụng `maven-shade-plugin` để đóng gói dependencies vào file JAR, giúp chương trình có thể chạy trực tiếp bằng lệnh:
+Copy JAR ra thư mục gốc:
 
-```bash
-java -jar <ten-file>.jar
+```powershell
+Copy-Item ".\auction-server\target\auction-server.jar" ".\server.jar" -Force
+Copy-Item ".\auction-client\target\auction-client.jar" ".\client.jar" -Force
 ```
 
----
+Chạy server:
 
-## 6. Vị trí các file `.jar`
-
-Sau khi build thành công, các file JAR nằm tại:
-
-```text
-auction-server/target/auction-server.jar
-auction-client/target/auction-client.jar
+```powershell
+java -jar server.jar
 ```
 
-Trong đó:
+Chạy client:
 
-- `auction-server.jar`: file chạy server.
-- `auction-client.jar`: file chạy client JavaFX.
-
----
-
-## 7. Hướng dẫn chạy Server/Client theo thứ tự
-
-### Bước 1: Bật MySQL
-
-Đảm bảo MySQL đang chạy và đã có database:
-
-```sql
-CREATE DATABASE IF NOT EXISTS auction_db;
+```powershell
+java -jar client.jar
 ```
 
-Đảm bảo file sau đã cấu hình đúng tài khoản MySQL:
+## 6. Danh sách chức năng đã hoàn thành
 
-```text
-auction-server/src/main/resources/db.properties
+- Đăng ký, đăng nhập và quản lý phiên người dùng.
+- Phân quyền người dùng, bao gồm người mua, người bán và quản trị viên.
+- Xem danh sách sản phẩm, xem chi tiết sản phẩm và tìm kiếm sản phẩm.
+- Thêm sản phẩm đấu giá, quản lý ảnh và thông tin sản phẩm.
+- Đấu giá English Auction.
+- Đấu giá Dutch Auction.
+- Auto-bid/proxy bidding.
+- Watchlist để theo dõi sản phẩm quan tâm.
+- Quản lý ví tiền, đặt cọc, giữ tiền, hoàn tiền và ghi nhận giao dịch.
+- Chốt phiên đấu giá và cập nhật trạng thái sản phẩm.
+- Chat realtime gồm global chat và private chat.
+- Quản lý bạn bè/friendship.
+- Trang quản trị hệ thống.
+- Thống kê, lịch sử đấu giá và biểu đồ giá.
+- Logging phục vụ theo dõi lỗi và request trong quá trình chạy.
+
+## 7. Kiến trúc tổng thể
+
+Hệ thống vận hành theo mô hình Client-Server phân tầng. Client JavaFX gửi request qua TCP Socket tới Server. Server định tuyến request tới các handler nghiệp vụ, thao tác với database qua DAO và phản hồi kết quả về Client.
+
+```mermaid
+flowchart LR
+  C1["JavaFX Client 1"] <-->|"TCP Socket"| S["Auction Server"]
+  C2["JavaFX Client 2"] <-->|"TCP Socket"| S
+  S --> R["Request Router / Action Registry"]
+  R --> A["Auction Services"]
+  R --> U["User / Wallet Services"]
+  R --> CH["Chat Services"]
+  A --> D["DAO Layer"]
+  U --> D
+  CH --> D
+  D --> DB[("MySQL Database")]
+  S -.->|"Realtime response / broadcast"| C1
+  S -.->|"Realtime response / broadcast"| C2
 ```
 
----
+Một số điểm kỹ thuật chính:
 
-### Bước 2: Chạy server trước
+- Tách module `client`, `server`, `shared` để giảm phụ thuộc trực tiếp giữa giao diện và nghiệp vụ server.
+- Dùng TCP Socket để giao tiếp Client-Server.
+- Dùng các request/response dùng chung trong `auction-shared`.
+- Dùng cơ chế lock và xử lý giao dịch để hạn chế race condition khi nhiều người cùng đấu giá.
+- Dùng background thread và `Platform.runLater()` để tránh chặn UI JavaFX khi gọi mạng.
 
-Mở terminal tại thư mục gốc project và chạy:
+## 8. Báo cáo PDF và video demo
 
-```bash
-java -jar auction-server/target/auction-server.jar
-```
+- Báo cáo PDF: https://drive.google.com/file/d/1pf1j6V50F7uxtXeVZF9_YT36XORGYG4t/view?usp=drive_link
+- Video demo: https://drive.google.com/file/d/1f-rXYu2PapCGe3ON3zm6eOxHXkE3EIol/view
 
-Server mặc định chạy ở port:
+## 9. Ghi chú khi chạy chương trình
 
-```text
-8080
-```
-
-Khi chạy server, cần giữ nguyên terminal server và không tắt.
-
----
-
-### Bước 3: Chạy client sau
-
-Mở terminal thứ hai tại thư mục gốc project và chạy:
-
-```bash
-java -jar auction-client/target/auction-client.jar
-```
-
-Nếu client yêu cầu nhập địa chỉ server, nhập:
-
-```text
-127.0.0.1
-```
-
-Nếu server chạy trên máy khác, nhập địa chỉ IP của máy đang chạy server.
-
----
-
-### Bước 4: Chạy nhiều client cùng lúc
-
-Có thể mở nhiều terminal và chạy nhiều client:
-
-```bash
-java -jar auction-client/target/auction-client.jar
-```
-
-Ví dụ:
-
-```text
-Terminal 1: chạy server
-Terminal 2: chạy client user A
-Terminal 3: chạy client user B
-Terminal 4: chạy client admin
-```
-
-Cách này dùng để kiểm thử chức năng nhiều người dùng cùng tham gia đấu giá.
-
----
-
-## 8. Danh sách chức năng đã hoàn thành
-
-### 8.1. Chức năng tài khoản
-
-- Đăng ký tài khoản.
-- Đăng nhập.
-- Quên mật khẩu.
-- Đăng xuất.
-- Cập nhật thông tin cá nhân.
-- Cập nhật ảnh đại diện.
-- Nạp tiền vào tài khoản.
-- Quản lý trạng thái tài khoản.
-
-### 8.2. Chức năng đấu giá
-
-- Xem danh sách sản phẩm đấu giá.
-- Xem chi tiết sản phẩm.
-- Thêm sản phẩm/lô đấu giá.
-- Cập nhật sản phẩm đang chờ duyệt.
-- Hủy sản phẩm của người bán.
-- Đặt giá sản phẩm.
-- Theo dõi giá hiện tại.
-- Cập nhật giá theo thời gian thực.
-- Xử lý kết thúc phiên đấu giá.
-
-### 8.3. Chức năng người bán
-
-- Đăng sản phẩm đấu giá.
-- Xem danh sách sản phẩm của mình.
-- Cập nhật thông tin sản phẩm đang chờ duyệt.
-- Hủy sản phẩm.
-- Nhận thông báo khi có người đặt giá.
-
-### 8.4. Chức năng người mua
-
-- Xem sản phẩm đang đấu giá.
-- Đặt giá sản phẩm.
-- Theo dõi sản phẩm yêu thích.
-- Xem lịch sử giao dịch.
-- Nhận thông báo khi bị người khác đặt giá cao hơn.
-
-### 8.5. Chức năng watchlist
-
-- Thêm sản phẩm vào danh sách theo dõi.
-- Xóa sản phẩm khỏi danh sách theo dõi.
-- Hiển thị danh sách sản phẩm đang theo dõi.
-- Cập nhật trạng thái theo dõi trên giao diện.
-
-### 8.6. Chức năng đánh giá
-
-- Gửi đánh giá.
-- Xem danh sách đánh giá.
-- Hiển thị điểm đánh giá trung bình.
-
-### 8.7. Chức năng chat và bạn bè
-
-- Chat giữa người dùng.
-- Tìm kiếm người dùng.
-- Gửi lời mời kết bạn.
-- Chấp nhận lời mời kết bạn.
-- Từ chối lời mời kết bạn.
-- Hiển thị tin nhắn trên giao diện client.
-
-### 8.8. Chức năng quản trị
-
-- Quản lý người dùng.
-- Khóa tài khoản.
-- Mở khóa tài khoản.
-- Theo dõi trạng thái người dùng.
-- Quản lý dữ liệu hệ thống ở mức cơ bản.
-
-### 8.9. Chức năng hệ thống
-
-- Client và server chạy riêng.
-- Server hỗ trợ nhiều client kết nối cùng lúc.
-- Giao tiếp qua TCP Socket.
-- Server xử lý request thông qua các handler riêng biệt.
-- Kết nối MySQL thông qua connection pool.
-- Tự động tạo/cập nhật bảng bằng migration.
-- Đóng gói được thành file executable fat JAR / uber JAR.
-- Chạy được bằng lệnh `java -jar`.
-
----
-
-## 9. Quy trình kiểm thử nhanh
-
-Có thể kiểm thử chương trình theo thứ tự sau:
-
-```text
-1. Bật MySQL.
-2. Chạy server bằng file auction-server.jar.
-3. Chạy client bằng file auction-client.jar.
-4. Đăng ký tài khoản mới.
-5. Đăng nhập.
-6. Thêm sản phẩm đấu giá.
-7. Mở client thứ hai.
-8. Đăng nhập bằng tài khoản khác.
-9. Đặt giá sản phẩm.
-10. Kiểm tra client còn lại có nhận cập nhật giá không.
-```
-
----
-
-## 10. Ghi chú khi chạy chương trình
-
-- Server phải chạy trước client.
-- MySQL phải được bật trước khi chạy server.
-- File `db.properties` phải cấu hình đúng tài khoản MySQL.
-- Nếu sửa file trong `src/main/resources`, cần build lại project để file JAR nhận cấu hình mới.
-- Nếu muốn test nhiều người dùng, có thể mở nhiều client cùng lúc.
-- Nhánh nộp cuối cùng là nhánh `main`.
+- Server phải chạy trước Client.
+- MySQL phải được bật trước khi chạy Server.
+- Nếu sửa cấu hình hoặc tài nguyên trong `src/main/resources`, cần build lại project để JAR nhận thay đổi.
+- Nếu muốn test nhiều người dùng, có thể mở nhiều Client cùng lúc.
+- Nhánh nộp cuối cùng là `main`.
 - Không commit thêm sau deadline theo yêu cầu của giảng viên.
-
-11. Videodemo - Project : https://drive.google.com/file/d/1f-rXYu2PapCGe3ON3zm6eOxHXkE3EIol/view?usp=drivesdk&fbclid=IwY2xjawSH6k9leHRuA2FlbQIxMABicmlkETFIZWtGQ2lpY0NHTmFTWlhFc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHmTKTZMD5ZGv-UDM6TLnlIUCTx2naG3_6XULwuBh5iQrVLUQ90K0SIKjdPR3_aem_-2vilnAuoisbbHAD0DGmQA
